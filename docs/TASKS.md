@@ -43,7 +43,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Guardrail script + workflow | ✅ | CLAUDE.md rules 1, 3, 4 and the convention rules, as checks |
 | GitHub Pages deploy of `spike/` | 🔶 | Workflow committed; Pages source must be switched on in repo settings |
 | Spike harness itself | ❌ | `spike/index.html` is a placeholder — see SPIKE.md |
-| Branch protection on `main` | ❌ | Manual; required before agents open PRs |
+| Branch protection on `main` | 🔶 | Ruleset committed at `.github/rulesets/main.json`; must be imported in repo settings |
 | `ci.yml` — typecheck, lint, tests, migration drift | 🔶 | Staged in `.github/workflows-pending/` |
 | `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
 | `reference-check.yml` — references vs their own checks | 🔶 | Staged; needs published seed tasks |

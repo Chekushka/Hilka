@@ -42,13 +42,25 @@ cannot be measured on a dev laptop.
 
 ### 2. Protect `main`
 
-Settings → Branches → Add branch ruleset for `main`:
+Settings → Rules → Rulesets → New ruleset → **Import a ruleset**, and upload
+`.github/rulesets/main.json`. It encodes:
 
-- Require a pull request before merging.
-- Require status checks to pass → add `guardrails` now, `verify` in Phase B.
-- Block force pushes.
-- Allow administrators to bypass — keep **on** while solo, so a hotfix the night
-  before a lesson is still possible. Turn it off when a second person joins.
+- A pull request is required; zero approvals, so a solo merge still works.
+- `guardrails` must pass.
+- No deletion, no force push.
+- Repository admins bypass (`actor_id: 5`) — a hotfix the night before a lesson
+  stays possible. Remove the `bypass_actors` entry when a second person joins.
+
+It targets `~DEFAULT_BRANCH` rather than the literal name, so it survives a
+rename of `main`.
+
+The file is the source of truth for a setting that otherwise lives only in the
+web UI and drifts silently. Edit it, re-import, and the ruleset matches git again.
+
+**In Phase B**, add `verify` to `required_status_checks` and re-import. Not
+before: a required check that never reports blocks every merge, and the fix is
+not obvious from the UI — the PR simply says it is waiting on a check that no
+workflow produces.
 
 Remote sessions push to `claude/*` branches. Protection on `main` is what makes
 an agent's mistake a reviewable diff.
