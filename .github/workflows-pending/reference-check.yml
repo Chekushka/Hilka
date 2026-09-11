@@ -1,0 +1,33 @@
+name: reference-check
+
+# Re-runs every published task's reference solution against its own checks.
+# Reads content/seed-tasks/*.json, so it needs no database.
+#
+# This is what turns "a runner upgrade silently broke forty tasks" into a red X
+# on a Tuesday morning instead of a dead lesson in March.
+
+on:
+  pull_request:
+    paths:
+      - 'lib/runner/**'
+      - 'lib/checker/**'
+      - 'content/seed-tasks/**'
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  references:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify:references

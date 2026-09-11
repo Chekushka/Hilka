@@ -1,0 +1,25 @@
+name: guardrails
+
+# Mechanizes the non-negotiable rules in CLAUDE.md. These are the rules an
+# agent breaks silently; a failing check is cheaper than a review that catches
+# it three commits later. Runs on every PR, including from the spike phase —
+# it is a no-op while the directories it inspects do not exist yet.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: guardrails-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/guardrails.sh

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%236E9A5F'/%3E%3Cg stroke='%23F1F3EC' stroke-width='2.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M12 20.5V13'/%3E%3Cpath d='M12 13L7 7.2'/%3E%3Cpath d='M12 13L17 4'/%3E%3C/g%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0}
+body{background:#E7EAE1;font-family:Onest,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#3E6B63}a:hover{color:#2F534D}
+[data-theme="light"]{--bg:#F1F3EC;--surface:#FAFAF6;--surface2:#E9EDE3;--ink:#262C27;--muted:#636D64;--line:#DCE2D6;--accent:#3E6B63;--accent-soft:#E2EBE7;--growth:#6E9A5F;--honey:#C9922F;--attention:#A8763C;--codebg:#F6F7F1;--shell:#E7EAE1}
+[data-theme="dark"]{--bg:#1A201D;--surface:#242B27;--surface2:#2C342F;--ink:#E3E7DE;--muted:#9AA69B;--line:#333C36;--accent:#6FA79C;--accent-soft:#2A3B37;--growth:#86B575;--honey:#DFAE4E;--attention:#C79358;--codebg:#1E2521;--shell:#12160F}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes forkA{0%,100%{opacity:.22}40%{opacity:1}}
+@keyframes forkB{0%,100%{opacity:.22}72%{opacity:1}}
+@keyframes budring{0%{transform:scale(.7);opacity:.5}70%{transform:scale(1.6);opacity:0}100%{transform:scale(1.6);opacity:0}}
+</style>
+</helmet>
+
+<div data-theme="{{ theme }}" style="min-height:100vh;background:var(--shell,#E7EAE1);padding:22px 22px 60px;box-sizing:border-box;color:var(--ink,#262C27)">
+
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:1366px;margin:0 auto 16px">
+<div style="font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted,#636D64);margin-right:6px">Python · 12–15 · 1366×768</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ screens }}" as="s" hint-placeholder-count="9"><button onClick="{{ s.go }}" style="font-family:Onest,system-ui,sans-serif;font-size:12.5px;font-weight:{{ s.w }};padding:7px 12px;border-radius:999px;border:1px solid var(--line,#DCE2D6);background:{{ s.bg }};color:{{ s.fg }};cursor:pointer">{{ s.label }}</button></sc-for>
+</div>
+<div style="flex:1"></div>
+<button onClick="{{ toggleTheme }}" style="font-family:Onest,system-ui,sans-serif;font-size:12.5px;padding:7px 14px;border-radius:999px;border:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);color:var(--ink,#262C27);cursor:pointer">{{ themeLabel }}</button>
+</div>
+
+<div style="width:1366px;height:768px;margin:0 auto;background:var(--bg,#F1F3EC);border:1px solid var(--line,#DCE2D6);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;position:relative">
+
+<div style="height:56px;flex:none;display:flex;align-items:center;gap:18px;padding:0 20px;background:var(--surface,#FAFAF6);border-bottom:1px solid var(--line,#DCE2D6)">
+<div style="display:flex;align-items:center;gap:9px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--growth,#6E9A5F)" stroke-width="2.6" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+<div style="font-size:17px;font-weight:500;letter-spacing:-.015em">hilka</div>
+</div>
+<div style="width:1px;height:24px;background:var(--line,#DCE2D6)"></div>
+<div style="font-size:13.5px;color:var(--muted,#636D64)">{{ crumb }}</div>
+<div style="flex:1"></div>
+<sc-if value="{{ showTimer }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--surface2,#E9EDE3);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums"><div style="width:8px;height:8px;border-radius:2px;background:var(--attention,#A8763C)"></div>18:24</div></sc-if>
+<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted,#636D64)">Звук вимкнено</div>
+<div style="width:30px;height:30px;border-radius:999px;background:var(--accent-soft,#E2EBE7);color:var(--accent,#3E6B63);display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600">ON</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex">
+
+<sc-if value="{{ isWork }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex">
+
+<div style="width:392px;flex:none;border-right:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);display:flex;flex-direction:column">
+<div style="padding:20px 22px 14px;border-bottom:1px solid var(--line,#DCE2D6)">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+<div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent,#3E6B63)">{{ typeLabel }}</div>
+<div style="font-size:11.5px;color:var(--muted,#636D64)">Завдання 4 з 8</div>
+</div>
+<div style="font-size:22px;font-weight:600;line-height:1.25;text-wrap:pretty">{{ taskTitle }}</div>
+<div style="margin-top:10px;font-size:15px;line-height:1.5;color:var(--ink,#262C27);text-wrap:pretty">{{ taskBody }}</div>
+</div>
+
+<div style="padding:14px 22px;border-bottom:1px solid var(--line,#DCE2D6)">
+<button onClick="{{ toggleTheory }}" style="width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;font-family:Onest,system-ui,sans-serif;color:var(--ink,#262C27)">
+<div style="width:18px;height:18px;border-radius:5px;background:var(--accent-soft,#E2EBE7);color:var(--accent,#3E6B63);font-size:12px;line-height:18px;text-align:center;font-weight:700">{{ theoryMark }}</div>
+<div style="font-size:14px;font-weight:600">Як це працює</div>
+<div style="flex:1"></div>
+<div style="font-size:12.5px;color:var(--muted,#636D64)">{{ theoryHint }}</div>
+</button>
+<sc-if value="{{ theoryOpen }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:12px;font-size:14px;line-height:1.55;color:var(--muted,#636D64);text-wrap:pretty">Цикл <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink,#262C27)">for</span> повторює дію задану кількість разів. Вираз <span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink,#262C27)">range(1, 6)</span> дає числа 1, 2, 3, 4, 5 — останнє число не входить.</div>
+</sc-if>
+</div>
+
+<div style="flex:1"></div>
+
+<div style="padding:16px 22px 20px;border-top:1px solid var(--line,#DCE2D6)">
+<button onClick="{{ toggleHint }}" style="width:100%;display:flex;align-items:center;gap:10px;background:var(--surface2,#E9EDE3);border:1px solid var(--line,#DCE2D6);border-radius:10px;padding:11px 13px;cursor:pointer;font-family:Onest,system-ui,sans-serif;color:var(--ink,#262C27);text-align:left">
+<div style="width:18px;height:18px;border-radius:999px;background:var(--honey,#C9922F)"></div>
+<div style="font-size:14px;font-weight:600">Підказка</div>
+<div style="flex:1"></div>
+<div style="font-size:12px;color:var(--muted,#636D64)">1 з 3</div>
+</button>
+<sc-if value="{{ hintOpen }}" hint-placeholder-val="{{ true }}">
+<div style="margin-top:10px;padding:13px;border-radius:10px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);font-size:14px;line-height:1.55;color:var(--ink,#262C27);text-wrap:pretty">Рядок усередині циклу треба зсунути праворуч на чотири пробіли — так Python розуміє, що його потрібно повторювати.</div>
+</sc-if>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+<sc-if value="{{ isQuiz }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;padding:28px 32px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:15px;color:var(--muted,#636D64)">Один правильний варіант.</div>
+<sc-for list="{{ quiz }}" as="o" hint-placeholder-count="4">
+<button onClick="{{ o.pick }}" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:12px;border:1.5px solid {{ o.bd }};background:{{ o.bg }};cursor:pointer;text-align:left;font-family:Onest,system-ui,sans-serif;color:var(--ink,#262C27)">
+<div style="width:26px;height:26px;flex:none;border-radius:999px;border:1.5px solid {{ o.bd }};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--muted,#636D64)">{{ o.key }}</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:15px">{{ o.text }}</div>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;background:var(--codebg,#F6F7F1)">
+<div style="height:38px;flex:none;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--line,#DCE2D6)">
+<div style="font-size:12.5px;font-weight:600">{{ editorLabel }}</div>
+<div style="flex:1"></div>
+<div style="font-size:12px;color:var(--muted,#636D64)">Python 3.12 у браузері</div>
+</div>
+<div style="flex:1;min-height:0;overflow:auto;padding:16px 0">
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="7">
+<div style="display:flex;align-items:baseline;gap:14px;padding:2px 18px;background:{{ l.rowbg }};border-left:3px solid {{ l.mark }}">
+<div style="width:22px;flex:none;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted,#636D64)">{{ l.n }}</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:16.5px;line-height:1.7;white-space:pre;color:var(--ink,#262C27)">{{ l.t }}</div>
+</div>
+</sc-for>
+<sc-if value="{{ showLineNote }}" hint-placeholder-val="{{ true }}">
+<div style="margin:10px 18px 0;padding:12px 14px;border-radius:10px;background:var(--surface,#FAFAF6);border:1px solid var(--attention,#A8763C);display:flex;gap:11px;align-items:flex-start">
+<div style="width:16px;height:16px;flex:none;margin-top:2px;transform:rotate(45deg);background:var(--attention,#A8763C);border-radius:3px"></div>
+<div style="font-size:14px;line-height:1.5;color:var(--ink,#262C27);text-wrap:pretty">Рядок 3: Python очікує відступ після двокрапки. Подивіться на рядок 2 — там відступ є.</div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPredict }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column">
+<div style="flex:none;background:var(--codebg,#F6F7F1);border-bottom:1px solid var(--line,#DCE2D6);padding:16px 0">
+<div style="padding:0 18px 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#636D64)">Тільки читати</div>
+<sc-for list="{{ predictLines }}" as="l" hint-placeholder-count="4">
+<div style="display:flex;align-items:baseline;gap:14px;padding:2px 18px">
+<div style="width:22px;flex:none;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted,#636D64)">{{ l.n }}</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:16.5px;line-height:1.7;white-space:pre">{{ l.t }}</div>
+</div>
+</sc-for>
+</div>
+<div style="padding:22px 28px;display:flex;flex-direction:column;gap:10px">
+<div style="font-size:15px;font-weight:600">Що з’явиться на екрані?</div>
+<div style="display:flex;gap:10px;align-items:center">
+<div style="flex:1;max-width:420px;padding:14px 16px;border-radius:10px;border:1.5px solid var(--accent,#3E6B63);background:var(--surface,#FAFAF6);font-family:'JetBrains Mono',monospace;font-size:16px">8<span style="opacity:.5">|</span></div>
+<div style="font-size:13px;color:var(--muted,#636D64)">Enter — перевірити</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isFill }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;background:var(--codebg,#F6F7F1);padding:24px 0">
+<sc-for list="{{ fillLines }}" as="l" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:14px;padding:3px 18px">
+<div style="width:22px;flex:none;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted,#636D64)">{{ l.n }}</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:16.5px;line-height:1.7;white-space:pre">{{ l.a }}</div>
+<sc-if value="{{ l.gap }}" hint-placeholder-val="{{ true }}"><div style="min-width:104px;padding:4px 10px;border-radius:7px;border:1.5px dashed var(--accent,#3E6B63);background:var(--accent-soft,#E2EBE7);font-family:'JetBrains Mono',monospace;font-size:15.5px;color:var(--accent,#3E6B63)">{{ l.g }}</div></sc-if>
+<div style="font-family:'JetBrains Mono',monospace;font-size:16.5px;line-height:1.7;white-space:pre">{{ l.b }}</div>
+</div>
+</sc-for>
+<div style="margin:20px 18px 0;display:flex;gap:9px;flex-wrap:wrap">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="4"><div style="padding:8px 13px;border-radius:8px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);font-family:'JetBrains Mono',monospace;font-size:14.5px">{{ c }}</div></sc-for>
+</div>
+</div>
+</sc-if>
+
+<div style="flex:none;height:236px;border-top:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);display:flex;flex-direction:column">
+<div style="height:42px;flex:none;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid var(--line,#DCE2D6)">
+<div style="font-size:12.5px;font-weight:600">Результат</div>
+<div style="font-size:12px;color:var(--muted,#636D64)">{{ outMeta }}</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:9px;align-items:center">
+<button onClick="{{ check }}" style="font-family:Onest,system-ui,sans-serif;font-size:13.5px;font-weight:500;padding:9px 16px;border-radius:9px;border:1px solid var(--line,#DCE2D6);background:var(--surface2,#E9EDE3);color:var(--ink,#262C27);cursor:pointer">Перевірити</button>
+<button onClick="{{ run }}" style="font-family:Onest,system-ui,sans-serif;font-size:14px;font-weight:600;padding:9px 20px;border-radius:9px;border:1.5px solid {{ runBd }};background:{{ runBg }};color:{{ runFg }};cursor:{{ runCur }};display:flex;align-items:center;gap:9px">
+<sc-if value="{{ runBusy }}" hint-placeholder-val="{{ true }}"><div style="width:13px;height:13px;border-radius:999px;border:2px solid currentColor;border-top-color:transparent;animation:spin 800ms linear infinite"></div></sc-if>
+{{ runLabel }}</button>
+</div>
+</div>
+<div style="flex:1;min-height:0;overflow:auto;padding:14px 18px;background:var(--codebg,#F6F7F1)">
+<sc-if value="{{ outIdle }}" hint-placeholder-val="{{ true }}"><div style="font-size:14.5px;color:var(--muted,#636D64)">Натисніть «Запустити» — результат з’явиться тут.</div></sc-if>
+<sc-if value="{{ outBusy }}" hint-placeholder-val="{{ true }}"><div style="font-size:14.5px;color:var(--muted,#636D64)">Виконую…</div></sc-if>
+<sc-if value="{{ outDone }}" hint-placeholder-val="{{ true }}">
+<div>
+<sc-for list="{{ outLines }}" as="o" hint-placeholder-count="5"><div style="font-family:'JetBrains Mono',monospace;font-size:16px;line-height:1.6">{{ o }}</div></sc-for>
+<div style="margin-top:12px;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="width:20px;height:20px;border-radius:999px;background:var(--growth,#6E9A5F);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">✓</div>
+<div style="font-size:14px">Збігається з очікуваним. Можна перевіряти.</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ outLoading }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:11px"><div style="width:14px;height:14px;border-radius:999px;border:2px solid var(--accent,#3E6B63);border-top-color:transparent;animation:spin 900ms linear infinite"></div><div style="font-size:14.5px;color:var(--muted,#636D64)">Готуємо Python у браузері — 4 секунди, це буває раз за урок.</div></div></sc-if>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isGrid }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex">
+<div style="width:392px;flex:none;border-right:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);padding:20px 22px">
+<div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent,#3E6B63);margin-bottom:10px">Сітка · код</div>
+<div style="font-size:22px;font-weight:600;line-height:1.25">Довести робота до акумулятора</div>
+<div style="margin-top:10px;font-size:15px;line-height:1.5;color:var(--ink,#262C27)">Каміння обійти. Кроків має бути якнайменше.</div>
+<div style="margin-top:20px;display:flex;flex-direction:column;gap:13px">
+<div style="display:flex;align-items:center;gap:12px;font-size:14px">
+<div style="width:30px;flex:none;display:flex;justify-content:center"><div style="width:22px;height:22px;border-radius:6px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)"></div></div>Клітинка — один крок</div>
+<div style="display:flex;align-items:center;gap:12px;font-size:14px">
+<div style="width:30px;flex:none;display:flex;flex-direction:column;align-items:center;gap:1px">
+<div style="width:4px;height:4px;border-radius:999px;background:var(--honey,#C9922F)"></div>
+<div style="width:18px;height:13px;border-radius:6px 6px 4px 4px;background:var(--accent,#3E6B63);display:flex;align-items:center;justify-content:center;gap:3px"><div style="width:3px;height:4px;border-radius:999px;background:var(--surface,#FAFAF6)"></div><div style="width:3px;height:4px;border-radius:999px;background:var(--surface,#FAFAF6)"></div></div>
+<div style="width:22px;height:8px;border-radius:3px;background:var(--accent,#3E6B63);display:flex;align-items:center;justify-content:center"><div style="width:5px;height:5px;border-radius:1px;background:var(--honey,#C9922F)"></div></div>
+</div>Робот — тут він зараз</div>
+<div style="display:flex;align-items:center;gap:12px;font-size:14px">
+<div style="width:30px;flex:none;display:flex;align-items:center;justify-content:center">
+<div style="width:19px;height:13px;border-radius:4px;border:2.5px solid var(--honey,#C9922F);display:flex;padding:2px;box-sizing:border-box;gap:1.5px"><div style="flex:1;background:var(--honey,#C9922F);border-radius:1px"></div><div style="flex:1;background:var(--honey,#C9922F);border-radius:1px"></div></div>
+<div style="width:3px;height:6px;border-radius:0 2px 2px 0;background:var(--honey,#C9922F)"></div>
+</div>Акумулятор — мета</div>
+<div style="display:flex;align-items:center;gap:12px;font-size:14px">
+<div style="width:30px;flex:none;display:flex;align-items:flex-end;justify-content:center;position:relative;height:22px">
+<div style="width:24px;height:14px;border-radius:10px 8px 5px 6px;background:var(--muted,#636D64)"></div>
+<div style="position:absolute;left:4px;bottom:8px;width:12px;height:10px;border-radius:7px 6px 3px 5px;background:var(--muted,#636D64);opacity:.8"></div>
+</div>Камінь — обійти</div>
+<div style="display:flex;align-items:center;gap:12px;font-size:14px">
+<div style="width:30px;flex:none;display:flex;align-items:center;justify-content:center;gap:4px"><div style="width:7px;height:7px;border-radius:999px;background:var(--growth,#6E9A5F)"></div><div style="width:7px;height:7px;border-radius:999px;background:var(--growth,#6E9A5F);opacity:.6"></div></div>Пройдений шлях</div>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg,#F1F3EC)">
+<div style="display:grid;grid-template-columns:repeat(8,54px);grid-template-rows:repeat(8,54px);gap:3px;padding:12px;background:var(--surface2,#E9EDE3);border-radius:12px">
+<sc-for list="{{ cells }}" as="c" hint-placeholder-count="64">
+<div style="border-radius:6px;background:{{ c.bg }};display:flex;align-items:center;justify-content:center">
+<sc-if value="{{ c.bot }}" hint-placeholder-val="{{ false }}">
+<div style="width:42px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:1px">
+<div style="width:6px;height:6px;border-radius:999px;background:var(--honey,#C9922F)"></div>
+<div style="width:2px;height:4px;background:var(--accent,#3E6B63)"></div>
+<div style="width:28px;height:19px;border-radius:8px 8px 6px 6px;background:var(--accent,#3E6B63);display:flex;align-items:center;justify-content:center;gap:5px">
+<div style="width:5px;height:6px;border-radius:999px;background:var(--surface,#FAFAF6)"></div>
+<div style="width:5px;height:6px;border-radius:999px;background:var(--surface,#FAFAF6)"></div>
+</div>
+<div style="width:32px;height:13px;border-radius:5px;background:var(--accent,#3E6B63);display:flex;align-items:center;justify-content:center;position:relative">
+<div style="width:8px;height:8px;border-radius:2px;background:var(--honey,#C9922F)"></div>
+<div style="position:absolute;left:-4px;top:3px;width:4px;height:7px;border-radius:2px;background:var(--accent,#3E6B63);opacity:.75"></div>
+<div style="position:absolute;right:-4px;top:3px;width:4px;height:7px;border-radius:2px;background:var(--accent,#3E6B63);opacity:.75"></div>
+</div>
+<div style="display:flex;gap:4px"><div style="width:11px;height:5px;border-radius:0 0 4px 4px;background:var(--accent,#3E6B63);opacity:.6"></div><div style="width:11px;height:5px;border-radius:0 0 4px 4px;background:var(--accent,#3E6B63);opacity:.6"></div></div>
+</div>
+</sc-if>
+<sc-if value="{{ c.goal }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+<div style="display:flex;align-items:center">
+<div style="width:22px;height:15px;border-radius:4px;border:2.5px solid var(--honey,#C9922F);display:flex;align-items:center;padding:2px;box-sizing:border-box;gap:1.5px">
+<div style="flex:1;height:100%;background:var(--honey,#C9922F);border-radius:1px"></div>
+<div style="flex:1;height:100%;background:var(--honey,#C9922F);border-radius:1px"></div>
+<div style="flex:1;height:100%;background:var(--honey,#C9922F);opacity:.25;border-radius:1px"></div>
+</div>
+<div style="width:3px;height:7px;border-radius:0 2px 2px 0;background:var(--honey,#C9922F)"></div>
+</div>
+<div style="width:26px;height:4px;border-radius:2px;background:var(--honey,#C9922F);opacity:.35"></div>
+</div>
+</sc-if>
+<sc-if value="{{ c.rock }}" hint-placeholder-val="{{ false }}">
+<div style="width:34px;height:30px;position:relative;display:flex;align-items:flex-end;justify-content:center">
+<div style="width:30px;height:19px;border-radius:12px 9px 6px 7px;background:var(--muted,#636D64)"></div>
+<div style="position:absolute;left:3px;bottom:11px;width:15px;height:13px;border-radius:9px 7px 3px 6px;background:var(--muted,#636D64);opacity:.8"></div>
+<div style="position:absolute;right:5px;bottom:14px;width:11px;height:10px;border-radius:7px 5px 4px 5px;background:var(--muted,#636D64);opacity:.55"></div>
+<div style="position:absolute;left:6px;bottom:2px;width:9px;height:3px;border-radius:2px;background:var(--surface,#FAFAF6);opacity:.35"></div>
+</div>
+</sc-if>
+<sc-if value="{{ c.trail }}" hint-placeholder-val="{{ false }}"><div style="width:9px;height:9px;border-radius:999px;background:var(--growth,#6E9A5F)"></div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:14.5px;color:var(--muted,#636D64)">крок 7 з 9 · вправо, вправо, вниз…</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLoad }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;display:flex;align-items:center;justify-content:center">
+<div style="width:520px;padding:36px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent,#3E6B63)" stroke-width="2.6" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4" style="animation:forkA 1.5s ease-in-out infinite"></path><path d="M12 13L17.2 4.2" style="animation:forkB 1.5s ease-in-out infinite"></path></svg>
+<div style="font-size:20px;font-weight:600">Готуємо Python</div>
+</div>
+<div style="font-size:15.5px;line-height:1.55;color:var(--ink,#262C27);text-wrap:pretty">Перший запуск на цьому комп’ютері триває кілька секунд. Далі буде швидко.</div>
+<div style="margin-top:22px;height:8px;border-radius:999px;background:var(--surface2,#E9EDE3);overflow:hidden"><div style="width:62%;height:100%;background:var(--growth,#6E9A5F)"></div></div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ loadSteps }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;font-size:14.5px;color:{{ s.fg }}">
+<div style="width:18px;height:18px;flex:none;border-radius:999px;background:{{ s.c }};color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ s.m }}</div>{{ s.t }}</div>
+</sc-for>
+</div>
+<div style="margin-top:24px;font-size:14px;color:var(--muted,#636D64)">Тим часом можна прочитати завдання — воно вже відкрите.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isWin }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg,#F1F3EC)">
+<div style="width:640px;padding:40px;border-radius:18px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);text-align:center">
+<div style="width:96px;height:96px;margin:0 auto 22px;border-radius:999px;background:var(--growth,#6E9A5F);display:flex;align-items:center;justify-content:center">
+<div style="width:34px;height:34px;border-radius:10px;background:var(--surface,#FAFAF6)"></div>
+</div>
+<div style="font-size:34px;font-weight:700;letter-spacing:-.01em">Цикл працює</div>
+<div style="margin-top:10px;font-size:16.5px;line-height:1.5;color:var(--muted,#636D64)">Ви щойно змусили комп’ютер повторити дію п’ять разів однією командою.</div>
+<div style="margin-top:28px;display:flex;gap:14px;justify-content:center">
+<div style="flex:1;padding:18px;border-radius:12px;background:var(--surface2,#E9EDE3);text-align:left">
+<div style="font-size:13px;color:var(--muted,#636D64)">Отримано</div>
+<div style="margin-top:6px;display:flex;align-items:center;gap:9px"><div style="width:14px;height:14px;border-radius:4px;background:var(--honey,#C9922F)"></div><div style="font-size:20px;font-weight:700">+40 XP</div></div>
+</div>
+<div style="flex:1;padding:18px;border-radius:12px;background:var(--surface2,#E9EDE3);text-align:left">
+<div style="font-size:13px;color:var(--muted,#636D64)">Відкрилось</div>
+<div style="margin-top:6px;display:flex;align-items:center;gap:9px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--growth,#6E9A5F)" stroke-width="3" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg><div style="font-size:16px;font-weight:600">Нове розгалуження</div></div>
+</div>
+</div>
+<div style="margin-top:28px;display:flex;gap:12px;justify-content:center">
+<button onClick="{{ goGarden }}" style="font-family:Onest,system-ui,sans-serif;font-size:14.5px;padding:12px 20px;border-radius:10px;border:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);color:var(--ink,#262C27);cursor:pointer">Подивитись гілку</button>
+<button onClick="{{ goWork }}" style="font-family:Onest,system-ui,sans-serif;font-size:14.5px;font-weight:600;padding:12px 24px;border-radius:10px;border:1.5px solid var(--accent,#3E6B63);background:var(--accent,#3E6B63);color:#fff;cursor:pointer">Далі — завдання 5</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isGarden }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:26px 32px;gap:22px;overflow:auto">
+<div style="display:flex;align-items:baseline;gap:14px">
+<div style="font-size:26px;font-weight:700">Моя гілка</div>
+<div style="font-size:14.5px;color:var(--muted,#636D64)">460 XP за семестр · 11 завдань із 32</div>
+</div>
+<div style="display:flex;gap:18px">
+<div style="flex:none;width:486px;padding:22px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+<div style="font-size:14px;font-weight:600">Ваша гілка</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:var(--surface2,#E9EDE3);font-size:12.5px"><div style="width:8px;height:8px;border-radius:999px;background:var(--growth,#6E9A5F)"></div>3 розгалуження</div>
+<div style="display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:var(--surface2,#E9EDE3);font-size:12.5px"><div style="width:8px;height:8px;border-radius:999px;background:var(--honey,#C9922F)"></div>1 брунька</div>
+</div>
+<div style="position:relative;height:272px;border-radius:12px;background:var(--bg,#F1F3EC);overflow:hidden">
+<svg width="442" height="272" viewBox="0 0 442 272" fill="none" style="position:absolute;inset:0">
+<rect x="141" y="10" width="160" height="136" rx="10" fill="var(--honey,#C9922F)" opacity=".08"></rect>
+<g stroke="var(--line,#DCE2D6)" stroke-width="1.5">
+<rect x="141" y="10" width="160" height="136" rx="10"></rect>
+<path d="M221 10V146"></path><path d="M141 78H301"></path>
+</g>
+<ellipse cx="221" cy="266" rx="74" ry="6" fill="var(--ink,#262C27)" opacity=".07"></ellipse>
+<g stroke-linecap="round" fill="none">
+<g stroke="var(--muted,#636D64)" opacity=".25" stroke-dasharray="4 9" stroke-width="4">
+<path d="M221 108C216 92 206 84 196 72"></path>
+<path d="M221 108C232 94 242 88 254 78"></path>
+</g>
+<g stroke="var(--growth,#6E9A5F)">
+<path d="M221 206C223 190 218 182 221 170" stroke-width="9"></path>
+<path d="M221 172C224 156 218 148 220 134" stroke-width="7"></path>
+<path d="M220 136C222 124 218 118 221 108" stroke-width="5"></path>
+<path d="M221 188C238 182 252 172 266 156" stroke-width="7"></path>
+<path d="M221 166C204 160 190 152 176 140" stroke-width="6.5"></path>
+<path d="M220 142C234 136 244 128 254 118" stroke-width="5"></path>
+</g>
+</g>
+<g transform="translate(266,156) rotate(-34)">
+<path d="M0 0C12 -16 39 -18 56 0C39 18 12 16 0 0Z" fill="var(--growth,#6E9A5F)"></path>
+<g stroke="var(--surface,#FAFAF6)" stroke-linecap="round" fill="none">
+<path d="M5 0L51 0" stroke-width="1.6" opacity=".45"></path>
+<path d="M18 0L28 -9M18 0L28 9M32 0L41 -7M32 0L41 7" stroke-width="1.2" opacity=".3"></path>
+</g>
+</g>
+<g transform="translate(176,140) rotate(-150) scale(.93)" opacity=".92">
+<path d="M0 0C12 -16 39 -18 56 0C39 18 12 16 0 0Z" fill="var(--growth,#6E9A5F)"></path>
+<g stroke="var(--surface,#FAFAF6)" stroke-linecap="round" fill="none">
+<path d="M5 0L51 0" stroke-width="1.7" opacity=".45"></path>
+<path d="M18 0L28 -9M18 0L28 9M32 0L41 -7M32 0L41 7" stroke-width="1.3" opacity=".3"></path>
+</g>
+</g>
+<g transform="translate(254,118) rotate(-40) scale(.78)" opacity=".78">
+<path d="M0 0C12 -16 39 -18 56 0C39 18 12 16 0 0Z" fill="var(--growth,#6E9A5F)"></path>
+<g stroke="var(--surface,#FAFAF6)" stroke-linecap="round" fill="none">
+<path d="M5 0L51 0" stroke-width="2" opacity=".45"></path>
+<path d="M18 0L28 -9M18 0L28 9" stroke-width="1.5" opacity=".3"></path>
+</g>
+</g>
+<g fill="none" stroke="var(--growth,#6E9A5F)" stroke-width="2" opacity=".45">
+<circle cx="221" cy="188" r="8"></circle>
+<circle cx="221" cy="166" r="8"></circle>
+</g>
+<path d="M182 209H260L251 258C249 263 246 264 243 264H199C195 264 192 262 191 258Z" fill="var(--attention,#A8763C)"></path>
+<path d="M186 224H256" stroke="var(--surface,#FAFAF6)" stroke-width="1.5" opacity=".18"></path>
+<rect x="176" y="196" width="90" height="14" rx="5" fill="var(--attention,#A8763C)"></rect>
+<rect x="181" y="207" width="80" height="5" fill="var(--ink,#262C27)" opacity=".18"></rect>
+</svg>
+<div style="position:absolute;left:221px;top:108px;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:999px;background:var(--honey,#C9922F);opacity:.3;animation:budring 2.6s ease-out infinite"></div>
+<div style="position:absolute;left:221px;top:108px;transform:translate(-50%,-50%);width:19px;height:19px;border-radius:999px;background:var(--honey,#C9922F);border:3px solid var(--bg,#F1F3EC)"></div>
+<div style="position:absolute;left:262px;top:70px;display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:999px;background:var(--surface,#FAFAF6);border:1.5px solid var(--honey,#C9922F);white-space:nowrap">
+<div style="font-size:12.5px;font-weight:600">Цикли</div><div style="font-size:12px;color:var(--muted,#636D64)">4 з 8</div>
+</div>
+<div style="position:absolute;left:20px;top:90px;font-size:12.5px;color:var(--muted,#636D64);white-space:nowrap">Перші команди</div>
+<div style="position:absolute;left:316px;top:118px;font-size:12.5px;color:var(--muted,#636D64);white-space:nowrap">Змінні й введення</div>
+<div style="position:absolute;right:14px;bottom:10px;font-size:11.5px;color:var(--muted,#636D64)">пунктир — те, що попереду</div>
+</div>
+<div style="margin-top:14px;display:flex;gap:8px">
+<div style="flex:1;padding:8px 6px 6px;border-radius:10px;background:var(--bg,#F1F3EC);border:1px solid var(--line,#DCE2D6);display:flex;flex-direction:column;align-items:center;gap:5px">
+<svg width="46" height="50" viewBox="0 0 120 140" fill="none" opacity=".5">
+<path d="M60 104V88" stroke="var(--growth,#6E9A5F)" stroke-width="6" stroke-linecap="round"></path>
+<circle cx="60" cy="84" r="5" fill="var(--honey,#C9922F)"></circle>
+<path d="M45 111H75L72 132C71 134 70 135 68 135H52C50 135 49 134 48 132Z" fill="var(--attention,#A8763C)"></path>
+<rect x="42" y="104" width="36" height="8" rx="3" fill="var(--attention,#A8763C)"></rect>
+</svg>
+<div style="font-size:11.5px;color:var(--muted,#636D64);text-align:center">Початок</div>
+</div>
+<div style="flex:1;padding:8px 6px 6px;border-radius:10px;background:var(--bg,#F1F3EC);border:1px solid var(--line,#DCE2D6);display:flex;flex-direction:column;align-items:center;gap:5px">
+<svg width="46" height="50" viewBox="0 0 120 140" fill="none" opacity=".55">
+<g stroke="var(--growth,#6E9A5F)" stroke-linecap="round"><path d="M60 104V78" stroke-width="6"></path><path d="M60 94C68 90 74 85 80 79" stroke-width="4.5"></path></g>
+<g transform="translate(80,79) rotate(-42) scale(.85)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)"></path></g>
+<circle cx="60" cy="75" r="5" fill="var(--honey,#C9922F)"></circle>
+<path d="M45 111H75L72 132C71 134 70 135 68 135H52C50 135 49 134 48 132Z" fill="var(--attention,#A8763C)"></path>
+<rect x="42" y="104" width="36" height="8" rx="3" fill="var(--attention,#A8763C)"></rect>
+</svg>
+<div style="font-size:11.5px;color:var(--muted,#636D64);text-align:center">Перше розгалуження</div>
+</div>
+<div style="flex:1;padding:8px 6px 6px;border-radius:10px;background:var(--accent-soft,#E2EBE7);border:1.5px solid var(--accent,#3E6B63);display:flex;flex-direction:column;align-items:center;gap:5px">
+<svg width="46" height="50" viewBox="0 0 120 140" fill="none">
+<g stroke="var(--growth,#6E9A5F)" stroke-linecap="round"><path d="M60 104V60" stroke-width="6"></path><path d="M60 94C70 90 78 84 86 76" stroke-width="4.5"></path><path d="M60 80C50 76 43 70 36 63" stroke-width="4"></path><path d="M60 68C67 64 72 59 77 53" stroke-width="3.5"></path></g>
+<g transform="translate(86,76) rotate(-42) scale(.9)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)"></path></g>
+<g transform="translate(36,63) rotate(-148) scale(.85)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)" opacity=".9"></path></g>
+<g transform="translate(77,53) rotate(-46) scale(.7)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)" opacity=".8"></path></g>
+<circle cx="60" cy="57" r="5" fill="var(--honey,#C9922F)"></circle>
+<path d="M45 111H75L72 132C71 134 70 135 68 135H52C50 135 49 134 48 132Z" fill="var(--attention,#A8763C)"></path>
+<rect x="42" y="104" width="36" height="8" rx="3" fill="var(--attention,#A8763C)"></rect>
+</svg>
+<div style="font-size:11.5px;font-weight:600;color:var(--accent,#3E6B63);text-align:center">Зараз тут</div>
+</div>
+<div style="flex:1;padding:8px 6px 6px;border-radius:10px;background:var(--bg,#F1F3EC);border:1px solid var(--line,#DCE2D6);display:flex;flex-direction:column;align-items:center;gap:5px">
+<svg width="46" height="50" viewBox="0 0 120 140" fill="none" opacity=".42">
+<g stroke="var(--growth,#6E9A5F)" stroke-linecap="round"><path d="M60 104V34" stroke-width="6"></path><path d="M60 96C72 92 82 85 92 76" stroke-width="4.5"></path><path d="M60 84C48 80 39 73 30 64" stroke-width="4.5"></path><path d="M60 70C70 66 78 60 85 52" stroke-width="4"></path><path d="M60 56C51 52 45 47 39 40" stroke-width="3.5"></path></g>
+<g transform="translate(92,76) rotate(-42) scale(.9)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)"></path></g>
+<g transform="translate(30,64) rotate(-148) scale(.9)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)"></path></g>
+<g transform="translate(85,52) rotate(-46) scale(.78)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)"></path></g>
+<g transform="translate(39,40) rotate(-142) scale(.72)"><path d="M0 0C5 -7 17 -8 24 0C17 8 5 7 0 0Z" fill="var(--growth,#6E9A5F)"></path></g>
+<circle cx="60" cy="31" r="5" fill="var(--honey,#C9922F)"></circle>
+<path d="M45 111H75L72 132C71 134 70 135 68 135H52C50 135 49 134 48 132Z" fill="var(--attention,#A8763C)"></path>
+<rect x="42" y="104" width="36" height="8" rx="3" fill="var(--attention,#A8763C)"></rect>
+</svg>
+<div style="font-size:11.5px;color:var(--muted,#636D64);text-align:center">Кінець семестру</div>
+</div>
+</div>
+<div style="margin-top:14px;padding:14px 16px;border-radius:11px;background:var(--accent-soft,#E2EBE7);display:flex;align-items:center;gap:14px">
+<div style="flex:1;min-width:0">
+<div style="font-size:13.5px;font-weight:600;color:var(--accent,#3E6B63)">Наступне розгалуження — за 4 завдання</div>
+<div style="margin-top:8px;height:7px;border-radius:999px;background:var(--surface,#FAFAF6);overflow:hidden"><div style="width:50%;height:100%;background:var(--growth,#6E9A5F)"></div></div>
+</div>
+<div style="font-size:13px;color:var(--accent,#3E6B63);font-variant-numeric:tabular-nums">4 / 8</div>
+</div>
+<div style="margin-top:12px;font-size:13.5px;line-height:1.5;color:var(--muted,#636D64);text-wrap:pretty">Завершена тема додає розгалуження. Нова тема відкриває бруньку на кінці.</div>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ topics }}" as="t" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:12px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="width:30px;height:30px;flex:none;border-radius:9px;background:{{ t.c }};color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ t.m }}</div>
+<div style="flex:1;min-width:0">
+<div style="font-size:15.5px;font-weight:600">{{ t.name }}</div>
+<div style="margin-top:7px;height:6px;border-radius:999px;background:var(--surface2,#E9EDE3);overflow:hidden"><div style="width:{{ t.pct }};height:100%;background:var(--growth,#6E9A5F)"></div></div>
+</div>
+<div style="font-size:13.5px;color:var(--muted,#636D64);font-variant-numeric:tabular-nums">{{ t.n }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:24px 32px;overflow:auto">
+<div style="display:flex;align-items:baseline;gap:14px;flex:none">
+<div style="font-size:26px;font-weight:700">Карта тем</div>
+<div style="font-size:14.5px;color:var(--muted,#636D64)">7 клас · 2 теми завершено</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:16px;font-size:13px;color:var(--muted,#636D64)">
+<div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:999px;background:var(--growth,#6E9A5F)"></div>завершено</div>
+<div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:999px;background:var(--accent,#3E6B63)"></div>зараз</div>
+<div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:999px;background:var(--honey,#C9922F)"></div>брунька — відкриється далі</div>
+</div>
+</div>
+<div style="position:relative;width:980px;height:470px;margin:8px auto 0">
+<svg width="980" height="470" viewBox="0 0 980 470" fill="none" stroke-linecap="round" style="position:absolute;inset:0">
+<path d="M80 400Q165 396 250 356" stroke="var(--growth,#6E9A5F)" stroke-width="10"></path>
+<path d="M250 356Q340 346 430 262" stroke="var(--accent,#3E6B63)" stroke-width="8"></path>
+<path d="M250 356Q340 386 430 410" stroke="var(--line,#DCE2D6)" stroke-width="7"></path>
+<path d="M430 262Q525 246 620 192" stroke="var(--line,#DCE2D6)" stroke-width="5.5"></path>
+<path d="M430 262Q525 278 620 310" stroke="var(--line,#DCE2D6)" stroke-width="5.5"></path>
+<path d="M430 410Q535 428 640 430" stroke="var(--line,#DCE2D6)" stroke-width="5"></path>
+<path d="M620 192Q715 168 806 132" stroke="var(--line,#DCE2D6)" stroke-width="4"></path>
+<path d="M620 310Q720 292 818 262" stroke="var(--line,#DCE2D6)" stroke-width="4"></path>
+</svg>
+<div style="position:absolute;left:80px;top:400px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:999px;background:var(--surface,#FAFAF6);border:1.5px solid var(--growth,#6E9A5F);white-space:nowrap">
+<div style="width:20px;height:20px;border-radius:999px;background:var(--growth,#6E9A5F);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">✓</div>
+<div style="font-size:14.5px;font-weight:600">Перші команди</div><div style="font-size:13px;color:var(--muted,#636D64)">6/6</div>
+</div>
+<div style="position:absolute;left:250px;top:356px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:999px;background:var(--surface,#FAFAF6);border:1.5px solid var(--growth,#6E9A5F);white-space:nowrap">
+<div style="width:20px;height:20px;border-radius:999px;background:var(--growth,#6E9A5F);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">✓</div>
+<div style="font-size:14.5px;font-weight:600">Змінні й введення</div><div style="font-size:13px;color:var(--muted,#636D64)">5/5</div>
+</div>
+<div style="position:absolute;left:430px;top:262px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:11px;padding:12px 17px;border-radius:999px;background:var(--accent,#3E6B63);border:1.5px solid var(--accent,#3E6B63);color:#fff;white-space:nowrap">
+<div style="width:9px;height:9px;border-radius:999px;background:var(--honey,#C9922F)"></div>
+<div style="font-size:16px;font-weight:600">Цикли</div><div style="font-size:13.5px;opacity:.75">4/8</div>
+</div>
+<div style="position:absolute;left:430px;top:410px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:999px;background:var(--surface,#FAFAF6);border:1.5px solid var(--line,#DCE2D6);white-space:nowrap">
+<div style="width:20px;height:20px;border-radius:999px;background:var(--surface2,#E9EDE3);color:var(--muted,#636D64);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">4</div>
+<div style="font-size:14.5px;color:var(--muted,#636D64)">Умови</div><div style="font-size:13px;color:var(--muted,#636D64)">0/7</div>
+</div>
+<div style="position:absolute;left:620px;top:192px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:999px;background:var(--surface,#FAFAF6);border:1.5px solid var(--line,#DCE2D6);white-space:nowrap">
+<div style="width:20px;height:20px;border-radius:999px;background:var(--surface2,#E9EDE3);color:var(--muted,#636D64);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">5</div>
+<div style="font-size:14.5px;color:var(--muted,#636D64)">Вкладені цикли</div>
+</div>
+<div style="position:absolute;left:620px;top:310px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:999px;background:var(--surface,#FAFAF6);border:1.5px solid var(--line,#DCE2D6);white-space:nowrap">
+<div style="width:20px;height:20px;border-radius:999px;background:var(--surface2,#E9EDE3);color:var(--muted,#636D64);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">6</div>
+<div style="font-size:14.5px;color:var(--muted,#636D64)">Списки</div>
+</div>
+<div style="position:absolute;left:640px;top:430px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:10px 15px;border-radius:999px;background:var(--surface,#FAFAF6);border:1.5px solid var(--line,#DCE2D6);white-space:nowrap">
+<div style="width:20px;height:20px;border-radius:999px;background:var(--surface2,#E9EDE3);color:var(--muted,#636D64);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">7</div>
+<div style="font-size:14.5px;color:var(--muted,#636D64)">Логічні вирази</div>
+</div>
+<div style="position:absolute;left:806px;top:132px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:9px;white-space:nowrap">
+<div style="width:13px;height:13px;border-radius:999px;background:var(--honey,#C9922F)"></div>
+<div style="font-size:13.5px;color:var(--muted,#636D64)">Рядки</div>
+</div>
+<div style="position:absolute;left:818px;top:262px;transform:translate(-50%,-50%);display:flex;align-items:center;gap:9px;white-space:nowrap">
+<div style="width:13px;height:13px;border-radius:999px;background:var(--honey,#C9922F)"></div>
+<div style="font-size:13.5px;color:var(--muted,#636D64)">Функції</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBrand }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;overflow:auto;padding:26px 32px 34px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:baseline;gap:14px">
+<div style="font-size:26px;font-weight:700">Hilka — знак і написання</div>
+<div style="font-size:14.5px;color:var(--muted,#636D64)">гілка рослини і розгалуження в коді</div>
+</div>
+<div style="display:flex;gap:18px">
+<div style="flex:1;padding:28px 30px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted,#636D64)">Латиниця</div>
+<div style="margin-top:18px;font-size:76px;font-weight:500;letter-spacing:-.035em;line-height:1">hilka</div>
+</div>
+<div style="flex:1;padding:28px 30px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted,#636D64)">Кирилиця</div>
+<div style="margin-top:18px;font-size:76px;font-weight:500;letter-spacing:-.035em;line-height:1">гілка</div>
+</div>
+</div>
+<div style="display:flex;gap:18px">
+<div style="width:250px;flex:none;padding:22px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);display:flex;flex-direction:column;gap:14px">
+<div style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted,#636D64)">Знак</div>
+<div style="display:flex;align-items:flex-end;gap:20px">
+<svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="var(--growth,#6E9A5F)" stroke-width="2.4" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--ink,#262C27)" stroke-width="2.6" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--ink,#262C27)" stroke-width="3" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+</div>
+<div style="font-size:13.5px;line-height:1.5;color:var(--muted,#636D64);text-wrap:pretty">Лінія, що роздвоюється. Без листка, без дерева.</div>
+</div>
+<div style="flex:1;padding:22px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);display:flex;flex-direction:column;gap:16px">
+<div style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted,#636D64)">Локап</div>
+<div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:12px">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--growth,#6E9A5F)" stroke-width="2.6" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+<div style="font-size:32px;font-weight:500;letter-spacing:-.03em">hilka</div>
+</div>
+<div style="display:flex;align-items:center;gap:12px">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--growth,#6E9A5F)" stroke-width="2.6" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+<div style="font-size:32px;font-weight:500;letter-spacing:-.03em">гілка</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--growth,#6E9A5F)" stroke-width="2.6" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+<div style="font-size:19px;font-weight:500;letter-spacing:-.02em">hilka</div>
+</div>
+<div style="padding:14px 20px;border-radius:10px;background:var(--accent,#3E6B63);display:flex;align-items:center;gap:11px">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FAFAF6" stroke-width="2.8" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4"></path><path d="M12 13L17.2 4.2"></path></svg>
+<div style="font-size:24px;font-weight:500;letter-spacing:-.03em;color:#FAFAF6">hilka</div>
+</div>
+</div>
+</div>
+<div style="width:270px;flex:none;padding:22px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);display:flex;flex-direction:column;gap:14px">
+<div style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted,#636D64)">Фавікон · 64 / 32 / 16</div>
+<div style="display:flex;align-items:flex-end;gap:16px">
+<div style="width:64px;height:64px;border-radius:16px;background:var(--growth,#6E9A5F);display:flex;align-items:center;justify-content:center"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#F1F3EC" stroke-width="2.6" stroke-linecap="round"><path d="M12 20.5V13"></path><path d="M12 13L7 7.2"></path><path d="M12 13L17 4"></path></svg></div>
+<div style="width:32px;height:32px;border-radius:8px;background:var(--growth,#6E9A5F);display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F1F3EC" stroke-width="3" stroke-linecap="round"><path d="M12 20.5V13"></path><path d="M12 13L7 7.2"></path><path d="M12 13L17 4"></path></svg></div>
+<div style="width:16px;height:16px;border-radius:4px;background:var(--growth,#6E9A5F);display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F1F3EC" stroke-width="3.6" stroke-linecap="round"><path d="M12 20.5V13"></path><path d="M12 13L7 7.2"></path><path d="M12 13L17 4"></path></svg></div>
+</div>
+<div style="font-size:13.5px;line-height:1.5;color:var(--muted,#636D64)">На 16 px залишається сам розгін ліній — товщина зростає, кути ті самі.</div>
+</div>
+</div>
+<div style="padding:22px;border-radius:14px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);display:flex;align-items:center;gap:30px">
+<div style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted,#636D64);width:110px;flex:none">Завантаження</div>
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent,#3E6B63)" stroke-width="2.6" stroke-linecap="round"><path d="M12 21V13"></path><path d="M12 13L7 7.4" style="animation:forkA 1.5s ease-in-out infinite"></path><path d="M12 13L17.2 4.2" style="animation:forkB 1.5s ease-in-out infinite"></path></svg>
+<div style="font-size:14px;color:var(--muted,#636D64)">Прогони знака спалахують по черзі, поки вантажиться середовище. Той самий знак, без окремої анімації-спінера.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isClass }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="padding:22px 28px 14px;display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--line,#DCE2D6)">
+<div style="font-size:24px;font-weight:700">7-А · Цикли</div>
+<div style="font-size:14px;color:var(--muted,#636D64)">Сесія триває 18:24 · 25 учнів</div>
+<div style="flex:1"></div>
+<sc-for list="{{ tally }}" as="x" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);font-size:13px"><div style="width:12px;height:12px;border-radius:{{ x.r }};background:{{ x.c }};transform:{{ x.tr }}"></div>{{ x.t }}</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:0;overflow:auto">
+<div style="display:grid;grid-template-columns:38px 1fr 130px 110px 92px 92px 120px;gap:0;padding:0 28px;height:40px;align-items:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#636D64);border-bottom:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);position:sticky;top:0">
+<div></div><div>Учень</div><div>Стан</div><div>Завдання</div><div>Спроби</div><div>Підказки</div><div>Остання дія</div>
+</div>
+<sc-for list="{{ roster }}" as="r" hint-placeholder-count="10">
+<div onClick="{{ r.open }}" style="display:grid;grid-template-columns:38px 1fr 130px 110px 92px 92px 120px;padding:0 28px;height:52px;align-items:center;font-size:14.5px;border-bottom:1px solid var(--line,#DCE2D6);cursor:pointer;background:{{ r.bg }}">
+<div><div style="width:14px;height:14px;border-radius:{{ r.shapeR }};background:{{ r.c }};transform:{{ r.tr }}"></div></div>
+<div style="font-weight:500">{{ r.name }}</div>
+<div style="color:{{ r.c }};font-weight:600;font-size:13.5px">{{ r.state }}</div>
+<div style="font-variant-numeric:tabular-nums">{{ r.task }}</div>
+<div style="font-variant-numeric:tabular-nums">{{ r.tries }}</div>
+<div style="font-variant-numeric:tabular-nums">{{ r.hints }}</div>
+<div style="color:var(--muted,#636D64);font-size:13.5px">{{ r.last }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isStudent }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex">
+<div style="flex:1;min-width:0;padding:24px 28px;display:flex;flex-direction:column;gap:16px;overflow:auto">
+<div style="display:flex;align-items:center;gap:14px">
+<button onClick="{{ goClass }}" style="font-family:Onest,system-ui,sans-serif;font-size:13.5px;padding:8px 14px;border-radius:9px;border:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);color:var(--ink,#262C27);cursor:pointer">← До класу</button>
+<div style="font-size:22px;font-weight:700">Марта Левчук</div>
+<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6);font-size:13px"><div style="width:12px;height:12px;background:var(--attention,#A8763C);transform:rotate(45deg);border-radius:2px"></div>Застрягла — 6 хв</div>
+</div>
+<div style="display:flex;gap:14px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+<div style="flex:1;padding:16px;border-radius:12px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="font-size:12.5px;color:var(--muted,#636D64)">{{ s.k }}</div>
+<div style="margin-top:6px;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums">{{ s.v }}</div>
+</div>
+</sc-for>
+</div>
+<div style="padding:18px;border-radius:12px;background:var(--surface,#FAFAF6);border:1px solid var(--line,#DCE2D6)">
+<div style="font-size:14px;font-weight:600;margin-bottom:12px">Остання надіслана спроба · завдання 4</div>
+<div style="border-radius:10px;background:var(--codebg,#F6F7F1);padding:14px 0">
+<sc-for list="{{ lines }}" as="l" hint-placeholder-count="4">
+<div style="display:flex;gap:14px;padding:1px 16px;border-left:3px solid {{ l.mark }};background:{{ l.rowbg }}">
+<div style="width:20px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted,#636D64)">{{ l.n }}</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:14.5px;line-height:1.7;white-space:pre">{{ l.t }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="width:320px;flex:none;border-left:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);padding:22px 22px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:14px;font-weight:600">Хронологія спроб</div>
+<sc-for list="{{ timeline }}" as="e" hint-placeholder-count="6">
+<div style="display:flex;gap:12px;align-items:flex-start">
+<div style="width:12px;height:12px;flex:none;margin-top:5px;border-radius:{{ e.r }};background:{{ e.c }};transform:{{ e.tr }}"></div>
+<div style="flex:1;min-width:0">
+<div style="font-size:14px;line-height:1.4">{{ e.t }}</div>
+<div style="font-size:12.5px;color:var(--muted,#636D64);margin-top:2px">{{ e.time }}</div>
+</div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<button style="font-family:Onest,system-ui,sans-serif;font-size:14px;font-weight:600;padding:12px;border-radius:10px;border:1.5px solid var(--accent,#3E6B63);background:var(--accent,#3E6B63);color:#fff;cursor:pointer">Відкрити підказку учениці</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSession }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex">
+<div style="width:330px;flex:none;border-right:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:14px;font-weight:600">Фільтри</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-size:12.5px;color:var(--muted,#636D64)">Клас</div>
+<div style="display:flex;gap:7px;flex-wrap:wrap">
+<sc-for list="{{ gradeTags }}" as="g" hint-placeholder-count="4"><div style="padding:7px 12px;border-radius:8px;border:1px solid {{ g.bd }};background:{{ g.bg }};color:{{ g.fg }};font-size:13px">{{ g.t }}</div></sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-size:12.5px;color:var(--muted,#636D64)">Тема</div>
+<sc-for list="{{ topicFilter }}" as="t" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:10px;font-size:14px"><div style="width:16px;height:16px;border-radius:4px;border:1.5px solid var(--accent,#3E6B63);background:{{ t.bg }};color:#fff;font-size:11px;text-align:center;line-height:14px;font-weight:700">{{ t.m }}</div>{{ t.t }}</div></sc-for>
+</div>
+<div style="height:1px;background:var(--line,#DCE2D6)"></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:12.5px;color:var(--muted,#636D64)">Обмеження часу</div>
+<div style="display:flex;gap:7px"><sc-for list="{{ limits }}" as="l" hint-placeholder-count="4"><div style="padding:8px 12px;border-radius:8px;border:1px solid {{ l.bd }};background:{{ l.bg }};color:{{ l.fg }};font-size:13px;font-variant-numeric:tabular-nums">{{ l.t }}</div></sc-for></div>
+<div style="display:flex;align-items:center;gap:11px;margin-top:6px">
+<div style="width:42px;height:24px;border-radius:999px;background:var(--accent,#3E6B63);padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end"><div style="width:18px;height:18px;border-radius:999px;background:#fff"></div></div>
+<div style="font-size:14px">Підказки доступні</div>
+</div>
+</div>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="padding:20px 26px 12px;display:flex;align-items:baseline;gap:14px"><div style="font-size:22px;font-weight:700">Нова сесія</div><div style="font-size:14px;color:var(--muted,#636D64)">Банк завдань · 84</div></div>
+<div style="flex:1;min-height:0;overflow:auto;padding:0 26px 20px;display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ bank }}" as="b" hint-placeholder-count="8">
+<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:11px;background:var(--surface,#FAFAF6);border:1px solid {{ b.bd }}">
+<div style="width:24px;height:24px;flex:none;border-radius:7px;background:{{ b.c }};color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ b.m }}</div>
+<div style="flex:1;min-width:0">
+<div style="font-size:15px;font-weight:500">{{ b.name }}</div>
+<div style="font-size:12.5px;color:var(--muted,#636D64);margin-top:3px">{{ b.meta }}</div>
+</div>
+<div style="font-size:12.5px;padding:5px 10px;border-radius:999px;background:var(--surface2,#E9EDE3);color:var(--muted,#636D64)">{{ b.type }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="width:300px;flex:none;border-left:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);padding:20px;display:flex;flex-direction:column;gap:12px">
+<div style="font-size:14px;font-weight:600">У сесії · 4 завдання</div>
+<sc-for list="{{ picked }}" as="p" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;background:var(--surface2,#E9EDE3)">
+<div style="font-size:12.5px;color:var(--muted,#636D64);font-variant-numeric:tabular-nums">{{ p.i }}</div>
+<div style="flex:1;min-width:0;font-size:14px">{{ p.t }}</div>
+<div style="font-size:12.5px;color:var(--muted,#636D64)">{{ p.type }}</div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="font-size:13px;color:var(--muted,#636D64);line-height:1.45">Орієнтовно 26 хв. Код сесії з’явиться на екрані після запуску.</div>
+<button style="font-family:Onest,system-ui,sans-serif;font-size:14.5px;font-weight:600;padding:13px;border-radius:10px;border:1.5px solid var(--accent,#3E6B63);background:var(--accent,#3E6B63);color:#fff;cursor:pointer">Запустити сесію</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTaskEd }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-width:0;display:flex">
+<div style="flex:1;min-width:0;overflow:auto;padding:22px 28px 30px">
+<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:18px"><div style="font-size:22px;font-weight:700">Редактор завдання</div><div style="font-size:13.5px;color:var(--muted,#636D64)">Чернетка · збережено 14:02</div></div>
+<div style="display:flex;gap:8px;margin-bottom:20px">
+<sc-for list="{{ typeTabs }}" as="t" hint-placeholder-count="6"><div style="padding:8px 14px;border-radius:8px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};font-size:13.5px;font-weight:{{ t.w }}">{{ t.t }}</div></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;max-width:720px">
+<sc-for list="{{ fields }}" as="f" hint-placeholder-count="5">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font-size:12.5px;font-weight:600;color:var(--muted,#636D64)">{{ f.label }}</div>
+<div style="padding:12px 14px;border-radius:9px;border:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);font-size:14.5px;font-family:{{ f.font }};min-height:{{ f.h }};white-space:pre-wrap;line-height:1.55">{{ f.value }}</div>
+</div>
+</sc-for>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-size:12.5px;font-weight:600;color:var(--muted,#636D64)">Підказки — у порядку показу</div>
+<sc-for list="{{ hints }}" as="h" hint-placeholder-count="3">
+<div style="display:flex;gap:11px;align-items:flex-start;padding:11px 13px;border-radius:9px;border:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6)">
+<div style="width:20px;height:20px;flex:none;border-radius:999px;background:var(--honey,#C9922F);color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ h.i }}</div>
+<div style="font-size:14px;line-height:1.5">{{ h.t }}</div>
+</div>
+</sc-for>
+<button style="align-self:flex-start;font-family:Onest,system-ui,sans-serif;font-size:13.5px;padding:9px 14px;border-radius:9px;border:1px dashed var(--accent,#3E6B63);background:none;color:var(--accent,#3E6B63);cursor:pointer">Додати підказку</button>
+</div>
+</div>
+</div>
+<div style="width:340px;flex:none;border-left:1px solid var(--line,#DCE2D6);background:var(--surface,#FAFAF6);padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-size:14px;font-weight:600">Перевірка</div>
+<div style="padding:12px;border-radius:9px;background:var(--codebg,#F6F7F1);border:1px solid var(--line,#DCE2D6);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;white-space:pre">assert out == "1\n2\n3\n4\n5\n"</div>
+<div style="font-size:13.5px;color:var(--muted,#636D64);line-height:1.5">Порівняння виводу. Пробіли в кінці рядків не враховуються.</div>
+<div style="height:1px;background:var(--line,#DCE2D6)"></div>
+<div style="font-size:14px;font-weight:600">Теги класу</div>
+<div style="display:flex;gap:7px;flex-wrap:wrap"><sc-for list="{{ gradeTags }}" as="g" hint-placeholder-count="4"><div style="padding:6px 11px;border-radius:8px;border:1px solid {{ g.bd }};background:{{ g.bg }};color:{{ g.fg }};font-size:12.5px">{{ g.t }}</div></sc-for></div>
+<div style="flex:1"></div>
+<button style="font-family:Onest,system-ui,sans-serif;font-size:14.5px;font-weight:600;padding:13px;border-radius:10px;border:1.5px solid var(--accent,#3E6B63);background:var(--accent,#3E6B63);color:#fff;cursor:pointer">Зберегти завдання</button>
+<button style="font-family:Onest,system-ui,sans-serif;font-size:14px;padding:11px;border-radius:10px;border:1px solid var(--line,#DCE2D6);background:none;color:var(--ink,#262C27);cursor:pointer">Перевірити на собі</button>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+<sc-if value="{{ isWork }}" hint-placeholder-val="{{ true }}">
+<div style="max-width:1366px;margin:16px auto 0;display:flex;flex-wrap:wrap;gap:22px;align-items:center">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted,#636D64)">Тип</div>
+<sc-for list="{{ typeSwitch }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.go }}" style="font-family:Onest,system-ui,sans-serif;font-size:12.5px;font-weight:{{ t.w }};padding:6px 11px;border-radius:8px;border:1px solid var(--line,#DCE2D6);background:{{ t.bg }};color:{{ t.fg }};cursor:pointer">{{ t.t }}</button></sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:9px">
+<div style="font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted,#636D64)">Стан Run</div>
+<sc-for list="{{ runSwitch }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.go }}" style="font-family:Onest,system-ui,sans-serif;font-size:12.5px;font-weight:{{ r.w }};padding:6px 11px;border-radius:8px;border:1px solid var(--line,#DCE2D6);background:{{ r.bg }};color:{{ r.fg }};cursor:pointer">{{ r.t }}</button></sc-for>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1420,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { screen: 'work', ttype: 'code', run: 'idle', theme: 'light', theoryOpen: true, hintOpen: false };
+
+  set(k, v) { return () => this.setState({ [k]: v }); }
+
+  doRun = () => {
+    if (this.state.run === 'disabled' || this.state.run === 'loading') return;
+    this.setState({ run: 'running' });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ run: 'done' }), 950);
+  };
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  renderVals() {
+    const s = this.state, dark = s.theme === 'dark';
+    const v = (n) => `var(${n})`;
+    const acc = v('--accent'), ink = v('--ink'), muted = v('--muted'), surf = v('--surface'), soft = v('--accent-soft'), line = v('--line'), growth = v('--growth'), honey = v('--honey'), att = v('--attention');
+
+    const screenList = [
+      ['work', 'Робоча зона'], ['grid', 'Сітка 8×8'], ['load', 'Завантаження'],
+      ['win', 'Успіх'], ['garden', 'Моя гілка'], ['map', 'Карта тем'], ['brand', 'Знак'], ['class', 'Клас'],
+      ['student', 'Картка учня'], ['session', 'Конструктор сесії'], ['taskEd', 'Редактор завдання']
+    ];
+    const screens = screenList.map(([id, label]) => ({
+      label, go: this.set('screen', id), w: s.screen === id ? 600 : 400,
+      bg: s.screen === id ? acc : surf, fg: s.screen === id ? '#fff' : ink
+    }));
+
+    const types = [['code', 'code'], ['fix', 'fix'], ['quiz', 'quiz'], ['predict', 'predict'], ['fill', 'fill']];
+    const typeSwitch = types.map(([id, t]) => ({
+      t, go: this.set('ttype', id), w: s.ttype === id ? 600 : 400,
+      bg: s.ttype === id ? soft : surf, fg: s.ttype === id ? acc : muted
+    }));
+    const runs = [['idle', 'idle'], ['running', 'running'], ['disabled', 'disabled'], ['loading', 'engine loading']];
+    const runSwitch = runs.map(([id, t]) => ({
+      t, go: this.set('run', id), w: s.run === id ? 600 : 400,
+      bg: s.run === id ? soft : surf, fg: s.run === id ? acc : muted
+    }));
+
+    const typeLabels = { code: 'Написати код', fix: 'Знайти помилку', quiz: 'Питання', predict: 'Передбачити вивід', fill: 'Заповнити пропуски' };
+    const titles = {
+      code: 'Вивести числа від 1 до 5',
+      fix: 'Цикл не запускається — чому?',
+      quiz: 'Скільки разів виконається цикл?',
+      predict: 'Що виведе ця програма?',
+      fill: 'Доповніть цикл'
+    };
+    const bodies = {
+      code: 'Напишіть програму, яка виводить числа від 1 до 5, кожне з нового рядка.',
+      fix: 'Код майже правильний. Знайдіть і виправте один рядок.',
+      quiz: 'Подивіться на межі range і виберіть відповідь.',
+      predict: 'Прочитайте код і напишіть, що з’явиться на екрані. Запускати не потрібно.',
+      fill: 'Перетягніть або впишіть у пропуски потрібні частини.'
+    };
+
+    const codeLines = [
+      { n: 1, t: '# числа від 1 до 5' },
+      { n: 2, t: 'for i in range(1, 6):' },
+      { n: 3, t: '    print(i)' }
+    ];
+    const fixLines = [
+      { n: 1, t: '# числа від 1 до 5' },
+      { n: 2, t: 'for i in range(1, 6):' },
+      { n: 3, t: 'print(i)', bad: true }
+    ];
+    const raw = s.ttype === 'fix' ? fixLines : codeLines;
+    const lines = raw.map(l => ({
+      n: l.n, t: l.t,
+      mark: l.bad ? att : 'transparent',
+      rowbg: l.bad ? (dark ? 'rgba(199,147,88,.14)' : 'rgba(168,118,60,.09)') : 'transparent'
+    }));
+
+    const quizData = [['А', '2 рази'], ['Б', '5 разів'], ['В', '6 разів'], ['Г', 'нескінченно']];
+    const quiz = quizData.map(([key, text], i) => ({
+      key, text, pick: () => {}, bd: i === 1 ? acc : line, bg: i === 1 ? soft : surf
+    }));
+
+    const legend = [
+      { t: 'Клітинка', c: v('--surface'), r: '6px' },
+      { t: 'Робот — тут він зараз', c: acc, r: '10px' },
+      { t: 'Зерно — мета', c: honey, r: '999px' },
+      { t: 'Камінь — обійти', c: muted, r: '5px' },
+      { t: 'Пройдений шлях', c: growth, r: '999px' }
+    ];
+    const rocks = [[3, 3], [3, 4], [5, 2]];
+    const trail = [[1, 1], [1, 2], [1, 3], [2, 3], [3, 3 - 3]];
+    const path = [[1, 1], [2, 1], [3, 1], [4, 1], [4, 2], [4, 3]];
+    const cells = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const isRock = rocks.some(([a, b]) => a === r && b === c);
+      const isBot = r === 4 && c === 4;
+      const isGoal = r === 6 && c === 6;
+      const isTrail = !isBot && path.some(([a, b]) => a === r && b === c);
+      cells.push({
+        bg: (r + c) % 2 ? v('--surface') : (dark ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.025)'),
+        bot: isBot, goal: isGoal, rock: isRock, trail: isTrail
+      });
+    }
+
+    const outState = s.run;
+    const rosterData = [
+      ['Марта Левчук', 'застрягла', att, '4 з 8', 5, 2, '6 хв тому'],
+      ['Олег Дацюк', 'працює', acc, '5 з 8', 2, 0, 'щойно'],
+      ['Іванна Гринь', 'готово', growth, '8 з 8', 9, 1, '1 хв тому'],
+      ['Ярослав Кіш', 'працює', acc, '3 з 8', 1, 1, 'щойно'],
+      ['Софія Пелех', 'працює', acc, '4 з 8', 3, 0, '2 хв тому'],
+      ['Назар Бойчук', 'застряг', att, '2 з 8', 7, 3, '9 хв тому'],
+      ['Христина Юзва', 'готово', growth, '8 з 8', 6, 0, '4 хв тому'],
+      ['Тарас Мельник', 'працює', acc, '6 з 8', 4, 1, 'щойно'],
+      ['Леся Івасюк', 'не почала', muted, '—', 0, 0, '—'],
+      ['Андрій Ференц', 'працює', acc, '5 з 8', 2, 2, '1 хв тому']
+    ];
+    const roster = rosterData.map(([name, state, c, task, tries, hints, last], i) => ({
+      name, state, c, task, tries, hints, last,
+      shapeR: state.indexOf('застряг') === 0 ? '2px' : state === 'готово' ? '4px' : '999px',
+      tr: state.indexOf('застряг') === 0 ? 'rotate(45deg)' : 'none',
+      bg: i % 2 ? (dark ? 'rgba(255,255,255,.015)' : 'rgba(0,0,0,.012)') : 'transparent',
+      open: this.set('screen', 'student')
+    }));
+    const tally = [
+      { t: '14 працюють', c: acc, r: '999px', tr: 'none' },
+      { t: '4 застрягли', c: att, r: '2px', tr: 'rotate(45deg)' },
+      { t: '7 завершили', c: growth, r: '4px', tr: 'none' }
+    ];
+
+    return {
+      theme: s.theme, themeLabel: dark ? 'Світла тема' : 'Темна тема',
+      toggleTheme: () => this.setState({ theme: dark ? 'light' : 'dark' }),
+      screens, typeSwitch, runSwitch,
+      isWork: s.screen === 'work', isGrid: s.screen === 'grid', isLoad: s.screen === 'load',
+      isWin: s.screen === 'win', isGarden: s.screen === 'garden', isClass: s.screen === 'class',
+      isStudent: s.screen === 'student', isSession: s.screen === 'session', isTaskEd: s.screen === 'taskEd',
+      isMap: s.screen === 'map', isBrand: s.screen === 'brand',
+      showTimer: s.screen === 'work' || s.screen === 'grid',
+      crumb: s.screen === 'class' || s.screen === 'student' || s.screen === 'session' || s.screen === 'taskEd'
+        ? 'Учитель · 7-А' : s.screen === 'brand' ? 'Знак і написання' : 'Цикли · сесія 4F7K2B',
+      goGarden: this.set('screen', 'garden'), goWork: this.set('screen', 'work'), goClass: this.set('screen', 'class'),
+
+      typeLabel: typeLabels[s.ttype], taskTitle: titles[s.ttype], taskBody: bodies[s.ttype],
+      theoryOpen: s.theoryOpen, toggleTheory: () => this.setState({ theoryOpen: !s.theoryOpen }),
+      theoryMark: s.theoryOpen ? '–' : '+', theoryHint: s.theoryOpen ? 'згорнути' : 'розгорнути',
+      hintOpen: s.hintOpen, toggleHint: () => this.setState({ hintOpen: !s.hintOpen }),
+
+      isQuiz: s.ttype === 'quiz', isPredict: s.ttype === 'predict', isFill: s.ttype === 'fill',
+      isEditor: s.ttype === 'code' || s.ttype === 'fix',
+      editorLabel: s.ttype === 'fix' ? 'main.py — виправте один рядок' : 'main.py',
+      lines, quiz, showLineNote: s.ttype === 'fix',
+      predictLines: [
+        { n: 1, t: 'a = 3' }, { n: 2, t: 'b = 5' },
+        { n: 3, t: 'print(a + b)' }
+      ],
+      fillLines: [
+        { n: 1, a: 'for i in ', gap: true, g: 'range(1, 6)', b: ':' },
+        { n: 2, a: '    print(', gap: true, g: 'i', b: ')' }
+      ],
+      chips: ['range(1, 6)', 'i', 'range(6)', 'print'],
+
+      legend, cells,
+      loadSteps: [
+        { t: 'Завантажено середовище', c: growth, m: '✓', fg: ink },
+        { t: 'Розпаковуємо бібліотеки', c: acc, m: '•', fg: ink },
+        { t: 'Перший запуск', c: v('--surface2'), m: '', fg: muted }
+      ],
+      topics: [
+        { name: 'Перші команди', m: '✓', c: growth, pct: '100%', n: '6 / 6' },
+        { name: 'Змінні й введення', m: '✓', c: growth, pct: '100%', n: '5 / 5' },
+        { name: 'Цикли', m: '3', c: acc, pct: '50%', n: '4 / 8' },
+        { name: 'Умови', m: '4', c: v('--surface2'), pct: '0%', n: '0 / 7' },
+        { name: 'Списки', m: '5', c: v('--surface2'), pct: '0%', n: '0 / 6' }
+      ],
+      roster, tally,
+      stats: [
+        { k: 'Спроб', v: '5' }, { k: 'Підказок', v: '2 з 3' },
+        { k: 'Часу на завданні', v: '6:12' }, { k: 'Сесія', v: '4 з 8' }
+      ],
+      timeline: [
+        { t: 'Запустила код — помилка відступу', time: '14:12', c: att, r: '2px', tr: 'rotate(45deg)' },
+        { t: 'Відкрила підказку 2', time: '14:10', c: honey, r: '999px', tr: 'none' },
+        { t: 'Запустила код — помилка відступу', time: '14:08', c: att, r: '2px', tr: 'rotate(45deg)' },
+        { t: 'Відкрила підказку 1', time: '14:07', c: honey, r: '999px', tr: 'none' },
+        { t: 'Завдання 3 виконано', time: '14:03', c: growth, r: '4px', tr: 'none' },
+        { t: 'Приєдналась до сесії', time: '13:58', c: acc, r: '999px', tr: 'none' }
+      ],
+      gradeTags: ['5 клас', '6 клас', '7 клас', '8 клас'].map((t, i) => ({
+        t, bd: i === 2 ? acc : line, bg: i === 2 ? soft : 'none', fg: i === 2 ? acc : muted
+      })),
+      topicFilter: [
+        { t: 'Перші команди', m: '', bg: 'none' }, { t: 'Змінні', m: '', bg: 'none' },
+        { t: 'Цикли', m: '✓', bg: acc }, { t: 'Умови', m: '', bg: 'none' }, { t: 'Списки', m: '', bg: 'none' }
+      ],
+      limits: ['15 хв', '25 хв', '45 хв', 'без межі'].map((t, i) => ({
+        t, bd: i === 1 ? acc : line, bg: i === 1 ? soft : 'none', fg: i === 1 ? acc : muted
+      })),
+      bank: [
+        { name: 'Вивести числа від 1 до 5', meta: '7 клас · Цикли · середня', type: 'code', m: '✓', c: growth, bd: growth },
+        { name: 'Цикл не запускається', meta: '7 клас · Цикли · легка', type: 'fix', m: '✓', c: growth, bd: growth },
+        { name: 'Скільки разів виконається цикл?', meta: '7 клас · Цикли · легка', type: 'quiz', m: '✓', c: growth, bd: growth },
+        { name: 'Робот малює квадрат', meta: '7 клас · Цикли · складна', type: 'code', m: '✓', c: growth, bd: growth },
+        { name: 'Що виведе ця програма?', meta: '7 клас · Цикли · легка', type: 'predict', m: '+', c: v('--surface2'), bd: line },
+        { name: 'Доповніть цикл', meta: '7 клас · Цикли · середня', type: 'fill', m: '+', c: v('--surface2'), bd: line },
+        { name: 'Сума чисел від 1 до n', meta: '8 клас · Цикли · складна', type: 'code', m: '+', c: v('--surface2'), bd: line },
+        { name: 'Порядок рядків у циклі', meta: '7 клас · Цикли · середня', type: 'parsons', m: '+', c: v('--surface2'), bd: line }
+      ],
+      picked: [
+        { i: '1', t: 'Скільки разів виконається цикл?', type: 'quiz' },
+        { i: '2', t: 'Цикл не запускається', type: 'fix' },
+        { i: '3', t: 'Вивести числа від 1 до 5', type: 'code' },
+        { i: '4', t: 'Робот малює квадрат', type: 'code' }
+      ],
+      typeTabs: ['quiz', 'predict', 'parsons', 'fill', 'code', 'fix'].map((t, i) => ({
+        t, bd: i === 4 ? acc : line, bg: i === 4 ? soft : surf, fg: i === 4 ? acc : muted, w: i === 4 ? 600 : 400
+      })),
+      fields: [
+        { label: 'Назва', value: 'Вивести числа від 1 до 5', font: 'Onest, sans-serif', h: '0' },
+        { label: 'Умова для учня', value: 'Напишіть програму, яка виводить числа від 1 до 5, кожне з нового рядка.', font: 'Onest, sans-serif', h: '64px' },
+        { label: 'Стартовий код', value: '# ваш код нижче\n', font: "'JetBrains Mono', monospace", h: '64px' },
+        { label: 'Очікуваний вивід', value: '1\n2\n3\n4\n5', font: "'JetBrains Mono', monospace", h: '90px' }
+      ],
+      hints: [
+        { i: '1', t: 'Числа треба повторити — згадайте, яка команда повторює дію.' },
+        { i: '2', t: 'range(1, 6) дає числа від 1 до 5.' },
+        { i: '3', t: 'Рядок усередині циклу зсуньте праворуч на чотири пробіли.' }
+      ],
+
+      run: this.doRun, check: () => {},
+      runBusy: outState === 'running',
+      runLabel: outState === 'running' ? 'Виконую…' : outState === 'loading' ? 'Готуємо Python…' : 'Запустити',
+      runBg: outState === 'disabled' || outState === 'loading' ? v('--surface2') : acc,
+      runBd: outState === 'disabled' || outState === 'loading' ? line : acc,
+      runFg: outState === 'disabled' || outState === 'loading' ? muted : '#fff',
+      runCur: outState === 'disabled' || outState === 'loading' ? 'not-allowed' : 'pointer',
+      outIdle: outState === 'idle' || outState === 'disabled',
+      outBusy: outState === 'running', outDone: outState === 'done', outLoading: outState === 'loading',
+      outLines: ['1', '2', '3', '4', '5'],
+      outMeta: outState === 'done' ? '0,2 с' : ''
+    };
+  }
+}
+</script>
+</body>
+</html>
