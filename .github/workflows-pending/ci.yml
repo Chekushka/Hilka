@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast signal: types, lint, pure unit tests, migration drift.
+  # `next build` is deliberately absent — Vercel builds every PR and reports its
+  # own status check, so building here doubles the wait for no extra signal.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test -- --run
+      - name: Migrations are committed with their schema change
+        run: |
+          npx drizzle-kit generate
+          git diff --exit-code drizzle/ || {
+            echo "::error::schema changed without a committed migration — run 'npx drizzle-kit generate' and commit drizzle/"
+            exit 1
+          }
+
+  # Slow job, separated so it can be re-run alone after a runner change.
+  # Every curriculum construct that actually executes Python lives here:
+  # variables, arithmetic, if, while, for, input, turtle, random, try/except.
+  runner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:runner

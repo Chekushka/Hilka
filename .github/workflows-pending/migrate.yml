@@ -1,0 +1,36 @@
+name: migrate
+
+# Migrations run on merge, never at app boot: serverless instances start
+# concurrently and would race each other applying the same migration.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'drizzle/**'
+      - 'lib/db/schema.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-production
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    # DATABASE_URL lives on this environment, not in repo-wide secrets, so it
+    # cannot be read by a workflow running on a branch or a fork.
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx drizzle-kit migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

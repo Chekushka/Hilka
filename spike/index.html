@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hilka — Skulpt spike</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 60ch; margin: 6vh auto; padding: 0 16px; }
+  code { font-family: ui-monospace, monospace; }
+  ol { padding-left: 1.2em; }
+  li { margin: .4em 0; }
+  .note { border-left: 3px solid currentColor; padding-left: 12px; opacity: .8; }
+</style>
+</head>
+<body>
+  <h1>Skulpt spike harness</h1>
+  <p class="note">
+    Placeholder. This page exists so the GitHub Pages pipeline can be verified and
+    so the harness has a URL that opens on the classroom machine. Replace it with
+    the real harness: a textarea, a Run button, and Skulpt vendored into
+    <code>spike/vendor/</code> — no build step, no framework.
+  </p>
+  <p>The six checks, in full, are in <code>docs/SPIKE.md</code>:</p>
+  <ol>
+    <li>Language coverage — f-strings, dict methods, <code>enumerate</code>/<code>zip</code>, slicing, <code>try/except</code>, Cyrillic</li>
+    <li>Turtle replaceable by a recording stub</li>
+    <li><code>input()</code> in a Worker, queued and interactive, without SharedArrayBuffer</li>
+    <li>Timeout that pauses while waiting for input</li>
+    <li>Error shape — type, line, column, message text</li>
+    <li>The classroom machine — cold load, memory, 200 segments</li>
+  </ol>
+  <p>Record findings in the Result column of <code>docs/SPIKE.md</code>, then copy the
+     outcome into <code>docs/TASKS.md</code>.</p>
+  <p id="loaded"></p>
+  <script>
+    // Baseline for check 6: time from navigation start to the page being usable.
+    addEventListener('load', () => {
+      const ms = Math.round(performance.now());
+      document.getElementById('loaded').textContent = 'Page usable after ' + ms + ' ms (page only — Skulpt not loaded yet).';
+    });
+  </script>
+</body>
+</html>
