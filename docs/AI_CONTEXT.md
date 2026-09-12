@@ -373,6 +373,24 @@ config, not in code — teachers disagree about it and will want to change it.
 
 ## Gotchas
 
-Empty by design — this fills in from real bugs found in this project. Do not pre-populate with
-generic advice. Unverified assumptions live in SPIKE.md until confirmed, then move here if they
-turn out to be traps.
+Fills in from real bugs found in this project. Do not pre-populate with generic advice.
+Unverified assumptions live in SPIKE.md until confirmed, then move here if they turn out to be
+traps.
+
+**A module stub cannot see the source line.** Skulpt's compiler emits `$currLineNo` as a local
+of the compiled function, not as a global, so a JS module such as the turtle stub has no way to
+read it; `Sk.currLineNo` is only populated at suspensions. `Segment.line` is therefore always
+null in practice and playback highlighting uses call order. Equivalent for the linear code grade
+7 writes, but it rules out line highlighting for anything with branches.
+
+**Skulpt's error text is not CPython's.** The grade 8 archetype `input()` + `+ 1` gives
+`TypeError: cannot concatenate 'str' and 'int' objects`, where CPython 3 says `can only
+concatenate str (not "int") to str`. No shared substring, so the rules in `lib/errors/` match
+Skulpt's wording. A future engine swap invalidates the whole rule base, not just its edges.
+
+**`col` is null for SyntaxError.** `traceback[0].lineno` is reliable; `colno` is 0 for runtime
+errors and absent for syntax errors. The editor can mark a line, not a column.
+
+**Skulpt does not echo an `input()` prompt.** With `inputfunTakesPrompt = true` the text arrives
+at `inputfun`, but nothing writes it to output. The output panel must print the prompt itself,
+or the student sees a bare cursor where the question should be.

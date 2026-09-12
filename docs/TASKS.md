@@ -10,17 +10,20 @@
 
 ## Spike (do this before anything else) — see SPIKE.md
 
-Six checks, one static HTML page, no framework. Record results in SPIKE.md, then copy the
-outcome here.
+Six checks, one static HTML page, no framework. Harness in `spike/`, findings in SPIKE.md.
+
+**Outcome: all six pass.** Skulpt stays the engine; the stack is unchanged. Checks 1–5 are
+engine properties and are settled. Check 6 must still be run on the classroom machine — the
+harness is deployed to GitHub Pages for exactly that.
 
 | Item | Status | Notes |
 |---|---|---|
-| 1. Language coverage | ❌ | f-strings, dict methods, `enumerate`/`zip`, slicing, `try/except`, Cyrillic |
-| 2. Turtle module replaceable by a recording stub | ❌ | Curriculum-critical. Skulpt's own renderer is not used. |
-| 3. `input()` in a Worker, queued and interactive | ❌ | Whole of grade 8 depends on it. Watch for a SharedArrayBuffer requirement. |
-| 4. Timeout that pauses while waiting for input | ❌ | A slow typist must not get "program stopped responding" |
-| 5. Error shape — type, line, column, message text | ❌ | Record the exact `str + int` message; it becomes error rule #1 |
-| 6. Classroom machine: cold load, memory, 200 segments | ❌ | 4 GB RAM, school network, not the dev machine |
+| 1. Language coverage | ✅ | Everything the curriculum needs works, Cyrillic included |
+| 2. Turtle module replaceable by a recording stub | ✅ | Replaceable via `Sk.builtinFiles.files`. Source line is **not** reachable — call-order fallback |
+| 3. `input()` in a Worker, queued and interactive | ✅ | Both modes work. **No SharedArrayBuffer**, so no COOP/COEP headers |
+| 4. Timeout that pauses while waiting for input | ✅ | Push `Sk.execStart` forward by the wait. 8 s of typing against a 5 s limit, no timeout |
+| 5. Error shape — type, line, column, message text | ✅ | Type and line reliable; `col` is null for SyntaxError. Skulpt text ≠ CPython text |
+| 6. Classroom machine: cold load, memory, 200 segments | 🔶 | Dev baseline recorded. Open the Pages URL on the school machine and fill it in |
 
 ## Infrastructure
 
@@ -42,7 +45,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | `SessionStart` hook + permission allowlist | ✅ | `.claude/settings.json`; no-op until `package.json` exists |
 | Guardrail script + workflow | ✅ | CLAUDE.md rules 1, 3, 4 and the convention rules, as checks |
 | GitHub Pages deploy of `spike/` | 🔶 | Workflow committed; Pages source must be switched on in repo settings |
-| Spike harness itself | ❌ | `spike/index.html` is a placeholder — see SPIKE.md |
+| Spike harness itself | ✅ | `spike/` — six checks, Skulpt vendored, turtle stub, interactive input |
 | Branch protection on `main` | 🔶 | Ruleset committed at `.github/rulesets/main.json`; must be imported in repo settings |
 | `ci.yml` — typecheck, lint, tests, migration drift | 🔶 | Staged in `.github/workflows-pending/` |
 | `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
@@ -59,8 +62,8 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Interactive input line in the output panel | ❌ | Real prompt/response, no modal. PyPizza must actually work. |
 | Headless run with queued `stdin` per case | ❌ | Used by Check; one run per RunCase |
 | Timeout paused across input suspensions | ❌ | |
-| `turtle` module stub (records, draws nothing) | ❌ | Primary visual layer. Skulpt's renderer is not used — it needs DOM. |
-| Segment log + source-line attribution | ❌ | Line number optional; falls back to call order |
+| `turtle` module stub (records, draws nothing) | 🔶 | Working version in `spike/turtle-stub.js`; port to `lib/runner/modules/` |
+| Segment log + source-line attribution | 🔶 | Segment log works. Line number confirmed unreachable — call-order fallback it is |
 | Canvas renderer (student + translucent target, one renderer) | ❌ | Guarantees identical scale and theme |
 | Playback scrubber with line highlighting | ❌ | Covers grade 7 lesson 40 without an interpreter stepper |
 | `random` module stub with deterministic seeding in headless mode | ❌ | Grade 9. Otherwise random programs are uncheckable. |
@@ -160,8 +163,8 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 - [x] Practice progress — save-code system. localStorage primary, code for portability.
 - [ ] Grade 8 plan says 1.5 h/week but lists 70 lessons and is filenamed "2 ГОД". Which is it?
 - [ ] Is the grid world worth building at all now that turtle is the curriculum's visual layer?
-- [ ] Does interactive input need SharedArrayBuffer? If yes, COOP/COEP headers on Vercel, which
-      affects embeds. Answered by SPIKE.md check 3.
+- [x] Does interactive input need SharedArrayBuffer? **No.** Verified with
+      `crossOriginIsolated=false`; no COOP/COEP headers on Vercel, embeds stay possible.
 - [ ] Default `parsons.indentMode` per topic — `given` first, `chosen` later, but where exactly?
 - [ ] Lesson 40 (grade 7) requires покрокове виконання, which the platform does not do. Cover
       with `predict`/`fix` tasks, or teach outside the platform?
