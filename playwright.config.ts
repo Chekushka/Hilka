@@ -5,7 +5,7 @@ import { defineConfig } from '@playwright/test';
  * need a browser — CLAUDE.md asks for one test per curriculum construct.
  */
 export default defineConfig({
-  testDir: './tests/runner',
+  testDir: './tests',
   timeout: 30_000,
   fullyParallel: false,
   reporter: process.env.CI ? 'list' : 'line',
@@ -18,7 +18,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'npm run build && npm run start',
-    url: 'http://127.0.0.1:3000/runner',
+    url: 'http://127.0.0.1:3000/practice',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000
   }

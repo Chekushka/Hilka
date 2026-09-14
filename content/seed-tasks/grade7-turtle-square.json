@@ -1,0 +1,37 @@
+{
+  "id": "g7-turtle-square",
+  "topicId": "turtle-basics",
+  "type": "code",
+  "title": "Квадрат",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй квадрат зі стороною 100.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 4,
+      "message": "Фігура має складатися з чотирьох сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Сторони не такі, як на зразку. Подивись, де твій малюнок відходить від нього."
+    }
+  ],
+  "hints": [
+    "Черепашка вміє йти вперед: turtle.forward(100).",
+    "Щоб повернути праворуч на 90 градусів: turtle.right(90).",
+    "Квадрат — це чотири однакові кроки з поворотом після кожного. Спробуй цикл for i in range(4)."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,100 @@
+'use client';
+
+/**
+ * The screen that occupies thirty minutes of a lesson.
+ *
+ * Three zones: the task statement, the editor, and the result. Calm, adult and
+ * quiet — closer to a well-made editor than to a game. Nothing bounces, nothing
+ * celebrates, nothing distracts. Progress and reward live in a separate warm
+ * layer between tasks, and none of it is allowed in here.
+ *
+ * Laid out for 1366×768 and legible from the back row when a teacher projects
+ * it; it stacks to one column when there is not room for two.
+ */
+import { useState } from 'react';
+import { CodeEditor } from '@/components/editor/CodeEditor';
+import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
+import { Hints } from './Hints';
+import { ResultPanel } from './ResultPanel';
+import { t } from '@/lib/i18n';
+import { useTaskRunner } from '@/lib/task/use-task-runner';
+import type { CodeTask } from '@/lib/task/types';
+
+export function TaskWorkspace({ task }: { task: CodeTask }) {
+  const [code, setCode] = useState(task.payload.starter);
+  const { engine, busy, result, report, target, run, check } = useTaskRunner(task);
+
+  const loading = engine === 'loading';
+  const disabled = loading || busy;
+
+  return (
+    <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-[minmax(280px,1fr)_minmax(420px,1.4fr)]">
+      <section>
+        <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
+        <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
+        <p className="mt-2 text-ink">{task.payload.prompt}</p>
+        <Hints hints={task.hints} />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <CodeEditor
+          value={code}
+          onChange={setCode}
+          errorLine={result?.error?.line ?? null}
+          ariaLabel={t('workspace.editorLabel')}
+        />
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => run(code)}
+            disabled={disabled}
+            className="rounded-md border border-accent px-4 py-2 text-sm text-accent disabled:opacity-50"
+          >
+            {busy ? t('workspace.running') : t('workspace.run')}
+          </button>
+          <button
+            type="button"
+            onClick={() => check(code)}
+            disabled={disabled}
+            className="rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
+          >
+            {busy ? t('workspace.checking') : t('workspace.check')}
+          </button>
+          {loading && (
+            // Several seconds on a classroom machine. Without this the student
+            // sees a dead button and presses F5.
+            <span className="text-sm text-ink-muted">
+              {t('workspace.loadingEngine')}{' '}
+              <span className="text-xs">{t('workspace.loadingHint')}</span>
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-4">
+          <figure>
+            <TurtleCanvas
+              drawing={result?.drawing ?? []}
+              target={target}
+              label={t('workspace.yourDrawing')}
+            />
+            <figcaption className="mt-1 text-xs text-ink-muted">
+              {t('workspace.yourDrawing')} · {t('workspace.target')}
+            </figcaption>
+          </figure>
+
+          {task.payload.surface === 'console' || (result?.stdout ?? '').length > 0 ? (
+            <div className="min-w-[220px] flex-1">
+              <p className="text-xs uppercase tracking-wide text-ink-muted">{t('workspace.output')}</p>
+              <pre className="mt-1 min-h-[3rem] whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
+                {result?.stdout || t('workspace.outputEmpty')}
+              </pre>
+            </div>
+          ) : null}
+        </div>
+
+        {result && <ResultPanel result={result} report={report} onRetry={() => check(code)} />}
+      </section>
+    </main>
+  );
+}

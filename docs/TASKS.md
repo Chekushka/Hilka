@@ -65,7 +65,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Timeout paused across input suspensions | ✅ | `Sk.execStart` pushed forward by the wait; test covers a 2.5 s answer against a shorter limit |
 | `turtle` module stub (records, draws nothing) | ✅ | `lib/runner/modules/turtle.ts` |
 | Segment log + source-line attribution | ✅ | Segment log works; `line` is always null by design, playback uses call order |
-| Canvas renderer (student + translucent target, one renderer) | ❌ | Guarantees identical scale and theme |
+| Canvas renderer (student + translucent target, one renderer) | ✅ | `components/canvas/TurtleCanvas.tsx`. One transform for both drawings |
 | Playback scrubber with line highlighting | ❌ | Covers grade 7 lesson 40 without an interpreter stepper |
 | `random` module stub with deterministic seeding in headless mode | ✅ | `lib/runner/modules/random.ts`. Seeded in headless, genuinely random in interactive |
 | Grid API (`move`/`turn`/`take`) + action log | ❌ | Optional, after turtle, only if still justified |
@@ -89,7 +89,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Item | Status | Notes |
 |---|---|---|
 | Shared task-component interface | ❌ | Adding a type must not touch runner/session/dashboard |
-| `code` | ❌ | Build first — proves the whole vertical slice |
+| `code` | 🔶 | Turtle surface end to end. Console surface and the shared component interface still open |
 | `quiz` | ❌ | |
 | `predict` | ❌ | |
 | `parsons` | ❌ | Highest-value type for the target audience. dnd-kit, keyboard-accessible. |
@@ -114,8 +114,8 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Progress codes: mint, restore, merge | ❌ | 8 chars, unambiguous alphabet, rate-limited entry, merge-not-replace |
 | Join by 6-char code | ❌ | Code must be legible from the back row on a projector |
 | Name selection from roster | ❌ | No password, no email |
-| Task runner shell (three-zone layout) | ❌ | Blocked on design |
-| Loading state for Skulpt | ❌ | Required. Measured: 2.2 s cold on the classroom machine, nearly all of it the 945 KB engine transfer |
+| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`, one hard-coded task. No task navigation or session yet |
+| Loading state for Skulpt | ✅ | Engine state surfaced through `warmUp()`; buttons disabled with a line saying why |
 | Exam mode: timer, no hints, single submit | ❌ | |
 
 ## Teacher Flow
@@ -145,7 +145,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 |---|---|---|
 | Curriculum mapping (grades 7–9) | ✅ | See CURRICULUM.md — 28 topics, grade tags, ~62 addressable lessons |
 | Grade 7 sem-2 block: intro → loops-for + turtle-basics | ❌ | ~9 topics. First thing that reaches a classroom. |
-| First topic, ~12 tasks | ❌ | Progression: quiz → predict → parsons → fill → code |
+| First topic, ~12 tasks | 🔶 | One task: `content/seed-tasks/grade7-turtle-square.json` |
 | Grade tagging of tasks | ❌ | |
 
 ## Open Questions
@@ -176,9 +176,8 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
    it passes. Do not scaffold Next.js first — the results can change the stack.
 2. Runner adapter + Worker + timeout + module stubs (`turtle`, `random`).
 3. Checker evaluator with the non-Python check kinds.
-4. One `code` task, hard-coded, end to end: prompt → editor → run → check → result. This is the
-   vertical slice that proves the stack. Make it a turtle task — it exercises the stub, the
-   segment log, the renderer, and `shape_equals` at once.
+4. ~~One `code` task, hard-coded, end to end~~ — done. `/practice` runs the grade 7 square:
+   prompt → editor → run → check → result, with the target overlaid on the student's drawing.
 5. Error humanization, starter rule set. Do this before adding task types — it changes how
    results are displayed everywhere.
 6. Database + Drizzle schema, task loaded from the DB instead of hard-coded.
