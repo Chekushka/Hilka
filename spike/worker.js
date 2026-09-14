@@ -14,7 +14,6 @@ self.__turtle__ = {
   x: 0, y: 0, heading: 0, pen: true, color: 'black', width: 1
 };
 
-var turtleStubSource = null;
 var pendingInput = null;
 var stdinQueue = [];
 var mode = 'headless';
@@ -32,7 +31,6 @@ function builtinRead(x) {
 fetch('turtle-stub.js')
   .then(function (r) { return r.text(); })
   .then(function (src) {
-    turtleStubSource = src;
     Sk.builtinFiles.files['src/lib/turtle.js'] = src;
     postMessage({
       type: 'ready',

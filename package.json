@@ -1,0 +1,34 @@
+{
+  "name": "hilka",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run sync:skulpt && next dev",
+    "build": "npm run sync:skulpt && next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest",
+    "test:runner": "playwright test",
+    "sync:skulpt": "node scripts/sync-skulpt.mjs",
+    "guardrails": "bash scripts/guardrails.sh"
+  },
+  "dependencies": {
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "skulpt": "^1.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22.20.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^5.0.0"
+  }
+}

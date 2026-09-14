@@ -30,11 +30,11 @@ than decorative.
 
 | Item | Status | Notes |
 |---|---|---|
-| Next.js + TypeScript scaffold | ❌ | |
+| Next.js + TypeScript scaffold | ✅ | Next 16, React 19, Tailwind v4, TS strict, no `src/` — folder map as in AI_CONTEXT.md |
 | Vercel project + preview deploys | ❌ | |
 | Neon database + connection | ❌ | Measure cold start on first request of a session |
 | Drizzle schema + first migration | ❌ | Schema in AI_CONTEXT.md |
-| Design tokens as CSS vars + Tailwind mapping | ❌ | Blocked on design deliverable |
+| Design tokens as CSS vars + Tailwind mapping | ✅ | Both themes in `app/globals.css`, mapped through Tailwind v4 `@theme`. Lifted from the mockups |
 
 ## CI/CD and Remote Development
 
@@ -48,7 +48,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | GitHub Pages deploy of `spike/` | 🔶 | Workflow committed; Pages source must be switched on in repo settings |
 | Spike harness itself | ✅ | `spike/` — six checks, Skulpt vendored, turtle stub, interactive input |
 | Branch protection on `main` | 🔶 | Ruleset committed at `.github/rulesets/main.json`; must be imported in repo settings |
-| `ci.yml` — typecheck, lint, tests, migration drift | 🔶 | Staged in `.github/workflows-pending/` |
+| `ci.yml` — typecheck, lint, tests | ✅ | Live. Migration-drift step returns with the Drizzle schema |
 | `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
 | `reference-check.yml` — references vs their own checks | 🔶 | Staged; needs published seed tasks |
 | Vercel Git integration + preview deploys | ❌ | Manual; previews are how the design gets tested on classroom hardware |
@@ -58,16 +58,16 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 
 | Item | Status | Notes |
 |---|---|---|
-| `PythonRunner` interface | ❌ | Nothing outside `lib/runner/` imports Skulpt |
-| Skulpt worker adapter | ❌ | Timeout, termination, stdout capture |
-| Interactive input line in the output panel | ❌ | Real prompt/response, no modal. PyPizza must actually work. |
-| Headless run with queued `stdin` per case | ❌ | Used by Check; one run per RunCase |
-| Timeout paused across input suspensions | ❌ | |
-| `turtle` module stub (records, draws nothing) | 🔶 | Working version in `spike/turtle-stub.js`; port to `lib/runner/modules/` |
-| Segment log + source-line attribution | 🔶 | Segment log works. Line number confirmed unreachable — call-order fallback it is |
+| `PythonRunner` interface | ✅ | `lib/runner/types.ts`. Guardrail check enforces the boundary |
+| Skulpt worker adapter | ✅ | `lib/runner/skulpt-runner.ts` + `worker.ts`. Timeout, cancel, stdout streaming |
+| Interactive input line in the output panel | 🔶 | Runner side works end to end; the panel UI arrives with the workspace |
+| Headless run with queued `stdin` per case | ✅ | `mode: 'headless'` with `stdin[]`; integration test covers it |
+| Timeout paused across input suspensions | ✅ | `Sk.execStart` pushed forward by the wait; test covers a 2.5 s answer against a shorter limit |
+| `turtle` module stub (records, draws nothing) | ✅ | `lib/runner/modules/turtle.ts` |
+| Segment log + source-line attribution | ✅ | Segment log works; `line` is always null by design, playback uses call order |
 | Canvas renderer (student + translucent target, one renderer) | ❌ | Guarantees identical scale and theme |
 | Playback scrubber with line highlighting | ❌ | Covers grade 7 lesson 40 without an interpreter stepper |
-| `random` module stub with deterministic seeding in headless mode | ❌ | Grade 9. Otherwise random programs are uncheckable. |
+| `random` module stub with deterministic seeding in headless mode | ✅ | `lib/runner/modules/random.ts`. Seeded in headless, genuinely random in interactive |
 | Grid API (`move`/`turn`/`take`) + action log | ❌ | Optional, after turtle, only if still justified |
 
 ## Checker
