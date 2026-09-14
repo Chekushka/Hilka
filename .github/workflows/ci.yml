@@ -13,9 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Fast signal: types, lint, pure unit tests, migration drift.
-  # `next build` is deliberately absent — Vercel builds every PR and reports its
-  # own status check, so building here doubles the wait for no extra signal.
+  # Fast signal: types, lint, pure unit tests. `next build` is deliberately
+  # absent here — Vercel builds every PR and reports its own status check, so
+  # building twice doubles the wait for no extra signal. The runner job below
+  # does build, because its tests need a served app.
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -27,14 +28,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm run test -- --run
-      - name: Migrations are committed with their schema change
-        run: |
-          npx drizzle-kit generate
-          git diff --exit-code drizzle/ || {
-            echo "::error::schema changed without a committed migration — run 'npx drizzle-kit generate' and commit drizzle/"
-            exit 1
-          }
+      - run: npm run test -- --run --passWithNoTests
+      # The migration-drift check returns here with the Drizzle schema. Adding it
+      # now would fail on a repository that has no drizzle/ directory yet.
 
   # Slow job, separated so it can be re-run alone after a runner change.
   # Every curriculum construct that actually executes Python lives here:
@@ -50,3 +46,5 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:runner
+        env:
+          CI: 'true'

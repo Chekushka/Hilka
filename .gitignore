@@ -11,3 +11,10 @@ test-results/
 .vercel
 .DS_Store
 *.log
+
+# Skulpt is a dependency, copied into public/ by scripts/sync-skulpt.mjs
+/public/runner/
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo
+*.tsbuildinfo

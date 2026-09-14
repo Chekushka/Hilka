@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. The single definition of every colour, space, radius and type
+ * step in the product — components reference these, never a hex value.
+ * Values come from docs/mockups and docs/design-brief-python-platform.md.
+ *
+ * The warmth is in green, sand and honey. Not cream and terracotta: that look
+ * is everywhere and would make this read as generated.
+ */
+:root {
+  /* Surfaces and ink */
+  --bg: #f1f3ec;            /* pale green-grey, not cream */
+  --surface: #fafaf6;
+  --shell: #e7eae1;
+  --line: #dce2d6;
+  --ink: #262c27;
+  --ink-muted: #636d64;
+  --code-bg: #f6f7f1;
+
+  /* Meaning. Never carried by colour alone — shape and icon carry it too. */
+  --accent: #3e6b63;        /* every interactive element */
+  --accent-soft: #e2ebe7;
+  --growth: #6e9a5f;        /* progress, garden, completion */
+  --honey: #c9922f;         /* XP, rewards, unlocks */
+  --attention: #a8763c;     /* "not correct yet" — never red */
+  --failure: #a3352b;       /* system failure only: connection lost, session closed */
+
+  /* Spacing: 4 px base */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Type. Sized for a 1366×768 school monitor read at an angle, and for the
+     back row when a teacher projects a task. */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 999px;
+
+  --border-thin: 1px;
+  --border-thick: 2px;
+
+  /* Restraint: one shadow level, used rarely. No shadow on every card. */
+  --shadow-raised: 0 1px 2px rgb(38 44 39 / 0.06), 0 2px 8px rgb(38 44 39 / 0.06);
+
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, "Fira Code", monospace;
+}
+
+/* An afternoon classroom with south-facing windows is a real condition. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a201d;          /* green-tinted, not neutral charcoal */
+    --surface: #242b27;
+    --shell: #12160f;
+    --line: #333c36;
+    --ink: #e3e7de;
+    --ink-muted: #9aa69b;
+    --code-bg: #1e2521;
+
+    --accent: #6fa79c;
+    --accent-soft: #2a3b37;
+    --growth: #86b575;
+    --honey: #dfae4e;
+    --attention: #c79358;
+    --failure: #d4645a;
+
+    --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
+  }
+}
+
+/* Tailwind v4 reads the scale from here, so utilities and raw CSS stay in sync. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-shell: var(--shell);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-code-bg: var(--code-bg);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-growth: var(--growth);
+  --color-honey: var(--honey);
+  --color-attention: var(--attention);
+  --color-failure: var(--failure);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
