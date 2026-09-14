@@ -93,7 +93,9 @@ export function TaskWorkspace({ task }: { task: CodeTask }) {
           ) : null}
         </div>
 
-        {result && <ResultPanel result={result} report={report} onRetry={() => check(code)} />}
+        {result && (
+          <ResultPanel result={result} report={report} code={code} onRetry={() => check(code)} />
+        )}
       </section>
     </main>
   );

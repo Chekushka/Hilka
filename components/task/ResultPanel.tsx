@@ -8,10 +8,10 @@
  * Meaning is carried by shape and wording as well as colour, because a class of
  * twenty-five contains someone who cannot separate red from green.
  *
- * Raw interpreter messages still reach the student here. lib/errors/ replaces
- * them with Ukrainian explanations next; until then this is the calm frame
- * around whatever the runner reported, never a traceback.
+ * Interpreter messages never reach the student: lib/errors/ rewrites them into
+ * an explanation and a next step, with the student's own line shown inline.
  */
+import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
 import type { CheckReport } from '@/lib/checker';
 import type { RunResult } from '@/lib/runner';
@@ -19,6 +19,7 @@ import type { RunResult } from '@/lib/runner';
 interface ResultPanelProps {
   result: RunResult;
   report: CheckReport | null;
+  code: string;
   onRetry: () => void;
 }
 
@@ -46,22 +47,21 @@ function Frame({
   );
 }
 
-export function ResultPanel({ result, report, onRetry }: ResultPanelProps) {
-  if (result.timedOut) {
+export function ResultPanel({ result, report, code, onRetry }: ResultPanelProps) {
+  if (result.timedOut || result.error) {
+    const human = result.timedOut ? humanizeTimeout() : humanize(result.error!, code);
     return (
-      <Frame tone="attention" icon="◷" title={t('result.timeoutTitle')}>
-        <p>{t('result.timeoutNote')}</p>
-      </Frame>
-    );
-  }
-
-  if (result.error) {
-    return (
-      <Frame tone="attention" icon="◆" title={t('result.errorTitle')}>
-        {result.error.line !== null && (
-          <p className="text-ink-muted">{t('result.errorLine', { line: result.error.line })}</p>
+      <Frame tone="attention" icon={result.timedOut ? '◷' : '◆'} title={human.title}>
+        <p>{human.explanation}</p>
+        {human.sourceLine && (
+          <p className="mt-2 rounded-md bg-code-bg px-3 py-2 font-mono text-xs">
+            {human.line !== null && (
+              <span className="mr-3 text-ink-muted">{t('result.errorLine', { line: human.line })}</span>
+            )}
+            {human.sourceLine}
+          </p>
         )}
-        <p className="mt-1 font-mono text-xs">{result.error.message}</p>
+        {human.hint && <p className="mt-2 text-ink-muted">{human.hint}</p>}
         <button
           type="button"
           onClick={onRetry}

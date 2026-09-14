@@ -53,11 +53,27 @@ test('a rectangle does not pass, and says why without shouting', async ({ page }
   await expect(page.getByText('Traceback')).toHaveCount(0);
 });
 
-test('a syntax error is calm and points at the line', async ({ page }) => {
+test('a syntax error is explained, not reported', async ({ page }) => {
   await typeSolution(page, 'import turtle\nturtle.forward(100');
   await page.getByRole('button', { name: 'Запустити' }).click();
-  await expect(page.getByRole('heading', { name: 'Програма зупинилася' })).toBeVisible({ timeout: 20_000 });
+  // The humanized message names the actual mistake rather than repeating the
+  // interpreter, and shows the student's own line back to them.
+  const heading = page.getByRole('heading', { name: 'Не закрита дужка' });
+  await expect(heading).toBeVisible({ timeout: 20_000 });
+  // The failing line is quoted back inside the message. It also exists in the
+  // editor above, so the assertion is scoped to the result panel — which is the
+  // live region, since the outer section wraps the editor too.
+  const panel = page.locator('section[aria-live="polite"]');
+  await expect(panel.getByText('turtle.forward(100')).toBeVisible();
+  await expect(page.getByText('SyntaxError')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Спробувати ще' })).toBeVisible();
+});
+
+test('a mistyped turtle command names the command', async ({ page }) => {
+  await typeSolution(page, 'import turtle\nturtle.forwrd(100)');
+  await page.getByRole('button', { name: 'Запустити' }).click();
+  await expect(page.getByRole('heading', { name: /forwrd/ })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('AttributeError')).toHaveCount(0);
 });
 
 test('an endless loop is reported as not finishing, not as an error', async ({ page }) => {

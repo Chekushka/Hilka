@@ -162,7 +162,7 @@ find nothing; checks whose directories do not exist yet pass silently.
 
 | Check | Rule it protects |
 |---|---|
-| Skulpt referenced outside `lib/runner` | The adapter boundary — the only thing that makes swapping in Pyodide possible |
+| Skulpt imported or used outside `lib/runner` | The adapter boundary — the only thing that makes swapping in Pyodide possible. Matches code, not comments: `lib/errors/` has to discuss Skulpt's wording |
 | `eval` / `new Function` in checker or runner | Checks are data; the evaluator must run unchanged server-side |
 | Explicit `any` in checker or runner | Same two modules, same reason |
 | `lib/db` imported by a component, the runner, or the checker | Only route handlers and server components touch the database |

@@ -100,11 +100,11 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 
 | Item | Status | Notes |
 |---|---|---|
-| `PyError` → Ukrainian message mapping | ❌ | Rule-based; generic calm fallback, never a raw traceback |
-| Rule #1: arithmetic on `input()` result | ❌ | Most common mistake of grade 8. Must never reach a student as a traceback. |
-| Starter rule set | ❌ | NameError, SyntaxError, IndentationError, TypeError, IndexError, ZeroDivisionError |
-| Timeout message phrased as "did not finish", not as an error | ❌ | |
-| Unmatched-error logging | ❌ | Feeds rule-base growth from real classroom data |
+| `PyError` → Ukrainian message mapping | ✅ | `lib/errors/`. 20 rules, ordered, first match wins; calm fallback, never a traceback |
+| Rule #1: arithmetic on `input()` result | ✅ | First in the rule base, and only fires when the code actually calls `input()` |
+| Starter rule set | ✅ | NameError, SyntaxError (four source-read variants), TypeError, IndexError, ZeroDivisionError, ValueError, AttributeError, ImportError, KeyError, EOFError. Skulpt has no IndentationError — it is a SyntaxError read from the source |
+| Timeout message phrased as "did not finish", not as an error | ✅ | `humanizeTimeout()`; a test asserts the word «помилка» never appears |
+| Unmatched-error logging | 🔶 | Collected in-session behind a reporter seam. The endpoint arrives with the database |
 
 ## Student Flow
 
@@ -178,8 +178,8 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 3. Checker evaluator with the non-Python check kinds.
 4. ~~One `code` task, hard-coded, end to end~~ — done. `/practice` runs the grade 7 square:
    prompt → editor → run → check → result, with the target overlaid on the student's drawing.
-5. Error humanization, starter rule set. Do this before adding task types — it changes how
-   results are displayed everywhere.
+5. ~~Error humanization, starter rule set~~ — done. Messages were written against Skulpt's
+   recorded wording, not CPython's.
 6. Database + Drizzle schema, task loaded from the DB instead of hard-coded.
 7. Session create/join/submit + attempts.
 8. Teacher dashboard, read-only first.
