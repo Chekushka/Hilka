@@ -12,18 +12,19 @@
 
 Six checks, one static HTML page, no framework. Harness in `spike/`, findings in SPIKE.md.
 
-**Outcome: all six pass.** Skulpt stays the engine; the stack is unchanged. Checks 1–5 are
-engine properties and are settled. Check 6 must still be run on the classroom machine — the
-harness is deployed to GitHub Pages for exactly that.
+**Outcome: all six pass, verified on the classroom machine.** Skulpt stays the engine, the
+stack is unchanged, and no decision gate was triggered. Cold load there is 2.2 s, nearly all of
+it fetching the 945 KB engine — inside target, but it makes the loading state mandatory rather
+than decorative.
 
 | Item | Status | Notes |
 |---|---|---|
 | 1. Language coverage | ✅ | Everything the curriculum needs works, Cyrillic included |
 | 2. Turtle module replaceable by a recording stub | ✅ | Replaceable via `Sk.builtinFiles.files`. Source line is **not** reachable — call-order fallback |
 | 3. `input()` in a Worker, queued and interactive | ✅ | Both modes work. **No SharedArrayBuffer**, so no COOP/COEP headers |
-| 4. Timeout that pauses while waiting for input | ✅ | Push `Sk.execStart` forward by the wait. 8 s of typing against a 5 s limit, no timeout |
+| 4. Timeout that pauses while waiting for input | ✅ | Push `Sk.execStart` forward by the wait. 53 s before typing against a 5 s limit, no timeout |
 | 5. Error shape — type, line, column, message text | ✅ | Type and line reliable; `col` is null for SyntaxError. Skulpt text ≠ CPython text |
-| 6. Classroom machine: cold load, memory, 200 segments | 🔶 | Dev baseline recorded. Open the Pages URL on the school machine and fill it in |
+| 6. Classroom machine: cold load, memory, 200 segments | ✅ | 2214 ms cold, 2 ms trivial run, memory flat, 200 segments in 11 ms. Warm-cache and two-tab rows still blank |
 
 ## Infrastructure
 
@@ -114,7 +115,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Join by 6-char code | ❌ | Code must be legible from the back row on a projector |
 | Name selection from roster | ❌ | No password, no email |
 | Task runner shell (three-zone layout) | ❌ | Blocked on design |
-| Loading state for Skulpt | ❌ | Required — several seconds on weak hardware |
+| Loading state for Skulpt | ❌ | Required. Measured: 2.2 s cold on the classroom machine, nearly all of it the 945 KB engine transfer |
 | Exam mode: timer, no hints, single submit | ❌ | |
 
 ## Teacher Flow
