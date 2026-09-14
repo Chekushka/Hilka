@@ -32,8 +32,8 @@ than decorative.
 |---|---|---|
 | Next.js + TypeScript scaffold | ✅ | Next 16, React 19, Tailwind v4, TS strict, no `src/` — folder map as in AI_CONTEXT.md |
 | Vercel project + preview deploys | ❌ | |
-| Neon database + connection | ❌ | Measure cold start on first request of a session |
-| Drizzle schema + first migration | ❌ | Schema in AI_CONTEXT.md |
+| Neon database + connection | 🔶 | Code is there and runs on any Postgres (`lib/db/client.ts`, node-postgres). The Neon project itself, and the cold-start measurement, are still manual |
+| Drizzle schema + first migration | ✅ | `lib/db/schema.ts`, `drizzle/0000_initial_schema.sql`. All seven tables; `tasks.slug` added so content in git has a stable key |
 | Design tokens as CSS vars + Tailwind mapping | ✅ | Both themes in `app/globals.css`, mapped through Tailwind v4 `@theme`. Lifted from the mockups |
 
 ## CI/CD and Remote Development
@@ -48,7 +48,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | GitHub Pages deploy of `spike/` | 🔶 | Workflow committed; Pages source must be switched on in repo settings |
 | Spike harness itself | ✅ | `spike/` — six checks, Skulpt vendored, turtle stub, interactive input |
 | Branch protection on `main` | 🔶 | Ruleset committed at `.github/rulesets/main.json`; must be imported in repo settings |
-| `ci.yml` — typecheck, lint, tests | ✅ | Live. Migration-drift step returns with the Drizzle schema |
+| `ci.yml` — typecheck, lint, tests | ✅ | Live, with the migration-drift step. The browser job runs a Postgres service, migrates and seeds — the workspace reads its task from the database |
 | `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
 | `reference-check.yml` — references vs their own checks | 🔶 | Staged; needs published seed tasks |
 | Vercel Git integration + preview deploys | ❌ | Manual; previews are how the design gets tested on classroom hardware |
@@ -114,7 +114,7 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Progress codes: mint, restore, merge | ❌ | 8 chars, unambiguous alphabet, rate-limited entry, merge-not-replace |
 | Join by 6-char code | ❌ | Code must be legible from the back row on a projector |
 | Name selection from roster | ❌ | No password, no email |
-| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`, one hard-coded task. No task navigation or session yet |
+| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. The task comes from the database now; which task is still a constant, and there is no navigation or session yet |
 | Loading state for Skulpt | ✅ | Engine state surfaced through `warmUp()`; buttons disabled with a line saying why |
 | Exam mode: timer, no hints, single submit | ❌ | |
 
@@ -144,8 +144,9 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | Item | Status | Notes |
 |---|---|---|
 | Curriculum mapping (grades 7–9) | ✅ | See CURRICULUM.md — 28 topics, grade tags, ~62 addressable lessons |
+| Topic rows for grade 7 | ✅ | `content/topics.json` — the 13 topics of the grade 7 section, seeded. Grades 8–9 follow with their content |
 | Grade 7 sem-2 block: intro → loops-for + turtle-basics | ❌ | ~9 topics. First thing that reaches a classroom. |
-| First topic, ~12 tasks | 🔶 | One task: `content/seed-tasks/grade7-turtle-square.json` |
+| First topic, ~12 tasks | 🔶 | One task: `content/seed-tasks/grade7-turtle-square.json`, imported by `npm run db:seed` |
 | Grade tagging of tasks | ❌ | |
 
 ## Open Questions
@@ -155,6 +156,9 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 - [x] Skulpt vs Pyodide — Skulpt for v1, behind an adapter. Revisit if the spike fails.
 - [x] Task storage — database as source of truth, with JSON export to git.
 - [x] Visual style — cozy; tool-like workspace, game-like reward layer.
+- [ ] What a student should see when the database is unreachable mid-lesson. A task that is
+      merely unpublished has a calm Ukrainian page; a connection failure currently falls through
+      to Next's own error page, in English.
 - [ ] Grade→score mapping to the 12-point scale — needs a teacher's decision, not a default.
 - [ ] Is a graded attempt final on first submit, or best-of-N? Affects the attempts query and
       the exam UI.
@@ -180,7 +184,9 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
    prompt → editor → run → check → result, with the target overlaid on the student's drawing.
 5. ~~Error humanization, starter rule set~~ — done. Messages were written against Skulpt's
    recorded wording, not CPython's.
-6. Database + Drizzle schema, task loaded from the DB instead of hard-coded.
+6. ~~Database + Drizzle schema, task loaded from the DB instead of hard-coded~~ — done.
+   `/practice` reads a published task through `lib/db/`; drafts are invisible and republishing
+   changes what the class sees without a deploy. Neon itself is still a manual step.
 7. Session create/join/submit + attempts.
 8. Teacher dashboard, read-only first.
 9. Task authoring UI.

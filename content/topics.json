@@ -1,0 +1,15 @@
+[
+  { "slug": "intro", "title": "Середовище програмування", "order": 1, "gradeTags": [7], "curriculumRef": "7:25" },
+  { "slug": "variables", "title": "Змінні", "order": 2, "gradeTags": [7], "curriculumRef": "7:26" },
+  { "slug": "arithmetic", "title": "Арифметичні оператори", "order": 3, "gradeTags": [7], "curriculumRef": "7:27" },
+  { "slug": "linear", "title": "Лінійний алгоритм", "order": 4, "gradeTags": [7], "curriculumRef": "7:28" },
+  { "slug": "turtle-basics", "title": "Черепашача графіка", "order": 5, "gradeTags": [7], "curriculumRef": "7:29-30" },
+  { "slug": "conditions", "title": "Розгалуження: умовний оператор if", "order": 6, "gradeTags": [7], "curriculumRef": "7:31-32" },
+  { "slug": "turtle-conditions", "title": "Умовний оператор у Turtle", "order": 7, "gradeTags": [7], "curriculumRef": "7:33" },
+  { "slug": "loops-while", "title": "Цикл while", "order": 8, "gradeTags": [7], "curriculumRef": "7:34-35" },
+  { "slug": "loops-for", "title": "Цикл for", "order": 9, "gradeTags": [7], "curriculumRef": "7:36-37" },
+  { "slug": "turtle-loops", "title": "Цикли у Turtle", "order": 10, "gradeTags": [7], "curriculumRef": "7:38" },
+  { "slug": "conditions-nested", "title": "Вкладені умови", "order": 11, "gradeTags": [7], "curriculumRef": "7:39" },
+  { "slug": "debugging", "title": "Тестування та налагодження", "order": 12, "gradeTags": [7], "curriculumRef": "7:40" },
+  { "slug": "turtle-animation", "title": "Динамічна графіка", "order": 13, "gradeTags": [7], "curriculumRef": "7:41-42" }
+]

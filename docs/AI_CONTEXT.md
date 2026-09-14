@@ -6,8 +6,10 @@
 > Update TASKS.md as work progresses. Do not update this file for routine progress —
 > only when architecture or conventions actually change.
 >
-> **Status: greenfield.** No code exists yet. Everything below is a decision, not a
-> description of an implementation. Unverified assumptions are marked and collected in SPIKE.md.
+> **Status: under construction.** The spike passed, the runner, checker, error humanization and
+> the database layer exist; everything student- and teacher-facing above one practice task does
+> not. TASKS.md is the truthful map of what is built. Anything here that no code implements yet
+> is a decision, not a description. Unverified assumptions are collected in SPIKE.md.
 
 ## What This Project Is
 
@@ -37,6 +39,7 @@ The interface language is Ukrainian; the codebase, comments, and docs are Englis
 | Vercel Hobby | Hosting | Free tier is not a constraint at this scale (~25 concurrent users) |
 | Neon Postgres | Database | Serverless, cold start ~1 s, does **not** pause permanently on inactivity |
 | Drizzle ORM | Schema + queries | Schema-as-TypeScript, migrations checked into repo |
+| node-postgres | Database driver | Nothing Neon-specific, so tests and CI run on a plain Postgres. `lib/db/client.ts` is the one place to swap in Neon's HTTP driver if per-request connect cost turns out to matter |
 | Skulpt | In-browser Python execution | See "Python Runner" |
 | CodeMirror 6 | Code editor | Lighter than Monaco, better low-RAM behaviour |
 | Tailwind + CSS custom properties | Styling | Design tokens as CSS vars, Tailwind config maps to them |
@@ -118,7 +121,7 @@ topics
   id, slug, title, order, grade_tags int[], curriculum_ref text, theory_md text
 
 tasks
-  id, topic_id, type, title,
+  id, slug, topic_id, type, title,
   payload jsonb,          -- type-specific, see TASK_SCHEMA.md
   checks jsonb,           -- Check[]
   cases jsonb,            -- RunCase[] | null (input-driven tasks)
@@ -162,6 +165,10 @@ Non-obvious invariants:
 - `tasks.version` is bumped on publish. Draft edits are invisible to students — this is what
   makes it safe to edit a task while a class is working.
 - `reference.artifacts` is derived, never hand-written. It is recomputed on publish.
+- `tasks.slug` exists because task content lives in git as JSON and is imported
+  (`npm run db:seed`). A re-import into a fresh database must update the same rows rather than
+  duplicate them, and uuids are not stable across databases. `topics.slug` is the same idea.
+  It is a content key, not an identifier: foreign keys still use uuids.
 
 ## Progress Codes
 

@@ -76,6 +76,7 @@ one, stop and raise it instead of working around it.
 
 ## Current state
 
-Greenfield. No code. The first task is `docs/SPIKE.md`, which is a static HTML page and not
-part of the application. Do not scaffold Next.js before the spike is answered — its results can
-change the stack.
+The spike is answered (`docs/SPIKE.md`) and Skulpt stayed. Built so far: the runner, the check
+evaluator, error humanization, the database layer, and one practice task end to end. Sessions,
+the teacher side, and five of the six task types do not exist. `docs/TASKS.md` is the map —
+read it rather than guessing from the folder tree.

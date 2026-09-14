@@ -8,7 +8,8 @@ check kind is added here in the same commit as its evaluator.
 
 ```ts
 interface Task {
-  id: string;
+  id: string;                  // uuid, assigned by the database
+  slug: string;                // stable content key, e.g. 'g7-turtle-square'
   topicId: string;
   type: TaskType;
   title: string;
@@ -29,6 +30,14 @@ type TaskType = 'quiz' | 'predict' | 'parsons' | 'fill' | 'code' | 'fix';
 
 A task passes when **every** check passes, for **every** case. With no `cases`, the code is run
 once with no stdin.
+
+### As content in git
+
+`content/seed-tasks/*.json` is the export format and the handoff format, and `npm run db:seed`
+imports it. A content file carries `slug` and `topicSlug` instead of `id` and `topicId` — uuids
+belong to one database and mean nothing in another — and the importer resolves the topic and
+rejects a file whose checks fail `validateTaskChecks`. Topics themselves are in
+`content/topics.json`.
 
 ## Payloads
 

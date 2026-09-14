@@ -29,14 +29,39 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test -- --run --passWithNoTests
-      # The migration-drift check returns here with the Drizzle schema. Adding it
-      # now would fail on a repository that has no drizzle/ directory yet.
+      # A schema edit committed without its migration is invisible until a
+      # deploy tries to run against the old tables. Generating again must
+      # produce nothing: anything new means the migration is missing.
+      - name: migration drift
+        run: |
+          npm run db:generate -- --name ci_drift_check < /dev/null
+          if [ -n "$(git status --porcelain drizzle)" ]; then
+            git status --porcelain drizzle
+            echo "::error::lib/db/schema.ts changed without a migration — run 'npm run db:generate' and commit drizzle/"
+            exit 1
+          fi
 
   # Slow job, separated so it can be re-run alone after a runner change.
   # Everything that needs a real browser: every curriculum construct that
   # executes Python, and the student workspace end to end.
   browser:
     runs-on: ubuntu-latest
+    # The workspace reads its task from the database, so the end-to-end tests
+    # need one. A throwaway Postgres is enough: nothing here is Neon-specific.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,6 +69,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run db:migrate
+      - run: npm run db:seed
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
         env:
