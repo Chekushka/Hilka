@@ -74,14 +74,14 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 
 | Item | Status | Notes |
 |---|---|---|
-| Declarative check evaluator | ❌ | Isomorphic. Must run unchanged on the server later. |
-| Check kinds: choice/text/order | ❌ | No Python execution needed — do these first |
-| Check kinds: stdout/var/expr | ❌ | Needs the runner |
-| Check kinds: `shape_equals` / `shape_contains` / `shape_props` | ❌ | Normalized segment sets. `right(90)` ≡ `left(270)` — needs a test. |
-| Check kinds: `number_close` / `numbers_equal` / `last_line_equals` | ❌ | Input-driven tasks. Prompt text is ignored. |
+| Declarative check evaluator | ✅ | `lib/checker/`. Pure, no DOM, no Python — moves to the server unchanged |
+| Check kinds: choice/text/order | ✅ | |
+| Check kinds: stdout/var/expr | 🔶 | stdout kinds done. `var`/`expr` need the runner to expose program state |
+| Check kinds: `shape_equals` / `shape_contains` / `shape_props` | ✅ | Normalized segment sets, with translate/rotate/scale. Equivalence tested at both runner and checker level |
+| Check kinds: `number_close` / `numbers_equal` / `last_line_equals` | ✅ | Prompt text ignored; a decimal comma reads as a decimal point |
 | Check kinds: `uses` / `forbids` (AST-based) | ❌ | Must not match identifiers or string literals |
 | Reference-solution execution + artifact computation | ❌ | Publish is rejected if the reference fails its own checks |
-| `stdout_equals` blocked on tasks with cases | ❌ | Enforce in the authoring UI, not by convention |
+| `stdout_equals` blocked on tasks with cases | ✅ | `validateTaskChecks` — the authoring UI calls it rather than restating the rule |
 | Parameterized variants + seeded PRNG | ❌ | `hash(session_id + student_name + task_id)` |
 
 ## Task Types

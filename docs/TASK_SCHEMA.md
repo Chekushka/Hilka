@@ -120,6 +120,17 @@ type Check = { message?: string } & (
 );
 ```
 
+### Implementation status
+
+`lib/checker/` evaluates these today: `choice_equals`, `order_equals`,
+`text_equals`, `stdout_equals`, `stdout_contains`, `last_line_equals`,
+`number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`.
+
+Not yet, and **never reported as a pass** — `evaluateCheck` marks them
+`unsupported` rather than letting a task through: `var_equals` and `expr` need
+the runner to expose program state, `uses` and `forbids` need a parsed AST, and
+`grid_goal` waits on the grid being built at all.
+
 ### Rules that are not optional
 
 **`stdout_equals` is banned on any task with `cases`.** Prompt wording varies legitimately
