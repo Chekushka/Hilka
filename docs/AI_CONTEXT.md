@@ -388,6 +388,12 @@ null in practice and playback highlighting uses call order. Equivalent for the l
 concatenate str (not "int") to str`. No shared substring, so the rules in `lib/errors/` match
 Skulpt's wording. A future engine swap invalidates the whole rule base, not just its edges.
 
+**Skulpt reports one message for every syntax mistake.** A missing colon, a
+line that should be indented, an indent with nothing above it and an unclosed
+quote all arrive as `SyntaxError: bad input`. The message cannot distinguish
+them, so the rules in `lib/errors/` read the student's own source line to tell
+which mistake it was. There is no `IndentationError` type at all.
+
 **`col` is null for SyntaxError.** `traceback[0].lineno` is reliable; `colno` is 0 for runtime
 errors and absent for syntax errors. The editor can mark a line, not a column.
 

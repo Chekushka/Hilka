@@ -1,0 +1,36 @@
+{
+  "workspace": {
+    "run": "Запустити",
+    "running": "Виконую…",
+    "check": "Перевірити",
+    "checking": "Перевіряю…",
+    "tryAgain": "Спробувати ще",
+    "loadingEngine": "Готую Python…",
+    "loadingHint": "Перший запуск триває кілька секунд. Далі буде швидко.",
+    "output": "Виведення",
+    "outputEmpty": "Запусти код — і побачиш результат тут.",
+    "yourDrawing": "Твій малюнок",
+    "target": "Зразок",
+    "editorLabel": "Твій код"
+  },
+  "hints": {
+    "title": "Підказки",
+    "show": "Показати підказку",
+    "next": "Ще підказка",
+    "counter": "Підказка {n} з {total}"
+  },
+  "result": {
+    "passed": "Готово!",
+    "passedNote": "Задача складена правильно.",
+    "notYet": "Ще не те",
+    "notYetNote": "Подивись на малюнок і спробуй ще раз. Нічого не втрачено.",
+    "errorLine": "Рядок {line}"
+  },
+  "task": {
+    "statement": "Завдання",
+    "difficulty": "Складність"
+  },
+  "meta": {
+    "description": "Python для 7–9 класу"
+  }
+}

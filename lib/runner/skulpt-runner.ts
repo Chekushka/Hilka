@@ -17,19 +17,34 @@ export class SkulptRunner implements PythonRunner {
   private worker: Worker | null = null;
   private pending: Pending | null = null;
   private nextId = 1;
+  private ready: Promise<void> | null = null;
+  private markReady: (() => void) | null = null;
 
   private ensureWorker(): Worker {
     if (this.worker) {
       return this.worker;
     }
+    this.ready = new Promise<void>((resolve) => {
+      this.markReady = resolve;
+    });
     const worker = new Worker(new URL('./worker.ts', import.meta.url));
     worker.onmessage = (event: MessageEvent<FromWorker>) => this.receive(event.data);
     this.worker = worker;
     return worker;
   }
 
+  warmUp(): Promise<void> {
+    this.ensureWorker();
+    return this.ready ?? Promise.resolve();
+  }
+
   private receive(message: FromWorker): void {
-    if (message.type === 'ready' || !this.pending) {
+    if (message.type === 'ready') {
+      this.markReady?.();
+      this.markReady = null;
+      return;
+    }
+    if (!this.pending) {
       return;
     }
     const pending = this.pending;
@@ -107,5 +122,7 @@ export class SkulptRunner implements PythonRunner {
   dispose(): void {
     this.worker?.terminate();
     this.worker = null;
+    this.ready = null;
+    this.markReady = null;
   }
 }

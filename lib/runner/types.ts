@@ -73,6 +73,13 @@ export interface RunOptions {
 }
 
 export interface PythonRunner {
+  /**
+   * Starts the engine and resolves when it can accept a run. Loading Skulpt
+   * takes a couple of seconds on a classroom machine, and the workspace has to
+   * show that rather than leave a dead button — a blank panel is what makes a
+   * student press F5.
+   */
+  warmUp(): Promise<void>;
   run(code: string, options: RunOptions): Promise<RunResult>;
   /** Kills a run in progress. The next run starts a fresh interpreter. */
   cancel(): void;

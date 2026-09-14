@@ -23,9 +23,14 @@ check() {
 exists() { [ -e "$1" ]; }
 
 # --- rule 3: nothing outside lib/runner imports Skulpt ------------------------
+# Matches code, not prose. lib/errors/ has to name Skulpt in its comments — its
+# rules match on Skulpt's own message wording, which is not CPython's — and that
+# coupling is documented in AI_CONTEXT.md rather than hidden. What must never
+# happen is another module reaching for the engine itself.
 if exists lib || exists app || exists components; then
-  check "Skulpt referenced outside lib/runner — the runner must stay behind its interface (CLAUDE.md rule 3)" \
-    grep -rniE "skulpt" --include=*.ts --include=*.tsx \
+  check "Skulpt imported or used outside lib/runner — the runner must stay behind its interface (CLAUDE.md rule 3)" \
+    grep -rnE "(from|require\()[[:space:]]*['\"][^'\"]*skulpt|importScripts\([^)]*skulpt|\bSk\.[A-Za-z]" \
+      --include=*.ts --include=*.tsx \
       --exclude-dir=runner --exclude-dir=node_modules \
       app components lib
 fi

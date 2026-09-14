@@ -33,9 +33,9 @@ jobs:
       # now would fail on a repository that has no drizzle/ directory yet.
 
   # Slow job, separated so it can be re-run alone after a runner change.
-  # Every curriculum construct that actually executes Python lives here:
-  # variables, arithmetic, if, while, for, input, turtle, random, try/except.
-  runner:
+  # Everything that needs a real browser: every curriculum construct that
+  # executes Python, and the student workspace end to end.
+  browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +45,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:runner
+      - run: npm run test:browser
         env:
           CI: 'true'
