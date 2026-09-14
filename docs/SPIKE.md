@@ -8,14 +8,15 @@ Do this before `create-next-app`. A failure here changes the stack, not the styl
 
 ## Outcome
 
-**All six pass.** Checks 1–5 are properties of the engine and are recorded below from a
-development machine; they do not change per machine. **Check 6 is about the classroom machine
-and is still open** — the numbers below are a dev-machine baseline to compare against, not the
-answer.
+**All six pass, on the classroom machine.** Checks 1–5 are properties of the engine and hold
+anywhere; check 6 was measured on the school machine itself and every measured target is met.
+Skulpt stays, the stack is unchanged, and no decision gate was triggered.
 
-Harness: `spike/`, published to GitHub Pages by `.github/workflows/spike-pages.yml`. Open it on
-the school machine, press *Run automatic checks*, run the two interactive checks by hand, then
-*Copy results as Markdown* and paste into check 6 below.
+The classroom run also settled check 4's worst case with a real person: a **53-second** pause
+before typing, against a 5-second execution limit, produced no timeout.
+
+Harness: `spike/`, published to GitHub Pages by `.github/workflows/spike-pages.yml`. Re-run it
+there after any runner change.
 
 Three findings that changed something, now in the Gotchas of AI_CONTEXT.md: the source line is
 not reachable from inside a module stub, Skulpt's `str + int` message differs from CPython's, and
@@ -155,10 +156,10 @@ must **not** time out when the student takes 30 seconds to type.
 
 | Question | Result |
 |---|---|
-| Does `Sk.execLimit` stop an infinite loop? | Yes. `while True: pass` stopped at ~2.00 s against a 2 s limit, raising `TimeLimitError` («Program exceeded run time limit.») |
-| Can the limit be paused around an input suspension? | Yes. Push `Sk.execStart` forward by the time waited when input resolves. Verified: 8 s of typing against a 5 s limit, no timeout |
-| Does `Worker.terminate()` work as a hard fallback, and how long does restart take? | Yes. ~50–70 ms to a usable worker on a dev machine — re-measure in the classroom |
-| Does `time.sleep` suspend rather than block? | Yes. `sleep(2)` took 2005 ms and output before and after it arrived normally |
+| Does `Sk.execLimit` stop an infinite loop? | Yes. `while True: pass` stopped at 2011 ms against a 2 s limit, raising `TimeLimitError` («Program exceeded run time limit.») |
+| Can the limit be paused around an input suspension? | Yes. Push `Sk.execStart` forward by the time waited when input resolves. Verified on the classroom machine: **53 s** before typing, against a 5 s limit, no timeout |
+| Does `Worker.terminate()` work as a hard fallback, and how long does restart take? | Yes. 81 ms to a usable worker on the classroom machine |
+| Does `time.sleep` suspend rather than block? | Yes. `sleep(2)` took 2013 ms and output before and after it arrived normally |
 
 A timer that counts typing time as execution time will produce "your program stopped
 responding" for the slowest student in the room. That is the worst possible false positive for
@@ -201,18 +202,22 @@ SyntaxError: EOF in multi-line statement    line 2, col null
 
 ### 6. The classroom machine
 
-| Measurement | Target | Result |
-|---|---|---|
-**Open — must be redone on the classroom machine.** Dev-machine baseline in brackets.
+Measured on the classroom machine. Dev-machine numbers in brackets for comparison.
 
 | Measurement | Target | Result |
 |---|---|---|
-| Time from page open to "Run" being usable, cold cache, school network | < 5 s | *(dev: 107 ms, of which 50 ms worker boot)* |
-| Same, warm cache | < 1 s | *(dev: same order)* |
-| Time to run a trivial program | < 300 ms | *(dev: 2–13 ms)* |
-| Memory after ten runs (does it grow?) | stable | *(dev: 2.7 → 2.7 MB, flat)* |
-| Behaviour with two browser tabs open | usable | |
-| Rendering 200 turtle segments on canvas | no visible lag | *(dev: 6 ms to run, 2.6–8.5 ms to draw)* |
+| Time from page open to "Run" being usable, cold cache, school network | < 5 s | **2214 ms**, of which 80 ms is the worker — the rest is fetching 945 KB of engine *(dev: 107 ms)* |
+| Same, warm cache | < 1 s | not recorded |
+| Time to run a trivial program | < 300 ms | **2 ms** *(dev: 2–13 ms)* |
+| Memory after ten runs (does it grow?) | stable | **0.8 → 0.8 MB**, flat *(dev: 2.7 → 2.7 MB)* |
+| Behaviour with two browser tabs open | usable | not recorded |
+| Rendering 200 turtle segments on canvas | no visible lag | **11 ms to run, 1.6 ms to draw** *(dev: 6 / 2.6 ms)* |
+
+Every target that was measured is met, most by an order of magnitude. The one number that is
+not negligible is the cold load: 2.2 s, and essentially all of it is transferring the engine.
+That is well inside the 5 s target but far too long to leave a blank panel, which is what the
+loading state in the design brief is for. It is also the number that will degrade first when
+twenty-five machines fetch the same 945 KB at the same moment at the start of a lesson.
 
 Vendored engine weight, which is what the school network actually pays for: `skulpt.min.js`
 547 KB + `skulpt-stdlib.js` 398 KB = 945 KB uncompressed, ~136 KB gzipped for the engine.
@@ -221,6 +226,9 @@ If cold load is far over target, the loading state the design brief asks for sto
 nicety and becomes the difference between a working lesson and twenty students pressing F5.
 
 ## Decision gates
+
+**Outcome: all six pass; the first row applies.** No gate was triggered — no Pyodide evaluation,
+no COOP/COEP headers, no lighter engine for grade 8, no return of the grid world.
 
 | Outcome | Action |
 |---|---|
