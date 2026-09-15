@@ -19,7 +19,7 @@ content-era.
 | `.github/workflows/guardrails.yml` | A | Runs the above on every PR |
 | `.github/workflows/spike-pages.yml` | A | Publishes `spike/` to GitHub Pages |
 | `spike/index.html` | A | Placeholder harness — replace with the real one |
-| `.github/workflows-pending/ci.yml` | B | typecheck, lint, unit tests, migration drift, runner tests |
+| `.github/workflows/ci.yml` | B | typecheck, lint, unit tests, migration drift, runner tests |
 | `.github/workflows-pending/migrate.yml` | B | `drizzle-kit migrate` on merge to `main` |
 | `.github/workflows-pending/reference-check.yml` | C | Re-runs every reference solution against its own checks |
 
@@ -81,30 +81,47 @@ When creating the Claude Code environment:
 
 ### 4. Activate the pending workflows
 
+`ci.yml` is live. `migrate.yml` moves across once the `production` environment
+exists (step 7):
+
 ```sh
-git mv .github/workflows-pending/ci.yml      .github/workflows/
 git mv .github/workflows-pending/migrate.yml .github/workflows/
-git rm .github/workflows-pending/README.md
 ```
 
-`ci.yml` expects these scripts in `package.json`:
+The workflows call these scripts, which `package.json` already defines:
+`typecheck`, `lint`, `test`, `test:browser`, `db:generate`, `db:migrate`,
+`db:seed`. `reference-check.yml` additionally wants `verify:references`, which
+arrives with reference-solution execution.
 
-```json
-{
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "lint": "next lint",
-    "test": "vitest",
-    "test:runner": "playwright test",
-    "verify:references": "tsx scripts/verify-references.ts"
-  }
-}
+`test` covers `lib/checker/`, `lib/seed/`, `lib/errors/` and `lib/db/`'s pure
+mapping — node environment, no browser, no database. `test:browser` is the
+browser job: it actually executes Python in a Worker, one test per curriculum
+construct, plus the test proving `right(90)` and `left(270)` pass the same
+`shape_equals` check.
+
+The browser job also runs a `postgres:16` service, applies the migrations and
+seeds `content/`: the workspace reads its task from the database, so without
+one `/practice` is a 404 and every end-to-end test fails. Nothing there is
+Neon-specific — the app speaks plain Postgres.
+
+The migration-drift step regenerates migrations and fails if anything new
+appears. A schema edit committed without its migration is otherwise invisible
+until a deploy runs against the old tables.
+
+### Working on the database locally
+
+```sh
+createdb hilka
+export DATABASE_URL=postgres://localhost/hilka
+npm run db:migrate    # apply drizzle/
+npm run db:seed       # import content/topics.json and content/seed-tasks/
 ```
 
-`test` covers `lib/checker/`, `lib/seed/`, and `lib/errors/` — pure, node
-environment, no browser. `test:runner` is the browser job: it actually executes
-Python in a Worker, one test per curriculum construct, plus the test proving
-`right(90)` and `left(270)` pass the same `shape_equals` check.
+After editing `lib/db/schema.ts`, run `npm run db:generate` and commit what it
+writes under `drizzle/` in the same commit as the schema change. Never
+`drizzle-kit push` against anything but a throwaway database — it applies
+differences without recording a migration, and the drift check will then fail
+for everyone else.
 
 ### 5. Vercel
 

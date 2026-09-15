@@ -1,6 +1,6 @@
 {
-  "id": "g7-turtle-square",
-  "topicId": "turtle-basics",
+  "slug": "g7-turtle-square",
+  "topicSlug": "turtle-basics",
   "type": "code",
   "title": "Квадрат",
   "payload": {
