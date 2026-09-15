@@ -116,7 +116,10 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Progress codes: mint, restore, merge | ❌ | 8 chars, unambiguous alphabet, rate-limited entry, merge-not-replace |
 | Join by 6-char code | ❌ | Code must be legible from the back row on a projector |
 | Name selection from roster | ❌ | No password, no email |
-| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. The task comes from the database now; which task is still a constant, and there is no navigation or session yet |
+| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. Now reused by both `/practice` (constant task) and a session (task chosen from its list); an optional `onSubmitAttempt` prop reports each Check's outcome without practice mode knowing sessions exist |
+| Join by 6-char code | ✅ | `app/(student)/s/[code]/page.tsx` + `lib/db/sessions.ts` `getOpenSessionByCode`. Case-insensitive; a closed or unknown code lands on the same calm not-found screen, on purpose — the distinction is for the teacher |
+| Name selection from roster | ✅ | `components/session/SessionRoom.tsx`. Kept in `sessionStorage` per session code via `useSyncExternalStore`, so a reload does not ask again |
+| Attempt submission (append-only) | ✅ | `POST /api/attempts` → `lib/db/attempts.ts`. Validated server-side against the open session, its assigned tasks and the roster (`validateAttemptContext`) — the request body itself is untrusted, per "Cheating and Trust" |
 | Loading state for Skulpt | ✅ | Engine state surfaced through `warmUp()`; buttons disabled with a line saying why |
 | Exam mode: timer, no hints, single submit | ❌ | |
 
@@ -128,7 +131,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Task authoring UI | ❌ | All six types + checks + hints. Big and unglamorous — do not defer past sprint 2. |
 | Draft / publish + version bump | ❌ | Publishing is what students see; drafts are invisible |
 | Class + roster management | ❌ | Roster is a plain string array |
-| Session builder | ❌ | Filter by topic and grade tag, set limit and hint availability |
+| Session builder | ❌ | Filter by topic and grade tag, set limit and hint availability. Until this exists, `scripts/db/seed-demo-session.ts` (`npm run db:seed:demo`) creates one demo teacher/class/open session directly, so the join flow has something to join |
 | Results dashboard | ❌ | Poll every 10 s; no realtime in v1 |
 | CSV export | ❌ | |
 | JSON export/import of all tasks | ❌ | Backup, git history, handoff to another teacher |
@@ -191,7 +194,11 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 6. ~~Database + Drizzle schema, task loaded from the DB instead of hard-coded~~ — done.
    `/practice` reads a published task through `lib/db/`; drafts are invisible and republishing
    changes what the class sees without a deploy. Neon itself is still a manual step.
-7. Session create/join/submit + attempts.
+7. ~~Session create/join/submit + attempts~~ — done, scoped: no session builder or teacher
+   auth exist yet, so a demo session is seeded directly in the database
+   (`scripts/db/seed-demo-session.ts`). `/s/[code]` joins, picks a name from the roster, runs
+   any assigned task, and each Check posts an append-only row to `/api/attempts`, checked
+   server-side against the open session, its task list and the roster.
 8. Teacher dashboard, read-only first.
 9. Task authoring UI.
 10. Remaining task types, `parsons` first.

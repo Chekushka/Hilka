@@ -17,6 +17,16 @@ export async function getPublishedCodeTask(slug: string): Promise<CodeTask | nul
   return row ? toCodeTask(row) : null;
 }
 
+/** Same rule as `getPublishedCodeTask`, keyed by id — a session stores ids. */
+export async function getPublishedCodeTaskById(id: string): Promise<CodeTask | null> {
+  const [row] = await getDb()
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, id), eq(tasks.status, 'published')))
+    .limit(1);
+  return row ? toCodeTask(row) : null;
+}
+
 /** Published tasks of one topic, in the order a student should meet them. */
 export async function listPublishedTasks(topicSlug: string): Promise<CodeTask[]> {
   const rows = await getDb()
