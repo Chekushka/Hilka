@@ -31,18 +31,20 @@ than decorative.
 | Item | Status | Notes |
 |---|---|---|
 | Next.js + TypeScript scaffold | ✅ | Next 16, React 19, Tailwind v4, TS strict, no `src/` — folder map as in AI_CONTEXT.md |
-| Vercel project + preview deploys | ❌ | |
-| Neon database + connection | 🔶 | Code is there and runs on any Postgres (`lib/db/client.ts`, node-postgres). The Neon project itself, and the cold-start measurement, are still manual |
+| Vercel project + preview deploys | ✅ | Live at <https://hilka.vercel.app>, production branch `main`, functions in `fra1`. Settings and their failure modes in CI_CD.md §5 |
+| Neon database + connection | ✅ | Frankfurt (eu-central-1), migrated and seeded; `DATABASE_URL` injected into Vercel by the Neon integration. `/practice` serves the square from it |
 | Drizzle schema + first migration | ✅ | `lib/db/schema.ts`, `drizzle/0000_initial_schema.sql`. All seven tables; `tasks.slug` added so content in git has a stable key |
 | Design tokens as CSS vars + Tailwind mapping | ✅ | Both themes in `app/globals.css`, mapped through Tailwind v4 `@theme`. Lifted from the mockups |
 
 ## CI/CD and Remote Development
 
-See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
+See CI_CD.md. Phases A and B are live — CI on every PR, and deploys to Vercel against
+Neon. What is left of B is the `production` environment that gates `migrate.yml`.
 
 | Item | Status | Notes |
 |---|---|---|
 | Docs in the repository | ✅ | A cloud session clones the repo; without these it starts blind |
+| Cloud environment for remote sessions | 🔶 | Sessions run, but the network policy blocks `*.vercel.app` and `*.neon.tech`: an agent can neither open a deploy nor reach the database, and has to ask a human what the live site shows |
 | `SessionStart` hook + permission allowlist | ✅ | `.claude/settings.json`; no-op until `package.json` exists |
 | Guardrail script + workflow | ✅ | CLAUDE.md rules 1, 3, 4 and the convention rules, as checks |
 | GitHub Pages deploy of `spike/` | 🔶 | Workflow committed; Pages source must be switched on in repo settings |
@@ -51,8 +53,8 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 | `ci.yml` — typecheck, lint, tests | ✅ | Live, with the migration-drift step. The browser job runs a Postgres service, migrates and seeds — the workspace reads its task from the database |
 | `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
 | `reference-check.yml` — references vs their own checks | 🔶 | Staged; needs published seed tasks |
-| Vercel Git integration + preview deploys | ❌ | Manual; previews are how the design gets tested on classroom hardware |
-| Neon branch-per-preview | ❌ | Manual, via the Neon Vercel integration |
+| Vercel Git integration + preview deploys | ✅ | Installed; PR #7 carried its check. **Deployment Protection is on**, so a logged-out classroom machine cannot open a preview until Vercel Authentication is off or a sharable link is used — CI_CD.md §5 |
+| Neon branch-per-preview | 🔶 | Integration installed. Unverified: that *"create a branch for each preview deployment"* is on and a PR preview really gets its own branch |
 
 ## Python Runner
 
@@ -156,6 +158,8 @@ See CI_CD.md. Phase A is live; phase B activates with the Next.js scaffold.
 - [x] Skulpt vs Pyodide — Skulpt for v1, behind an adapter. Revisit if the spike fails.
 - [x] Task storage — database as source of truth, with JSON export to git.
 - [x] Visual style — cozy; tool-like workspace, game-like reward layer.
+- [ ] Neon cold start on the first request of a lesson. Unmeasured, and it lands on the
+      student who opens `/practice` first — measure it on the classroom machine, not a laptop.
 - [ ] What a student should see when the database is unreachable mid-lesson. A task that is
       merely unpublished has a calm Ukrainian page; a connection failure currently falls through
       to Next's own error page, in English.

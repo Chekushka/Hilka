@@ -404,6 +404,12 @@ which mistake it was. There is no `IndentationError` type at all.
 **`col` is null for SyntaxError.** `traceback[0].lineno` is reliable; `colno` is 0 for runtime
 errors and absent for syntax errors. The editor can mark a line, not a column.
 
+**`sslmode=require` does not mean what libpq means by it.** `pg` currently treats
+`require`, `prefer` and `verify-ca` as aliases for `verify-full`, and warns on every
+connection that `pg` v9 will switch them to libpq semantics, which verify no certificate at
+all. Nothing is wrong today, but the upgrade that changes it will silently stop verifying
+Neon's certificate unless the connection strings say `verify-full` by then.
+
 **Skulpt does not echo an `input()` prompt.** With `inputfunTakesPrompt = true` the text arrives
 at `inputfun`, but nothing writes it to output. The output panel must print the prompt itself,
 or the student sees a bare cursor where the question should be.
