@@ -114,9 +114,10 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 |---|---|---|
 | Practice mode (localStorage progress) | ❌ | Primary store; no server round-trip to resume on the same machine |
 | Progress codes: mint, restore, merge | ❌ | 8 chars, unambiguous alphabet, rate-limited entry, merge-not-replace |
-| Join by 6-char code | ❌ | Code must be legible from the back row on a projector |
-| Name selection from roster | ❌ | No password, no email |
-| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. The task comes from the database now; which task is still a constant, and there is no navigation or session yet |
+| Join by 6-char code | ✅ | `/s` (entry) → `/s/[code]` (join + runner). Case-insensitive, dashes/spaces stripped (`lib/session/code.ts`) |
+| Name selection from roster | ✅ | `NamePicker` — a list of buttons, no typing. Chosen name kept in `sessionStorage`, not an account |
+| Attempts on an errored or timed-out check | ❌ | `onAttempt` only fires after a judged check (`report` set); a run that errors or times out records nothing yet — teacher visibility into "who is stuck" needs this |
+| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`, reused by both practice and sessions via an `onAttempt` callback. Which task(s) a page shows is still either a constant or `sessions.task_ids` — no student-driven navigation across topics yet |
 | Loading state for Skulpt | ✅ | Engine state surfaced through `warmUp()`; buttons disabled with a line saying why |
 | Exam mode: timer, no hints, single submit | ❌ | |
 
@@ -128,7 +129,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Task authoring UI | ❌ | All six types + checks + hints. Big and unglamorous — do not defer past sprint 2. |
 | Draft / publish + version bump | ❌ | Publishing is what students see; drafts are invisible |
 | Class + roster management | ❌ | Roster is a plain string array |
-| Session builder | ❌ | Filter by topic and grade tag, set limit and hint availability |
+| Session builder | ❌ | Filter by topic and grade tag, set limit and hint availability. `scripts/db/create-session.ts` is the CLI stopgap until this exists |
 | Results dashboard | ❌ | Poll every 10 s; no realtime in v1 |
 | CSV export | ❌ | |
 | JSON export/import of all tasks | ❌ | Backup, git history, handoff to another teacher |
@@ -165,7 +166,9 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
       to Next's own error page, in English.
 - [ ] Grade→score mapping to the 12-point scale — needs a teacher's decision, not a default.
 - [ ] Is a graded attempt final on first submit, or best-of-N? Affects the attempts query and
-      the exam UI.
+      the exam UI. `SessionRunner` currently lets a student move to the next task after any
+      completed check, pass or fail — fine for practice, not a decision for graded mode yet.
+- [ ] `sessions.shuffle` is stored but not honored — task order is always `task_ids` as written.
 - [ ] Does the advanced branch share a topic with the main track or sit in a separate one?
 - [x] Curriculum — supplied and mapped in CURRICULUM.md. Programming runs in semester 2 in all
       three grades, so the deadline is roughly January, not September.
@@ -191,7 +194,11 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 6. ~~Database + Drizzle schema, task loaded from the DB instead of hard-coded~~ — done.
    `/practice` reads a published task through `lib/db/`; drafts are invisible and republishing
    changes what the class sees without a deploy. Neon itself is still a manual step.
-7. Session create/join/submit + attempts.
+7. ~~Session create/join/submit + attempts~~ — done for a single-topic session with one
+   task: join by code, pick a name, work through `sessions.task_ids` in order, each check
+   posts to `/api/attempts` (re-validated server-side: session still open, name on the
+   roster, task in the session). No teacher UI creates a session yet — `npm run
+   db:create-session` does, until step 9.
 8. Teacher dashboard, read-only first.
 9. Task authoring UI.
 10. Remaining task types, `parsons` first.

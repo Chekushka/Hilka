@@ -101,8 +101,8 @@ git mv .github/workflows-pending/migrate.yml .github/workflows/
 
 The workflows call these scripts, which `package.json` already defines:
 `typecheck`, `lint`, `test`, `test:browser`, `db:generate`, `db:migrate`,
-`db:seed`. `reference-check.yml` additionally wants `verify:references`, which
-arrives with reference-solution execution.
+`db:seed`, `db:create-session`. `reference-check.yml` additionally wants
+`verify:references`, which arrives with reference-solution execution.
 
 `test` covers `lib/checker/`, `lib/seed/`, `lib/errors/` and `lib/db/`'s pure
 mapping — node environment, no browser, no database. `test:browser` is the
@@ -113,7 +113,9 @@ construct, plus the test proving `right(90)` and `left(270)` pass the same
 The browser job also runs a `postgres:16` service, applies the migrations and
 seeds `content/`: the workspace reads its task from the database, so without
 one `/practice` is a 404 and every end-to-end test fails. Nothing there is
-Neon-specific — the app speaks plain Postgres.
+Neon-specific — the app speaks plain Postgres. It also mints one fixture
+session with `db:create-session` (code `TEST01`) for `tests/e2e/session.spec.ts`
+— there is no teacher UI to do that yet.
 
 The migration-drift step regenerates migrations and fails if anything new
 appears. A schema edit committed without its migration is otherwise invisible
@@ -126,6 +128,12 @@ createdb hilka
 export DATABASE_URL=postgres://localhost/hilka
 npm run db:migrate    # apply drizzle/
 npm run db:seed       # import content/topics.json and content/seed-tasks/
+
+# To try the session join flow (/s/[code]) — no teacher UI creates a session
+# yet, so this is the stopgap (docs/TASKS.md):
+npm run db:create-session -- \
+  --teacher you@example.com --class "7-А" --roster "Оля,Іван" \
+  --tasks g7-turtle-square --code ABC123
 ```
 
 After editing `lib/db/schema.ts`, run `npm run db:generate` and commit what it

@@ -11,7 +11,7 @@
  * Laid out for 1366×768 and legible from the back row when a teacher projects
  * it; it stacks to one column when there is not room for two.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { Hints } from './Hints';
@@ -20,9 +20,50 @@ import { t } from '@/lib/i18n';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
 import type { CodeTask } from '@/lib/task/types';
 
-export function TaskWorkspace({ task }: { task: CodeTask }) {
+export interface TaskAttempt {
+  code: string;
+  passed: boolean;
+  hintsUsed: number;
+  durationMs: number;
+}
+
+interface TaskWorkspaceProps {
+  task: CodeTask;
+  /** Fired once per completed check (a run alone judges nothing, so it never
+   *  fires for one) — the session runner uses this to record an attempt.
+   *  Practice mode leaves it unset. A check that errors or times out is not
+   *  reported here yet: report stays null for those, so there is nothing to
+   *  attach (docs/TASKS.md). */
+  onAttempt?: (attempt: TaskAttempt) => void;
+}
+
+export function TaskWorkspace({ task, onAttempt }: TaskWorkspaceProps) {
   const [code, setCode] = useState(task.payload.starter);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const startedAt = useRef(0);
   const { engine, busy, result, report, target, run, check } = useTaskRunner(task);
+
+  useEffect(() => {
+    // Date.now() is impure, so it belongs in an effect rather than in the
+    // initial useRef() call — this runs once, on mount, before a student can
+    // possibly have clicked Check yet.
+    startedAt.current = Date.now();
+  }, []);
+
+  useEffect(() => {
+    if (!report) {
+      return;
+    }
+    onAttempt?.({
+      code,
+      passed: report.passed,
+      hintsUsed,
+      durationMs: Date.now() - startedAt.current
+    });
+    // Only a fresh check (a new report object) should count as an attempt —
+    // code/hintsUsed are read at that moment, not watched on their own.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report]);
 
   const loading = engine === 'loading';
   const disabled = loading || busy;
@@ -33,7 +74,7 @@ export function TaskWorkspace({ task }: { task: CodeTask }) {
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
         <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
         <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={task.hints} />
+        <Hints hints={task.hints} onReveal={setHintsUsed} />
       </section>
 
       <section className="flex flex-col gap-4">

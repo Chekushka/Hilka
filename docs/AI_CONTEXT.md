@@ -410,6 +410,21 @@ connection that `pg` v9 will switch them to libpq semantics, which verify no cer
 all. Nothing is wrong today, but the upgrade that changes it will silently stop verifying
 Neon's certificate unless the connection strings say `verify-full` by then.
 
+**A unique-constraint violation from drizzle has the pg error in `.cause`, not
+`.message`.** `error.message` is drizzle's own "Failed query: ..." wrapper; the constraint name
+(`error.cause.constraint`) and the Postgres code (`error.cause.code === '23505'`) are on the
+driver error underneath. Matching on `.message.includes(...)` silently never matches.
+
+**React's compiler-backed hook rules (`react-hooks/set-state-in-effect`,
+`react-hooks/purity`) flag two patterns that are still correct here.** Reading
+`sessionStorage` after mount and calling `setState` from that effect is the standard
+hydration-safe way to use browser storage in a component also rendered on the server — the
+lint rule's own suggested alternative (a lazy `useState` initializer) reads the same storage
+during render, which mismatches the server-rendered HTML instead. Likewise `Date.now()` in a
+`useRef()` initializer is impure and has to move into a mount-only effect. Both are
+`eslint-disable-next-line`d in place, with a comment saying why, rather than restructured
+around the rule.
+
 **Skulpt does not echo an `input()` prompt.** With `inputfunTakesPrompt = true` the text arrives
 at `inputfun`, but nothing writes it to output. The output panel must print the prompt itself,
 or the student sees a bare cursor where the question should be.

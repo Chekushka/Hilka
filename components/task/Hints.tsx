@@ -7,7 +7,14 @@
 import { useState } from 'react';
 import { t } from '@/lib/i18n';
 
-export function Hints({ hints }: { hints: string[] }) {
+interface HintsProps {
+  hints: string[];
+  /** Fired with the new count each time another hint is revealed — a session
+   *  attempt records how many were used; practice mode ignores it. */
+  onReveal?: (count: number) => void;
+}
+
+export function Hints({ hints, onReveal }: HintsProps) {
   const [shown, setShown] = useState(0);
   if (hints.length === 0) return null;
 
@@ -27,7 +34,11 @@ export function Hints({ hints }: { hints: string[] }) {
       {shown < hints.length && (
         <button
           type="button"
-          onClick={() => setShown(shown + 1)}
+          onClick={() => {
+            const next = shown + 1;
+            setShown(next);
+            onReveal?.(next);
+          }}
           className="mt-2 rounded-md border border-accent px-3 py-1.5 text-sm text-accent"
         >
           {shown === 0 ? t('hints.show') : t('hints.next')}

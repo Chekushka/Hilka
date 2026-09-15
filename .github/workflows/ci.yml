@@ -71,6 +71,15 @@ jobs:
       - run: npm ci
       - run: npm run db:migrate
       - run: npm run db:seed
+      # tests/e2e/session.spec.ts needs a real session to join — the teacher
+      # session builder does not exist yet, so this is how one gets minted
+      # (docs/TASKS.md, scripts/db/create-session.ts).
+      - name: create the e2e fixture session
+        run: |
+          npm run db:create-session -- \
+            --teacher e2e@example.com --class "E2E" \
+            --roster "Тестова Олена,Тестовий Богдан" \
+            --tasks g7-turtle-square --code TEST01
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
         env:
