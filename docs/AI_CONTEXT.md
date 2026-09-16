@@ -224,6 +224,7 @@ interface PythonRunner {
     stdin?: string[];              // headless: queue consumed by input()
     timeoutMs: number;             // default 5000, excludes time spent waiting for input
     randomSeed?: number;           // headless: makes `random` deterministic
+    exprs?: string[];              // `expr` check bodies, evaluated after the run
     onStdout?(chunk: string): void;
     onInputRequest?(prompt: string): Promise<string>;   // interactive only
   }): Promise<RunResult>;
@@ -236,6 +237,8 @@ interface RunResult {
   actions: GridAction[];     // optional grid API, empty when unused
   timedOut: boolean;
   inputsConsumed: number;
+  vars: Record<string, PyValue>;        // module globals after the run — powers var_equals
+  exprResults: Record<string, boolean>; // opts.exprs, keyed by their own text — powers expr
 }
 ```
 
@@ -436,3 +439,15 @@ Neon's certificate unless the connection strings say `verify-full` by then.
 **Skulpt does not echo an `input()` prompt.** With `inputfunTakesPrompt = true` the text arrives
 at `inputfun`, but nothing writes it to output. The output panel must print the prompt itself,
 or the student sees a bare cursor where the question should be.
+
+**A global named `name`, `length`, `for`, `class`, … is stored mangled.** Skulpt's compiler
+(`fixReserved` in its `compile.js`) suffixes any Python identifier that collides with a JS
+reserved word or an `Object`/`Function` prototype member — `name`, `length`, `constructor`,
+`toString`, `for`, `class`, and about seventy others — with `_$rw$` before using it as a
+property key, because the compiled module scope is a plain JS object and bare `name` or
+`length` would hit the real `Function.prototype`/`Object.prototype` member instead of storing
+the student's value. `lib/runner/py-values.ts` reads the finished program's globals for
+`var_equals` and strips that suffix (`$` is not a legal character in a Python identifier, so
+the strip is always unambiguous) — anyone reading `module.$d` directly for a future check kind
+needs the same unmangling, or a task whose reference solution happens to use a variable called
+`name` silently reports it as `undefined`.

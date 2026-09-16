@@ -5,6 +5,16 @@
  */
 export interface SkulptPyObject {
   v?: unknown;
+  /** Skulpt's own type name for the value: 'int', 'str', 'list', 'function', … */
+  'tp$name'?: string;
+  /** Present on dict instances. */
+  $items?(): [SkulptPyObject, SkulptPyObject][];
+}
+
+/** What `Sk.importMainWithBody` resolves with once the program finishes. */
+export interface SkulptModule {
+  /** Module-level bindings, keyed by name. Populated incrementally as the program runs. */
+  $d: Record<string, SkulptPyObject>;
 }
 
 export interface SkulptException {
@@ -28,7 +38,10 @@ export interface SkulptConfig {
 export interface SkulptGlobal {
   configure(config: SkulptConfig): void;
   importMainWithBody(name: string, dumpJS: boolean, body: string, canSuspend: boolean): unknown;
-  misceval: { asyncToPromise(fn: () => unknown): Promise<unknown> };
+  misceval: {
+    asyncToPromise(fn: () => unknown): Promise<unknown>;
+    isTrue(value: SkulptPyObject): boolean;
+  };
   ffi: {
     remapToJs(value: SkulptPyObject): unknown;
     remapToPy(value: unknown): SkulptPyObject;

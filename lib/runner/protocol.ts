@@ -1,5 +1,5 @@
 /** Messages between the adapter on the main thread and the worker. */
-import type { Dot, PyError, Segment } from './types';
+import type { Dot, PyError, PyValue, Segment } from './types';
 
 export interface RunRequest {
   type: 'run';
@@ -9,6 +9,7 @@ export interface RunRequest {
   stdin: string[];
   timeoutMs: number;
   randomSeed: number | null;
+  exprs: string[];
 }
 
 export interface InputResponse {
@@ -45,6 +46,8 @@ export interface DoneMessage {
   timedOut: boolean;
   inputsConsumed: number;
   elapsedMs: number;
+  vars: Record<string, PyValue>;
+  exprResults: Record<string, boolean>;
 }
 
 export type FromWorker = ReadyMessage | StdoutMessage | InputRequestMessage | DoneMessage;

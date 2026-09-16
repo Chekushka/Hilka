@@ -133,12 +133,29 @@ type Check = { message?: string } & (
 
 `lib/checker/` evaluates these today: `choice_equals`, `order_equals`,
 `text_equals`, `stdout_equals`, `stdout_contains`, `last_line_equals`,
-`number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`.
+`number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`,
+`uses`, `forbids`, `var_equals`, `expr`.
 
-Not yet, and **never reported as a pass** — `evaluateCheck` marks them
-`unsupported` rather than letting a task through: `var_equals` and `expr` need
-the runner to expose program state, `uses` and `forbids` need a parsed AST, and
-`grid_goal` waits on the grid being built at all.
+`uses`/`forbids` run against `Submission.code` through `lib/checker/ast.ts`, a
+small Python tokenizer (not a full parser) that skips string and comment
+contents and tracks dotted attribute chains, so `while` cannot be satisfied by
+a variable named `whileCount` or by the word appearing inside a string, and
+`turtle.forward` can be matched as a call name in addition to its parts.
+
+`var_equals` and `expr` need the runner to expose program state, which
+`lib/runner/` now does: `RunResult.vars` holds the module's global variables
+after a run that finished without an error (restricted to plain data — no
+functions, classes, or imported modules), and `RunResult.exprResults` holds
+one boolean per string the caller passed as `RunOptions.exprs`, evaluated in
+the same global scope right after the program's own code, each wrapped in its
+own `try/except` so one bad expr cannot take down the ones after it or the
+run itself. The checker only reads these two maps; it still never executes
+anything itself. See "Python Runner" in AI_CONTEXT.md and the `name_$rw$`
+gotcha before reading `RunResult.vars` from anywhere new.
+
+Not yet, and **never reported as a pass** — `evaluateCheck` marks it
+`unsupported` rather than letting a task through: `grid_goal` waits on the
+grid being built at all.
 
 ### Rules that are not optional
 

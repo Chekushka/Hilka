@@ -73,6 +73,10 @@ export interface Evidence {
     drawing: Segment[];
     error: { type: string; message: string } | null;
     timedOut: boolean;
+    /** Module-level variables left after the run. Powers `var_equals`. */
+    vars?: Record<string, unknown>;
+    /** `check.python` → whether it evaluated truthy. Powers `expr`. */
+    exprResults?: Record<string, boolean>;
   } | null;
   reference?: ReferenceArtifacts | null;
 }
