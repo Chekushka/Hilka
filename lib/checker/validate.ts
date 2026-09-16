@@ -19,7 +19,21 @@ export interface TaskShape {
   payload?: { broken?: string };
 }
 
-export function validateTaskChecks(task: TaskShape): ValidationError[] {
+export interface ValidateOptions {
+  /**
+   * Whether a check that needs computed expectations (shape_equals,
+   * stdout_equals) requires `reference.code` to already be set. True by
+   * default — content/seed-tasks/ is imported already complete. A draft
+   * task being authored has no reference yet by construction (it is
+   * computed by running the reference solution, which the draft/publish
+   * flow does at publish time, not at save time) — pass false there so
+   * saving a draft is not blocked on a solution that does not exist yet.
+   */
+  requireReference?: boolean;
+}
+
+export function validateTaskChecks(task: TaskShape, options: ValidateOptions = {}): ValidationError[] {
+  const requireReference = options.requireReference ?? true;
   const errors: ValidationError[] = [];
   const hasCases = (task.cases?.length ?? 0) > 0;
 
@@ -53,7 +67,7 @@ export function validateTaskChecks(task: TaskShape): ValidationError[] {
   const needsReference = task.checks.some(
     (check) => check.kind === 'shape_equals' || check.kind === 'stdout_equals'
   );
-  if (needsReference && !task.reference?.code) {
+  if (requireReference && needsReference && !task.reference?.code) {
     errors.push({
       at: -1,
       message: 'a reference solution is required: expected results are computed, never typed'

@@ -20,10 +20,13 @@ export type {
   ShapeNormalization,
   Submission
 } from './types';
+export { evaluateAgainstOwnRun, evaluateRun } from './reference-check';
 export type {
+  CheckRunOutcome,
   ReferenceCheckFailure,
   ReferenceCheckOutcome,
   ReferenceCheckTask,
+  RunOutcome,
   RunPython
 } from './reference-check';
 export type { ValidationError, TaskShape } from './validate';

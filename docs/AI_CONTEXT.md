@@ -451,3 +451,19 @@ the student's value. `lib/runner/py-values.ts` reads the finished program's glob
 the strip is always unambiguous) — anyone reading `module.$d` directly for a future check kind
 needs the same unmangling, or a task whose reference solution happens to use a variable called
 `name` silently reports it as `undefined`.
+
+**`request.url` inside a route handler does not reflect the Host header it was actually sent
+to, at least under `next start` in this sandbox.** A request to `http://127.0.0.1:3000/api/x`
+and one to `http://localhost:3000/api/x` both report `request.url` as `http://localhost:3000/...`
+— confirmed with curl against both hosts. Any route building an absolute URL from it (the
+magic-link's `devLoginUrl` in `app/api/auth/request-link/route.ts`, via
+`new URL(path, request.url)`) always redirects to the `localhost` origin, so the browser's
+teacher-session cookie ends up scoped to `localhost`, never to whatever origin the page was
+actually loaded from. Harmless for a normal click-through login — the redirect just carries the
+browser there too — but it breaks anything that assumes the *current* page origin matches
+`playwright.config.ts`'s `baseURL` (`127.0.0.1`) after logging in: `page.request` always targets
+that configured baseURL for a relative path, regardless of where `page.goto` actually navigated,
+so a `page.request` call made after login silently drops the cookie and reads back as logged
+out. `tests/e2e/task-authoring.spec.ts` uses an in-page `fetch` (via `page.evaluate`) for every
+authenticated call instead, the same way the student flow's own `/api/attempts` call already
+does — that always matches the page's real current origin.

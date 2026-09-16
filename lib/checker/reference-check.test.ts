@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { checkTaskReference, type ReferenceCheckTask, type RunPython } from './reference-check';
+import {
+  checkTaskReference,
+  evaluateAgainstOwnRun,
+  type ReferenceCheckTask,
+  type RunPython
+} from './reference-check';
 import type { RunResult } from '@/lib/runner';
 
 function result(overrides: Partial<RunResult> = {}): RunResult {
@@ -132,5 +137,32 @@ describe('checkTaskReference', () => {
     const runPython: RunPython = async (code) => result({ stdout: code.includes('41') ? '41\n' : '42\n' });
     const outcome = await checkTaskReference(task, runPython);
     expect(outcome.passed).toBe(true);
+  });
+});
+
+describe('evaluateAgainstOwnRun', () => {
+  // The publish gate: a route handler calls this with a run the teacher's
+  // browser already produced, no live runPython involved.
+  it('passes a clean run that satisfies every check', () => {
+    const outcome = evaluateAgainstOwnRun('print(42)', [{ kind: 'last_line_equals', value: '42' }], result({ stdout: '42\n' }));
+    expect(outcome).toEqual({ ranCleanly: true, passed: true, failures: [] });
+  });
+
+  it('reports a failing check without pretending the run itself failed', () => {
+    const outcome = evaluateAgainstOwnRun(
+      'print(41)',
+      [{ kind: 'last_line_equals', value: '42', message: 'Очікували 42' }],
+      result({ stdout: '41\n' })
+    );
+    expect(outcome).toEqual({ ranCleanly: true, passed: false, failures: ['Очікували 42'] });
+  });
+
+  it('marks a run that errored as not having run cleanly, with no check verdicts', () => {
+    const outcome = evaluateAgainstOwnRun(
+      'print(1 / 0)',
+      [{ kind: 'last_line_equals', value: '1' }],
+      result({ error: { type: 'ZeroDivisionError', message: 'division by zero', line: 1, col: 0 } })
+    );
+    expect(outcome).toEqual({ ranCleanly: false, passed: false, failures: [] });
   });
 });
