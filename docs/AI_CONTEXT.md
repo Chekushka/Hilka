@@ -136,6 +136,9 @@ tasks
 teachers
   id, email, role ('teacher' | 'admin'), created_at
 
+teacher_login_tokens
+  id, teacher_id, token_hash, expires_at, used_at, created_at
+
 classes
   id, teacher_id, title, roster text[]     -- plain display names, nothing more
 
@@ -189,6 +192,26 @@ Known weakness, accepted: a lost code is unrecoverable and students in this age 
 them. Mitigate in the UI — show the code again on every save, make it copyable, and let a
 teacher attach a code to a roster name in the dashboard. The eventual fix is roster-linked
 practice progress, after which codes become a fallback rather than the mechanism.
+
+## Teacher Auth
+
+Magic link, no passwords — `~5 accounts total; anything heavier is over-engineering`
+(CLAUDE.md). A teacher requests a link for their email; `teacher_login_tokens` stores it
+**hashed** and single-use (`used_at`), expiring after 15 minutes. Verifying the token starts a
+session that is **not** a database row: `lib/auth/session-cookie.ts` signs
+`teacherId.expiresAtMs` with `AUTH_SECRET` (HMAC-SHA256) and reads it back the same way, so
+logging in costs one insert and one update, never a session table to prune.
+
+**No email provider is wired up yet.** `POST /api/auth/request-link` logs the link
+server-side and, outside a real Vercel deployment (`process.env.VERCEL`), returns it directly
+as `devLoginUrl` — this is what lets CI and this project's own Playwright suite exercise login
+without an inbox, since both build and `next start` in production mode too, where `NODE_ENV`
+alone can't tell a real deployment from a test run. Wiring a real provider is separate,
+unbuilt work; when it lands, `devLoginUrl` must go.
+
+Teachers are provisioned directly in the database — there is no self-signup, and
+`request-link` responds identically whether or not the email matches a teacher, so it cannot
+be used to enumerate accounts.
 
 ## Python Runner
 

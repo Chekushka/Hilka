@@ -34,6 +34,47 @@
     "emptyTitle": "Тут поки що порожньо",
     "emptyNote": "Це завдання ще не опубліковане. Спитай учителя або зазирни трохи пізніше."
   },
+  "auth": {
+    "loginTitle": "Вхід для вчителя",
+    "emailLabel": "Електронна пошта",
+    "submit": "Надіслати посилання",
+    "submitting": "Надсилаю…",
+    "requested": "Якщо ця адреса зареєстрована, посилання для входу готове.",
+    "devNote": "Розсилка поштою ще не підключена: посилання виведено в консоль сервера.",
+    "devLinkLabel": "Посилання для входу (лише для розробки)",
+    "invalidToken": "Це посилання вже недійсне. Запроси нове.",
+    "logout": "Вийти"
+  },
+  "dashboard": {
+    "title": "Мої класи",
+    "empty": "Класів ще немає.",
+    "roster": "Учні",
+    "sessionsTitle": "Заняття",
+    "sessionOpen": "Активне",
+    "sessionClosed": "Завершене",
+    "sessionTaskCount": "Завдань: {n}",
+    "sessionDetailTitle": "Заняття {code}",
+    "backToDashboard": "До списку класів",
+    "attemptsEmpty": "Спроб ще немає.",
+    "columnStudent": "Учень",
+    "columnTask": "Завдання",
+    "columnResult": "Результат",
+    "columnHints": "Підказок",
+    "columnDuration": "Час",
+    "durationSeconds": "{n} с",
+    "durationUnknown": "—",
+    "resultPassed": "Зараховано",
+    "resultNotYet": "Не зараховано"
+  },
+  "session": {
+    "closedTitle": "Заняття не знайдено",
+    "closedNote": "Перевір код і спробуй ще раз, або запитай учителя.",
+    "pickName": "Обери своє ім'я",
+    "taskListTitle": "Завдання заняття",
+    "backToList": "До списку завдань",
+    "taskDone": "Виконано",
+    "loadingTask": "Готую завдання…"
+  },
   "meta": {
     "description": "Python для 7–9 класу"
   }

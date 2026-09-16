@@ -11,7 +11,7 @@
  * Laid out for 1366×768 and legible from the back row when a teacher projects
  * it; it stacks to one column when there is not room for two.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { Hints } from './Hints';
@@ -20,9 +20,47 @@ import { t } from '@/lib/i18n';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
 import type { CodeTask } from '@/lib/task/types';
 
-export function TaskWorkspace({ task }: { task: CodeTask }) {
+export interface AttemptOutcome {
+  passed: boolean;
+  hintsUsed: number;
+  durationMs: number;
+  code: string;
+}
+
+interface TaskWorkspaceProps {
+  task: CodeTask;
+  /** Fired once per completed Check. Absent in plain practice — only a session records attempts. */
+  onSubmitAttempt?: (outcome: AttemptOutcome) => void;
+}
+
+export function TaskWorkspace({ task, onSubmitAttempt }: TaskWorkspaceProps) {
   const [code, setCode] = useState(task.payload.starter);
   const { engine, busy, result, report, target, run, check } = useTaskRunner(task);
+
+  const hintsUsedRef = useRef(0);
+  const openedAtRef = useRef(0);
+  const onSubmitAttemptRef = useRef(onSubmitAttempt);
+  // What was actually submitted to Check, captured at click time rather than
+  // read from `code` inside the effect below — the student can keep typing
+  // while a check is in flight, and the attempt must record what was tested.
+  const lastCheckedCodeRef = useRef('');
+
+  useEffect(() => {
+    openedAtRef.current = Date.now();
+  }, []);
+  useEffect(() => {
+    onSubmitAttemptRef.current = onSubmitAttempt;
+  }, [onSubmitAttempt]);
+
+  useEffect(() => {
+    if (!report) return;
+    onSubmitAttemptRef.current?.({
+      passed: report.passed,
+      hintsUsed: hintsUsedRef.current,
+      durationMs: Date.now() - openedAtRef.current,
+      code: lastCheckedCodeRef.current
+    });
+  }, [report]);
 
   const loading = engine === 'loading';
   const disabled = loading || busy;
@@ -33,7 +71,7 @@ export function TaskWorkspace({ task }: { task: CodeTask }) {
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
         <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
         <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={task.hints} />
+        <Hints hints={task.hints} onReveal={() => (hintsUsedRef.current += 1)} />
       </section>
 
       <section className="flex flex-col gap-4">
@@ -55,7 +93,10 @@ export function TaskWorkspace({ task }: { task: CodeTask }) {
           </button>
           <button
             type="button"
-            onClick={() => check(code)}
+            onClick={() => {
+              lastCheckedCodeRef.current = code;
+              check(code);
+            }}
             disabled={disabled}
             className="rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
           >
@@ -94,7 +135,15 @@ export function TaskWorkspace({ task }: { task: CodeTask }) {
         </div>
 
         {result && (
-          <ResultPanel result={result} report={report} code={code} onRetry={() => check(code)} />
+          <ResultPanel
+            result={result}
+            report={report}
+            code={code}
+            onRetry={() => {
+              lastCheckedCodeRef.current = code;
+              check(code);
+            }}
+          />
         )}
       </section>
     </main>
