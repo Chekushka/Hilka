@@ -6,19 +6,14 @@
  * never happened, a reference that was not computed — fails that check rather
  * than passing it silently.
  */
+import { extractNames } from './ast';
 import { isClosed, boundingBox, shapeContains, shapesMatch, totalLength } from './geometry';
 import { fallbackMessage } from './messages';
 import { extractNumbers, lastLine, normalizeText } from './text';
 import type { Check, CheckReport, CheckResult, Evidence } from './types';
 
 /** Kinds whose evaluators are not written yet. They never report a pass. */
-const UNSUPPORTED: ReadonlySet<Check['kind']> = new Set([
-  'var_equals',
-  'expr',
-  'uses',
-  'forbids',
-  'grid_goal'
-]);
+const UNSUPPORTED: ReadonlySet<Check['kind']> = new Set(['var_equals', 'expr', 'grid_goal']);
 
 function within(value: number, tol: number, expected: number): boolean {
   return Math.abs(value - expected) <= tol;
@@ -152,8 +147,26 @@ function evaluateOne(check: Check, evidence: Evidence): boolean {
       return true;
     }
 
+    case 'uses': {
+      if (submission.code === undefined) return false;
+      const names = extractNames(submission.code);
+      if (check.any && check.any.length > 0 && !check.any.some((name) => names.has(name))) {
+        return false;
+      }
+      if (check.all && check.all.length > 0 && !check.all.every((name) => names.has(name))) {
+        return false;
+      }
+      return true;
+    }
+
+    case 'forbids': {
+      if (submission.code === undefined) return false;
+      const names = extractNames(submission.code);
+      return !check.names.some((name) => names.has(name));
+    }
+
     default:
-      // var_equals, expr, uses, forbids, grid_goal — no evaluator yet.
+      // var_equals, expr, grid_goal — no evaluator yet.
       return false;
   }
 }

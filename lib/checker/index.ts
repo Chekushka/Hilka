@@ -1,3 +1,4 @@
+export { extractNames } from './ast';
 export { evaluateCheck, evaluateChecks } from './evaluate';
 export { validateTaskChecks } from './validate';
 export {

@@ -84,6 +84,48 @@ describe('turtle checks', () => {
   });
 });
 
+describe('source constraint checks', () => {
+  const code = (source: string): Evidence => evidence({ submission: { code: source } });
+
+  it('passes uses.all when every required name is present', () => {
+    const checks: Check[] = [{ kind: 'uses', all: ['for', 'range'] }];
+    expect(evaluateChecks(checks, code('for i in range(3):\n    pass')).passed).toBe(true);
+    expect(evaluateChecks(checks, code('while True:\n    pass')).passed).toBe(false);
+  });
+
+  it('passes uses.any when at least one required name is present', () => {
+    const checks: Check[] = [{ kind: 'uses', any: ['for', 'while'] }];
+    expect(evaluateChecks(checks, code('while True:\n    pass')).passed).toBe(true);
+    expect(evaluateChecks(checks, code('x = 1')).passed).toBe(false);
+  });
+
+  it('does not count a name that only appears in a string literal', () => {
+    const checks: Check[] = [{ kind: 'uses', all: ['for'] }];
+    expect(evaluateChecks(checks, code('print("a for loop")')).passed).toBe(false);
+  });
+
+  it('matches a dotted call name', () => {
+    const checks: Check[] = [{ kind: 'uses', all: ['turtle.forward'] }];
+    expect(evaluateChecks(checks, code('turtle.forward(100)')).passed).toBe(true);
+    expect(evaluateChecks(checks, code('turtle.backward(100)')).passed).toBe(false);
+  });
+
+  it('rejects code that contains a forbidden name', () => {
+    const checks: Check[] = [{ kind: 'forbids', names: ['while'] }];
+    expect(evaluateChecks(checks, code('for i in range(3):\n    pass')).passed).toBe(true);
+    expect(evaluateChecks(checks, code('while True:\n    pass')).passed).toBe(false);
+  });
+
+  it('does not let a forbidden keyword fire on an identifier that merely contains it', () => {
+    const checks: Check[] = [{ kind: 'forbids', names: ['while'] }];
+    expect(evaluateChecks(checks, code('whileCount = 0')).passed).toBe(true);
+  });
+
+  it('fails when no code was submitted', () => {
+    expect(evaluateChecks([{ kind: 'forbids', names: ['while'] }], evidence()).passed).toBe(false);
+  });
+});
+
 describe('report shape', () => {
   it('requires every check to pass', () => {
     const checks: Check[] = [

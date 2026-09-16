@@ -81,7 +81,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Check kinds: stdout/var/expr | 🔶 | stdout kinds done. `var`/`expr` need the runner to expose program state |
 | Check kinds: `shape_equals` / `shape_contains` / `shape_props` | ✅ | Normalized segment sets, with translate/rotate/scale. Equivalence tested at both runner and checker level |
 | Check kinds: `number_close` / `numbers_equal` / `last_line_equals` | ✅ | Prompt text ignored; a decimal comma reads as a decimal point |
-| Check kinds: `uses` / `forbids` (AST-based) | ❌ | Must not match identifiers or string literals |
+| Check kinds: `uses` / `forbids` (AST-based) | ✅ | `lib/checker/ast.ts` — a Python tokenizer, not a full parser. Skips string/comment contents; tracks dotted attribute chains (`turtle.forward`) |
 | Reference-solution execution + artifact computation | ❌ | Publish is rejected if the reference fails its own checks |
 | `stdout_equals` blocked on tasks with cases | ✅ | `validateTaskChecks` — the authoring UI calls it rather than restating the rule |
 | Parameterized variants + seeded PRNG | ❌ | `hash(session_id + student_name + task_id)` |
