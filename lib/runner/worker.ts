@@ -5,11 +5,13 @@
  * Skulpt is loaded with importScripts because it is a UMD bundle with no module
  * build; scripts/sync-skulpt.mjs copies it out of node_modules into public/.
  */
+import { buildExprEpilogue, createExprRecorder, EXPR_MODULE_PATH, EXPR_MODULE_SOURCE } from './modules/expr-recorder';
 import { RANDOM_MODULE_PATH, RANDOM_MODULE_SOURCE } from './modules/random';
 import { createRecorder, TURTLE_MODULE_PATH, TURTLE_MODULE_SOURCE } from './modules/turtle';
-import type { SkulptException, SkulptGlobal, SkulptPyObject } from './skulpt.d';
+import { extractVars } from './py-values';
+import type { SkulptException, SkulptGlobal, SkulptModule, SkulptPyObject } from './skulpt.d';
 import type { DoneMessage, FromWorker, ToWorker } from './protocol';
-import type { PyError } from './types';
+import type { PyError, PyValue } from './types';
 
 declare const Sk: SkulptGlobal;
 
@@ -17,6 +19,7 @@ const scope = self as unknown as {
   importScripts: (...urls: string[]) => void;
   __turtle__: ReturnType<typeof createRecorder>;
   __randomSeed__: number;
+  __exprRecorder__: ReturnType<typeof createExprRecorder>;
 };
 
 scope.importScripts('/runner/skulpt.min.js', '/runner/skulpt-stdlib.js');
@@ -24,10 +27,14 @@ scope.importScripts('/runner/skulpt.min.js', '/runner/skulpt-stdlib.js');
 let recorder = createRecorder();
 scope.__turtle__ = recorder;
 
+let exprRecorder = createExprRecorder();
+scope.__exprRecorder__ = exprRecorder;
+
 // Replacing the modules before execution is what makes the stubs the thing
 // `import turtle` and `import random` resolve to.
 Sk.builtinFiles.files[TURTLE_MODULE_PATH] = TURTLE_MODULE_SOURCE;
 Sk.builtinFiles.files[RANDOM_MODULE_PATH] = RANDOM_MODULE_SOURCE;
+Sk.builtinFiles.files[EXPR_MODULE_PATH] = EXPR_MODULE_SOURCE;
 
 let pendingInput: ((value: string) => void) | null = null;
 
@@ -71,6 +78,10 @@ async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<v
   recorder = createRecorder();
   scope.__turtle__ = recorder;
 
+  exprRecorder = createExprRecorder();
+  scope.__exprRecorder__ = exprRecorder;
+
+  const code = request.code + buildExprEpilogue(request.exprs);
   const queue = request.stdin.slice();
   let inputsConsumed = 0;
   let stdout = '';
@@ -123,14 +134,25 @@ async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<v
   const started = Date.now();
   let error: PyError | null = null;
   let timedOut = false;
+  let vars: Record<string, PyValue> = {};
   try {
-    await Sk.misceval.asyncToPromise(() =>
-      Sk.importMainWithBody('<stdin>', false, request.code, true)
+    const finished = await Sk.misceval.asyncToPromise(() =>
+      Sk.importMainWithBody('<stdin>', false, code, true)
     );
+    // Only reachable once the program — the epilogue included — ran to
+    // completion, so a raised exception never leaves stale vars behind.
+    vars = extractVars(finished as SkulptModule);
   } catch (caught) {
     timedOut = isTimeout(caught);
     error = describeError(caught);
   }
+
+  const exprResults: Record<string, boolean> = {};
+  request.exprs.forEach((expr, index) => {
+    if (index in exprRecorder.results) {
+      exprResults[expr] = exprRecorder.results[index];
+    }
+  });
 
   const done: DoneMessage = {
     type: 'done',
@@ -141,7 +163,9 @@ async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<v
     dots: recorder.dots,
     timedOut,
     inputsConsumed,
-    elapsedMs: Date.now() - started - inputWaitMs
+    elapsedMs: Date.now() - started - inputWaitMs,
+    vars,
+    exprResults
   };
   post(done);
 }

@@ -13,7 +13,7 @@ function evidence(partial: Partial<Evidence> = {}): Evidence {
   return { submission: {}, run: null, reference: null, ...partial };
 }
 
-function ran(stdout: string, drawing: Segment[] = []): Evidence['run'] {
+function ran(stdout: string, drawing: Segment[] = []): NonNullable<Evidence['run']> {
   return { stdout, drawing, error: null, timedOut: false };
 }
 
@@ -84,6 +84,48 @@ describe('turtle checks', () => {
   });
 });
 
+describe('program state checks', () => {
+  function withVars(vars: Record<string, unknown>): Evidence {
+    return evidence({ run: { ...ran(''), vars } });
+  }
+
+  it('compares a simple variable value', () => {
+    const checks: Check[] = [{ kind: 'var_equals', name: 'total', value: 10 }];
+    expect(evaluateChecks(checks, withVars({ total: 10 })).passed).toBe(true);
+    expect(evaluateChecks(checks, withVars({ total: 9 })).passed).toBe(false);
+  });
+
+  it('compares a list or dict structurally, not by reference', () => {
+    const checks: Check[] = [{ kind: 'var_equals', name: 'items', value: [1, 2, { a: 'b' }] }];
+    expect(evaluateChecks(checks, withVars({ items: [1, 2, { a: 'b' }] })).passed).toBe(true);
+    expect(evaluateChecks(checks, withVars({ items: [1, 2, { a: 'c' }] })).passed).toBe(false);
+  });
+
+  it('fails when the variable was never assigned', () => {
+    const checks: Check[] = [{ kind: 'var_equals', name: 'missing', value: 1 }];
+    expect(evaluateChecks(checks, withVars({ total: 1 })).passed).toBe(false);
+  });
+
+  it('fails when no run happened at all', () => {
+    const checks: Check[] = [{ kind: 'var_equals', name: 'total', value: 1 }];
+    expect(evaluateChecks(checks, evidence()).passed).toBe(false);
+  });
+
+  it('passes an expr that the run recorded as truthy', () => {
+    const checks: Check[] = [{ kind: 'expr', python: 'total == 10' }];
+    const evidenceWithExpr = evidence({ run: { ...ran(''), exprResults: { 'total == 10': true } } });
+    expect(evaluateChecks(checks, evidenceWithExpr).passed).toBe(true);
+  });
+
+  it('fails an expr that recorded false or was never reached', () => {
+    const failing = evidence({ run: { ...ran(''), exprResults: { 'total == 10': false } } });
+    const notReached = evidence({ run: { ...ran(''), exprResults: {} } });
+    const checks: Check[] = [{ kind: 'expr', python: 'total == 10' }];
+    expect(evaluateChecks(checks, failing).passed).toBe(false);
+    expect(evaluateChecks(checks, notReached).passed).toBe(false);
+  });
+});
+
 describe('source constraint checks', () => {
   const code = (source: string): Evidence => evidence({ submission: { code: source } });
 
@@ -151,7 +193,7 @@ describe('report shape', () => {
   });
 
   it('never passes a kind that has no evaluator yet', () => {
-    const report = evaluateChecks([{ kind: 'expr', python: 'x == 1' }], evidence({ run: ran('') }));
+    const report = evaluateChecks([{ kind: 'grid_goal' }], evidence({ run: ran('') }));
     expect(report.passed).toBe(false);
     expect(report.results[0].unsupported).toBe(true);
   });

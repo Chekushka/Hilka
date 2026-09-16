@@ -10,7 +10,7 @@ import type { RunResult } from '@/lib/runner';
 async function run(
   page: Page,
   code: string,
-  options: { stdin?: string[]; timeoutMs?: number; randomSeed?: number } = {}
+  options: { stdin?: string[]; timeoutMs?: number; randomSeed?: number; exprs?: string[] } = {}
 ): Promise<RunResult> {
   return page.evaluate(
     ([source, opts]) =>
@@ -127,6 +127,36 @@ test('waiting for input does not count against the limit', async ({ page }) => {
   expect(result.timedOut).toBe(false);
   expect(result.error).toBeNull();
   expect(result.stdout.trim()).toBe('готово');
+});
+
+test('exposes module-level variables after the run, for var_equals', async ({ page }) => {
+  const result = await run(page, 'a = 7\nb = 3\ntotal = a + b\nname = "ага"\nitems = [1, 2, total]');
+  expect(result.error).toBeNull();
+  expect(result.vars).toMatchObject({ a: 7, b: 3, total: 10, name: 'ага', items: [1, 2, 10] });
+});
+
+test('never exposes a function, a class, or an imported module as a variable', async ({ page }) => {
+  const result = await run(page, 'import turtle\ndef f():\n    pass\nclass C:\n    pass\nx = 1');
+  expect(result.error).toBeNull();
+  expect(result.vars).toEqual({ x: 1 });
+});
+
+test('evaluates an expr check against the state the run finished with', async ({ page }) => {
+  const result = await run(page, 'total = 7 + 3', { exprs: ['total == 10', 'total == 11'] });
+  expect(result.error).toBeNull();
+  expect(result.exprResults).toEqual({ 'total == 10': true, 'total == 11': false });
+});
+
+test('a bad expr records false instead of aborting the run or the exprs after it', async ({ page }) => {
+  const result = await run(page, 'x = 1', { exprs: ['1 / 0', 'x == 1'] });
+  expect(result.error).toBeNull();
+  expect(result.exprResults).toEqual({ '1 / 0': false, 'x == 1': true });
+});
+
+test('an expr never reached because the program errored first is simply absent', async ({ page }) => {
+  const result = await run(page, 'raise ValueError("stop")', { exprs: ['1 == 1'] });
+  expect(result.error).not.toBeNull();
+  expect(result.exprResults).toEqual({});
 });
 
 test('an error carries type, message and line', async ({ page }) => {

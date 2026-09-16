@@ -13,6 +13,7 @@ export type {
   Dot,
   PyError,
   PythonRunner,
+  PyValue,
   RunOptions,
   RunResult,
   Segment

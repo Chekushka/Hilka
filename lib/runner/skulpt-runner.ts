@@ -73,7 +73,9 @@ export class SkulptRunner implements PythonRunner {
       dots: message.dots,
       timedOut: message.timedOut,
       inputsConsumed: message.inputsConsumed,
-      elapsedMs: message.elapsedMs
+      elapsedMs: message.elapsedMs,
+      vars: message.vars,
+      exprResults: message.exprResults
     });
   }
 
@@ -89,7 +91,8 @@ export class SkulptRunner implements PythonRunner {
       mode: options.mode,
       stdin: options.stdin ?? [],
       timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-      randomSeed: options.randomSeed ?? null
+      randomSeed: options.randomSeed ?? null,
+      exprs: options.exprs ?? []
     };
     return new Promise<RunResult>((resolve, reject) => {
       this.pending = { resolve, reject, options };
@@ -115,7 +118,9 @@ export class SkulptRunner implements PythonRunner {
       dots: [],
       timedOut: true,
       inputsConsumed: 0,
-      elapsedMs: 0
+      elapsedMs: 0,
+      vars: {},
+      exprResults: {}
     });
   }
 

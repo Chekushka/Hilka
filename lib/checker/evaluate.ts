@@ -13,7 +13,33 @@ import { extractNumbers, lastLine, normalizeText } from './text';
 import type { Check, CheckReport, CheckResult, Evidence } from './types';
 
 /** Kinds whose evaluators are not written yet. They never report a pass. */
-const UNSUPPORTED: ReadonlySet<Check['kind']> = new Set(['var_equals', 'expr', 'grid_goal']);
+const UNSUPPORTED: ReadonlySet<Check['kind']> = new Set(['grid_goal']);
+
+/** Structural equality for the plain values var_equals compares. */
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((v, i) => deepEqual(v, b[i]));
+  }
+  if (
+    typeof a === 'object' &&
+    a !== null &&
+    typeof b === 'object' &&
+    b !== null &&
+    !Array.isArray(a) &&
+    !Array.isArray(b)
+  ) {
+    const aKeys = Object.keys(a as Record<string, unknown>);
+    const bKeys = Object.keys(b as Record<string, unknown>);
+    return (
+      aKeys.length === bKeys.length &&
+      aKeys.every((key) =>
+        deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+      )
+    );
+  }
+  return false;
+}
 
 function within(value: number, tol: number, expected: number): boolean {
   return Math.abs(value - expected) <= tol;
@@ -147,6 +173,15 @@ function evaluateOne(check: Check, evidence: Evidence): boolean {
       return true;
     }
 
+    case 'var_equals': {
+      if (!run?.vars || !(check.name in run.vars)) return false;
+      return deepEqual(run.vars[check.name], check.value);
+    }
+
+    case 'expr': {
+      return run?.exprResults?.[check.python] === true;
+    }
+
     case 'uses': {
       if (submission.code === undefined) return false;
       const names = extractNames(submission.code);
@@ -166,7 +201,7 @@ function evaluateOne(check: Check, evidence: Evidence): boolean {
     }
 
     default:
-      // var_equals, expr, grid_goal — no evaluator yet.
+      // grid_goal — no evaluator yet.
       return false;
   }
 }

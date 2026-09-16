@@ -78,7 +78,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 |---|---|---|
 | Declarative check evaluator | ✅ | `lib/checker/`. Pure, no DOM, no Python — moves to the server unchanged |
 | Check kinds: choice/text/order | ✅ | |
-| Check kinds: stdout/var/expr | 🔶 | stdout kinds done. `var`/`expr` need the runner to expose program state |
+| Check kinds: stdout/var/expr | ✅ | `var_equals` reads `RunResult.vars` (module globals after a clean run); `expr` reads `RunResult.exprResults`, evaluated in-worker right after the program via `lib/runner/modules/expr-recorder.ts` |
 | Check kinds: `shape_equals` / `shape_contains` / `shape_props` | ✅ | Normalized segment sets, with translate/rotate/scale. Equivalence tested at both runner and checker level |
 | Check kinds: `number_close` / `numbers_equal` / `last_line_equals` | ✅ | Prompt text ignored; a decimal comma reads as a decimal point |
 | Check kinds: `uses` / `forbids` (AST-based) | ✅ | `lib/checker/ast.ts` — a Python tokenizer, not a full parser. Skips string/comment contents; tracks dotted attribute chains (`turtle.forward`) |

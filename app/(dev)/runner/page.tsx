@@ -9,7 +9,10 @@ import { useEffect, useRef, useState } from 'react';
 import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
 
 interface TestHooks {
-  run(code: string, options: { mode: 'headless'; stdin?: string[]; timeoutMs?: number; randomSeed?: number }): Promise<RunResult>;
+  run(
+    code: string,
+    options: { mode: 'headless'; stdin?: string[]; timeoutMs?: number; randomSeed?: number; exprs?: string[] }
+  ): Promise<RunResult>;
   runInteractive(code: string, answers: string[], delayMs: number): Promise<RunResult>;
 }
 

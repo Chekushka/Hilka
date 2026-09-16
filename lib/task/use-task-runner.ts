@@ -9,7 +9,7 @@
  * overlaid against.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { evaluateChecks, type CheckReport } from '@/lib/checker';
+import { evaluateChecks, type Check, type CheckReport } from '@/lib/checker';
 import { createRunner, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
 import type { CodeTask } from './types';
 
@@ -69,7 +69,12 @@ export function useTaskRunner(task: CodeTask) {
       const runner = runnerRef.current;
       if (!runner) return;
       setState((previous) => ({ ...previous, busy: true, report: null }));
-      const result = await runner.run(code, { mode: 'headless' });
+      // Only a judged run needs the expr epilogue — a plain Run must not pay
+      // for it or risk it changing behaviour the student didn't ask to check.
+      const exprs = judge
+        ? task.checks.filter((c): c is Check & { kind: 'expr' } => c.kind === 'expr').map((c) => c.python)
+        : undefined;
+      const result = await runner.run(code, { mode: 'headless', exprs });
       setState((previous) => ({
         ...previous,
         busy: false,
@@ -82,7 +87,9 @@ export function useTaskRunner(task: CodeTask) {
                   stdout: result.stdout,
                   drawing: result.drawing,
                   error: result.error,
-                  timedOut: result.timedOut
+                  timedOut: result.timedOut,
+                  vars: result.vars,
+                  exprResults: result.exprResults
                 },
                 reference: { drawing: previous.target }
               })

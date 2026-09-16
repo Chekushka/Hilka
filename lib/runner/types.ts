@@ -42,6 +42,9 @@ export interface PyError {
   col: number | null;
 }
 
+/** A Python value simple enough to compare or send across postMessage. */
+export type PyValue = null | boolean | number | string | PyValue[] | { [key: string]: PyValue };
+
 export interface RunResult {
   stdout: string;
   error: PyError | null;
@@ -52,6 +55,19 @@ export interface RunResult {
   inputsConsumed: number;
   /** Execution time with input waits excluded, matching how the limit is counted. */
   elapsedMs: number;
+  /**
+   * Module-level variables left after the run — powers `var_equals`. Only
+   * populated when the run finished without an error or timeout; functions,
+   * classes, and imported modules are never included.
+   */
+  vars: Record<string, PyValue>;
+  /**
+   * `check.python` → whether it evaluated truthy, for every string
+   * `RunOptions.exprs` listed — powers the `expr` check kind. A key is
+   * missing when the program never reached it (an earlier error or timeout),
+   * which the checker already treats as a fail.
+   */
+  exprResults: Record<string, boolean>;
 }
 
 export interface RunOptions {
@@ -67,6 +83,8 @@ export interface RunOptions {
   timeoutMs?: number;
   /** Headless only: makes `random` reproducible so the run can be checked. */
   randomSeed?: number;
+  /** `expr` check bodies to evaluate against the final global scope after the run. */
+  exprs?: string[];
   onStdout?: (chunk: string) => void;
   /** Interactive only. Resolve with what the student typed. */
   onInputRequest?: (prompt: string) => Promise<string>;
