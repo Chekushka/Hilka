@@ -52,7 +52,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Branch protection on `main` | 🔶 | Ruleset committed at `.github/rulesets/main.json`; must be imported in repo settings |
 | `ci.yml` — typecheck, lint, tests | ✅ | Live, with the migration-drift step. The browser job runs a Postgres service, migrates and seeds — the workspace reads its task from the database |
 | `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
-| `reference-check.yml` — references vs their own checks | 🔶 | Staged; needs published seed tasks |
+| `reference-check.yml` — references vs their own checks | ✅ | Live. `npm run verify:references` drives the real runner via `/runner` (no database needed) against `content/seed-tasks/*.json` |
 | Vercel Git integration + preview deploys | ✅ | Installed; PR #7 carried its check. **Deployment Protection is on**, so a logged-out classroom machine cannot open a preview until Vercel Authentication is off or a sharable link is used — CI_CD.md §5 |
 | Neon branch-per-preview | 🔶 | Integration installed. Unverified: that *"create a branch for each preview deployment"* is on and a PR preview really gets its own branch |
 
@@ -82,7 +82,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Check kinds: `shape_equals` / `shape_contains` / `shape_props` | ✅ | Normalized segment sets, with translate/rotate/scale. Equivalence tested at both runner and checker level |
 | Check kinds: `number_close` / `numbers_equal` / `last_line_equals` | ✅ | Prompt text ignored; a decimal comma reads as a decimal point |
 | Check kinds: `uses` / `forbids` (AST-based) | ✅ | `lib/checker/ast.ts` — a Python tokenizer, not a full parser. Skips string/comment contents; tracks dotted attribute chains (`turtle.forward`) |
-| Reference-solution execution + artifact computation | ❌ | Publish is rejected if the reference fails its own checks |
+| Reference-solution execution + artifact computation | 🔶 | `lib/checker/reference-check.ts` + `npm run verify:references` proves every seed task's reference solution passes its own checks (self-comparison for `shape_equals`, real evaluation for the rest) — CI-only today. Still open: running this at publish time and storing `reference.artifacts` on the task row; there is no publish flow yet to hang it off of. No server-side Python (AI_CONTEXT.md), so that publish-time run has to happen client-side, in the authoring UI, the way `/practice` already runs the reference in-browser |
 | `stdout_equals` blocked on tasks with cases | ✅ | `validateTaskChecks` — the authoring UI calls it rather than restating the rule |
 | Parameterized variants + seeded PRNG | ❌ | `hash(session_id + student_name + task_id)` |
 
