@@ -79,6 +79,23 @@ export const teachers = pgTable('teachers', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
+/**
+ * Magic-link login tokens (docs/AI_CONTEXT.md, "Teacher Auth"). Stored
+ * hashed, never raw — a database leak must not hand out a working login
+ * link — and single-use via `usedAt`. No session table alongside this: the
+ * logged-in state itself lives in a signed cookie, not the database.
+ */
+export const teacherLoginTokens = pgTable('teacher_login_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  teacherId: uuid('teacher_id')
+    .notNull()
+    .references(() => teachers.id),
+  tokenHash: text('token_hash').notNull().unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});
+
 export const classes = pgTable('classes', {
   id: uuid('id').primaryKey().defaultRandom(),
   teacherId: uuid('teacher_id')

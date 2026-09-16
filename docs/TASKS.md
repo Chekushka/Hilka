@@ -127,12 +127,12 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 
 | Item | Status | Notes |
 |---|---|---|
-| Magic-link auth | ❌ | ~5 accounts total; anything heavier is over-engineering |
+| Magic-link auth | 🔶 | `lib/auth/`. Real login mechanism — hashed single-use tokens (`teacher_login_tokens`), a signed cookie, no session table — but no email provider is wired up: `POST /api/auth/request-link` logs the link and returns it as `devLoginUrl` outside a real Vercel deployment. Teachers are provisioned directly in the database; there is no self-signup |
 | Task authoring UI | ❌ | All six types + checks + hints. Big and unglamorous — do not defer past sprint 2. |
 | Draft / publish + version bump | ❌ | Publishing is what students see; drafts are invisible |
 | Class + roster management | ❌ | Roster is a plain string array |
 | Session builder | ❌ | Filter by topic and grade tag, set limit and hint availability. Until this exists, `scripts/db/seed-demo-session.ts` (`npm run db:seed:demo`) creates one demo teacher/class/open session directly, so the join flow has something to join |
-| Results dashboard | ❌ | Poll every 10 s; no realtime in v1 |
+| Results dashboard | 🔶 | `app/(teacher)/dashboard/` — read-only: classes, their sessions, and a session's attempts (student, task, pass/fail, hints, duration), each scoped to the logged-in teacher. No polling yet (a page load is enough for a read-only first cut), no class table "who is stuck" rollup, no CSV |
 | CSV export | ❌ | |
 | JSON export/import of all tasks | ❌ | Backup, git history, handoff to another teacher |
 
@@ -199,7 +199,12 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
    (`scripts/db/seed-demo-session.ts`). `/s/[code]` joins, picks a name from the roster, runs
    any assigned task, and each Check posts an append-only row to `/api/attempts`, checked
    server-side against the open session, its task list and the roster.
-8. Teacher dashboard, read-only first.
+8. ~~Teacher dashboard, read-only first~~ — done, scoped: magic-link auth is real (hashed
+   single-use tokens, signed cookie) but email delivery is not, so `POST /api/auth/request-link`
+   hands the link back directly outside a real Vercel deployment instead of sending it
+   (`docs/AI_CONTEXT.md`, "Teacher Auth"). `/dashboard` shows a teacher's own classes, sessions
+   and attempts; no session builder or authoring UI yet, so there is nothing to create or edit
+   from it.
 9. Task authoring UI.
 10. Remaining task types, `parsons` first.
 11. Turtle canvas, target overlay, playback scrubber. Grid only if still justified afterwards.

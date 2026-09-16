@@ -126,7 +126,13 @@ createdb hilka
 export DATABASE_URL=postgres://localhost/hilka
 npm run db:migrate    # apply drizzle/
 npm run db:seed       # import content/topics.json and content/seed-tasks/
+npm run db:seed:demo  # one demo teacher/class/open session, for the join and dashboard flows
 ```
+
+Teacher login also needs `export AUTH_SECRET=<anything>` — it signs the cookie that marks a
+request as logged in (`lib/auth/session-cookie.ts`). Any string works locally; there is no
+format requirement, only that it stays the same across restarts or existing cookies stop
+verifying.
 
 After editing `lib/db/schema.ts`, run `npm run db:generate` and commit what it
 writes under `drizzle/` in the same commit as the schema change. Never
@@ -150,7 +156,7 @@ The project settings that matter, and what goes wrong when they are wrong:
 | Install Command | **default** (`npm ci`) | Not `--omit=dev` — the build needs TypeScript and the `@types` packages |
 | Node.js Version | **22.x** | Matches `.nvmrc`, which Vercel does not reliably read. This dropdown, or `engines.node`, is what actually decides |
 | Function Region | **`fra1`** (Frankfurt) | Must equal the Neon region. Every `/practice` request is a database round trip made server-side, so a region mismatch costs more than the distance from Kyiv to the function. Hobby allows one region; the default is `iad1` |
-| Environment Variables | none by hand | `DATABASE_URL` comes from the Neon integration (step 6) |
+| Environment Variables | `AUTH_SECRET` set by hand; `DATABASE_URL` from the Neon integration (step 6) | `AUTH_SECRET` has no integration to inject it — generate one (`openssl rand -hex 32`) and add it to Production, Preview and Development in Vercel's project settings. Without it, `lib/auth/session-cookie.ts` throws on the first request that touches a teacher cookie — fails closed with a 500, never a silent open door |
 | Deployment Protection | decide deliberately | Standard Protection is **on by default** and puts a Vercel login in front of every preview URL. See below |
 
 **Variables attach to a deployment when it is built.** A deployment created
@@ -230,6 +236,8 @@ verifying Neon's certificate.
 | GitHub environment `production` | `DATABASE_URL` | `migrate.yml` |
 | Cloud environment for agents | `DATABASE_URL` (Neon **dev** branch) | remote sessions |
 | Repo secrets | *(none needed)* | Vercel and Neon are wired through their apps |
+| Vercel project settings | `AUTH_SECRET` | teacher login (`lib/auth/session-cookie.ts`) — no integration sets this one, see step 5 |
+| `.github/workflows/ci.yml` | `AUTH_SECRET` (throwaway, hard-coded) | the `browser` job only; not a real secret, just needs to be *some* value |
 
 Create the `production` environment under Settings → Environments and add a
 required reviewer. Then a migration against the real database is a button you

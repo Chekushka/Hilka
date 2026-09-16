@@ -10,6 +10,26 @@ import { getDb } from './client';
 import { classes, sessions, tasks } from './schema';
 import { orderSessionTasks } from './session-mapping';
 
+export interface TeacherSessionDetail {
+  id: string;
+  code: string;
+  classTitle: string;
+}
+
+/** A session detail, but only for the teacher who owns its class — never another teacher's. */
+export async function getSessionForTeacher(
+  sessionId: string,
+  teacherId: string
+): Promise<TeacherSessionDetail | null> {
+  const [row] = await getDb()
+    .select({ id: sessions.id, code: sessions.code, classTitle: classes.title })
+    .from(sessions)
+    .innerJoin(classes, eq(sessions.classId, classes.id))
+    .where(and(eq(sessions.id, sessionId), eq(classes.teacherId, teacherId)))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function getOpenSessionByCode(code: string): Promise<JoinedSession | null> {
   const db = getDb();
   const [row] = await db
