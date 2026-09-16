@@ -128,8 +128,8 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Item | Status | Notes |
 |---|---|---|
 | Magic-link auth | 🔶 | `lib/auth/`. Real login mechanism — hashed single-use tokens (`teacher_login_tokens`), a signed cookie, no session table — but no email provider is wired up: `POST /api/auth/request-link` logs the link and returns it as `devLoginUrl` outside a real Vercel deployment. Teachers are provisioned directly in the database; there is no self-signup |
-| Task authoring UI | ❌ | Forms for all six types + checks + hints, built on the flow below. Big and unglamorous — do not defer past sprint 2. |
-| Draft / publish + version bump | 🔶 | The flow exists with no form UI yet: `POST /api/tasks` (draft, `code` only), `PATCH /api/tasks/[id]` (edit while draft), `POST /api/tasks/[id]/publish` (the gate). No server-side Python (AI_CONTEXT.md), so the reference solution runs in the teacher's browser via `/runner` and the computed run is posted to publish, which re-evaluates it server-side with `evaluateAgainstOwnRun` before writing `reference` + flipping `status` + bumping `version` (0 while draft, 1 on first publish). One-way per version: a published task cannot be re-edited here — re-drafting is separate, unbuilt work. `tests/e2e/task-authoring.spec.ts` covers it end to end |
+| Task authoring UI | 🔶 | `code` tasks only, scoped to what the rest of the app actually supports end to end — the other five types have no payload shape or checker support yet, so this is not five sixths done. `/tasks` lists every task (draft + published); `/tasks/new` creates a draft; `/tasks/[id]` edits a draft and runs+publishes its reference, or shows a read-only view once published. `checks` is authored as raw JSON (validated by `validateTaskChecks`, same as `npm run db:seed`), not a per-kind visual builder — 15 check kinds make that a separate, larger slice. `hints`/`gradeTags` are plain-text fields (one per line / comma-separated), not dynamic add-remove lists. `tests/e2e/task-authoring-ui.spec.ts` drives the real forms end to end, on top of the API-level coverage below |
+| Draft / publish + version bump | ✅ | `POST /api/tasks` (draft, `code` only), `PATCH /api/tasks/[id]` (edit while draft), `POST /api/tasks/[id]/publish` (the gate) — all wired to the forms above. No server-side Python (AI_CONTEXT.md), so the reference solution runs in the teacher's browser and the computed run is posted to publish, which re-evaluates it server-side with `evaluateAgainstOwnRun` before writing `reference` + flipping `status` + bumping `version` (0 while draft, 1 on first publish). One-way per version: a published task cannot be re-edited here — re-drafting is separate, unbuilt work. `tests/e2e/task-authoring.spec.ts` covers the API directly; `tests/e2e/task-authoring-ui.spec.ts` covers it through the forms |
 | Class + roster management | ❌ | Roster is a plain string array |
 | Session builder | ❌ | Filter by topic and grade tag, set limit and hint availability. Until this exists, `scripts/db/seed-demo-session.ts` (`npm run db:seed:demo`) creates one demo teacher/class/open session directly, so the join flow has something to join |
 | Results dashboard | 🔶 | `app/(teacher)/dashboard/` — read-only: classes, their sessions, and a session's attempts (student, task, pass/fail, hints, duration), each scoped to the logged-in teacher. No polling yet (a page load is enough for a read-only first cut), no class table "who is stuck" rollup, no CSV |
@@ -205,7 +205,10 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
    (`docs/AI_CONTEXT.md`, "Teacher Auth"). `/dashboard` shows a teacher's own classes, sessions
    and attempts; no session builder or authoring UI yet, so there is nothing to create or edit
    from it.
-9. Task authoring UI.
+9. ~~Task authoring UI~~ — done, scoped to `code` tasks: `/tasks`, `/tasks/new`, `/tasks/[id]`
+   (edit a draft, run and publish its reference, or view it read-only once published). Checks
+   are authored as raw JSON, not a per-kind visual builder; that and the other five task types
+   are still open.
 10. Remaining task types, `parsons` first.
 11. Turtle canvas, target overlay, playback scrubber. Grid only if still justified afterwards.
 12. Meta layer.

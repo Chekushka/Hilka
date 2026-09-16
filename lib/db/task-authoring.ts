@@ -14,11 +14,11 @@
  * with no draft history). A later re-draft-and-republish, once that flow
  * exists, would land on 2.
  */
-import { and, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Check } from '@/lib/checker';
-import type { CodePayload, Reference } from '@/lib/task/types';
+import type { CodePayload, Reference, TaskStatus } from '@/lib/task/types';
 import { getDb } from './client';
-import { tasks } from './schema';
+import { tasks, topics } from './schema';
 import type { TaskRow } from './task-mapping';
 
 export interface DraftTaskInput {
@@ -60,6 +60,32 @@ export async function createDraftTask(input: DraftTaskInput): Promise<{ id: stri
 export async function getTaskForAuthoring(id: string): Promise<TaskRow | null> {
   const [row] = await getDb().select().from(tasks).where(eq(tasks.id, id)).limit(1);
   return row ?? null;
+}
+
+export interface TaskListRow {
+  id: string;
+  slug: string;
+  title: string;
+  status: TaskStatus;
+  version: number;
+  topicTitle: string;
+}
+
+/** Every task, draft and published, for the authoring list — never filtered by status like the student-facing queries. */
+export async function listTasksForAuthoring(): Promise<TaskListRow[]> {
+  const rows = await getDb()
+    .select({
+      id: tasks.id,
+      slug: tasks.slug,
+      title: tasks.title,
+      status: tasks.status,
+      version: tasks.version,
+      topicTitle: topics.title
+    })
+    .from(tasks)
+    .innerJoin(topics, eq(tasks.topicId, topics.id))
+    .orderBy(asc(topics.order), asc(tasks.slug));
+  return rows;
 }
 
 /** `null` when the task does not exist or is no longer a draft — a published task is not editable here. */
