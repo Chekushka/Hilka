@@ -93,7 +93,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Shared task-component interface | ✅ | `Task = CodeTask \| ParsonsTask \| QuizTask` (`lib/task/types.ts`); `components/task/TaskWorkspace.tsx` dispatches by `task.type` to `components/task-types/*View.tsx`. `lib/db/tasks.ts` and the session/practice routes hand back the union — the next type (`predict`, `fill` or `fix`) is a new branch plus a new file, not a rewrite |
 | `code` | 🔶 | Turtle surface end to end. Console surface still open |
 | `quiz` | ✅ | Single/multiple choice, end to end: authoring (`NewTaskForm`, `QuizDraftEditor`), instant client-side checking (`choice_equals`, already in `lib/checker`), and a publish gate with no run and no canonical submission either — the correct answer lives entirely in `checks`, so `lib/task/quiz.ts` instead confirms every `choice_equals` index actually names an option (and exactly one, on a single-answer quiz) |
-| `predict` | ❌ | |
+| `predict` | 🔶 | `answerMode: 'text'` end to end: authoring (`NewTaskForm`, `PredictDraftEditor`), instant client-side checking (`text_equals`, already in `lib/checker`) against a value verified at publish, and a publish gate that runs `payload.code` (there is no separate reference to write — it IS the code shown to the student) and confirms the checks actually match its real stdout (`evaluatePredictionAgainstOwnRun`), same as `code`'s rule 5 guarantee. `answerMode: 'choice'` and `imageOptions` are not built: nothing authors or renders them yet |
 | `parsons` | 🔶 | `indentMode: 'given'` end to end: authoring (`NewTaskForm`, `ParsonsDraftEditor`), drag-and-keyboard assembly (`ParsonsTaskView`, dnd-kit), instant client-side checking (`order_equals`, already in `lib/checker`), and a publish gate with no run to post — `payload.lines` is already the correct order, checked server-side (`lib/task/parsons.ts`). `indentMode: 'chosen'` is not built: `order_equals` has nowhere to read an expected indent from, so the authoring API rejects it and the component only ever renders `'given'` |
 | `fill` | ❌ | |
 | `fix` | ❌ | |
@@ -151,7 +151,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Curriculum mapping (grades 7–9) | ✅ | See CURRICULUM.md — 28 topics, grade tags, ~62 addressable lessons |
 | Topic rows for grade 7 | ✅ | `content/topics.json` — the 13 topics of the grade 7 section, seeded. Grades 8–9 follow with their content |
 | Grade 7 sem-2 block: intro → loops-for + turtle-basics | ❌ | ~9 topics. First thing that reaches a classroom. |
-| First topic, ~12 tasks | 🔶 | Three tasks across three topics: `content/seed-tasks/grade7-turtle-square.json` (turtle-basics), `grade7-parsons-triangle.json` (turtle-loops), `grade7-quiz-variable-names.json` (variables), imported by `npm run db:seed` |
+| First topic, ~12 tasks | 🔶 | Four tasks across four topics: `content/seed-tasks/grade7-turtle-square.json` (turtle-basics), `grade7-parsons-triangle.json` (turtle-loops), `grade7-quiz-variable-names.json` (variables), `grade7-predict-arithmetic.json` (arithmetic), imported by `npm run db:seed` |
 | Grade tagging of tasks | ❌ | |
 
 ## Open Questions
@@ -211,10 +211,11 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
    (edit a draft, run and publish its reference, or view it read-only once published). Checks
    are authored as raw JSON, not a per-kind visual builder; that and the other five task types
    are still open.
-10. ~~Remaining task types, `parsons` first~~ — `parsons` (`indentMode: 'given'`) and `quiz` are
-    done end to end (docs/TASK_SCHEMA.md); `'chosen'`, `predict`, `fill`, `fix` remain. The
-    shared task-component interface this needed (`Task` union, `TaskWorkspace` dispatching by
-    type) now exists too, so the next type is a new branch and a new file, not a rewrite.
+10. ~~Remaining task types, `parsons` first~~ — `parsons` (`indentMode: 'given'`), `quiz` and
+    `predict` (`answerMode: 'text'`) are done end to end (docs/TASK_SCHEMA.md); parsons
+    `'chosen'`, predict `'choice'`/`imageOptions`, `fill`, `fix` remain. The shared
+    task-component interface this needed (`Task` union, `TaskWorkspace` dispatching by type) now
+    exists too, so the next type is a new branch and a new file, not a rewrite.
 11. Turtle canvas, target overlay, playback scrubber. Grid only if still justified afterwards.
 12. Meta layer.
 

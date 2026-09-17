@@ -5,7 +5,7 @@
  * Trust"), so this only needs to catch a malformed request, not an
  * adversarial one.
  */
-import type { CodePayload, ParsonsPayload, QuizPayload, TaskPayload } from './types';
+import type { CodePayload, ParsonsPayload, PredictPayload, QuizPayload, TaskPayload } from './types';
 
 export function isCodePayload(value: unknown): value is CodePayload {
   if (typeof value !== 'object' || value === null) return false;
@@ -54,6 +54,20 @@ export function isQuizPayload(value: unknown): value is QuizPayload {
   );
 }
 
+export function isPredictPayload(value: unknown): value is PredictPayload {
+  if (typeof value !== 'object' || value === null) return false;
+  const p = value as Record<string, unknown>;
+  return (
+    p.type === 'predict' &&
+    typeof p.prompt === 'string' &&
+    typeof p.code === 'string' &&
+    p.code.length > 0 &&
+    // 'choice' and imageOptions are documented but not built yet (lib/task/types.ts) — reject
+    // them here rather than storing a payload nothing can render or grade.
+    p.answerMode === 'text'
+  );
+}
+
 export function isTaskPayload(value: unknown): value is TaskPayload {
-  return isCodePayload(value) || isParsonsPayload(value) || isQuizPayload(value);
+  return isCodePayload(value) || isParsonsPayload(value) || isQuizPayload(value) || isPredictPayload(value);
 }

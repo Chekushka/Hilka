@@ -146,3 +146,42 @@ test('a teacher builds a quiz task from the forms and publishes it with no run s
   await page.getByRole('button', { name: 'Опублікувати' }).click();
   await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
 });
+
+test('a teacher builds a predict task from the forms, runs it, and publishes it', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  await page.getByRole('link', { name: 'Завдання' }).click();
+  await page.getByRole('link', { name: 'Нове завдання' }).click();
+  await expect(page.getByRole('heading', { name: 'Нове завдання' })).toBeVisible();
+
+  await page.getByLabel('Тип завдання').selectOption('predict');
+
+  const slug = `e2e-ui-predict-${Date.now()}`;
+  await page.getByLabel('Ідентифікатор (slug)').fill(slug);
+  await page.getByLabel('Назва').fill('UI Predict чернетка');
+  await page.getByLabel('Умова').fill('Що виведе ця програма?');
+  await typeIntoEditor(page, 0, 'a = 2\nb = 3\nprint(a + b * 4)');
+  await page
+    .getByLabel('Перевірки (JSON)')
+    .fill(JSON.stringify([{ kind: 'text_equals', value: '14', normalize: 'trim' }]));
+  await page.getByLabel(/Підказки/).fill('Множення виконується раніше за додавання.');
+  await page.getByLabel(/Складність/).fill('1');
+
+  await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().endsWith('/api/tasks') && response.request().method() === 'POST'
+    ),
+    page.getByRole('button', { name: 'Створити чернетку' }).click()
+  ]);
+
+  await expect(page.getByRole('heading', { name: 'Редагування чернетки' })).toBeVisible();
+  await expect(page.getByText('UI Predict чернетка')).toBeVisible();
+
+  // Unlike `code`, there is no separate starter vs reference: the code field
+  // saved above is already what runs (lib/task/types.ts) — Run just proves it.
+  await page.getByRole('button', { name: 'Запустити еталон' }).click();
+  await expect(page.getByText('14', { exact: true })).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
+});

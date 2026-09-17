@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toCodeTask, toParsonsTask, toQuizTask, toTask, type TaskRow } from './task-mapping';
+import { toCodeTask, toParsonsTask, toPredictTask, toQuizTask, toTask, type TaskRow } from './task-mapping';
 
 function row(overrides: Partial<TaskRow> = {}): TaskRow {
   return {
@@ -137,6 +137,48 @@ describe('toQuizTask', () => {
   });
 });
 
+function predictRow(overrides: Partial<TaskRow> = {}): TaskRow {
+  return row({
+    type: 'predict',
+    payload: {
+      type: 'predict',
+      prompt: 'Що виведе ця програма?',
+      code: 'print(2 + 3 * 4)',
+      answerMode: 'text'
+    },
+    checks: [{ kind: 'text_equals', value: '14', normalize: 'trim' }],
+    reference: { code: 'print(2 + 3 * 4)' },
+    ...overrides
+  });
+}
+
+describe('toPredictTask', () => {
+  it('maps a published row to the task the workspace consumes', () => {
+    const task = toPredictTask(predictRow());
+    expect(task).not.toBeNull();
+    expect(task?.type).toBe('predict');
+    expect(task?.payload.code).toBe('print(2 + 3 * 4)');
+    expect(task?.reference.code).toBe('print(2 + 3 * 4)');
+  });
+
+  it('rejects a row whose type is not predict', () => {
+    expect(toPredictTask(row())).toBeNull();
+  });
+
+  it('rejects a row whose payload disagrees with its type', () => {
+    const broken = predictRow();
+    broken.payload = { type: 'code' } as unknown as TaskRow['payload'];
+    expect(toPredictTask(broken)).toBeNull();
+  });
+
+  it('rejects a predict task with no reference solution', () => {
+    // Same rule as code (CLAUDE.md rule 5): payload.code IS the reference,
+    // and without one there is nothing to have verified the checks against.
+    expect(toPredictTask(predictRow({ reference: null }))).toBeNull();
+    expect(toPredictTask(predictRow({ reference: { code: '' } }))).toBeNull();
+  });
+});
+
 describe('toTask', () => {
   it('dispatches a code row to toCodeTask', () => {
     expect(toTask(row())?.type).toBe('code');
@@ -148,6 +190,10 @@ describe('toTask', () => {
 
   it('dispatches a quiz row to toQuizTask', () => {
     expect(toTask(quizRow())?.type).toBe('quiz');
+  });
+
+  it('dispatches a predict row to toPredictTask', () => {
+    expect(toTask(predictRow())?.type).toBe('predict');
   });
 
   it('returns null for a type nothing maps yet', () => {

@@ -110,6 +110,72 @@ test('a teacher drafts a task, runs the reference in-browser, and publishes it',
   expect(republish.status).toBe(409);
 });
 
+test('a predict task publishes once its checks match what payload.code actually prints', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-predict-${Date.now()}`;
+  const code = 'a = 2\nb = 3\nprint(a + b * 4)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'arithmetic',
+      title: 'E2E предикт чернетка',
+      payload: { type: 'predict', prompt: 'Тест', code, answerMode: 'text' },
+      checks: [{ kind: 'text_equals', value: '14', normalize: 'trim' }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  // payload.code IS the reference here — there is nothing separate to write.
+  const run = await runInBrowser(page, code);
+  expect(run.error).toBeNull();
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode: code, run }
+  });
+  expect(published.status).toBe(200);
+  const publishedTask = published.body as { status: string; version: number; reference: { code: string } };
+  expect(publishedTask.status).toBe('published');
+  expect(publishedTask.version).toBe(1);
+  expect(publishedTask.reference.code).toBe(code);
+});
+
+test('a predict task is rejected when its checks do not match what the code prints', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-predict-wrong-${Date.now()}`;
+  const code = 'a = 2\nb = 3\nprint(a + b * 4)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'arithmetic',
+      title: 'E2E предикт (хибна перевірка)',
+      payload: { type: 'predict', prompt: 'Тест', code, answerMode: 'text' },
+      // The code actually prints 14, not 20 — this must not publish.
+      checks: [{ kind: 'text_equals', value: '20', normalize: 'trim' }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, code);
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode: code, run }
+  });
+  expect(published.status).toBe(422);
+  expect((published.body as { error: string }).error).toBe('reference_fails_checks');
+});
+
 test('publish is rejected when the reference solution fails its own checks', async ({ page }) => {
   await loginAsTeacher(page, TEACHER_EMAIL);
 

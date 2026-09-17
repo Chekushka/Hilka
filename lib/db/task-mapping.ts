@@ -7,7 +7,7 @@
  * result from — must be rejected here rather than surfacing as a broken
  * workspace.
  */
-import type { CodeTask, ParsonsTask, QuizTask, Task } from '@/lib/task/types';
+import type { CodeTask, ParsonsTask, PredictTask, QuizTask, Task } from '@/lib/task/types';
 import type { tasks } from './schema';
 
 export type TaskRow = typeof tasks.$inferSelect;
@@ -80,9 +80,34 @@ export function toQuizTask(row: TaskRow): QuizTask | null {
   };
 }
 
+/** Executes like `code` — `payload.code` IS the reference, so this requires one, same as `toCodeTask`. */
+export function toPredictTask(row: TaskRow): PredictTask | null {
+  if (row.type !== 'predict' || row.payload?.type !== 'predict') {
+    return null;
+  }
+  if (!row.reference?.code) {
+    return null;
+  }
+  return {
+    id: row.id,
+    slug: row.slug,
+    topicId: row.topicId,
+    type: 'predict',
+    title: row.title,
+    payload: row.payload,
+    checks: row.checks ?? [],
+    hints: row.hints ?? [],
+    reference: row.reference,
+    difficulty: clampDifficulty(row.difficulty),
+    gradeTags: row.gradeTags ?? [],
+    version: row.version,
+    status: row.status
+  };
+}
+
 /** Tries every mapper this platform understands; `null` for a type none of them render yet. */
 export function toTask(row: TaskRow): Task | null {
-  return toCodeTask(row) ?? toParsonsTask(row) ?? toQuizTask(row);
+  return toCodeTask(row) ?? toParsonsTask(row) ?? toQuizTask(row) ?? toPredictTask(row);
 }
 
 function clampDifficulty(value: number): CodeTask['difficulty'] {

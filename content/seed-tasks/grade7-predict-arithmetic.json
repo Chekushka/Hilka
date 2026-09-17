@@ -1,0 +1,31 @@
+{
+  "slug": "g7-predict-arithmetic",
+  "topicSlug": "arithmetic",
+  "type": "predict",
+  "title": "Що виведе програма?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = 2\nb = 3\nprint(a + b * 4)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "14",
+      "normalize": "trim",
+      "message": "Python рахує спочатку множення, потім додавання: b * 4 виконується раніше за a +."
+    }
+  ],
+  "hints": [
+    "Python виконує множення раніше за додавання, як і в звичайній математиці.",
+    "b * 4 дорівнює 12, тоді a + 12."
+  ],
+  "reference": {
+    "code": "a = 2\nb = 3\nprint(a + b * 4)"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

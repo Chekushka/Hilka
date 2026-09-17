@@ -20,10 +20,21 @@
  * branch instead confirms the checks are internally consistent with the
  * payload (lib/task/quiz.ts) — an index that exists, and exactly one when
  * the quiz is single-answer.
+ *
+ * `predict` — runs exactly like `code`: `payload.code` IS the reference,
+ * there is no separate solution to write. The posted run's stdout stands in
+ * for a perfect prediction (`evaluatePredictionAgainstOwnRun`), so this
+ * confirms the checks the author wrote (e.g. `text_equals`) actually match
+ * what the code prints, instead of trusting a hand-typed value.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { evaluateAgainstOwnRun, evaluateChecks, type RunOutcome } from '@/lib/checker';
+import {
+  evaluateAgainstOwnRun,
+  evaluateChecks,
+  evaluatePredictionAgainstOwnRun,
+  type RunOutcome
+} from '@/lib/checker';
 import { getTaskForAuthoring, publishTask } from '@/lib/db/task-authoring';
 import { parsonsCanonicalSubmission } from '@/lib/task/parsons';
 import { validateQuizChecks } from '@/lib/task/quiz';
@@ -97,7 +108,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const outcome = evaluateAgainstOwnRun(body.referenceCode, task.checks, body.run);
+  const outcome =
+    task.type === 'predict'
+      ? evaluatePredictionAgainstOwnRun(body.run.stdout, task.checks, body.run)
+      : evaluateAgainstOwnRun(body.referenceCode, task.checks, body.run);
   if (!outcome.ranCleanly) {
     return NextResponse.json({ error: 'reference_run_failed', detail: body.run.error }, { status: 422 });
   }
