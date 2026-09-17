@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * Creates a draft task — `code` or `parsons`, the two types the rest of the
- * app understands end to end (docs/TASKS.md). The other four have no payload
- * shape or checker support yet, so this form does not offer them — adding
- * one is a separate slice, not a form-builder problem.
+ * Creates a draft task — `code`, `parsons` or `quiz`, the three types the
+ * rest of the app understands end to end (docs/TASKS.md). The other three
+ * have no payload shape or checker support yet, so this form does not offer
+ * them — adding one is a separate slice, not a form-builder problem.
  *
  * On success the browser moves to the task's own page, where `code` writes
- * and publishes a reference solution, and `parsons` publishes directly
- * (lib/task/parsons.ts — nothing to run).
+ * and publishes a reference solution, while `parsons` and `quiz` publish
+ * directly — neither executes anything to run first.
  */
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -54,6 +54,10 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   const [linesText, setLinesText] = useState(DEFAULT_PARSONS_LINES);
   const [distractorsText, setDistractorsText] = useState('');
 
+  // quiz-only
+  const [optionsText, setOptionsText] = useState('');
+  const [multiple, setMultiple] = useState(false);
+
   const [checksText, setChecksText] = useState('[]');
   const [hintsText, setHintsText] = useState('');
   const [difficulty, setDifficulty] = useState(2);
@@ -62,6 +66,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   const [error, setError] = useState<string | null>(null);
 
   const parsedLines = parseParsonsLines(linesText);
+  const parsedOptions = parseHints(optionsText);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -76,6 +81,10 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
       setError(t('authoring.parsonsLinesEmpty'));
       return;
     }
+    if (taskType === 'quiz' && parsedOptions.length === 0) {
+      setError(t('authoring.quizOptionsEmpty'));
+      return;
+    }
 
     setSaving(true);
     const response = await fetch('/api/tasks', {
@@ -88,13 +97,15 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         payload:
           taskType === 'code'
             ? { type: 'code', surface, prompt, starter }
-            : {
-                type: 'parsons',
-                prompt,
-                lines: parsedLines,
-                distractors: parseHints(distractorsText),
-                indentMode: 'given'
-              },
+            : taskType === 'parsons'
+              ? {
+                  type: 'parsons',
+                  prompt,
+                  lines: parsedLines,
+                  distractors: parseHints(distractorsText),
+                  indentMode: 'given'
+                }
+              : { type: 'quiz', prompt, options: parsedOptions, multiple },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -133,6 +144,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         >
           <option value="code">{t('authoring.taskTypeCode')}</option>
           <option value="parsons">{t('authoring.taskTypeParsons')}</option>
+          <option value="quiz">{t('authoring.taskTypeQuiz')}</option>
         </select>
       </div>
 
@@ -221,7 +233,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
           </label>
           <CodeEditor value={starter} onChange={setStarter} ariaLabel={t('authoring.starterLabel')} />
         </div>
-      ) : (
+      ) : taskType === 'parsons' ? (
         <>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm text-ink-muted" htmlFor="parsonsLines">
@@ -258,6 +270,34 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
               className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
             />
           </div>
+        </>
+      ) : (
+        <>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="quizOptions">
+              {t('authoring.quizOptionsLabel')}
+            </label>
+            <textarea
+              id="quizOptions"
+              rows={4}
+              value={optionsText}
+              onChange={(event) => setOptionsText(event.target.value)}
+              className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+            />
+            <p className="text-xs text-ink-muted">{t('authoring.quizOptionsHint')}</p>
+            <ul className="mt-1 text-xs text-ink-muted">
+              {parsedOptions.map((option, index) => (
+                <li key={index}>
+                  {index}: {option}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input type="checkbox" checked={multiple} onChange={(event) => setMultiple(event.target.checked)} />
+            {t('authoring.quizMultipleLabel')}
+          </label>
         </>
       )}
 

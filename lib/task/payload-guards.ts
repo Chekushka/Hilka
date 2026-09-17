@@ -5,7 +5,7 @@
  * Trust"), so this only needs to catch a malformed request, not an
  * adversarial one.
  */
-import type { CodePayload, ParsonsPayload, TaskPayload } from './types';
+import type { CodePayload, ParsonsPayload, QuizPayload, TaskPayload } from './types';
 
 export function isCodePayload(value: unknown): value is CodePayload {
   if (typeof value !== 'object' || value === null) return false;
@@ -41,6 +41,19 @@ export function isParsonsPayload(value: unknown): value is ParsonsPayload {
   );
 }
 
+export function isQuizPayload(value: unknown): value is QuizPayload {
+  if (typeof value !== 'object' || value === null) return false;
+  const p = value as Record<string, unknown>;
+  return (
+    p.type === 'quiz' &&
+    typeof p.prompt === 'string' &&
+    Array.isArray(p.options) &&
+    p.options.length > 0 &&
+    p.options.every((o) => typeof o === 'string') &&
+    typeof p.multiple === 'boolean'
+  );
+}
+
 export function isTaskPayload(value: unknown): value is TaskPayload {
-  return isCodePayload(value) || isParsonsPayload(value);
+  return isCodePayload(value) || isParsonsPayload(value) || isQuizPayload(value);
 }

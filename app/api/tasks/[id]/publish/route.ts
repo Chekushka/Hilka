@@ -14,12 +14,19 @@
  * is already the correct order (lib/task/parsons.ts), and this branch checks
  * that order against the task's own checks entirely server-side, with an
  * empty request body.
+ *
+ * `quiz` — also nothing to run, and unlike `parsons` there is no canonical
+ * submission either: the correct answer lives entirely in `checks`. This
+ * branch instead confirms the checks are internally consistent with the
+ * payload (lib/task/quiz.ts) — an index that exists, and exactly one when
+ * the quiz is single-answer.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { evaluateAgainstOwnRun, evaluateChecks, type RunOutcome } from '@/lib/checker';
 import { getTaskForAuthoring, publishTask } from '@/lib/db/task-authoring';
 import { parsonsCanonicalSubmission } from '@/lib/task/parsons';
+import { validateQuizChecks } from '@/lib/task/quiz';
 
 interface PublishBody {
   referenceCode: string;
@@ -65,6 +72,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         },
         { status: 422 }
       );
+    }
+    const updated = await publishTask(id, null);
+    if (!updated) {
+      return NextResponse.json({ error: 'publish_race' }, { status: 409 });
+    }
+    return NextResponse.json(updated);
+  }
+
+  if (task.type === 'quiz' && task.payload?.type === 'quiz') {
+    const errors = validateQuizChecks(task.payload, task.checks);
+    if (errors.length > 0) {
+      return NextResponse.json({ error: 'reference_fails_checks', failures: errors }, { status: 422 });
     }
     const updated = await publishTask(id, null);
     if (!updated) {

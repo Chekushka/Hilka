@@ -226,6 +226,13 @@ implies, and the publish route (`app/api/tasks/[id]/publish/route.ts`) evaluates
 task's own checks entirely server-side, with no client run to post first. The same rule as
 above still holds: publish is rejected if that canonical submission does not pass.
 
+**`quiz` has no `reference` either, and no canonical submission to build one from.** The correct
+answer isn't implied by anything in `payload` — it lives entirely in `checks`
+(`choice_equals.indices`). So there is nothing to *run* against the checks; instead
+`lib/task/quiz.ts`'s `validateQuizChecks` confirms the checks are internally consistent with the
+payload — every index actually names an option, and a single-answer quiz (`multiple: false`)
+names exactly one. That is what the publish gate checks, entirely server-side.
+
 ## Parameterization
 
 ```ts

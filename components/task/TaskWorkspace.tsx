@@ -1,14 +1,15 @@
 'use client';
 
 /**
- * Dispatches to the component for the student's task type. Adding an eighth
- * type means adding a branch here and a new file in components/task-types/,
- * never touching the session or practice flow that renders this
- * (docs/AI_CONTEXT.md, "Every task type implements one shared component
- * interface").
+ * Dispatches to the component for the student's task type. Adding the next
+ * one (predict, fill or fix) means adding a branch here and a new file in
+ * components/task-types/, never touching the session or practice flow that
+ * renders this (docs/AI_CONTEXT.md, "Every task type implements one shared
+ * component interface").
  */
 import { CodeTaskView } from '@/components/task-types/CodeTaskView';
 import { ParsonsTaskView } from '@/components/task-types/ParsonsTaskView';
+import { QuizTaskView } from '@/components/task-types/QuizTaskView';
 import type { AttemptOutcome, Task } from '@/lib/task/types';
 
 export type { AttemptOutcome } from '@/lib/task/types';
@@ -22,6 +23,9 @@ interface TaskWorkspaceProps {
 export function TaskWorkspace({ task, onSubmitAttempt }: TaskWorkspaceProps) {
   if (task.type === 'parsons') {
     return <ParsonsTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+  }
+  if (task.type === 'quiz') {
+    return <QuizTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
   }
   return <CodeTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
 }

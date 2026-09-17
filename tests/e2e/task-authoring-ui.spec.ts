@@ -111,3 +111,38 @@ test('a teacher builds a parsons task from the forms and publishes it with no ru
   await page.getByRole('button', { name: 'Опублікувати' }).click();
   await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
 });
+
+test('a teacher builds a quiz task from the forms and publishes it with no run step', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  await page.getByRole('link', { name: 'Завдання' }).click();
+  await page.getByRole('link', { name: 'Нове завдання' }).click();
+  await expect(page.getByRole('heading', { name: 'Нове завдання' })).toBeVisible();
+
+  await page.getByLabel('Тип завдання').selectOption('quiz');
+
+  const slug = `e2e-ui-quiz-${Date.now()}`;
+  await page.getByLabel('Ідентифікатор (slug)').fill(slug);
+  await page.getByLabel('Назва').fill('UI Quiz чернетка');
+  await page.getByLabel('Умова').fill('Яке з цих чисел найбільше?');
+  await page.getByLabel('Варіанти відповіді (один на рядок)').fill('1\n2\n3');
+  // Index 2 ("3") is the correct, largest option.
+  await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'choice_equals', indices: [2] }]));
+  await page.getByLabel(/Підказки/).fill('Порівняй усі три числа.');
+  await page.getByLabel(/Складність/).fill('1');
+
+  await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().endsWith('/api/tasks') && response.request().method() === 'POST'
+    ),
+    page.getByRole('button', { name: 'Створити чернетку' }).click()
+  ]);
+
+  await expect(page.getByRole('heading', { name: 'Редагування чернетки' })).toBeVisible();
+  await expect(page.getByText('UI Quiz чернетка')).toBeVisible();
+
+  // Nothing to run first — the correct answer lives entirely in `checks`
+  // (lib/task/quiz.ts), so Publish alone is the gate.
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
+});
