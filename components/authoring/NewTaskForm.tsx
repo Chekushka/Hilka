@@ -1,14 +1,15 @@
 'use client';
 
 /**
- * Creates a draft task — `code`, `parsons` or `quiz`, the three types the
- * rest of the app understands end to end (docs/TASKS.md). The other three
- * have no payload shape or checker support yet, so this form does not offer
- * them — adding one is a separate slice, not a form-builder problem.
+ * Creates a draft task — `code`, `parsons`, `quiz` or `predict`, the types
+ * the rest of the app understands end to end (docs/TASKS.md). `fill` and
+ * `fix` have no payload shape or checker support yet, so this form does not
+ * offer them — adding one is a separate slice, not a form-builder problem.
  *
- * On success the browser moves to the task's own page, where `code` writes
- * and publishes a reference solution, while `parsons` and `quiz` publish
- * directly — neither executes anything to run first.
+ * On success the browser moves to the task's own page, where `code` and
+ * `predict` write and publish a reference solution (predict's IS the code
+ * shown to the student — nothing separate to write), while `parsons` and
+ * `quiz` publish directly — neither executes anything to run first.
  */
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -58,6 +59,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   const [optionsText, setOptionsText] = useState('');
   const [multiple, setMultiple] = useState(false);
 
+  // predict-only
+  const [predictCode, setPredictCode] = useState('');
+
   const [checksText, setChecksText] = useState('[]');
   const [hintsText, setHintsText] = useState('');
   const [difficulty, setDifficulty] = useState(2);
@@ -85,6 +89,10 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
       setError(t('authoring.quizOptionsEmpty'));
       return;
     }
+    if (taskType === 'predict' && predictCode.trim().length === 0) {
+      setError(t('authoring.predictCodeEmpty'));
+      return;
+    }
 
     setSaving(true);
     const response = await fetch('/api/tasks', {
@@ -105,7 +113,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                   distractors: parseHints(distractorsText),
                   indentMode: 'given'
                 }
-              : { type: 'quiz', prompt, options: parsedOptions, multiple },
+              : taskType === 'quiz'
+                ? { type: 'quiz', prompt, options: parsedOptions, multiple }
+                : { type: 'predict', prompt, code: predictCode, answerMode: 'text' },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -145,6 +155,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
           <option value="code">{t('authoring.taskTypeCode')}</option>
           <option value="parsons">{t('authoring.taskTypeParsons')}</option>
           <option value="quiz">{t('authoring.taskTypeQuiz')}</option>
+          <option value="predict">{t('authoring.taskTypePredict')}</option>
         </select>
       </div>
 
@@ -271,7 +282,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
             />
           </div>
         </>
-      ) : (
+      ) : taskType === 'quiz' ? (
         <>
           <div className="flex flex-col gap-1.5">
             <label className="text-sm text-ink-muted" htmlFor="quizOptions">
@@ -299,6 +310,14 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
             {t('authoring.quizMultipleLabel')}
           </label>
         </>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="predictCode">
+            {t('authoring.predictCodeLabel')}
+          </label>
+          <CodeEditor value={predictCode} onChange={setPredictCode} ariaLabel={t('authoring.predictCodeLabel')} />
+          <p className="text-xs text-ink-muted">{t('authoring.predictCodeHint')}</p>
+        </div>
       )}
 
       <div className="flex flex-col gap-1.5">

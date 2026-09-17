@@ -13,6 +13,9 @@
     "target": "Зразок",
     "editorLabel": "Твій код"
   },
+  "predict": {
+    "answerLabel": "Що виведе ця програма?"
+  },
   "parsons": {
     "bankTitle": "Рядки для складання",
     "bankEmpty": "Усі рядки вже перенесені нижче.",
@@ -106,6 +109,7 @@
     "taskTypeCode": "Код",
     "taskTypeParsons": "Складання з рядків (Parsons)",
     "taskTypeQuiz": "Тест з варіантами відповіді",
+    "taskTypePredict": "Передбач результат",
     "topicLabel": "Тема",
     "slugLabel": "Ідентифікатор (slug)",
     "slugHint": "Латиниця, цифри, дефіси — стабільний ключ вмісту, не змінюється після створення.",
@@ -124,6 +128,9 @@
     "quizOptionsEmpty": "Додай хоча б один варіант відповіді.",
     "quizMultipleLabel": "Декілька правильних відповідей",
     "quizChecksFailed": "Перевірки не узгоджені з варіантами відповіді:",
+    "predictCodeLabel": "Код, який побачить учень",
+    "predictCodeHint": "Учень читає цей код і вгадує, що він виведе — код не редагується, лише читається.",
+    "predictCodeEmpty": "Додай код для передбачення.",
     "checksLabel": "Перевірки (JSON)",
     "checksHint": "Масив об'єктів перевірки — формат описаний у docs/TASK_SCHEMA.md.",
     "checksInvalidJson": "Некоректний JSON у полі перевірок.",

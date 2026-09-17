@@ -10,7 +10,7 @@
  * by Playwright, for CI) build on.
  */
 import { evaluateChecks } from './evaluate';
-import type { Check, Evidence } from './types';
+import type { Check, Evidence, Submission } from './types';
 import type { RunOptions, RunResult } from '@/lib/runner';
 
 export type RunPython = (code: string, options: RunOptions) => Promise<RunResult>;
@@ -34,7 +34,7 @@ function exprsOf(checks: Check[]): string[] {
 
 /** Which of `checks` `run` fails, given `reference` as the target for shape_equals etc. */
 export function evaluateRun(
-  code: string,
+  submission: Submission,
   checks: Check[],
   run: RunOutcome,
   reference: Evidence['reference']
@@ -43,7 +43,7 @@ export function evaluateRun(
     return { ranCleanly: false, passed: false, failures: [] };
   }
   const evidence: Evidence = {
-    submission: { code },
+    submission,
     run: {
       stdout: run.stdout,
       drawing: run.drawing,
@@ -69,7 +69,19 @@ export function evaluateRun(
  * AI_CONTEXT.md, "Python Runner").
  */
 export function evaluateAgainstOwnRun(code: string, checks: Check[], run: RunOutcome): CheckRunOutcome {
-  return evaluateRun(code, checks, run, { stdout: run.stdout, drawing: run.drawing });
+  return evaluateRun({ code }, checks, run, { stdout: run.stdout, drawing: run.drawing });
+}
+
+/**
+ * `predict`'s equivalent of `evaluateAgainstOwnRun`: the fixed snippet in
+ * `payload.code` IS the reference, and a perfect prediction is exactly its
+ * real stdout — so checking that stdout as a `text` submission against the
+ * task's own checks confirms whatever value the author typed into e.g.
+ * `text_equals` actually matches what the code prints, instead of trusting
+ * it by hand (CLAUDE.md rule 5).
+ */
+export function evaluatePredictionAgainstOwnRun(text: string, checks: Check[], run: RunOutcome): CheckRunOutcome {
+  return evaluateRun({ text }, checks, run, { stdout: run.stdout, drawing: run.drawing });
 }
 
 /** The subset of a task's shape this needs — mirrors validate.ts's TaskShape. */
@@ -127,7 +139,12 @@ export async function checkTaskReference(
       stdin: runCase.stdin,
       exprs: exprsOf(checks)
     });
-    const outcome = evaluateAgainstOwnRun(referenceCode, checks, result);
+    // `predict` has no code of its own to submit — a perfect prediction IS
+    // the reference's real stdout (lib/task/types.ts).
+    const outcome =
+      task.type === 'predict'
+        ? evaluatePredictionAgainstOwnRun(result.stdout, checks, result)
+        : evaluateAgainstOwnRun(referenceCode, checks, result);
     if (!outcome.ranCleanly) {
       failures.push({
         context,
@@ -149,7 +166,7 @@ export async function checkTaskReference(
     // A broken program that raises or times out has correctly failed; only a
     // clean run that satisfies every check is the bug TASK_SCHEMA.md warns
     // about.
-    const outcome = evaluateRun(broken, task.checks, result, referenceArtifacts);
+    const outcome = evaluateRun({ code: broken }, task.checks, result, referenceArtifacts);
     if (outcome.passed) {
       failures.push({
         context: 'broken',

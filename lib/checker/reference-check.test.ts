@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkTaskReference,
   evaluateAgainstOwnRun,
+  evaluatePredictionAgainstOwnRun,
   type ReferenceCheckTask,
   type RunPython
 } from './reference-check';
@@ -138,6 +139,34 @@ describe('checkTaskReference', () => {
     const outcome = await checkTaskReference(task, runPython);
     expect(outcome.passed).toBe(true);
   });
+
+  it('checks a predict task by submitting the reference run\'s own stdout as the prediction', async () => {
+    // predict has no code of its own to submit — a perfect prediction IS
+    // the fixed snippet's real stdout (lib/task/types.ts).
+    const task: ReferenceCheckTask = {
+      slug: 'g7-predict-arithmetic',
+      type: 'predict',
+      checks: [{ kind: 'text_equals', value: '14', normalize: 'trim' }],
+      reference: { code: 'a = 2\nb = 3\nprint(a + b * 4)' }
+    };
+    const runPython: RunPython = async () => result({ stdout: '14\n' });
+    const outcome = await checkTaskReference(task, runPython);
+    expect(outcome.passed).toBe(true);
+    expect(outcome.failures).toEqual([]);
+  });
+
+  it('reports a predict task whose checks do not match what the code actually prints', async () => {
+    const task: ReferenceCheckTask = {
+      slug: 'g7-predict-arithmetic',
+      type: 'predict',
+      checks: [{ kind: 'text_equals', value: '20', normalize: 'trim', message: 'Очікували 20' }],
+      reference: { code: 'a = 2\nb = 3\nprint(a + b * 4)' }
+    };
+    const runPython: RunPython = async () => result({ stdout: '14\n' });
+    const outcome = await checkTaskReference(task, runPython);
+    expect(outcome.passed).toBe(false);
+    expect(outcome.failures).toEqual([{ context: 'no cases', message: 'Очікували 20' }]);
+  });
 });
 
 describe('evaluateAgainstOwnRun', () => {
@@ -164,5 +193,27 @@ describe('evaluateAgainstOwnRun', () => {
       result({ error: { type: 'ZeroDivisionError', message: 'division by zero', line: 1, col: 0 } })
     );
     expect(outcome).toEqual({ ranCleanly: false, passed: false, failures: [] });
+  });
+});
+
+describe('evaluatePredictionAgainstOwnRun', () => {
+  // predict's publish gate: the posted run is payload.code's own run, and a
+  // perfect prediction is exactly its stdout.
+  it('passes when the checks accept the run\'s own stdout as the prediction', () => {
+    const outcome = evaluatePredictionAgainstOwnRun(
+      '14\n',
+      [{ kind: 'text_equals', value: '14', normalize: 'trim' }],
+      result({ stdout: '14\n' })
+    );
+    expect(outcome).toEqual({ ranCleanly: true, passed: true, failures: [] });
+  });
+
+  it('reports a check whose hand-typed value does not match the real output', () => {
+    const outcome = evaluatePredictionAgainstOwnRun(
+      '14\n',
+      [{ kind: 'text_equals', value: '20', normalize: 'trim', message: 'Очікували 20' }],
+      result({ stdout: '14\n' })
+    );
+    expect(outcome).toEqual({ ranCleanly: true, passed: false, failures: ['Очікували 20'] });
   });
 });

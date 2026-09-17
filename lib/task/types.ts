@@ -43,8 +43,23 @@ export interface QuizPayload {
   multiple: boolean;
 }
 
+/**
+ * `answerMode: 'choice'` and `imageOptions` are documented in TASK_SCHEMA.md
+ * but not built yet — only a free-text prediction is graded today. The
+ * authoring API rejects anything but `'text'`, and
+ * `components/task-types/PredictTaskView.tsx` only ever renders a text
+ * input (docs/TASKS.md Open Questions has the parsons `'chosen'` precedent
+ * for this kind of partial build).
+ */
+export interface PredictPayload {
+  type: 'predict';
+  prompt: string;
+  code: string;
+  answerMode: 'text';
+}
+
 /** Widens to the union in TASK_SCHEMA.md as each task type is built. */
-export type TaskPayload = CodePayload | ParsonsPayload | QuizPayload;
+export type TaskPayload = CodePayload | ParsonsPayload | QuizPayload | PredictPayload;
 
 /**
  * One input set of an input-driven task: the code runs once per case, with
@@ -129,14 +144,39 @@ export interface QuizTask {
   status: TaskStatus;
 }
 
+/**
+ * Executes exactly like `code` — `payload.code` IS the reference solution,
+ * there is no separate one to author, since the whole point is "what does
+ * this fixed program print". `reference.code` is always `payload.code`; the
+ * publish gate runs it once to confirm the checks the author wrote (e.g.
+ * `text_equals`) actually match its real output, rather than trusting a
+ * hand-typed expected value (CLAUDE.md rule 5, lib/checker/reference-check.ts's
+ * `evaluatePredictionAgainstOwnRun`).
+ */
+export interface PredictTask {
+  id: string;
+  slug: string;
+  topicId: string;
+  type: 'predict';
+  title: string;
+  payload: PredictPayload;
+  checks: Check[];
+  hints: string[];
+  reference: Reference;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  gradeTags: number[];
+  version: number;
+  status: TaskStatus;
+}
+
 /** Every task type the student-facing surfaces know how to render today. */
-export type Task = CodeTask | ParsonsTask | QuizTask;
+export type Task = CodeTask | ParsonsTask | QuizTask | PredictTask;
 
 /** What a task-type component reports once a Check completes. */
 export interface AttemptOutcome {
   passed: boolean;
   hintsUsed: number;
   durationMs: number;
-  /** Shape matches `Submission` — `{ code }` for `code`, `{ orderedLines }` for `parsons`, `{ choiceIndices }` for `quiz`. */
+  /** Shape matches `Submission` — `{ code }` for `code`, `{ orderedLines }` for `parsons`, `{ choiceIndices }` for `quiz`, `{ text }` for `predict`. */
   submittedAnswer: Record<string, unknown>;
 }

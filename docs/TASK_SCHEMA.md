@@ -78,6 +78,13 @@ Notes:
 - `predict.imageOptions` renders N turtle reference programs as pictures and asks which one the
   shown code produces. The author writes N short programs; the platform renders them. No
   hand-drawn assets anywhere.
+- **Not built**: `predict.answerMode: 'choice'` and `imageOptions`. Only `'text'` is graded
+  today — the authoring API rejects anything else, and
+  `components/task-types/PredictTaskView.tsx` only ever renders a text input. `payload.code` IS
+  the reference solution (there is nothing separate to write); the publish gate runs it once and
+  checks that the author's `text_equals` value actually matches its real stdout
+  (`lib/checker/reference-check.ts`'s `evaluatePredictionAgainstOwnRun`), the same rule 5
+  guarantee `code` gets.
 
 ## Run cases
 
