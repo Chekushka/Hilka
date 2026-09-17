@@ -16,8 +16,35 @@ export interface CodePayload {
   starter: string;
 }
 
+export interface ParsonsLine {
+  text: string;
+  indent: number;
+}
+
+/**
+ * `indentMode: 'chosen'` is documented in TASK_SCHEMA.md but not built yet —
+ * the checker's `order_equals` has nowhere to read an expected indent from,
+ * so nothing here can grade it. Every parsons task is authored and rendered
+ * as `'given'` until that lands (docs/TASKS.md Open Questions).
+ */
+export interface ParsonsPayload {
+  type: 'parsons';
+  prompt: string;
+  lines: ParsonsLine[];
+  distractors?: string[];
+  indentMode: 'given' | 'chosen';
+}
+
+/** `multiple: false` means exactly one option is correct; `true` allows several. */
+export interface QuizPayload {
+  type: 'quiz';
+  prompt: string;
+  options: string[];
+  multiple: boolean;
+}
+
 /** Widens to the union in TASK_SCHEMA.md as each task type is built. */
-export type TaskPayload = CodePayload;
+export type TaskPayload = CodePayload | ParsonsPayload | QuizPayload;
 
 /**
  * One input set of an input-driven task: the code runs once per case, with
@@ -56,4 +83,60 @@ export interface CodeTask {
   gradeTags: number[];
   version: number;
   status: TaskStatus;
+}
+
+/**
+ * No `reference` — nothing executes, so there is nothing to run and derive
+ * artifacts from. The payload's own line order already is the correct
+ * answer (lib/task/parsons.ts), which is what the publish gate checks
+ * instead of a reference run.
+ */
+export interface ParsonsTask {
+  id: string;
+  slug: string;
+  topicId: string;
+  type: 'parsons';
+  title: string;
+  payload: ParsonsPayload;
+  checks: Check[];
+  hints: string[];
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  gradeTags: number[];
+  version: number;
+  status: TaskStatus;
+}
+
+/**
+ * No `reference` either — like `parsons`, nothing executes. The correct
+ * answer lives entirely in `checks` (`choice_equals.indices`); there is no
+ * separate "reference" to derive it from, so the publish gate
+ * (lib/task/quiz.ts) instead confirms the checks are internally consistent
+ * with the payload — indices that actually exist, and exactly one of them
+ * when `multiple` is false.
+ */
+export interface QuizTask {
+  id: string;
+  slug: string;
+  topicId: string;
+  type: 'quiz';
+  title: string;
+  payload: QuizPayload;
+  checks: Check[];
+  hints: string[];
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  gradeTags: number[];
+  version: number;
+  status: TaskStatus;
+}
+
+/** Every task type the student-facing surfaces know how to render today. */
+export type Task = CodeTask | ParsonsTask | QuizTask;
+
+/** What a task-type component reports once a Check completes. */
+export interface AttemptOutcome {
+  passed: boolean;
+  hintsUsed: number;
+  durationMs: number;
+  /** Shape matches `Submission` — `{ code }` for `code`, `{ orderedLines }` for `parsons`, `{ choiceIndices }` for `quiz`. */
+  submittedAnswer: Record<string, unknown>;
 }

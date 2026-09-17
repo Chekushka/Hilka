@@ -1,36 +1,27 @@
 /**
  * Draft task creation. Teacher-only — task content is shared curriculum
  * content, not owned per-teacher, so any logged-in teacher may author it
- * (docs/AI_CONTEXT.md, "Teacher Auth"). Scoped to `code` tasks, the only
- * type the rest of the app understands end to end (docs/TASKS.md).
+ * (docs/AI_CONTEXT.md, "Teacher Auth"). Scoped to `code` and `parsons`
+ * tasks, the only two types the rest of the app understands end to end
+ * (docs/TASKS.md).
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { validateTaskChecks, type Check } from '@/lib/checker';
 import { createDraftTask, isUniqueViolation } from '@/lib/db/task-authoring';
 import { getTopicIdBySlug } from '@/lib/db/topics';
-import type { CodePayload } from '@/lib/task/types';
+import type { TaskPayload } from '@/lib/task/types';
+import { isTaskPayload } from '@/lib/task/payload-guards';
 
 interface CreateTaskBody {
   slug: string;
   topicSlug: string;
   title: string;
-  payload: CodePayload;
+  payload: TaskPayload;
   checks: Check[];
   hints?: string[];
   difficulty?: number;
   gradeTags?: number[];
-}
-
-function isCodePayload(value: unknown): value is CodePayload {
-  if (typeof value !== 'object' || value === null) return false;
-  const p = value as Record<string, unknown>;
-  return (
-    p.type === 'code' &&
-    typeof p.surface === 'string' &&
-    typeof p.prompt === 'string' &&
-    typeof p.starter === 'string'
-  );
 }
 
 // Structural only — a Check's kind decides its shape, and re-deriving the
@@ -52,7 +43,7 @@ function isValidBody(body: unknown): body is CreateTaskBody {
     b.topicSlug.length > 0 &&
     typeof b.title === 'string' &&
     b.title.length > 0 &&
-    isCodePayload(b.payload) &&
+    isTaskPayload(b.payload) &&
     Array.isArray(b.checks) &&
     b.checks.every(isCheckShaped) &&
     (b.hints === undefined || (Array.isArray(b.hints) && b.hints.every((h) => typeof h === 'string'))) &&
@@ -75,7 +66,7 @@ export async function POST(request: Request) {
   // A draft has no reference solution yet by construction — that arrives at
   // publish time (lib/checker/reference-check.ts's evaluateAgainstOwnRun is
   // the real gate then), so a draft save must not be blocked on it.
-  const errors = validateTaskChecks({ checks: body.checks, type: 'code' }, { requireReference: false });
+  const errors = validateTaskChecks({ checks: body.checks, type: body.payload.type }, { requireReference: false });
   if (errors.length > 0) {
     return NextResponse.json({ error: 'invalid_checks', details: errors }, { status: 400 });
   }

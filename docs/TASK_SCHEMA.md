@@ -72,6 +72,9 @@ type Payload =
 Notes:
 - `parsons.indentMode: 'chosen'` is the harder variant and the only one that teaches Python
   indentation. Default to `'given'` for a topic's first Parsons task and `'chosen'` later.
+  **Not built**: `order_equals` has nowhere to read an expected indent from (see "Implementation
+  status" below), so the authoring API rejects `'chosen'` and `components/task-types/ParsonsTaskView.tsx`
+  only ever renders `'given'` — indentation is shown for context, never set or graded.
 - `predict.imageOptions` renders N turtle reference programs as pictures and asks which one the
   shown code produces. The author writes N short programs; the platform renders them. No
   hand-drawn assets anywhere.
@@ -135,6 +138,12 @@ type Check = { message?: string } & (
 `text_equals`, `stdout_equals`, `stdout_contains`, `last_line_equals`,
 `number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`,
 `uses`, `forbids`, `var_equals`, `expr`.
+
+`order_equals`'s `checkIndent` is declared but not evaluated — the check only ever compares
+`submission.orderedLines[i].index` against `check.lines[i]`, never `.indent`, because nothing
+carries the *expected* indent for it to compare against. This is exactly what blocks
+`parsons.indentMode: 'chosen'` above; giving `order_equals` an `indents` field (or similar) to
+compare against is the smallest fix, the same commit that builds `'chosen'` should add it.
 
 `uses`/`forbids` run against `Submission.code` through `lib/checker/ast.ts`, a
 small Python tokenizer (not a full parser) that skips string and comment
@@ -209,6 +218,20 @@ a runner upgrade: re-running all references is a single job.
 For `fix` tasks, `payload.broken` and `reference.code` are both required, and publish
 additionally verifies that `broken` **fails** — a "broken" program that passes is a bug in the
 task.
+
+**`parsons` has no `reference` at all.** Nothing executes, so there is nothing to run and derive
+artifacts from — `payload.lines` is already stored in the correct order, and that order *is* the
+reference. `lib/task/parsons.ts`'s `parsonsCanonicalSubmission` builds the submission that order
+implies, and the publish route (`app/api/tasks/[id]/publish/route.ts`) evaluates it against the
+task's own checks entirely server-side, with no client run to post first. The same rule as
+above still holds: publish is rejected if that canonical submission does not pass.
+
+**`quiz` has no `reference` either, and no canonical submission to build one from.** The correct
+answer isn't implied by anything in `payload` — it lives entirely in `checks`
+(`choice_equals.indices`). So there is nothing to *run* against the checks; instead
+`lib/task/quiz.ts`'s `validateQuizChecks` confirms the checks are internally consistent with the
+payload — every index actually names an option, and a single-answer quiz (`multiple: false`)
+names exactly one. That is what the publish gate checks, entirely server-side.
 
 ## Parameterization
 

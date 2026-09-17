@@ -1,0 +1,34 @@
+{
+  "slug": "g7-parsons-triangle",
+  "topicSlug": "turtle-loops",
+  "type": "parsons",
+  "title": "Трикутник (склади програму)",
+  "payload": {
+    "type": "parsons",
+    "prompt": "Розстав рядки так, щоб програма намалювала трикутник.",
+    "lines": [
+      { "text": "import turtle", "indent": 0 },
+      { "text": "for i in range(3):", "indent": 0 },
+      { "text": "turtle.forward(100)", "indent": 1 },
+      { "text": "turtle.right(120)", "indent": 1 }
+    ],
+    "distractors": ["turtle.right(90)"],
+    "indentMode": "given"
+  },
+  "checks": [
+    {
+      "kind": "order_equals",
+      "lines": [0, 1, 2, 3],
+      "message": "Порядок рядків ще не той. Подумай, що має виконатись раніше."
+    }
+  ],
+  "hints": [
+    "Спочатку підключаємо модуль, потім починається цикл.",
+    "Усередині циклу — крок уперед і поворот, у такому порядку.",
+    "Трикутник повертає на 120°, а не на 90°."
+  ],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

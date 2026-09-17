@@ -452,6 +452,18 @@ the strip is always unambiguous) — anyone reading `module.$d` directly for a f
 needs the same unmangling, or a task whose reference solution happens to use a variable called
 `name` silently reports it as `undefined`.
 
+**A parsons task's checks reference lines by position, not by content.** `payload.lines[i]`'s
+index *is* the identifier `order_equals.lines` and `Submission.orderedLines[].index` use —
+there is no separate id field. `lib/task/parsons.ts`'s `parsonsPool` extends the same index
+space for `distractors`, at `payload.lines.length + i`, specifically so a distractor can never
+collide with a real line's index and always fails the length/order comparison in
+`evaluate.ts`'s `order_equals` case. Editing `payload.lines` — reordering, inserting, deleting —
+without recomputing every check's `lines` array silently breaks a published task; there is no
+runtime check for this because the checker only sees `Submission`, never `payload`. The publish
+gate (`app/api/tasks/[id]/publish/route.ts`, `parsonsCanonicalSubmission`) does catch it before
+anything reaches a student, but a `PATCH` to a draft's checks alone, without touching the
+lines, will not.
+
 **`request.url` inside a route handler does not reflect the Host header it was actually sent
 to, at least under `next start` in this sandbox.** A request to `http://127.0.0.1:3000/api/x`
 and one to `http://localhost:3000/api/x` both report `request.url` as `http://localhost:3000/...`

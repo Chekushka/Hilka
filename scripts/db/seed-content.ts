@@ -15,7 +15,7 @@ import { validateTaskChecks } from '@/lib/checker';
 import { getDb } from '@/lib/db/client';
 import { tasks, topics } from '@/lib/db/schema';
 import type { Check } from '@/lib/checker';
-import type { CodePayload, Reference, RunCase, TaskStatus, TaskType } from '@/lib/task/types';
+import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 
 const root = path.join(process.cwd(), 'content');
 
@@ -33,7 +33,7 @@ interface TaskContent {
   topicSlug: string;
   type: TaskType;
   title: string;
-  payload: CodePayload;
+  payload: TaskPayload;
   checks: Check[];
   cases?: RunCase[];
   hints: string[];

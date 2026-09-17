@@ -1,0 +1,27 @@
+{
+  "slug": "g7-quiz-variable-names",
+  "topicSlug": "variables",
+  "type": "quiz",
+  "title": "Правильне ім'я змінної",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яке з цих імен змінної є правильним у Python?",
+    "options": ["1x", "x1", "x-1", "x 1"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [1],
+      "message": "Ім'я змінної не може починатися з цифри, містити дефіс чи пробіл."
+    }
+  ],
+  "hints": [
+    "Ім'я змінної в Python не може починатися з цифри.",
+    "Ім'я не може містити пробіл чи дефіс — тільки букви, цифри й підкреслення."
+  ],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

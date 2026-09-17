@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toCodeTask, type TaskRow } from './task-mapping';
+import { toCodeTask, toParsonsTask, toQuizTask, toTask, type TaskRow } from './task-mapping';
 
 function row(overrides: Partial<TaskRow> = {}): TaskRow {
   return {
@@ -60,5 +60,97 @@ describe('toCodeTask', () => {
     const task = toCodeTask(row({ hints: [], checks: [] }));
     expect(task?.hints).toEqual([]);
     expect(task?.checks).toEqual([]);
+  });
+});
+
+function parsonsRow(overrides: Partial<TaskRow> = {}): TaskRow {
+  return row({
+    type: 'parsons',
+    payload: {
+      type: 'parsons',
+      prompt: 'Склади трикутник.',
+      lines: [
+        { text: 'import turtle', indent: 0 },
+        { text: 'for i in range(3):', indent: 0 }
+      ],
+      distractors: ['turtle.right(90)'],
+      indentMode: 'given'
+    },
+    checks: [{ kind: 'order_equals', lines: [0, 1] }],
+    reference: null,
+    ...overrides
+  });
+}
+
+describe('toParsonsTask', () => {
+  it('maps a published row, with no reference required', () => {
+    const task = toParsonsTask(parsonsRow());
+    expect(task).not.toBeNull();
+    expect(task?.type).toBe('parsons');
+    expect(task?.payload.lines).toHaveLength(2);
+    expect(task).not.toHaveProperty('reference');
+  });
+
+  it('rejects a row whose type is not parsons', () => {
+    expect(toParsonsTask(row())).toBeNull();
+  });
+
+  it('rejects a row whose payload disagrees with its type', () => {
+    const broken = parsonsRow();
+    broken.payload = { type: 'code' } as unknown as TaskRow['payload'];
+    expect(toParsonsTask(broken)).toBeNull();
+  });
+});
+
+function quizRow(overrides: Partial<TaskRow> = {}): TaskRow {
+  return row({
+    type: 'quiz',
+    payload: {
+      type: 'quiz',
+      prompt: 'Яке ім’я змінної правильне?',
+      options: ['1x', 'x1'],
+      multiple: false
+    },
+    checks: [{ kind: 'choice_equals', indices: [1] }],
+    reference: null,
+    ...overrides
+  });
+}
+
+describe('toQuizTask', () => {
+  it('maps a published row, with no reference required', () => {
+    const task = toQuizTask(quizRow());
+    expect(task).not.toBeNull();
+    expect(task?.type).toBe('quiz');
+    expect(task?.payload.options).toHaveLength(2);
+    expect(task).not.toHaveProperty('reference');
+  });
+
+  it('rejects a row whose type is not quiz', () => {
+    expect(toQuizTask(row())).toBeNull();
+  });
+
+  it('rejects a row whose payload disagrees with its type', () => {
+    const broken = quizRow();
+    broken.payload = { type: 'code' } as unknown as TaskRow['payload'];
+    expect(toQuizTask(broken)).toBeNull();
+  });
+});
+
+describe('toTask', () => {
+  it('dispatches a code row to toCodeTask', () => {
+    expect(toTask(row())?.type).toBe('code');
+  });
+
+  it('dispatches a parsons row to toParsonsTask', () => {
+    expect(toTask(parsonsRow())?.type).toBe('parsons');
+  });
+
+  it('dispatches a quiz row to toQuizTask', () => {
+    expect(toTask(quizRow())?.type).toBe('quiz');
+  });
+
+  it('returns null for a type nothing maps yet', () => {
+    expect(toTask(row({ type: 'fill', payload: { type: 'fill' } as unknown as TaskRow['payload'] }))).toBeNull();
   });
 });

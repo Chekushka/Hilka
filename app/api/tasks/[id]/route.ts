@@ -7,26 +7,16 @@ import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { validateTaskChecks, type Check } from '@/lib/checker';
 import { getTaskForAuthoring, updateDraftTask } from '@/lib/db/task-authoring';
-import type { CodePayload } from '@/lib/task/types';
+import type { TaskPayload } from '@/lib/task/types';
+import { isTaskPayload } from '@/lib/task/payload-guards';
 
 interface UpdateTaskBody {
   title?: string;
-  payload?: CodePayload;
+  payload?: TaskPayload;
   checks?: Check[];
   hints?: string[];
   difficulty?: number;
   gradeTags?: number[];
-}
-
-function isCodePayload(value: unknown): value is CodePayload {
-  if (typeof value !== 'object' || value === null) return false;
-  const p = value as Record<string, unknown>;
-  return (
-    p.type === 'code' &&
-    typeof p.surface === 'string' &&
-    typeof p.prompt === 'string' &&
-    typeof p.starter === 'string'
-  );
 }
 
 function isCheckShaped(value: unknown): value is Check {
@@ -38,7 +28,7 @@ function isValidBody(body: unknown): body is UpdateTaskBody {
   const b = body as Record<string, unknown>;
   return (
     (b.title === undefined || (typeof b.title === 'string' && b.title.length > 0)) &&
-    (b.payload === undefined || isCodePayload(b.payload)) &&
+    (b.payload === undefined || isTaskPayload(b.payload)) &&
     (b.checks === undefined || (Array.isArray(b.checks) && b.checks.every(isCheckShaped))) &&
     (b.hints === undefined || (Array.isArray(b.hints) && b.hints.every((h) => typeof h === 'string'))) &&
     (b.difficulty === undefined || typeof b.difficulty === 'number') &&
@@ -71,19 +61,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  if (body.checks) {
-    const errors = validateTaskChecks({ checks: body.checks, type: 'code' }, { requireReference: false });
-    if (errors.length > 0) {
-      return NextResponse.json({ error: 'invalid_checks', details: errors }, { status: 400 });
-    }
-  }
-
   const existing = await getTaskForAuthoring(id);
   if (!existing) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
   if (existing.status !== 'draft') {
     return NextResponse.json({ error: 'not_editable' }, { status: 409 });
+  }
+
+  if (body.checks) {
+    const errors = validateTaskChecks(
+      { checks: body.checks, type: body.payload?.type ?? existing.type },
+      { requireReference: false }
+    );
+    if (errors.length > 0) {
+      return NextResponse.json({ error: 'invalid_checks', details: errors }, { status: 400 });
+    }
   }
 
   const updated = await updateDraftTask(id, body);
