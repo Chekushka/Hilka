@@ -23,11 +23,16 @@ export default async function DashboardPage() {
     <main className="mx-auto max-w-3xl p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{t('dashboard.title')}</h1>
-        <form action="/api/auth/logout" method="post">
-          <button type="submit" className="text-sm text-accent">
-            {t('auth.logout')}
-          </button>
-        </form>
+        <div className="flex items-center gap-4">
+          <Link href="/tasks" className="text-sm text-accent">
+            {t('authoring.tasksTitle')}
+          </Link>
+          <form action="/api/auth/logout" method="post">
+            <button type="submit" className="text-sm text-accent">
+              {t('auth.logout')}
+            </button>
+          </form>
+        </div>
       </div>
 
       {classes.length === 0 ? (

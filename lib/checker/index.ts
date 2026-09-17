@@ -1,5 +1,6 @@
 export { extractNames } from './ast';
 export { evaluateCheck, evaluateChecks } from './evaluate';
+export { checkTaskReference } from './reference-check';
 export { validateTaskChecks } from './validate';
 export {
   boundingBox,
@@ -19,4 +20,13 @@ export type {
   ShapeNormalization,
   Submission
 } from './types';
+export { evaluateAgainstOwnRun, evaluateRun } from './reference-check';
+export type {
+  CheckRunOutcome,
+  ReferenceCheckFailure,
+  ReferenceCheckOutcome,
+  ReferenceCheckTask,
+  RunOutcome,
+  RunPython
+} from './reference-check';
 export type { ValidationError, TaskShape } from './validate';

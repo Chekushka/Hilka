@@ -36,6 +36,16 @@ describe('validateTaskChecks', () => {
     expect(errors[0].message).toContain('reference');
   });
 
+  it('skips the reference requirement when asked — a draft has none yet', () => {
+    // The draft/publish flow: a task being authored has no reference.code
+    // until it is published, so saving a draft must not trip this rule.
+    const errors = validateTaskChecks(
+      { checks: [{ kind: 'shape_equals' }] },
+      { requireReference: false }
+    );
+    expect(errors).toEqual([]);
+  });
+
   it('rejects an empty uses check', () => {
     const errors = validateTaskChecks({ checks: [{ kind: 'uses' }] });
     expect(errors.some((e) => e.message.includes('uses'))).toBe(true);

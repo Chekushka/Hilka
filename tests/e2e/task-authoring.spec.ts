@@ -1,0 +1,176 @@
+import { expect, test, type Page } from '@playwright/test';
+import type { RunResult } from '@/lib/runner';
+
+/**
+ * The draft/publish flow, end to end, without any form UI (docs/TASKS.md,
+ * "Draft / publish + version bump" — that UI is separate, unbuilt work).
+ * There is no server-side Python execution (docs/AI_CONTEXT.md), so the
+ * reference solution runs in the browser via /runner, exactly like a future
+ * authoring UI would, and the computed run is posted to the publish route.
+ *
+ * API calls go through in-page fetch, not page.request: the login redirect
+ * lands the browser on whatever origin the server's own absolute-URL
+ * construction picks (docs/AI_CONTEXT.md Gotchas — "request.url ignores the
+ * Host header locally"), which is not always playwright.config.ts's baseURL.
+ * page.request always targets that config baseURL regardless of where the
+ * page actually navigated, so it would miss the teacher cookie; an in-page
+ * fetch always matches the page's real current origin, the same way the
+ * student flow's own /api/attempts calls do.
+ */
+
+const TEACHER_EMAIL = 'demo-teacher@hilka.dev';
+
+interface ApiResult {
+  status: number;
+  body: unknown;
+}
+
+async function loginAsTeacher(page: Page, email: string) {
+  await page.goto('/login');
+  await page.getByLabel('Електронна пошта').fill(email);
+  await page.getByRole('button', { name: 'Надіслати посилання' }).click();
+  const link = page.getByRole('link', { name: /\/api\/auth\/verify\?token=/ });
+  const href = await link.getAttribute('href');
+  if (!href) throw new Error('no devLoginUrl link rendered — is the browser job unset from Vercel?');
+  await page.goto(href);
+}
+
+async function api(page: Page, path: string, init?: { method?: string; body?: unknown }): Promise<ApiResult> {
+  return page.evaluate(
+    async ([p, method, body]) => {
+      const response = await fetch(p as string, {
+        method: (method as string | undefined) ?? 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: body !== undefined ? JSON.stringify(body) : undefined
+      });
+      return { status: response.status, body: await response.json().catch(() => null) };
+    },
+    [path, init?.method, init?.body] as const
+  );
+}
+
+async function runInBrowser(page: Page, code: string): Promise<RunResult> {
+  await page.goto('/runner');
+  await page.waitForFunction(() => window.__runner__ !== undefined);
+  return page.evaluate((source) => window.__runner__!.run(source, { mode: 'headless' }), code);
+}
+
+test('a teacher drafts a task, runs the reference in-browser, and publishes it', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-draft-${Date.now()}`;
+  const referenceCode = 'import turtle\nfor i in range(4):\n    turtle.forward(60)\n    turtle.right(90)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'turtle-basics',
+      title: 'E2E чернетка',
+      payload: { type: 'code', surface: 'turtle', prompt: 'Тест', starter: '' },
+      checks: [
+        { kind: 'shape_props', closed: true, segmentCount: 4 },
+        { kind: 'shape_equals', normalize: ['translate', 'rotate'] }
+      ]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const unpublished = await api(page, `/api/tasks/${id}`);
+  expect((unpublished.body as { status: string }).status).toBe('draft');
+
+  // Following /runner navigates away from the logged-in page; log back in —
+  // the teacher cookie survives navigation, this just re-establishes it here
+  // since /runner itself needs no auth and doesn't preserve the earlier page.
+  const run = await runInBrowser(page, referenceCode);
+  expect(run.error).toBeNull();
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode, run }
+  });
+  expect(published.status).toBe(200);
+  const publishedTask = published.body as {
+    status: string;
+    version: number;
+    reference: { code: string; artifacts: { drawing: unknown[] } };
+  };
+  expect(publishedTask.status).toBe('published');
+  expect(publishedTask.version).toBe(1);
+  expect(publishedTask.reference.code).toBe(referenceCode);
+  expect(publishedTask.reference.artifacts.drawing).toHaveLength(4);
+
+  // A second publish attempt is rejected — the gate is one-way per version.
+  const republish = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode, run }
+  });
+  expect(republish.status).toBe(409);
+});
+
+test('publish is rejected when the reference solution fails its own checks', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-draft-bad-${Date.now()}`;
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'turtle-basics',
+      title: 'E2E погана чернетка',
+      payload: { type: 'code', surface: 'console', prompt: 'Тест', starter: '' },
+      checks: [{ kind: 'last_line_equals', value: '42', message: 'Очікували 42' }]
+    }
+  });
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, 'print(41)');
+  expect(run.error).toBeNull();
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const publishResponse = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode: 'print(41)', run }
+  });
+  expect(publishResponse.status).toBe(422);
+  const body = publishResponse.body as { error: string; failures: string[] };
+  expect(body.error).toBe('reference_fails_checks');
+  expect(body.failures).toEqual(['Очікували 42']);
+
+  // Nothing was published — the row is still an editable draft.
+  const stillDraft = await api(page, `/api/tasks/${id}`);
+  expect((stillDraft.body as { status: string }).status).toBe('draft');
+});
+
+test('an unknown topic slug is rejected rather than silently orphaning the task', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+  const response = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug: `e2e-no-topic-${Date.now()}`,
+      topicSlug: 'not-a-real-topic',
+      title: 'Без теми',
+      payload: { type: 'code', surface: 'console', prompt: 'Тест', starter: '' },
+      checks: []
+    }
+  });
+  expect(response.status).toBe(400);
+  expect((response.body as { error: string }).error).toBe('unknown_topic');
+});
+
+test('task authoring endpoints require a logged-in teacher', async ({ page }) => {
+  await page.goto('/');
+  const response = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug: `e2e-unauth-${Date.now()}`,
+      topicSlug: 'turtle-basics',
+      title: 'Без входу',
+      payload: { type: 'code', surface: 'console', prompt: 'Тест', starter: '' },
+      checks: []
+    }
+  });
+  expect(response.status).toBe(401);
+});

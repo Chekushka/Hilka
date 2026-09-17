@@ -15,7 +15,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/db/seed-content.ts",
     "db:seed:demo": "tsx scripts/db/seed-demo-session.ts",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "verify:references": "playwright test --config=playwright.references.config.ts"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",

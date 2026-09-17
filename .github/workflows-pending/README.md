@@ -1,19 +1,16 @@
 # Pending workflows
 
-GitHub only runs workflows found in `.github/workflows/`. These three live here
-because they need a `package.json`, which does not exist yet — the spike comes
-first (`docs/SPIKE.md`), and its results can still change the stack.
+GitHub only runs workflows found in `.github/workflows/`. This one lives here
+because it needs the `production` GitHub environment holding `DATABASE_URL`,
+which cannot be committed.
 
-`ci.yml` is live as of the Next.js scaffold. These two are still waiting:
-
-- `migrate.yml` — activate with the Drizzle schema. Needs the `production`
-  GitHub environment holding `DATABASE_URL`.
-- `reference-check.yml` — activate once `content/seed-tasks/` holds published
-  tasks and `npm run verify:references` exists.
+- `migrate.yml` — activate with that environment in place (docs/CI_CD.md,
+  "Manual steps — Phase B", step 7).
 
 ```sh
-git mv .github/workflows-pending/<file> .github/workflows/
+git mv .github/workflows-pending/migrate.yml .github/workflows/
 ```
 
-An empty CI that can never fail teaches everyone — people and agents — to ignore
-a red X. That is the only reason these are staged rather than merged now.
+`ci.yml` and `reference-check.yml` are both live already. An empty CI that can
+never fail teaches everyone — people and agents — to ignore a red X. That is
+the only reason this one is staged rather than merged now.

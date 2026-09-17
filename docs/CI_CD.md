@@ -23,7 +23,7 @@ published tasks.
 | `spike/index.html` | A | Placeholder harness — replace with the real one |
 | `.github/workflows/ci.yml` | B | typecheck, lint, unit tests, migration drift, runner tests |
 | `.github/workflows-pending/migrate.yml` | B | `drizzle-kit migrate` on merge to `main` |
-| `.github/workflows-pending/reference-check.yml` | C | Re-runs every reference solution against its own checks |
+| `.github/workflows/reference-check.yml` | C | Re-runs every reference solution against its own checks |
 
 Pending workflows are inert: GitHub only runs what is inside `.github/workflows/`.
 
@@ -101,8 +101,14 @@ git mv .github/workflows-pending/migrate.yml .github/workflows/
 
 The workflows call these scripts, which `package.json` already defines:
 `typecheck`, `lint`, `test`, `test:browser`, `db:generate`, `db:migrate`,
-`db:seed`. `reference-check.yml` additionally wants `verify:references`, which
-arrives with reference-solution execution.
+`db:seed`, `verify:references`.
+
+`verify:references` runs against `playwright.references.config.ts`, not the
+shared `playwright.config.ts` — the shared one waits for `/practice`, which
+reads a task from the database, and this run is specifically the one meant to
+work with no `DATABASE_URL` at all (`lib/checker/reference-check.ts` reads
+`content/seed-tasks/*.json` directly and drives the real runner through
+`/runner`, the same DB-free page `tests/runner/` uses).
 
 `test` covers `lib/checker/`, `lib/seed/`, `lib/errors/` and `lib/db/`'s pure
 mapping — node environment, no browser, no database. `test:browser` is the
@@ -247,8 +253,9 @@ press, not something a merge does behind your back.
 
 ## Phase C — content era
 
-Activate `reference-check.yml` once `content/seed-tasks/` holds published tasks.
-It runs nightly and on any change to `lib/runner/` or `lib/checker/`.
+`reference-check.yml` is active: `content/seed-tasks/` holds one published
+task and `verify:references` exists. It runs nightly and on any change to
+`lib/runner/`, `lib/checker/`, or `content/seed-tasks/`.
 
 Add to `scripts/guardrails.sh` as the schema grows; it already rejects
 `stdout_equals` on any seed task that has `cases` (TASK_SCHEMA.md).
