@@ -6,7 +6,7 @@
  */
 import { NextResponse } from 'next/server';
 import { getOpenSessionByCode } from '@/lib/db/sessions';
-import { getPublishedCodeTaskById } from '@/lib/db/tasks';
+import { getPublishedTaskById } from '@/lib/db/tasks';
 
 export async function GET(
   _request: Request,
@@ -21,7 +21,7 @@ export async function GET(
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  const task = await getPublishedCodeTaskById(taskId);
+  const task = await getPublishedTaskById(taskId);
   if (!task) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }

@@ -76,3 +76,38 @@ test('a teacher builds a turtle task from the forms and publishes it', async ({ 
   await page.getByRole('button', { name: 'Опублікувати' }).click();
   await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
 });
+
+test('a teacher builds a parsons task from the forms and publishes it with no run step', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  await page.getByRole('link', { name: 'Завдання' }).click();
+  await page.getByRole('link', { name: 'Нове завдання' }).click();
+  await expect(page.getByRole('heading', { name: 'Нове завдання' })).toBeVisible();
+
+  await page.getByLabel('Тип завдання').selectOption('parsons');
+
+  const slug = `e2e-ui-parsons-${Date.now()}`;
+  await page.getByLabel('Ідентифікатор (slug)').fill(slug);
+  await page.getByLabel('Назва').fill('UI Parsons чернетка');
+  await page.getByLabel('Умова').fill('Розстав рядки так, щоб програма намалювала трикутник.');
+  // The default lines pre-filled by NewTaskForm are already this triangle
+  // (import → for → forward → right), so only the check needs writing.
+  await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'order_equals', lines: [0, 1, 2, 3] }]));
+  await page.getByLabel(/Підказки/).fill('Цикл повторюється тричі.');
+  await page.getByLabel(/Складність/).fill('1');
+
+  await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().endsWith('/api/tasks') && response.request().method() === 'POST'
+    ),
+    page.getByRole('button', { name: 'Створити чернетку' }).click()
+  ]);
+
+  await expect(page.getByRole('heading', { name: 'Редагування чернетки' })).toBeVisible();
+  await expect(page.getByText('UI Parsons чернетка')).toBeVisible();
+
+  // Nothing to run first — the payload's own line order already is correct
+  // (lib/task/parsons.ts), so Publish alone is the gate.
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
+});

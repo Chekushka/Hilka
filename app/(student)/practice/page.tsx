@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { TaskWorkspace } from '@/components/task/TaskWorkspace';
-import { getPublishedCodeTask } from '@/lib/db/tasks';
+import { getPublishedTask } from '@/lib/db/tasks';
 
 /**
  * One task, read from the database. A server component does the reading —
@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 const PRACTICE_TASK_SLUG = 'g7-turtle-square';
 
 export default async function PracticePage() {
-  const task = await getPublishedCodeTask(PRACTICE_TASK_SLUG);
+  const task = await getPublishedTask(PRACTICE_TASK_SLUG);
   if (!task) {
     // Drafts are invisible to students, so an unpublished task lands here.
     notFound();

@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { t } from '@/lib/i18n';
 import type { JoinedSession } from '@/lib/session/types';
-import type { CodeTask } from '@/lib/task/types';
+import type { Task } from '@/lib/task/types';
 
 interface SessionRoomProps {
   code: string;
@@ -50,7 +50,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   const studentName = pickedName ?? storedName;
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [taskCache, setTaskCache] = useState<Record<string, CodeTask>>({});
+  const [taskCache, setTaskCache] = useState<Record<string, Task>>({});
   const [taskLoadFailed, setTaskLoadFailed] = useState<string | null>(null);
   const fetchedRef = useRef<Set<string>>(new Set());
   const [passed, setPassed] = useState<ReadonlySet<string>>(new Set());
@@ -60,7 +60,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     fetchedRef.current.add(selectedTaskId);
     let cancelled = false;
     fetch(`/api/sessions/${code}/tasks/${selectedTaskId}`)
-      .then((response) => (response.ok ? (response.json() as Promise<CodeTask>) : Promise.reject()))
+      .then((response) => (response.ok ? (response.json() as Promise<Task>) : Promise.reject()))
       .then((task) => {
         if (!cancelled) setTaskCache((previous) => ({ ...previous, [selectedTaskId]: task }));
       })
@@ -101,7 +101,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         studentName,
         taskId,
         taskVersion,
-        submittedAnswer: { code: outcome.code },
+        submittedAnswer: outcome.submittedAnswer,
         passed: outcome.passed,
         hintsUsed: outcome.hintsUsed,
         durationMs: outcome.durationMs

@@ -7,7 +7,7 @@
  * result from — must be rejected here rather than surfacing as a broken
  * workspace.
  */
-import type { CodeTask } from '@/lib/task/types';
+import type { CodeTask, ParsonsTask, Task } from '@/lib/task/types';
 import type { tasks } from './schema';
 
 export type TaskRow = typeof tasks.$inferSelect;
@@ -36,6 +36,32 @@ export function toCodeTask(row: TaskRow): CodeTask | null {
     version: row.version,
     status: row.status
   };
+}
+
+/** No reference to require here — a parsons task has nothing to execute. */
+export function toParsonsTask(row: TaskRow): ParsonsTask | null {
+  if (row.type !== 'parsons' || row.payload?.type !== 'parsons') {
+    return null;
+  }
+  return {
+    id: row.id,
+    slug: row.slug,
+    topicId: row.topicId,
+    type: 'parsons',
+    title: row.title,
+    payload: row.payload,
+    checks: row.checks ?? [],
+    hints: row.hints ?? [],
+    difficulty: clampDifficulty(row.difficulty),
+    gradeTags: row.gradeTags ?? [],
+    version: row.version,
+    status: row.status
+  };
+}
+
+/** Tries every mapper this platform understands; `null` for a type none of them render yet. */
+export function toTask(row: TaskRow): Task | null {
+  return toCodeTask(row) ?? toParsonsTask(row);
 }
 
 function clampDifficulty(value: number): CodeTask['difficulty'] {

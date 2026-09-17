@@ -90,11 +90,11 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 
 | Item | Status | Notes |
 |---|---|---|
-| Shared task-component interface | ❌ | Adding a type must not touch runner/session/dashboard |
-| `code` | 🔶 | Turtle surface end to end. Console surface and the shared component interface still open |
+| Shared task-component interface | ✅ | `Task = CodeTask \| ParsonsTask` (`lib/task/types.ts`); `components/task/TaskWorkspace.tsx` dispatches by `task.type` to `components/task-types/*View.tsx`. `lib/db/tasks.ts` and the session/practice routes hand back the union — adding an eighth type is a new branch plus a new file, not a rewrite |
+| `code` | 🔶 | Turtle surface end to end. Console surface still open |
 | `quiz` | ❌ | |
 | `predict` | ❌ | |
-| `parsons` | ❌ | Highest-value type for the target audience. dnd-kit, keyboard-accessible. |
+| `parsons` | 🔶 | `indentMode: 'given'` end to end: authoring (`NewTaskForm`, `ParsonsDraftEditor`), drag-and-keyboard assembly (`ParsonsTaskView`, dnd-kit), instant client-side checking (`order_equals`, already in `lib/checker`), and a publish gate with no run to post — `payload.lines` is already the correct order, checked server-side (`lib/task/parsons.ts`). `indentMode: 'chosen'` is not built: `order_equals` has nowhere to read an expected indent from, so the authoring API rejects it and the component only ever renders `'given'` |
 | `fill` | ❌ | |
 | `fix` | ❌ | |
 
@@ -151,7 +151,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Curriculum mapping (grades 7–9) | ✅ | See CURRICULUM.md — 28 topics, grade tags, ~62 addressable lessons |
 | Topic rows for grade 7 | ✅ | `content/topics.json` — the 13 topics of the grade 7 section, seeded. Grades 8–9 follow with their content |
 | Grade 7 sem-2 block: intro → loops-for + turtle-basics | ❌ | ~9 topics. First thing that reaches a classroom. |
-| First topic, ~12 tasks | 🔶 | One task: `content/seed-tasks/grade7-turtle-square.json`, imported by `npm run db:seed` |
+| First topic, ~12 tasks | 🔶 | Two tasks across two topics: `content/seed-tasks/grade7-turtle-square.json` (turtle-basics) and `grade7-parsons-triangle.json` (turtle-loops), imported by `npm run db:seed` |
 | Grade tagging of tasks | ❌ | |
 
 ## Open Questions
@@ -177,7 +177,9 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 - [ ] Is the grid world worth building at all now that turtle is the curriculum's visual layer?
 - [x] Does interactive input need SharedArrayBuffer? **No.** Verified with
       `crossOriginIsolated=false`; no COOP/COEP headers on Vercel, embeds stay possible.
-- [ ] Default `parsons.indentMode` per topic — `given` first, `chosen` later, but where exactly?
+- [x] Default `parsons.indentMode` per topic — `given` only for now: the authoring API rejects
+      `'chosen'` and the component never renders it. Revisit once `order_equals` can grade an
+      expected indent (docs/TASK_SCHEMA.md).
 - [ ] Lesson 40 (grade 7) requires покрокове виконання, which the platform does not do. Cover
       with `predict`/`fix` tasks, or teach outside the platform?
 
@@ -209,7 +211,10 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
    (edit a draft, run and publish its reference, or view it read-only once published). Checks
    are authored as raw JSON, not a per-kind visual builder; that and the other five task types
    are still open.
-10. Remaining task types, `parsons` first.
+10. ~~Remaining task types, `parsons` first~~ — `parsons` done for `indentMode: 'given'`
+    (docs/TASK_SCHEMA.md); `'chosen'`, `quiz`, `predict`, `fill`, `fix` remain. The shared
+    task-component interface this needed (`Task` union, `TaskWorkspace` dispatching by type)
+    now exists too, so the next type is a new branch and a new file, not a rewrite.
 11. Turtle canvas, target overlay, playback scrubber. Grid only if still justified afterwards.
 12. Meta layer.
 

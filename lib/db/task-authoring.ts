@@ -16,7 +16,7 @@
  */
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Check } from '@/lib/checker';
-import type { CodePayload, Reference, TaskStatus } from '@/lib/task/types';
+import type { Reference, TaskPayload, TaskStatus } from '@/lib/task/types';
 import { getDb } from './client';
 import { tasks, topics } from './schema';
 import type { TaskRow } from './task-mapping';
@@ -25,7 +25,7 @@ export interface DraftTaskInput {
   slug: string;
   topicId: string;
   title: string;
-  payload: CodePayload;
+  payload: TaskPayload;
   checks: Check[];
   hints: string[];
   difficulty: number;
@@ -43,7 +43,7 @@ export async function createDraftTask(input: DraftTaskInput): Promise<{ id: stri
     .values({
       slug: input.slug,
       topicId: input.topicId,
-      type: 'code',
+      type: input.payload.type,
       title: input.title,
       payload: input.payload,
       checks: input.checks,
@@ -95,7 +95,9 @@ export async function updateDraftTask(
 ): Promise<TaskRow | null> {
   const [row] = await getDb()
     .update(tasks)
-    .set(input)
+    // `type` is a separate column, derived from `payload.type` — kept in sync
+    // here rather than left to whatever the row already had.
+    .set(input.payload ? { ...input, type: input.payload.type } : input)
     .where(and(eq(tasks.id, id), eq(tasks.status, 'draft')))
     .returning();
   return row ?? null;
@@ -108,7 +110,7 @@ export async function updateDraftTask(
  * draft anymore (already published, or concurrently published elsewhere),
  * which the route handler reports rather than silently overwriting.
  */
-export async function publishTask(id: string, reference: Reference): Promise<TaskRow | null> {
+export async function publishTask(id: string, reference: Reference | null): Promise<TaskRow | null> {
   const [row] = await getDb()
     .update(tasks)
     .set({ reference, status: 'published', version: sql`${tasks.version} + 1` })

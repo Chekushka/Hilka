@@ -2,19 +2,24 @@
  * The publish gate (docs/TASK_SCHEMA.md, "Reference solutions"): a task's
  * reference solution must pass its own checks before it can go live.
  *
- * There is no server-side Python execution (docs/AI_CONTEXT.md), so the
- * reference run itself happens in the teacher's browser — the same runner
- * `/practice` already uses — and is posted here already computed. What this
- * route verifies server-side is the part that IS pure and isomorphic: the
- * checker evaluation (lib/checker/reference-check.ts). It does not re-run
- * Python, so it trusts the run's own stdout/drawing/vars — an authenticated
- * teacher is a trusted author, not an adversarial student (CLAUDE.md,
- * "Cheating and Trust").
+ * `code` — there is no server-side Python execution (docs/AI_CONTEXT.md), so
+ * the reference run itself happens in the teacher's browser and is posted
+ * here already computed. What this branch verifies server-side is the part
+ * that IS pure and isomorphic: the checker evaluation
+ * (lib/checker/reference-check.ts). It does not re-run Python, so it trusts
+ * the run's own stdout/drawing/vars — an authenticated teacher is a trusted
+ * author, not an adversarial student (CLAUDE.md, "Cheating and Trust").
+ *
+ * `parsons` — nothing executes, so there is no run to post: `payload.lines`
+ * is already the correct order (lib/task/parsons.ts), and this branch checks
+ * that order against the task's own checks entirely server-side, with an
+ * empty request body.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { evaluateAgainstOwnRun, type RunOutcome } from '@/lib/checker';
+import { evaluateAgainstOwnRun, evaluateChecks, type RunOutcome } from '@/lib/checker';
 import { getTaskForAuthoring, publishTask } from '@/lib/db/task-authoring';
+import { parsonsCanonicalSubmission } from '@/lib/task/parsons';
 
 interface PublishBody {
   referenceCode: string;
@@ -42,17 +47,35 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  const body: unknown = await request.json().catch(() => null);
-  if (!isValidBody(body)) {
-    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
-  }
-
   const task = await getTaskForAuthoring(id);
   if (!task) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
   if (task.status !== 'draft') {
     return NextResponse.json({ error: 'not_a_draft' }, { status: 409 });
+  }
+
+  if (task.type === 'parsons' && task.payload?.type === 'parsons') {
+    const outcome = evaluateChecks(task.checks, { submission: parsonsCanonicalSubmission(task.payload) });
+    if (!outcome.passed) {
+      return NextResponse.json(
+        {
+          error: 'reference_fails_checks',
+          failures: outcome.results.filter((r) => !r.passed).map((r) => r.message)
+        },
+        { status: 422 }
+      );
+    }
+    const updated = await publishTask(id, null);
+    if (!updated) {
+      return NextResponse.json({ error: 'publish_race' }, { status: 409 });
+    }
+    return NextResponse.json(updated);
+  }
+
+  const body: unknown = await request.json().catch(() => null);
+  if (!isValidBody(body)) {
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
   const outcome = evaluateAgainstOwnRun(body.referenceCode, task.checks, body.run);
