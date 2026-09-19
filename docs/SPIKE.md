@@ -22,6 +22,12 @@ Three findings that changed something, now in the Gotchas of AI_CONTEXT.md: the 
 not reachable from inside a module stub, Skulpt's `str + int` message differs from CPython's, and
 Skulpt does not echo an `input()` prompt to output.
 
+**File delivery added open items, not yet run:** two rows in check 1 (f-string format specs and
+conversion flags), a BOM/CRLF/line-number check under check 1, and a new check 7 comparing the
+turtle stub's signatures against CPython's. None of the original six checks changed; these are
+additions for the file-delivery mode (AI_CONTEXT.md, TASK_SCHEMA.md) and must be run and recorded
+before that mode's safe subset can be trusted.
+
 ## Rules
 
 - One page, no build step. `index.html` plus the Skulpt files.
@@ -31,6 +37,9 @@ Skulpt does not echo an `input()` prompt to output.
 - If a check fails, record what the failure looks like before trying a workaround. "Doesn't
   support f-strings" and "supports them but reports a wrong line number" lead to different
   decisions.
+- Check 1's results define the file-delivery safe subset (TASK_SCHEMA.md). Record them precisely
+  enough to be copied there verbatim — "mostly works" is not precise enough to allow-list a
+  construct that gates whether a student's upload is accepted or rejected.
 
 ## Checks
 
@@ -79,9 +88,19 @@ except ValueError:
 | `math`, `random` | grades 8, 9 | Work. `math.sqrt(16)` → `4.0`, `round(math.pi, 2)` → `3.14` |
 | `try / except` | grade 9 lesson 36 | Works |
 | Cyrillic in strings and output | everything | Works in literals, `print`, f-strings, `len`, and `input()` prompts |
+| f-string format specifiers, e.g. `f"{x:.2f}"` | grade 8 projects (BMI, quadratic roots) via file delivery | **Not yet checked.** Add before the next spike pass — this is the most likely engine divergence a student hits taking a file-delivery task home to IDLE. Until checked, TASK_SCHEMA.md excludes format specs from the safe subset and documents `round(x, 2)` as the replacement |
+| f-string conversion flags, e.g. `f"{x!r}"` | same | **Not yet checked**, same reasoning |
 
 Cyrillic is on the list deliberately. An engine that mangles «Привіт» in `print` output or in a
 string literal is unusable regardless of everything else, and it is the cheapest thing to check.
+
+**File-delivery addition, not yet run:** parse a `.py` file containing a UTF-8 BOM, CRLF line
+endings, and Ukrainian comments together, after the normalization TASK_SCHEMA.md's upload
+validation performs (BOM stripped, CRLF → `\n`), and confirm reported error line numbers still
+point at the right source line. A line-ending or BOM bug that only shifts line numbers would be
+invisible in every other check here, since none of them touch a file with mixed encoding and
+endings — it would surface for the first time as a student's IDLE-written file reporting an error
+on the wrong line.
 
 ### 2. Turtle as a stub
 
@@ -224,6 +243,18 @@ Vendored engine weight, which is what the school network actually pays for: `sku
 
 If cold load is far over target, the loading state the design brief asks for stops being a
 nicety and becomes the difference between a working lesson and twenty students pressing F5.
+
+### 7. Turtle stub vs CPython signatures (file delivery)
+
+**Not yet run.** For every function the stub in `lib/runner/modules/turtle.ts` implements
+(`forward`, `backward`, `left`, `right`, `goto`, `setheading`, `penup`, `pendown`, `pencolor`,
+`pensize`, `circle`, `speed`, `home`, `dot`, and their short aliases), compare name, parameter
+order, and defaults against real CPython's `turtle` module for the functions grade 7 actually
+uses. Record any divergence found — do not assume a match because the names line up.
+
+This exists because file delivery means turtle code written in Hilka has to run unchanged in
+IDLE, on real `turtle`, not the stub. AI_CONTEXT.md's "Turtle" section states the constraint;
+this check is what verifies it holds.
 
 ## Decision gates
 

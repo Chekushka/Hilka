@@ -65,7 +65,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Interactive input line in the output panel | 🔶 | Runner side works end to end; the panel UI arrives with the workspace |
 | Headless run with queued `stdin` per case | ✅ | `mode: 'headless'` with `stdin[]`; integration test covers it |
 | Timeout paused across input suspensions | ✅ | `Sk.execStart` pushed forward by the wait; test covers a 2.5 s answer against a shorter limit |
-| `turtle` module stub (records, draws nothing) | ✅ | `lib/runner/modules/turtle.ts` |
+| `turtle` module stub (records, draws nothing) | ✅ | `lib/runner/modules/turtle.ts`. API fidelity against real CPython `turtle` is now a hard constraint, not just a convenience match — file-delivery code must run unchanged in IDLE (AI_CONTEXT.md, "Turtle"). Signature comparison is SPIKE.md check 7, not yet run |
 | Segment log + source-line attribution | ✅ | Segment log works; `line` is always null by design, playback uses call order |
 | Canvas renderer (student + translucent target, one renderer) | ✅ | `components/canvas/TurtleCanvas.tsx`. One transform for both drawings |
 | Playback scrubber with line highlighting | ❌ | Covers grade 7 lesson 40 without an interpreter stepper |
@@ -97,6 +97,37 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | `parsons` | 🔶 | `indentMode: 'given'` end to end: authoring (`NewTaskForm`, `ParsonsDraftEditor`), drag-and-keyboard assembly (`ParsonsTaskView`, dnd-kit), instant client-side checking (`order_equals`, already in `lib/checker`), and a publish gate with no run to post — `payload.lines` is already the correct order, checked server-side (`lib/task/parsons.ts`). `indentMode: 'chosen'` is not built: `order_equals` has nowhere to read an expected indent from, so the authoring API rejects it and the component only ever renders `'given'` |
 | `fill` | ✅ | End to end, also reusing `code`'s machinery: `FillTaskView` renders `payload.template` (`lib/task/fill.ts`'s `parseFillTemplate`) with an inline `<input>` at every `{{n}}` gap, substitutes the student's answers into a `code` string on Run/Check, and hands it to the same `useTaskRunner`/`RunnableTask` shape `fix` uses. Authoring (`NewTaskForm`, `FillDraftEditor`) writes a separately authored reference, exactly like `code`'s starter vs reference — the publish gate needed no special-casing at all, it falls into the same generic branch |
 | `fix` | ✅ | End to end, reusing `code`'s machinery: `FixTaskView` and `useTaskRunner` are shared verbatim via a `RunnableTask` shape (`lib/task/use-task-runner.ts`) — the student edits `payload.broken` instead of `payload.starter`, same run/check/result flow. Authoring (`NewTaskForm`, `FixDraftEditor`) posts two runs to publish: `reference.code` must pass every check, and `payload.broken` (read from the saved row, not re-trusted from the request) must fail at least one — `lib/checker/reference-check.ts` already proved this exact rule for `checkTaskReference`/CI, and the publish route now enforces the same thing browser-side with `evaluateRun` |
+
+## File Delivery
+
+Not started. Adds `delivery: 'file'` to `code` and `fix` (TASK_SCHEMA.md); no new task type, no
+change to `lib/checker/`. Depends on SPIKE.md's file-delivery checks (1's f-string rows, the
+BOM/CRLF/line-number check, and check 7) being run first — the safe subset in TASK_SCHEMA.md is
+provisional until they are.
+
+| Item | Status | Notes |
+|---|---|---|
+| Starter-file generation (header + prompt + starter/broken) | ❌ | TASK_SCHEMA.md, "Starter file generation" |
+| Upload endpoint + validation pipeline (9 ordered steps) | ❌ | TASK_SCHEMA.md, "Upload validation". Extension, binary detection, encoding fallback, BOM/CRLF normalization, size cap, filename mismatch warning |
+| Header parsing (`taskId`/`version`/`seed`) with manual-selection fallback | ❌ | Falls back to a picker rather than rejecting, since an edited header is as likely to be innocent as tampered |
+| AST-based compatibility linter + safe-subset allow-list | ❌ | Needs SPIKE.md check 1's file-delivery rows run first; the allow-list in TASK_SCHEMA.md is a placeholder until then |
+| `FILE_UNSUPPORTED` error class | ❌ | Distinct from `lib/errors/`'s `PyError` mapping — raised at upload, before any run, and phrased as a platform limitation, never a wrong answer |
+| Duplicate-hash flagging across students in a session | ❌ | Per-attempt hash of the uploaded source; identical hashes across different students flagged to the teacher, never auto-accused (AI_CONTEXT.md, "Cheating and Trust") |
+| Per-session bulk download of submitted files, for the teacher | ❌ | Dashboard feature — a teacher reviewing a file-delivery task needs the actual files, not just pass/fail |
+
+## Server-side CPython (v2)
+
+**Planned, out of v1 scope.** The completion of File Delivery, not an alternative to it — see
+AI_CONTEXT.md's "File Delivery" for why the linter (v1) is a stopgap rather than the final
+design. A sandboxed serverless function runs an uploaded file on real CPython and returns stdout
+and program state, which the same `Check[]` evaluates. This removes engine divergence entirely
+for file tasks and closes the devtools-tampering hole in "Cheating and Trust" for exactly the
+tasks that go through it. 2–4 s latency is accepted — the student has already spent minutes in
+IDLE before uploading.
+
+| Item | Status | Notes |
+|---|---|---|
+| Sandboxed serverless CPython execution for file-delivery tasks | ❌ | Planned; do not build before v1 (the safe subset + linter) ships and the sequencing rule is in place |
 
 ## Error Humanization
 
@@ -182,6 +213,13 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
       expected indent (docs/TASK_SCHEMA.md).
 - [ ] Lesson 40 (grade 7) requires покрокове виконання, which the platform does not do. Cover
       with `predict`/`fix` tasks, or teach outside the platform?
+- [ ] Which Python version is installed alongside IDLE on the classroom machines, and is it the
+      same on all of them? Affects the file-delivery safe subset directly.
+- [ ] Multi-file projects with local imports — needed for the grade 9 projects, or is a single
+      file enough for v1? See AI_CONTEXT.md's "File Delivery" v1 scope limit.
+- [ ] Should a file-delivery task be blocked in the UI until its in-browser prerequisite is
+      passed (the sequencing rule in AI_CONTEXT.md), or only ordered that way by convention,
+      left to the teacher?
 
 ## Recommended Implementation Order
 
