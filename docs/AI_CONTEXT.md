@@ -282,6 +282,16 @@ interface Segment { x1: number; y1: number; x2: number; y2: number;
 it from the Skulpt frame is **unverified** — if it fails, fall back to call order, which is
 equivalent for the linear code grade 7 writes.
 
+**API fidelity is a hard constraint, not a nice-to-have.** File-delivery tasks (see "File
+Delivery") mean code written in Hilka must run unchanged in IDLE, on real CPython's real `turtle`
+module. The stub's function signatures — `forward`, `backward`, `left`, `right`, `goto`,
+`setheading`, `penup`, `pendown`, `pencolor`, `pensize`, `circle`, `speed`, `home`, `dot`, and
+their aliases — must match CPython's `turtle` exactly: same names, same parameter order, same
+defaults. No convenience functions of the stub's own, however small, because a student who takes
+their program home and finds it broken against real turtle has suffered the same trust failure
+as being handed a wrong grade. SPIKE.md carries the signature comparison for the functions grade
+7 actually uses.
+
 Rendering happens on the main thread from this log. One renderer draws both the student's
 result and the target, so they are guaranteed to share scale, theme, and coordinate system.
 
@@ -338,6 +348,79 @@ humanization rule for it must be first in the rule base and must not read like a
 If `TypeError: can only concatenate str (not "int") to str` reaches a student, half the class
 is lost on the first project of the year.
 
+## File Delivery
+
+Grade 8 lesson 43 («Середовища для написання коду. Транслятори») and the grade 9 project lessons
+(31–44) require students to work with real `.py` files in a real editor, not a browser sandbox.
+The classroom machines have IDLE installed and colleagues already teach with it, so IDLE is the
+target — Hilka adapts to IDLE, it does not recommend a replacement (CURRICULUM.md). A
+file-delivery task lets a student download a `.py` file, edit it in IDLE, and upload it back to
+be checked.
+
+This deliberately breaks the ~1 s feedback loop the rest of the product is built around. That
+cost is accepted, not overlooked: the goal of this mode is teaching students to work with files
+outside a browser sandbox, which the curriculum requires at these two points and nowhere else.
+Every other task stays inline for exactly this reason — file delivery is the exception, not a
+new default.
+
+**Sequencing rule.** A file-delivery task may only follow a task on the same concept the student
+has already passed in-browser. The humanized error layer (`lib/errors/`) never reaches a student
+working in IDLE — IDLE shows CPython's own traceback, unfiltered — so a student meeting a new
+concept for the first time inside a file task has no safety net if it goes wrong. The in-browser
+task is what teaches the concept; the file task is what teaches working with it outside the
+sandbox. The two are not interchangeable and the second must not substitute for the first.
+
+**Engine divergence.** There is no "Skulpt format" — Skulpt executes ordinary `.py` files, the
+same bytes IDLE would run. The problem is coverage: Skulpt implements a subset of Python, so code
+that runs correctly in IDLE (real CPython) can fail in Hilka, and the reverse is just as bad — a
+task that only works because of a Skulpt quirk would fail the same student's file when they take
+it home. Automatic rewriting of student code to paper over the gap is rejected outright: checking
+code the student did not write destroys trust in the grade. Two stages:
+
+- **v1 — safe subset + compatibility linter.** A documented allow-list of constructs confirmed
+  empirically by SPIKE.md (TASK_SCHEMA.md has the list). On upload, the AST is parsed before
+  anything runs; a construct outside the list is rejected with a message naming the replacement
+  (e.g. `f"{x:.2f}"` → `round(x, 2)`) and stating plainly that this is a limitation of Hilka's
+  engine, not a mistake by the student. See TASK_SCHEMA.md's `FILE_UNSUPPORTED`.
+- **v2 — server-side CPython, for file tasks only.** The planned completion of this feature, not
+  a vague possibility to revisit later — without it the linter is easy to mistake for the final
+  design and grow instead of retire. A sandboxed serverless function runs the uploaded file on
+  real CPython and returns stdout and program state; the same declarative `Check[]` evaluates the
+  result, unchanged. This removes engine divergence entirely, and as a side effect closes the
+  devtools-tampering hole in "Cheating and Trust" below for exactly the tasks that are graded —
+  a file already went through a real interpreter server-side, so there is nothing left in the
+  client to tamper with. The 2–4 s latency this brings (the same cold-start cost already accepted
+  elsewhere in "Cheating and Trust") is irrelevant here: the student has already spent minutes in
+  IDLE before uploading, not seconds waiting on a Run button.
+
+**Storage.** The uploaded source is stored verbatim in `attempts.submitted_answer`, the same
+column every other task type already writes its answer to — a teacher reviewing a session sees
+exactly the file the student returned, not a re-serialized approximation of it.
+
+**v1 scope limit.** Single file only. Multi-file projects with local imports (`import` of a
+sibling module) are out of scope for v1 — grade 9's project lessons may eventually need this, but
+nothing in the curriculum requires it before the file-delivery mode itself exists.
+
+### CPython vs Skulpt
+
+Differences that matter for grades 7–9 file-delivery content. This list is a summary for
+orientation, not the source of truth — **SPIKE.md is authoritative**, because "doesn't support
+X" and "supports X but reports it differently" lead to different decisions, and only a check that
+actually ran the code can tell them apart.
+
+- No filesystem, no `os`, no `sys` — a file-delivery program that tries to read another file or
+  inspect `sys.argv` runs in IDLE and fails in Hilka, silently if not caught by the linter.
+- Limited standard library — `math` and `random` are covered (SPIKE.md check 1); most of the rest
+  is unverified and therefore outside the safe subset by default.
+- Built-in types are not subclassable the way CPython allows.
+- f-string format specifiers are incomplete (see TASK_SCHEMA.md's replacement table) — the most
+  likely divergence in the grade 8 projects specifically, since `f"{x:.2f}"` is a natural way to
+  print a computed BMI or price.
+- Error message text differs from CPython's (see the Gotchas entry on `str + int`) — irrelevant
+  inside Hilka, where `lib/errors/` matches Skulpt's wording, but it means a student cannot use
+  Hilka's error message to debug the same program in IDLE, and vice versa.
+- Execution is slower than CPython — irrelevant for the short programs this curriculum assigns.
+
 ## Reference Solutions
 
 Every task that executes Python stores `reference.code` — the author's correct solution.
@@ -381,6 +464,17 @@ Not mitigated: devtools tampering. The intended fix is a serverless function re-
 declarative checks on final submission only (cold start 2–4 s is acceptable once per task, not
 per run). The architecture is already shaped for this — checks are data and the evaluator is
 isomorphic. Do not introduce anything that breaks that.
+
+4. **File-delivery tasks add their own threat.** A file is easier to pass around than typed code
+   — forwarding a `.py` attachment costs nothing, where copying code by hand at least costs
+   effort. Mitigations are the same parameterized-variant mechanism as above (a passed-around
+   file still carries the sender's seed, and their output will not match the receiver's task),
+   plus storing a hash of the uploaded source per attempt and flagging identical hashes across
+   different students in the same session. The flag goes to the teacher, same as every other
+   behavioural flag here — the system never accuses anyone, it surfaces a fact and lets a human
+   decide. v2 (server-side CPython, "File Delivery" above) closes devtools tampering specifically
+   for graded file tasks; it does not address file-sharing, which stays mitigated rather than
+   solved.
 
 For parameterized turtle and input tasks, the reference solution is executed per-seed at
 publish time only if the parameter space is small; otherwise expected artifacts are computed

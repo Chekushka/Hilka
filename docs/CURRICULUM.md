@@ -99,7 +99,7 @@ the runner — it is the dominant interaction mode for an entire grade.
 
 ## Consequences for the platform
 
-These three documents change two earlier decisions.
+These three documents change earlier decisions, three in total.
 
 **1. Turtle is not optional, and it outranks the 8×8 grid.**
 
@@ -124,6 +124,20 @@ user input. The custom input-field approach (collect values up front, feed as `s
 the straightforward cases but not `input()` inside a loop with a prompt that depends on earlier
 output. Decide during the spike whether Skulpt's `inputfun` hook can drive a real prompt-response
 exchange in the UI, because a whole grade depends on it.
+
+**3. File delivery attaches at two specific points, not everywhere.**
+
+Grade 8 lesson 43 («Середовища для написання коду. Транслятори») is the introduction — the
+lesson is literally about editors and translators, so a task that hands the student a real
+`.py` file to edit outside the browser belongs exactly there. Grade 9 lessons 31–44 (the project
+block) are the main use: a project spans multiple sessions and outgrows a browser tab well before
+lesson 44. **Not grade 7** — grade 7 is turtle-first and entirely graphical, and nothing in its
+lesson list (25–46) asks students to work with files.
+
+The editor is IDLE: it is already installed on the classroom machines and colleagues already
+teach with it. The platform adapts to IDLE rather than recommending a replacement — introducing
+a second editor into a classroom that already has a working one is a cost with no matching
+benefit here. See AI_CONTEXT.md's "File Delivery" for the mechanism.
 
 ## Topic tagging
 

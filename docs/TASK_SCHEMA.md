@@ -60,14 +60,21 @@ type Payload =
   | { type: 'fill';    prompt: string; template: string }   // gaps as {{1}}, {{2}}
 
   | { type: 'code';    prompt: string; starter: string;
-      surface: 'console' | 'turtle' | 'grid' }
+      surface: 'console' | 'turtle' | 'grid';
+      delivery?: 'inline' | 'file'; file?: FileSpec }   // delivery default 'inline'
 
   | { type: 'fix';     prompt: string; broken: string;
-      surface: 'console' | 'turtle' | 'grid' }
+      surface: 'console' | 'turtle' | 'grid';
+      delivery?: 'inline' | 'file'; file?: FileSpec }   // delivery default 'inline'
 ```
 
 `code` and `fix` execute Python. `fill` executes Python after substitution. `quiz`, `predict`
 (text/choice mode), and `parsons` do not execute anything and stay instant on weak hardware.
+
+`delivery: 'file'` is only meaningful on `code` and `fix` — see "File Delivery" below. It is
+invalid on `quiz`, `predict`, `parsons`, and `fill`; the authoring API rejects it there. `fill`
+in particular already executes Python after substitution, but the substitution *is* the
+editing surface, so there is no separate file to hand out.
 
 Notes:
 - `parsons.indentMode: 'chosen'` is the harder variant and the only one that teaches Python
@@ -85,6 +92,116 @@ Notes:
   checks that the author's `text_equals` value actually matches its real stdout
   (`lib/checker/reference-check.ts`'s `evaluatePredictionAgainstOwnRun`), the same rule 5
   guarantee `code` gets.
+
+## File Delivery
+
+Not a seventh task type. `delivery: 'file'` on `code` or `fix` changes how the student receives
+and returns the code; the same `Check[]` and `RunCase[]` grade it, through the same runner.
+`lib/checker/` does not know delivery mode exists. Full rationale is in AI_CONTEXT.md's "File
+Delivery" section; this is the data contract.
+
+```ts
+interface FileSpec {
+  filename: string;        // expected name, e.g. "bmi.py"
+  headerComment: boolean;  // inject taskId/version/seed header
+  maxBytes: number;        // default 65536
+}
+```
+
+### Starter file generation
+
+For a file-delivery task, the download the student receives is generated, never hand-authored:
+
+1. A header comment, present when `file.headerComment` is true, carrying `taskId`, `version`,
+   and `seed` — the same triple that already identifies an attempt. It is a plain `#`-comment
+   block, not metadata IDLE would choke on.
+2. The task text (`payload.prompt`), as comments, so the file is self-contained once it leaves
+   the browser tab.
+3. `payload.starter` (for `code`) or `payload.broken` (for `fix`), unchanged.
+
+The header is what makes the upload path able to identify which task a returned file belongs to
+without the student typing anything. See "Upload validation" step 8 for what happens when it is
+missing or edited.
+
+### Upload validation
+
+Applied in order, top to bottom, first failing step wins. Every rejection is phrased as an
+instruction for what to do next, never as a verdict on the student's code — the student did
+nothing wrong by working in IDLE, which is the point of the mode.
+
+| # | Check | Outcome |
+|---|---|---|
+| 1 | Extension is not `.py` | Reject, with a named message asking for the `.py` file saved from IDLE |
+| 2 | Content is binary / not text (`.docx`, `.zip`, `.pdf` renamed to `.py`, etc.) | Reject, with a named message asking to save as plain text from IDLE, not another program |
+| 3 | Encoding is not UTF-8 | Try `cp1251` (the common Windows-Ukrainian fallback); if that decodes cleanly, accept with a warning shown to the student |
+| 4 | UTF-8 BOM present | Strip silently |
+| 5 | CRLF line endings | Normalize to `\n` silently |
+| 6 | File exceeds `file.maxBytes` (default 65536) | Reject, with a named message |
+| 7 | Filename differs from `file.filename` | Accept, with a warning — content is what is graded, the name is a convenience for the student's own folder |
+| 8 | Header comment missing or altered (its `taskId`/`version`/`seed` unparseable) | Fall back to manual task selection — the student is shown a picker rather than told the file is broken, because a missing header is at least as likely to be a copy-paste as tampering |
+| 9 | Parsed AST contains a construct outside the safe subset (below) | Reject as `FILE_UNSUPPORTED` (below) |
+
+Steps 4–5 run before step 6's byte count, since a BOM and CRLF padding are not part of what the
+student wrote. Step 9 runs last because it is the only check that requires a successful parse,
+which steps 1–3 exist to guarantee.
+
+### Safe subset (v1)
+
+Automatic rewriting of student code is rejected outright: checking code the student did not
+write destroys trust in the grade. Instead, v1 restricts what a file-delivery task may require —
+an allow-list confirmed empirically in SPIKE.md check 1, not assumed from documentation. A
+construct outside this list fails upload validation step 9, never silently produces a wrong
+result.
+
+Confirmed, from SPIKE.md check 1: f-strings without format specs, dict `.items()`/`.keys()`/
+`.values()`, `enumerate`, `zip`, slicing (including `[::-1]`), `str.split`/`str.join`,
+`sorted(reverse=...)`, `max`/`min`/`sum`/`len`, the `math` and `random` modules, `try`/`except`,
+and Cyrillic in strings, `print`, f-strings, `len`, and `input()` prompts. Core syntax
+(variables, arithmetic, `if`/`while`/`for`, functions, the built-in types) is the baseline the
+rest of the platform already depends on and is not re-listed here.
+
+**Not yet in the safe subset** — pending the SPIKE.md check 1 additions for file delivery:
+
+| Construct outside the safe subset | Why it is excluded | Replacement to suggest |
+|---|---|---|
+| f-string format spec, e.g. `f"{x:.2f}"` | Skulpt's format mini-language is not confirmed complete (SPIKE.md) | `round(x, 2)` — format the rounded value, or build the string with `+` |
+| f-string conversion flag, e.g. `f"{x!r}"` | same | `repr(x)` concatenated with `+`, or drop the flag |
+
+This table grows only from a confirmed SPIKE.md divergence — never from a guess about what
+Skulpt might not support.
+
+### `FILE_UNSUPPORTED`
+
+Distinct from every error class in `lib/errors/`. A `PyError` means the student's program is
+wrong or crashed; `FILE_UNSUPPORTED` means the program is valid Python that Hilka's engine
+cannot run. The message must say exactly that — a platform limitation, not a mistake — name the
+unsupported construct, offer the replacement from the table above when one exists, and tell the
+student to report it to the teacher. It is never phrased as a wrong answer, and it is raised
+before the program runs at all: the AST is parsed on upload, ahead of any execution.
+
+### Worked example — grade 8 `fix`, file delivery
+
+```json
+{
+  "type": "fix",
+  "payload": { "type": "fix", "surface": "console",
+               "prompt": "Програма мала обчислити ІМТ, але видає помилку. Виправ її в IDLE.",
+               "broken": "w = input()\nh = input()\nprint(w / h ** 2)",
+               "delivery": "file",
+               "file": { "filename": "bmi_fix.py", "headerComment": true, "maxBytes": 65536 } },
+  "cases": [
+    { "label": "звичайний випадок", "stdin": ["70", "1.75"],
+      "checks": [{ "kind": "number_close", "value": 22.86, "tol": 0.05, "which": "last" }] }
+  ],
+  "checks": [],
+  "reference": { "code": "w = float(input())\nh = float(input())\nprint(w / h ** 2)" }
+}
+```
+
+The student downloads `bmi_fix.py` (header comment plus the prompt plus `broken`), fixes the
+missing `float()` conversions in IDLE, saves, and uploads the result. The upload runs through
+validation above, then the same `RunCase`/`Check` evaluation as an inline `fix` task — the
+`broken` string above must still fail at publish, exactly as for inline delivery.
 
 ## Run cases
 
