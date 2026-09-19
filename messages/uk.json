@@ -11,7 +11,13 @@
     "outputEmpty": "Запусти код — і побачиш результат тут.",
     "yourDrawing": "Твій малюнок",
     "target": "Зразок",
-    "editorLabel": "Твій код"
+    "editorLabel": "Твій код",
+    "playbackPlay": "Відтворити крок за кроком",
+    "playbackPause": "Пауза",
+    "playbackPrev": "Попередній крок",
+    "playbackNext": "Наступний крок",
+    "playbackScrubber": "Перемотка малювання",
+    "playbackStep": "Крок {step} з {total}"
   },
   "predict": {
     "answerLabel": "Що виведе ця програма?"

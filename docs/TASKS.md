@@ -68,7 +68,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | `turtle` module stub (records, draws nothing) | ✅ | `lib/runner/modules/turtle.ts`. API fidelity against real CPython `turtle` is now a hard constraint, not just a convenience match — file-delivery code must run unchanged in IDLE (AI_CONTEXT.md, "Turtle"). Signature comparison is SPIKE.md check 7, not yet run |
 | Segment log + source-line attribution | ✅ | Segment log works; `line` is always null by design, playback uses call order |
 | Canvas renderer (student + translucent target, one renderer) | ✅ | `components/canvas/TurtleCanvas.tsx`. One transform for both drawings |
-| Playback scrubber with line highlighting | ❌ | Covers grade 7 lesson 40 without an interpreter stepper |
+| Playback scrubber with line highlighting | ✅ | `components/canvas/PlaybackScrubber.tsx` + `lib/canvas/playback.ts`. `Segment.line` is always null, so stepping is driven by position in the segment array (call order), highlighting the last-drawn segment on `TurtleCanvas` rather than a source line. Wired into `code`, `fix`, `fill`. Covers grade 7 lesson 40 without an interpreter stepper |
 | `random` module stub with deterministic seeding in headless mode | ✅ | `lib/runner/modules/random.ts`. Seeded in headless, genuinely random in interactive |
 | Grid API (`move`/`turn`/`take`) + action log | ❌ | Optional, after turtle, only if still justified |
 
@@ -211,8 +211,10 @@ IDLE before uploading.
 - [x] Default `parsons.indentMode` per topic — `given` only for now: the authoring API rejects
       `'chosen'` and the component never renders it. Revisit once `order_equals` can grade an
       expected indent (docs/TASK_SCHEMA.md).
-- [ ] Lesson 40 (grade 7) requires покрокове виконання, which the platform does not do. Cover
-      with `predict`/`fix` tasks, or teach outside the platform?
+- [x] Lesson 40 (grade 7) requires покрокове виконання. **Covered by the playback scrubber**
+      (`components/canvas/PlaybackScrubber.tsx`), stepping the turtle drawing by call order
+      rather than an interpreter-level stepper — no need to fall back to `predict`/`fix` tasks
+      or to teach it outside the platform.
 - [ ] Which Python version is installed alongside IDLE on the classroom machines, and is it the
       same on all of them? Affects the file-delivery safe subset directly.
 - [ ] Multi-file projects with local imports — needed for the grade 9 projects, or is a single
@@ -256,7 +258,11 @@ IDLE before uploading.
     expected indent from) and predict's `'choice'` mode / `imageOptions`. The shared
     task-component interface this needed (`Task` union, `TaskWorkspace` dispatching by type) is
     what made `fix` and `fill` a new branch and a new file each, not a rewrite.
-11. Turtle canvas, target overlay, playback scrubber. Grid only if still justified afterwards.
+11. ~~Turtle canvas, target overlay, playback scrubber~~ — done. The canvas and target overlay
+    shipped earlier; the playback scrubber (`components/canvas/PlaybackScrubber.tsx`) now steps
+    a turtle drawing segment by segment, driven by call order since `Segment.line` is always
+    null (docs/AI_CONTEXT.md's Gotchas). Wired into `code`, `fix`, `fill`. Grid only if still
+    justified afterwards.
 12. Meta layer.
 
 Building the authoring UI early is the standing temptation, because it feels like foundation.
