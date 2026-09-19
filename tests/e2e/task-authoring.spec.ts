@@ -176,6 +176,127 @@ test('a predict task is rejected when its checks do not match what the code prin
   expect((published.body as { error: string }).error).toBe('reference_fails_checks');
 });
 
+test('a fix task publishes once the reference passes and the broken code fails', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-fix-${Date.now()}`;
+  const broken = 'import turtle\nfor i in range(4):\n    turtle.forward(60)\n    turtle.right(80)';
+  const referenceCode = 'import turtle\nfor i in range(4):\n    turtle.forward(60)\n    turtle.right(90)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'debugging',
+      title: 'E2E fix чернетка',
+      payload: { type: 'fix', surface: 'turtle', prompt: 'Тест', broken },
+      checks: [{ kind: 'shape_props', closed: true, segmentCount: 4 }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, referenceCode);
+  expect(run.error).toBeNull();
+  const brokenRun = await runInBrowser(page, broken);
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode, run, brokenRun }
+  });
+  expect(published.status).toBe(200);
+  const publishedTask = published.body as { status: string; version: number; reference: { code: string } };
+  expect(publishedTask.status).toBe('published');
+  expect(publishedTask.version).toBe(1);
+  expect(publishedTask.reference.code).toBe(referenceCode);
+});
+
+test('a fix task is rejected when the broken code already passes every check', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-fix-not-broken-${Date.now()}`;
+  // Not actually broken — right(90) draws a correct square, so this must not publish.
+  const notReallyBroken = 'import turtle\nfor i in range(4):\n    turtle.forward(60)\n    turtle.right(90)';
+  const referenceCode = notReallyBroken;
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'debugging',
+      title: 'E2E fix (не насправді зламаний)',
+      payload: { type: 'fix', surface: 'turtle', prompt: 'Тест', broken: notReallyBroken },
+      checks: [{ kind: 'shape_props', closed: true, segmentCount: 4 }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, referenceCode);
+  const brokenRun = await runInBrowser(page, notReallyBroken);
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode, run, brokenRun }
+  });
+  expect(published.status).toBe(422);
+  expect((published.body as { error: string }).error).toBe('broken_passes_checks');
+});
+
+test('a fill task publishes with a separately written reference, unrelated to the template', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-fill-${Date.now()}`;
+  const template = 'import turtle\nfor i in range({{1}}):\n    turtle.forward({{2}})\n    turtle.right({{3}})';
+  const referenceCode = 'import turtle\nfor i in range(5):\n    turtle.forward(80)\n    turtle.right(72)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'turtle-loops',
+      title: 'E2E fill чернетка',
+      payload: { type: 'fill', prompt: 'Тест', template },
+      checks: [{ kind: 'shape_props', closed: true, segmentCount: 5 }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, referenceCode);
+  expect(run.error).toBeNull();
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode, run }
+  });
+  expect(published.status).toBe(200);
+  const publishedTask = published.body as { status: string; version: number; reference: { code: string } };
+  expect(publishedTask.status).toBe('published');
+  expect(publishedTask.version).toBe(1);
+  expect(publishedTask.reference.code).toBe(referenceCode);
+});
+
+test('a fill task with no gap in its template is rejected before it is even created', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug: `e2e-fill-no-gap-${Date.now()}`,
+      topicSlug: 'turtle-loops',
+      title: 'E2E fill без пропусків',
+      // No {{n}} anywhere — this is just a code task wearing a fill costume.
+      payload: { type: 'fill', prompt: 'Тест', template: 'print(1)' },
+      checks: []
+    }
+  });
+  expect(created.status).toBe(400);
+});
+
 test('publish is rejected when the reference solution fails its own checks', async ({ page }) => {
   await loginAsTeacher(page, TEACHER_EMAIL);
 

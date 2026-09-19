@@ -5,7 +5,8 @@
  * Trust"), so this only needs to catch a malformed request, not an
  * adversarial one.
  */
-import type { CodePayload, ParsonsPayload, PredictPayload, QuizPayload, TaskPayload } from './types';
+import { isFillTemplateValid } from './fill';
+import type { CodePayload, FillPayload, FixPayload, ParsonsPayload, PredictPayload, QuizPayload, TaskPayload } from './types';
 
 export function isCodePayload(value: unknown): value is CodePayload {
   if (typeof value !== 'object' || value === null) return false;
@@ -68,6 +69,38 @@ export function isPredictPayload(value: unknown): value is PredictPayload {
   );
 }
 
+export function isFixPayload(value: unknown): value is FixPayload {
+  if (typeof value !== 'object' || value === null) return false;
+  const p = value as Record<string, unknown>;
+  return (
+    p.type === 'fix' &&
+    typeof p.surface === 'string' &&
+    typeof p.prompt === 'string' &&
+    typeof p.broken === 'string' &&
+    p.broken.length > 0
+  );
+}
+
+export function isFillPayload(value: unknown): value is FillPayload {
+  if (typeof value !== 'object' || value === null) return false;
+  const p = value as Record<string, unknown>;
+  return (
+    p.type === 'fill' &&
+    typeof p.prompt === 'string' &&
+    typeof p.template === 'string' &&
+    // A template with no {{n}} gap is just a code task — reject it here
+    // rather than storing a fill task with nothing for the student to fill.
+    isFillTemplateValid(p.template)
+  );
+}
+
 export function isTaskPayload(value: unknown): value is TaskPayload {
-  return isCodePayload(value) || isParsonsPayload(value) || isQuizPayload(value) || isPredictPayload(value);
+  return (
+    isCodePayload(value) ||
+    isParsonsPayload(value) ||
+    isQuizPayload(value) ||
+    isPredictPayload(value) ||
+    isFixPayload(value) ||
+    isFillPayload(value)
+  );
 }

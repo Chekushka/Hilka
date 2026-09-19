@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { toCodeTask, toParsonsTask, toPredictTask, toQuizTask, toTask, type TaskRow } from './task-mapping';
+import {
+  toCodeTask,
+  toFillTask,
+  toFixTask,
+  toParsonsTask,
+  toPredictTask,
+  toQuizTask,
+  toTask,
+  type TaskRow
+} from './task-mapping';
 
 function row(overrides: Partial<TaskRow> = {}): TaskRow {
   return {
@@ -179,6 +188,89 @@ describe('toPredictTask', () => {
   });
 });
 
+function fixRow(overrides: Partial<TaskRow> = {}): TaskRow {
+  return row({
+    type: 'fix',
+    payload: {
+      type: 'fix',
+      surface: 'turtle',
+      prompt: 'Виправ квадрат.',
+      broken: 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(80)'
+    },
+    checks: [{ kind: 'shape_props', closed: true, segmentCount: 4 }],
+    reference: { code: 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)' },
+    ...overrides
+  });
+}
+
+describe('toFixTask', () => {
+  it('maps a published row to the task the workspace consumes', () => {
+    const task = toFixTask(fixRow());
+    expect(task).not.toBeNull();
+    expect(task?.type).toBe('fix');
+    expect(task?.payload.broken).toContain('right(80)');
+    expect(task?.reference.code).toContain('right(90)');
+  });
+
+  it('rejects a row whose type is not fix', () => {
+    expect(toFixTask(row())).toBeNull();
+  });
+
+  it('rejects a row whose payload disagrees with its type', () => {
+    const broken = fixRow();
+    broken.payload = { type: 'code' } as unknown as TaskRow['payload'];
+    expect(toFixTask(broken)).toBeNull();
+  });
+
+  it('rejects a fix task with no reference solution', () => {
+    // Same rule as code (CLAUDE.md rule 5): the correct fix is a separately
+    // authored reference, never payload.broken itself.
+    expect(toFixTask(fixRow({ reference: null }))).toBeNull();
+    expect(toFixTask(fixRow({ reference: { code: '' } }))).toBeNull();
+  });
+});
+
+function fillRow(overrides: Partial<TaskRow> = {}): TaskRow {
+  return row({
+    type: 'fill',
+    payload: {
+      type: 'fill',
+      prompt: "Заповни пропуски, щоб намалювати п'ятикутник.",
+      template: 'import turtle\nfor i in range({{1}}):\n    turtle.forward({{2}})\n    turtle.right({{3}})'
+    },
+    checks: [{ kind: 'shape_props', closed: true, segmentCount: 5 }],
+    reference: { code: 'import turtle\nfor i in range(5):\n    turtle.forward(80)\n    turtle.right(72)' },
+    ...overrides
+  });
+}
+
+describe('toFillTask', () => {
+  it('maps a published row to the task the workspace consumes', () => {
+    const task = toFillTask(fillRow());
+    expect(task).not.toBeNull();
+    expect(task?.type).toBe('fill');
+    expect(task?.payload.template).toContain('{{1}}');
+    expect(task?.reference.code).toContain('range(5)');
+  });
+
+  it('rejects a row whose type is not fill', () => {
+    expect(toFillTask(row())).toBeNull();
+  });
+
+  it('rejects a row whose payload disagrees with its type', () => {
+    const broken = fillRow();
+    broken.payload = { type: 'code' } as unknown as TaskRow['payload'];
+    expect(toFillTask(broken)).toBeNull();
+  });
+
+  it('rejects a fill task with no reference solution', () => {
+    // Same rule as code (CLAUDE.md rule 5): the correct fill is a separately
+    // authored reference, never derived from the template's gap structure.
+    expect(toFillTask(fillRow({ reference: null }))).toBeNull();
+    expect(toFillTask(fillRow({ reference: { code: '' } }))).toBeNull();
+  });
+});
+
 describe('toTask', () => {
   it('dispatches a code row to toCodeTask', () => {
     expect(toTask(row())?.type).toBe('code');
@@ -196,7 +288,17 @@ describe('toTask', () => {
     expect(toTask(predictRow())?.type).toBe('predict');
   });
 
-  it('returns null for a type nothing maps yet', () => {
-    expect(toTask(row({ type: 'fill', payload: { type: 'fill' } as unknown as TaskRow['payload'] }))).toBeNull();
+  it('dispatches a fix row to toFixTask', () => {
+    expect(toTask(fixRow())?.type).toBe('fix');
+  });
+
+  it('dispatches a fill row to toFillTask', () => {
+    expect(toTask(fillRow())?.type).toBe('fill');
+  });
+
+  it('returns null for a type none of the mappers recognize', () => {
+    // Defensive: jsonb isn't type-checked by the database, so a row with a
+    // type outside the known union must not reach the workspace as a guess.
+    expect(toTask(row({ type: 'unknown-future-type' as TaskRow['type'] }))).toBeNull();
   });
 });

@@ -185,3 +185,92 @@ test('a teacher builds a predict task from the forms, runs it, and publishes it'
   await page.getByRole('button', { name: 'Опублікувати' }).click();
   await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
 });
+
+test('a teacher builds a fix task from the forms, runs both programs, and publishes it', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  await page.getByRole('link', { name: 'Завдання' }).click();
+  await page.getByRole('link', { name: 'Нове завдання' }).click();
+  await expect(page.getByRole('heading', { name: 'Нове завдання' })).toBeVisible();
+
+  await page.getByLabel('Тип завдання').selectOption('fix');
+  await page.getByLabel('Середовище').selectOption('turtle');
+
+  const slug = `e2e-ui-fix-${Date.now()}`;
+  await page.getByLabel('Ідентифікатор (slug)').fill(slug);
+  await page.getByLabel('Назва').fill('UI Fix чернетка');
+  await page.getByLabel('Умова').fill('У цій програмі помилка. Виправ її.');
+  await typeIntoEditor(page, 0, 'import turtle\nfor i in range(4):\n    turtle.forward(60)\n    turtle.right(80)');
+  await page
+    .getByLabel('Перевірки (JSON)')
+    .fill(JSON.stringify([{ kind: 'shape_props', closed: true, segmentCount: 4 }]));
+  await page.getByLabel(/Підказки/).fill('Перевір кут повороту.');
+  await page.getByLabel(/Складність/).fill('2');
+
+  await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().endsWith('/api/tasks') && response.request().method() === 'POST'
+    ),
+    page.getByRole('button', { name: 'Створити чернетку' }).click()
+  ]);
+
+  await expect(page.getByRole('heading', { name: 'Редагування чернетки' })).toBeVisible();
+  await expect(page.getByText('UI Fix чернетка')).toBeVisible();
+
+  // Editor 0 is `broken` (already saved from the form above); editor 1 is
+  // the separate, correct reference solution this page still needs written.
+  await typeIntoEditor(page, 1, 'import turtle\nfor i in range(4):\n    turtle.forward(60)\n    turtle.right(90)');
+  await page.getByRole('button', { name: 'Запустити еталон' }).click();
+  await expect(page.getByRole('img', { name: 'Твій малюнок' })).toBeVisible({ timeout: 15_000 });
+
+  // Broken must fail — proving it does is what unlocks Publish.
+  await page.getByRole('button', { name: 'Запустити хибний код' }).click();
+  await expect(page.getByRole('button', { name: 'Опублікувати' })).toBeEnabled({ timeout: 15_000 });
+
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
+});
+
+test('a teacher builds a fill task from the forms, writes a reference, and publishes it', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  await page.getByRole('link', { name: 'Завдання' }).click();
+  await page.getByRole('link', { name: 'Нове завдання' }).click();
+  await expect(page.getByRole('heading', { name: 'Нове завдання' })).toBeVisible();
+
+  await page.getByLabel('Тип завдання').selectOption('fill');
+
+  const slug = `e2e-ui-fill-${Date.now()}`;
+  await page.getByLabel('Ідентифікатор (slug)').fill(slug);
+  await page.getByLabel('Назва').fill('UI Fill чернетка');
+  await page.getByLabel('Умова').fill("Заповни пропуски, щоб намалювати п'ятикутник.");
+  // A plain textarea, not a CodeEditor — {{n}} is not valid Python.
+  await page
+    .getByLabel('Шаблон коду з пропусками')
+    .fill('import turtle\nfor i in range({{1}}):\n    turtle.forward({{2}})\n    turtle.right({{3}})');
+  await page
+    .getByLabel('Перевірки (JSON)')
+    .fill(JSON.stringify([{ kind: 'shape_props', closed: true, segmentCount: 5 }]));
+  await page.getByLabel(/Підказки/).fill('Сума поворотів дорівнює 360°.');
+  await page.getByLabel(/Складність/).fill('3');
+
+  await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().endsWith('/api/tasks') && response.request().method() === 'POST'
+    ),
+    page.getByRole('button', { name: 'Створити чернетку' }).click()
+  ]);
+
+  await expect(page.getByRole('heading', { name: 'Редагування чернетки' })).toBeVisible();
+  await expect(page.getByText('UI Fill чернетка')).toBeVisible();
+
+  // The reference is a separately written, fully correct program — it need
+  // not even share the template's exact gap structure, same as code's
+  // starter vs reference.
+  await typeIntoEditor(page, 0, 'import turtle\nfor i in range(5):\n    turtle.forward(80)\n    turtle.right(72)');
+  await page.getByRole('button', { name: 'Запустити еталон' }).click();
+  await expect(page.getByRole('img', { name: 'Твій малюнок' })).toBeVisible({ timeout: 15_000 });
+
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
+});

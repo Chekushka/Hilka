@@ -1,20 +1,21 @@
 'use client';
 
 /**
- * Creates a draft task — `code`, `parsons`, `quiz` or `predict`, the types
- * the rest of the app understands end to end (docs/TASKS.md). `fill` and
- * `fix` have no payload shape or checker support yet, so this form does not
- * offer them — adding one is a separate slice, not a form-builder problem.
+ * Creates a draft task — every type TASK_SCHEMA.md documents now has a
+ * payload shape and checker support (docs/TASKS.md).
  *
- * On success the browser moves to the task's own page, where `code` and
- * `predict` write and publish a reference solution (predict's IS the code
- * shown to the student — nothing separate to write), while `parsons` and
- * `quiz` publish directly — neither executes anything to run first.
+ * On success the browser moves to the task's own page, where `code`,
+ * `predict`, `fix` and `fill` write and publish a reference solution
+ * (predict's IS the code shown to the student — nothing separate to write;
+ * fix needs a second run too, proving `payload.broken` fails), while
+ * `parsons` and `quiz` publish directly — neither executes anything to run
+ * first.
  */
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { t } from '@/lib/i18n';
+import { isFillTemplateValid } from '@/lib/task/fill';
 import type { Surface, TaskType } from '@/lib/task/types';
 import { formatParsonsLines, parseParsonsLines } from './parsons-form-utils';
 import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
@@ -62,6 +63,12 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   // predict-only
   const [predictCode, setPredictCode] = useState('');
 
+  // fix-only
+  const [brokenCode, setBrokenCode] = useState('');
+
+  // fill-only
+  const [template, setTemplate] = useState('');
+
   const [checksText, setChecksText] = useState('[]');
   const [hintsText, setHintsText] = useState('');
   const [difficulty, setDifficulty] = useState(2);
@@ -93,6 +100,14 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
       setError(t('authoring.predictCodeEmpty'));
       return;
     }
+    if (taskType === 'fix' && brokenCode.trim().length === 0) {
+      setError(t('authoring.brokenCodeEmpty'));
+      return;
+    }
+    if (taskType === 'fill' && !isFillTemplateValid(template)) {
+      setError(t('authoring.templateEmpty'));
+      return;
+    }
 
     setSaving(true);
     const response = await fetch('/api/tasks', {
@@ -115,7 +130,11 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                 }
               : taskType === 'quiz'
                 ? { type: 'quiz', prompt, options: parsedOptions, multiple }
-                : { type: 'predict', prompt, code: predictCode, answerMode: 'text' },
+                : taskType === 'predict'
+                  ? { type: 'predict', prompt, code: predictCode, answerMode: 'text' }
+                  : taskType === 'fix'
+                    ? { type: 'fix', surface, prompt, broken: brokenCode }
+                    : { type: 'fill', prompt, template },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -156,6 +175,8 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
           <option value="parsons">{t('authoring.taskTypeParsons')}</option>
           <option value="quiz">{t('authoring.taskTypeQuiz')}</option>
           <option value="predict">{t('authoring.taskTypePredict')}</option>
+          <option value="fix">{t('authoring.taskTypeFix')}</option>
+          <option value="fill">{t('authoring.taskTypeFill')}</option>
         </select>
       </div>
 
@@ -206,7 +227,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         />
       </div>
 
-      {taskType === 'code' ? (
+      {taskType === 'code' || taskType === 'fix' ? (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="surface">
             {t('authoring.surfaceLabel')}
@@ -310,13 +331,36 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
             {t('authoring.quizMultipleLabel')}
           </label>
         </>
-      ) : (
+      ) : taskType === 'predict' ? (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="predictCode">
             {t('authoring.predictCodeLabel')}
           </label>
           <CodeEditor value={predictCode} onChange={setPredictCode} ariaLabel={t('authoring.predictCodeLabel')} />
           <p className="text-xs text-ink-muted">{t('authoring.predictCodeHint')}</p>
+        </div>
+      ) : taskType === 'fix' ? (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="brokenCode">
+            {t('authoring.brokenCodeLabel')}
+          </label>
+          <CodeEditor value={brokenCode} onChange={setBrokenCode} ariaLabel={t('authoring.brokenCodeLabel')} />
+          <p className="text-xs text-ink-muted">{t('authoring.brokenCodeHint')}</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="template">
+            {t('authoring.templateLabel')}
+          </label>
+          <textarea
+            id="template"
+            rows={6}
+            value={template}
+            onChange={(event) => setTemplate(event.target.value)}
+            spellCheck={false}
+            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+          />
+          <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
         </div>
       )}
 
