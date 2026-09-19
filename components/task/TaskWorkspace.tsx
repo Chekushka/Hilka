@@ -1,13 +1,14 @@
 'use client';
 
 /**
- * Dispatches to the component for the student's task type. Adding the next
- * one (fill) means adding a branch here and a new file in
- * components/task-types/, never touching the session or practice flow that
- * renders this (docs/AI_CONTEXT.md, "Every task type implements one shared
- * component interface").
+ * Dispatches to the component for the student's task type. Every type
+ * TASK_SCHEMA.md documents now has one; a future one still just means a
+ * branch here and a new file in components/task-types/, never touching the
+ * session or practice flow that renders this (docs/AI_CONTEXT.md, "Every
+ * task type implements one shared component interface").
  */
 import { CodeTaskView } from '@/components/task-types/CodeTaskView';
+import { FillTaskView } from '@/components/task-types/FillTaskView';
 import { FixTaskView } from '@/components/task-types/FixTaskView';
 import { ParsonsTaskView } from '@/components/task-types/ParsonsTaskView';
 import { PredictTaskView } from '@/components/task-types/PredictTaskView';
@@ -34,6 +35,9 @@ export function TaskWorkspace({ task, onSubmitAttempt }: TaskWorkspaceProps) {
   }
   if (task.type === 'fix') {
     return <FixTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+  }
+  if (task.type === 'fill') {
+    return <FillTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
   }
   return <CodeTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
 }

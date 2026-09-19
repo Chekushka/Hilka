@@ -32,6 +32,11 @@
  * must NOT pass the very checks `reference.code` just did. A "broken"
  * program that already passes every check is a bug in the task
  * (TASK_SCHEMA.md, "Reference solutions"), so this needs both runs posted.
+ *
+ * `fill` — falls into the same generic branch as `code`: a separately
+ * written reference (unrelated to `payload.template`'s gap structure, same
+ * as `code`'s starter vs reference) must pass every check. Nothing about
+ * `fill` needs special-casing here at all.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';

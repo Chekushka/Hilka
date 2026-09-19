@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { DraftTaskEditor } from '@/components/authoring/DraftTaskEditor';
+import { FillDraftEditor } from '@/components/authoring/FillDraftEditor';
 import { FixDraftEditor } from '@/components/authoring/FixDraftEditor';
 import { ParsonsDraftEditor } from '@/components/authoring/ParsonsDraftEditor';
 import { PredictDraftEditor } from '@/components/authoring/PredictDraftEditor';
@@ -187,7 +188,49 @@ function PublishedFixView({ task }: { task: TaskRow }) {
   );
 }
 
-const AUTHORABLE_TYPES = ['code', 'parsons', 'quiz', 'predict', 'fix'] as const;
+/** A published `fill` task — the template stays fixed and read-only, same as the reference. */
+function PublishedFillView({ task }: { task: TaskRow }) {
+  if (task.payload?.type !== 'fill') return null;
+  return (
+    <div className="mt-6 flex flex-col gap-4">
+      <p className="rounded-md border border-line bg-surface p-3 text-sm text-ink-muted">
+        {t('authoring.notEditable')}
+      </p>
+      <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
+      <p className="text-ink">{task.payload.prompt}</p>
+
+      <TurtleCanvas drawing={task.reference?.artifacts?.drawing ?? []} label={t('workspace.target')} />
+      {task.reference?.artifacts?.stdout && (
+        <pre className="whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
+          {task.reference.artifacts.stdout}
+        </pre>
+      )}
+
+      <div>
+        <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.templateLabel')}</p>
+        <pre className="mt-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
+          {task.payload.template}
+        </pre>
+      </div>
+
+      <div>
+        <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.referenceTitle')}</p>
+        <pre className="mt-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
+          {task.reference?.code}
+        </pre>
+      </div>
+
+      <div>
+        <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.checksLabel')}</p>
+        <pre className="mt-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-xs text-ink">
+          {JSON.stringify(task.checks, null, 2)}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+const AUTHORABLE_TYPES = ['code', 'parsons', 'quiz', 'predict', 'fix', 'fill'] as const;
 
 export default async function TaskPage({ params }: { params: Promise<{ id: string }> }) {
   const teacher = await getCurrentTeacher();
@@ -224,8 +267,10 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           <PublishedQuizView task={task} />
         ) : payload.type === 'predict' ? (
           <PublishedPredictView task={task} />
-        ) : (
+        ) : payload.type === 'fix' ? (
           <PublishedFixView task={task} />
+        ) : (
+          <PublishedFillView task={task} />
         )
       ) : payload.type === 'code' ? (
         <DraftTaskEditor
@@ -275,8 +320,20 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             gradeTags: task.gradeTags
           }}
         />
-      ) : (
+      ) : payload.type === 'fix' ? (
         <FixDraftEditor
+          task={{
+            id: task.id,
+            title: task.title,
+            payload,
+            checks: task.checks,
+            hints: task.hints,
+            difficulty: task.difficulty,
+            gradeTags: task.gradeTags
+          }}
+        />
+      ) : (
+        <FillDraftEditor
           task={{
             id: task.id,
             title: task.title,
