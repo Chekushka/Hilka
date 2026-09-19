@@ -2,12 +2,13 @@
 
 /**
  * Dispatches to the component for the student's task type. Adding the next
- * one (fill or fix) means adding a branch here and a new file in
+ * one (fill) means adding a branch here and a new file in
  * components/task-types/, never touching the session or practice flow that
  * renders this (docs/AI_CONTEXT.md, "Every task type implements one shared
  * component interface").
  */
 import { CodeTaskView } from '@/components/task-types/CodeTaskView';
+import { FixTaskView } from '@/components/task-types/FixTaskView';
 import { ParsonsTaskView } from '@/components/task-types/ParsonsTaskView';
 import { PredictTaskView } from '@/components/task-types/PredictTaskView';
 import { QuizTaskView } from '@/components/task-types/QuizTaskView';
@@ -30,6 +31,9 @@ export function TaskWorkspace({ task, onSubmitAttempt }: TaskWorkspaceProps) {
   }
   if (task.type === 'predict') {
     return <PredictTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+  }
+  if (task.type === 'fix') {
+    return <FixTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
   }
   return <CodeTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
 }

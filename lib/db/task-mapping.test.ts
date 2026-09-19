@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toCodeTask, toParsonsTask, toPredictTask, toQuizTask, toTask, type TaskRow } from './task-mapping';
+import { toCodeTask, toFixTask, toParsonsTask, toPredictTask, toQuizTask, toTask, type TaskRow } from './task-mapping';
 
 function row(overrides: Partial<TaskRow> = {}): TaskRow {
   return {
@@ -179,6 +179,48 @@ describe('toPredictTask', () => {
   });
 });
 
+function fixRow(overrides: Partial<TaskRow> = {}): TaskRow {
+  return row({
+    type: 'fix',
+    payload: {
+      type: 'fix',
+      surface: 'turtle',
+      prompt: 'Виправ квадрат.',
+      broken: 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(80)'
+    },
+    checks: [{ kind: 'shape_props', closed: true, segmentCount: 4 }],
+    reference: { code: 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)' },
+    ...overrides
+  });
+}
+
+describe('toFixTask', () => {
+  it('maps a published row to the task the workspace consumes', () => {
+    const task = toFixTask(fixRow());
+    expect(task).not.toBeNull();
+    expect(task?.type).toBe('fix');
+    expect(task?.payload.broken).toContain('right(80)');
+    expect(task?.reference.code).toContain('right(90)');
+  });
+
+  it('rejects a row whose type is not fix', () => {
+    expect(toFixTask(row())).toBeNull();
+  });
+
+  it('rejects a row whose payload disagrees with its type', () => {
+    const broken = fixRow();
+    broken.payload = { type: 'code' } as unknown as TaskRow['payload'];
+    expect(toFixTask(broken)).toBeNull();
+  });
+
+  it('rejects a fix task with no reference solution', () => {
+    // Same rule as code (CLAUDE.md rule 5): the correct fix is a separately
+    // authored reference, never payload.broken itself.
+    expect(toFixTask(fixRow({ reference: null }))).toBeNull();
+    expect(toFixTask(fixRow({ reference: { code: '' } }))).toBeNull();
+  });
+});
+
 describe('toTask', () => {
   it('dispatches a code row to toCodeTask', () => {
     expect(toTask(row())?.type).toBe('code');
@@ -194,6 +236,10 @@ describe('toTask', () => {
 
   it('dispatches a predict row to toPredictTask', () => {
     expect(toTask(predictRow())?.type).toBe('predict');
+  });
+
+  it('dispatches a fix row to toFixTask', () => {
+    expect(toTask(fixRow())?.type).toBe('fix');
   });
 
   it('returns null for a type nothing maps yet', () => {

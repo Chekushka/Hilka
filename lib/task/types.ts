@@ -58,8 +58,22 @@ export interface PredictPayload {
   answerMode: 'text';
 }
 
+/**
+ * `broken` is what the student sees and edits — the same field
+ * `reference.code` plays for `code`, except here it is wrong on purpose.
+ * Publish requires both that `reference.code` passes every check AND that
+ * `broken` fails at least one (TASK_SCHEMA.md, "Reference solutions") —
+ * a "broken" program that already passes is a bug in the task, not a task.
+ */
+export interface FixPayload {
+  type: 'fix';
+  surface: Surface;
+  prompt: string;
+  broken: string;
+}
+
 /** Widens to the union in TASK_SCHEMA.md as each task type is built. */
-export type TaskPayload = CodePayload | ParsonsPayload | QuizPayload | PredictPayload;
+export type TaskPayload = CodePayload | ParsonsPayload | QuizPayload | PredictPayload | FixPayload;
 
 /**
  * One input set of an input-driven task: the code runs once per case, with
@@ -169,14 +183,37 @@ export interface PredictTask {
   status: TaskStatus;
 }
 
+/**
+ * Executes exactly like `code` — the student edits `payload.broken`
+ * (pre-filled as the starting code) and Check runs it the same way
+ * `useTaskRunner` already does for `code` (lib/task/use-task-runner.ts's
+ * `RunnableTask` covers both). `reference.code` is the author's separately
+ * written correct fix, never `payload.broken` itself.
+ */
+export interface FixTask {
+  id: string;
+  slug: string;
+  topicId: string;
+  type: 'fix';
+  title: string;
+  payload: FixPayload;
+  checks: Check[];
+  hints: string[];
+  reference: Reference;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  gradeTags: number[];
+  version: number;
+  status: TaskStatus;
+}
+
 /** Every task type the student-facing surfaces know how to render today. */
-export type Task = CodeTask | ParsonsTask | QuizTask | PredictTask;
+export type Task = CodeTask | ParsonsTask | QuizTask | PredictTask | FixTask;
 
 /** What a task-type component reports once a Check completes. */
 export interface AttemptOutcome {
   passed: boolean;
   hintsUsed: number;
   durationMs: number;
-  /** Shape matches `Submission` — `{ code }` for `code`, `{ orderedLines }` for `parsons`, `{ choiceIndices }` for `quiz`, `{ text }` for `predict`. */
+  /** Shape matches `Submission` — `{ code }` for `code` and `fix`, `{ orderedLines }` for `parsons`, `{ choiceIndices }` for `quiz`, `{ text }` for `predict`. */
   submittedAnswer: Record<string, unknown>;
 }

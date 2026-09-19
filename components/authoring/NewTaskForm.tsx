@@ -1,14 +1,15 @@
 'use client';
 
 /**
- * Creates a draft task — `code`, `parsons`, `quiz` or `predict`, the types
- * the rest of the app understands end to end (docs/TASKS.md). `fill` and
- * `fix` have no payload shape or checker support yet, so this form does not
- * offer them — adding one is a separate slice, not a form-builder problem.
+ * Creates a draft task — `code`, `parsons`, `quiz`, `predict` or `fix`, the
+ * types the rest of the app understands end to end (docs/TASKS.md). `fill`
+ * has no payload shape or checker support yet, so this form does not offer
+ * it — adding it is a separate slice, not a form-builder problem.
  *
- * On success the browser moves to the task's own page, where `code` and
- * `predict` write and publish a reference solution (predict's IS the code
- * shown to the student — nothing separate to write), while `parsons` and
+ * On success the browser moves to the task's own page, where `code`,
+ * `predict` and `fix` write and publish a reference solution (predict's IS
+ * the code shown to the student — nothing separate to write; fix needs a
+ * second run too, proving `payload.broken` fails), while `parsons` and
  * `quiz` publish directly — neither executes anything to run first.
  */
 import { useRouter } from 'next/navigation';
@@ -62,6 +63,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   // predict-only
   const [predictCode, setPredictCode] = useState('');
 
+  // fix-only
+  const [brokenCode, setBrokenCode] = useState('');
+
   const [checksText, setChecksText] = useState('[]');
   const [hintsText, setHintsText] = useState('');
   const [difficulty, setDifficulty] = useState(2);
@@ -93,6 +97,10 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
       setError(t('authoring.predictCodeEmpty'));
       return;
     }
+    if (taskType === 'fix' && brokenCode.trim().length === 0) {
+      setError(t('authoring.brokenCodeEmpty'));
+      return;
+    }
 
     setSaving(true);
     const response = await fetch('/api/tasks', {
@@ -115,7 +123,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                 }
               : taskType === 'quiz'
                 ? { type: 'quiz', prompt, options: parsedOptions, multiple }
-                : { type: 'predict', prompt, code: predictCode, answerMode: 'text' },
+                : taskType === 'predict'
+                  ? { type: 'predict', prompt, code: predictCode, answerMode: 'text' }
+                  : { type: 'fix', surface, prompt, broken: brokenCode },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -156,6 +166,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
           <option value="parsons">{t('authoring.taskTypeParsons')}</option>
           <option value="quiz">{t('authoring.taskTypeQuiz')}</option>
           <option value="predict">{t('authoring.taskTypePredict')}</option>
+          <option value="fix">{t('authoring.taskTypeFix')}</option>
         </select>
       </div>
 
@@ -206,7 +217,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         />
       </div>
 
-      {taskType === 'code' ? (
+      {taskType === 'code' || taskType === 'fix' ? (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="surface">
             {t('authoring.surfaceLabel')}
@@ -310,13 +321,21 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
             {t('authoring.quizMultipleLabel')}
           </label>
         </>
-      ) : (
+      ) : taskType === 'predict' ? (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="predictCode">
             {t('authoring.predictCodeLabel')}
           </label>
           <CodeEditor value={predictCode} onChange={setPredictCode} ariaLabel={t('authoring.predictCodeLabel')} />
           <p className="text-xs text-ink-muted">{t('authoring.predictCodeHint')}</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="brokenCode">
+            {t('authoring.brokenCodeLabel')}
+          </label>
+          <CodeEditor value={brokenCode} onChange={setBrokenCode} ariaLabel={t('authoring.brokenCodeLabel')} />
+          <p className="text-xs text-ink-muted">{t('authoring.brokenCodeHint')}</p>
         </div>
       )}
 

@@ -1,0 +1,36 @@
+{
+  "slug": "g7-fix-square",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Полагодь фігуру",
+  "payload": {
+    "type": "fix",
+    "surface": "turtle",
+    "prompt": "Ця програма мала намалювати квадрат, але в ній помилка. Знайди її й виправ так, щоб фігура вийшла правильною.",
+    "broken": "import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(80)\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 4,
+      "message": "Фігура має складатися з чотирьох сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Сторони не такі, як на зразку. Перевір кут повороту."
+    }
+  ],
+  "hints": [
+    "Порівняй кут повороту з тим, який справді потрібен для квадрата.",
+    "Сума всіх поворотів має дорівнювати 360°: чотири сторони по 90°."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

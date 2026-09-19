@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { evaluateChecks, type Check, type CheckReport } from '@/lib/checker';
 import { createRunner, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
-import type { CodeTask } from './types';
+import type { Reference } from './types';
 
 export type EngineState = 'loading' | 'ready' | 'failed';
 
@@ -25,7 +25,18 @@ export interface TaskRunnerState {
   target: Segment[];
 }
 
-export function useTaskRunner(task: CodeTask) {
+/**
+ * Everything this hook needs from a task — `code` and `fix` both satisfy it
+ * (the student edits different starting code, `payload.starter` vs
+ * `payload.broken`, but run and Check work identically once there's a
+ * `reference` to warm up against and `checks` to judge with).
+ */
+export interface RunnableTask {
+  checks: Check[];
+  reference: Reference;
+}
+
+export function useTaskRunner(task: RunnableTask) {
   const runnerRef = useRef<PythonRunner | null>(null);
   const [state, setState] = useState<TaskRunnerState>({
     engine: 'loading',

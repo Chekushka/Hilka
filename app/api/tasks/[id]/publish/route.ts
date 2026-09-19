@@ -26,6 +26,12 @@
  * for a perfect prediction (`evaluatePredictionAgainstOwnRun`), so this
  * confirms the checks the author wrote (e.g. `text_equals`) actually match
  * what the code prints, instead of trusting a hand-typed value.
+ *
+ * `fix` — like `code`, plus one extra proof: `payload.broken` (already
+ * saved, read from `task` rather than re-trusted from the request body)
+ * must NOT pass the very checks `reference.code` just did. A "broken"
+ * program that already passes every check is a bug in the task
+ * (TASK_SCHEMA.md, "Reference solutions"), so this needs both runs posted.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
@@ -33,6 +39,7 @@ import {
   evaluateAgainstOwnRun,
   evaluateChecks,
   evaluatePredictionAgainstOwnRun,
+  evaluateRun,
   type RunOutcome
 } from '@/lib/checker';
 import { getTaskForAuthoring, publishTask } from '@/lib/db/task-authoring';
@@ -44,18 +51,31 @@ interface PublishBody {
   run: RunOutcome;
 }
 
-function isValidBody(body: unknown): body is PublishBody {
-  if (typeof body !== 'object' || body === null) return false;
-  const b = body as Record<string, unknown>;
-  if (typeof b.referenceCode !== 'string' || b.referenceCode.length === 0) return false;
-  if (typeof b.run !== 'object' || b.run === null) return false;
-  const run = b.run as Record<string, unknown>;
+interface FixPublishBody extends PublishBody {
+  brokenRun: RunOutcome;
+}
+
+function isRunOutcomeShaped(value: unknown): value is RunOutcome {
+  if (typeof value !== 'object' || value === null) return false;
+  const run = value as Record<string, unknown>;
   return (
     typeof run.stdout === 'string' &&
     Array.isArray(run.drawing) &&
     typeof run.timedOut === 'boolean' &&
     (run.error === null || typeof run.error === 'object')
   );
+}
+
+function isValidBody(body: unknown): body is PublishBody {
+  if (typeof body !== 'object' || body === null) return false;
+  const b = body as Record<string, unknown>;
+  return typeof b.referenceCode === 'string' && b.referenceCode.length > 0 && isRunOutcomeShaped(b.run);
+}
+
+function isValidFixBody(body: unknown): body is FixPublishBody {
+  if (typeof body !== 'object' || body === null) return false;
+  const brokenRun = (body as Record<string, unknown>).brokenRun;
+  return isValidBody(body) && isRunOutcomeShaped(brokenRun);
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -97,6 +117,39 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'reference_fails_checks', failures: errors }, { status: 422 });
     }
     const updated = await publishTask(id, null);
+    if (!updated) {
+      return NextResponse.json({ error: 'publish_race' }, { status: 409 });
+    }
+    return NextResponse.json(updated);
+  }
+
+  if (task.type === 'fix' && task.payload?.type === 'fix') {
+    const body: unknown = await request.json().catch(() => null);
+    if (!isValidFixBody(body)) {
+      return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+    }
+
+    const outcome = evaluateAgainstOwnRun(body.referenceCode, task.checks, body.run);
+    if (!outcome.ranCleanly) {
+      return NextResponse.json({ error: 'reference_run_failed', detail: body.run.error }, { status: 422 });
+    }
+    if (!outcome.passed) {
+      return NextResponse.json({ error: 'reference_fails_checks', failures: outcome.failures }, { status: 422 });
+    }
+
+    const brokenOutcome = evaluateRun({ code: task.payload.broken }, task.checks, body.brokenRun, {
+      stdout: body.run.stdout,
+      drawing: body.run.drawing
+    });
+    if (brokenOutcome.passed) {
+      return NextResponse.json({ error: 'broken_passes_checks' }, { status: 422 });
+    }
+
+    const updated = await publishTask(id, {
+      code: body.referenceCode,
+      computedAt: new Date().toISOString(),
+      artifacts: { stdout: body.run.stdout, drawing: body.run.drawing }
+    });
     if (!updated) {
       return NextResponse.json({ error: 'publish_race' }, { status: 409 });
     }

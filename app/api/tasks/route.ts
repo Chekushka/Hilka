@@ -1,9 +1,9 @@
 /**
  * Draft task creation. Teacher-only — task content is shared curriculum
  * content, not owned per-teacher, so any logged-in teacher may author it
- * (docs/AI_CONTEXT.md, "Teacher Auth"). Scoped to `code`, `parsons`, `quiz`
- * and `predict` tasks, the types the rest of the app understands end to end
- * (docs/TASKS.md).
+ * (docs/AI_CONTEXT.md, "Teacher Auth"). Scoped to `code`, `parsons`, `quiz`,
+ * `predict` and `fix` tasks, the types the rest of the app understands end
+ * to end (docs/TASKS.md).
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
