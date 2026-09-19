@@ -118,6 +118,32 @@
   "meta": {
     "description": "Python для 7–9 класу"
   },
+  "sessionBuilder": {
+    "newSession": "Нове заняття",
+    "title": "Нове заняття",
+    "classLabel": "Клас",
+    "modeLabel": "Режим",
+    "modePractice": "Практика",
+    "modeGraded": "З оцінюванням",
+    "topicFilterLabel": "Тема",
+    "gradeFilterLabel": "Клас (рівень)",
+    "filterAll": "Усі",
+    "tasksLabel": "Завдання заняття",
+    "selectedCount": "обрано: {n}",
+    "noMatchingTasks": "Немає опублікованих завдань за цим фільтром.",
+    "timeLimitLabel": "Обмеження часу (хв)",
+    "timeLimitPlaceholder": "без обмеження",
+    "hintsEnabledLabel": "Дозволити підказки",
+    "shuffleLabel": "Перемішати порядок завдань",
+    "noClass": "Оберіть клас.",
+    "noTasks": "Оберіть хоча б одне завдання.",
+    "noClasses": "У тебе ще немає жодного класу — спершу створи клас (ще не реалізовано в інтерфейсі).",
+    "create": "Створити заняття",
+    "creating": "Створюю…",
+    "createError": "Не вдалося створити заняття. Спробуй ще раз.",
+    "created": "Заняття створено. Код для учнів:",
+    "viewSession": "Переглянути заняття"
+  },
   "authoring": {
     "tasksTitle": "Завдання",
     "newTask": "Нове завдання",

@@ -2,7 +2,7 @@
  * Class queries, scoped to the owning teacher — a teacher only ever sees
  * their own classes and sessions, never another teacher's.
  */
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import type { SessionMode } from '@/lib/session/types';
 import { getDb } from './client';
 import { classes, sessions } from './schema';
@@ -20,6 +20,30 @@ export interface TeacherClassSummary {
   title: string;
   roster: string[];
   sessions: TeacherSessionSummary[];
+}
+
+export interface ClassOption {
+  id: string;
+  title: string;
+}
+
+/** For the session builder's class picker — no roster or session join needed there. */
+export async function listClassOptionsForTeacher(teacherId: string): Promise<ClassOption[]> {
+  return getDb()
+    .select({ id: classes.id, title: classes.title })
+    .from(classes)
+    .where(eq(classes.teacherId, teacherId))
+    .orderBy(asc(classes.title));
+}
+
+/** Ownership check: a session builder must not create a session under a class the caller does not own. */
+export async function getClassForTeacher(classId: string, teacherId: string): Promise<ClassOption | null> {
+  const [row] = await getDb()
+    .select({ id: classes.id, title: classes.title })
+    .from(classes)
+    .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
+    .limit(1);
+  return row ?? null;
 }
 
 export async function listClassesForTeacher(teacherId: string): Promise<TeacherClassSummary[]> {

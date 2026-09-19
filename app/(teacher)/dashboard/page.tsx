@@ -24,6 +24,9 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{t('dashboard.title')}</h1>
         <div className="flex items-center gap-4">
+          <Link href="/sessions/new" className="text-sm text-accent">
+            {t('sessionBuilder.newSession')}
+          </Link>
           <Link href="/tasks" className="text-sm text-accent">
             {t('authoring.tasksTitle')}
           </Link>
