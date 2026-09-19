@@ -143,11 +143,9 @@ IDLE before uploading.
 
 | Item | Status | Notes |
 |---|---|---|
-| Practice mode (localStorage progress) | ❌ | Primary store; no server round-trip to resume on the same machine |
-| Progress codes: mint, restore, merge | ❌ | 8 chars, unambiguous alphabet, rate-limited entry, merge-not-replace |
-| Join by 6-char code | ❌ | Code must be legible from the back row on a projector |
-| Name selection from roster | ❌ | No password, no email |
-| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. Now reused by both `/practice` (constant task) and a session (task chosen from its list); an optional `onSubmitAttempt` prop reports each Check's outcome without practice mode knowing sessions exist |
+| Practice mode (localStorage progress) | ✅ | `lib/practice/local-progress.ts`'s `useLocalProgress` — completed task slugs, primary store, no server round-trip to resume on the same machine |
+| Progress codes: mint, restore, merge | ✅ | `lib/practice/code.ts` (format/validate), `lib/db/progress-codes.ts` (mint/update/read), `POST /api/progress` + `POST /api/progress/restore`, rate-limited by `lib/practice/rate-limit.ts`. `components/practice/ProgressPanel.tsx` is the UI, merge-not-replace via `mergeProgress`. `state` holds only `completedTaskSlugs` today — `xp`/"current topic" are Meta Layer, not invented ahead of it; the jsonb column needs no migration to add them later |
+| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. Now reused by both `/practice` (constant task, wrapped by `components/practice/PracticePageClient.tsx` for local progress) and a session (task chosen from its list); an optional `onSubmitAttempt` prop reports each Check's outcome without practice mode knowing sessions exist |
 | Join by 6-char code | ✅ | `app/(student)/s/[code]/page.tsx` + `lib/db/sessions.ts` `getOpenSessionByCode`. Case-insensitive; a closed or unknown code lands on the same calm not-found screen, on purpose — the distinction is for the teacher |
 | Name selection from roster | ✅ | `components/session/SessionRoom.tsx`. Kept in `sessionStorage` per session code via `useSyncExternalStore`, so a reload does not ask again |
 | Attempt submission (append-only) | ✅ | `POST /api/attempts` → `lib/db/attempts.ts`. Validated server-side against the open session, its assigned tasks and the roster (`validateAttemptContext`) — the request body itself is untrusted, per "Cheating and Trust" |

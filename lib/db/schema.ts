@@ -30,6 +30,7 @@ import {
   uuid
 } from 'drizzle-orm/pg-core';
 import type { Check } from '@/lib/checker';
+import type { PracticeProgress } from '@/lib/practice/progress';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 
 export const topics = pgTable('topics', {
@@ -135,7 +136,7 @@ export const progressCodes = pgTable('progress_codes', {
   // Human-readable alphabet, no 0/O/1/I/l. A bearer credential for someone
   // else's practice progress, which is why entry is rate-limited.
   code: char('code', { length: 8 }).primaryKey(),
-  state: jsonb('state').$type<Record<string, unknown>>().notNull(),
+  state: jsonb('state').$type<PracticeProgress>().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   // Exists so abandoned rows can be pruned later. Nothing prunes them yet.
