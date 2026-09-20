@@ -224,6 +224,34 @@ schema and the content; create it before, and it is empty forever.
 string opens production too, given the production host. Rotate under Roles →
 Reset password, then update the Vercel variable and redeploy.
 
+**Neon branch cleanup.** The Free plan caps a project at **10 branches total**,
+and the Neon-Managed integration does not free one up just because its PR
+merged. It creates one branch per git branch (named `preview/<git-branch>`,
+reused across every push to that PR — not one new branch per push), which
+only gets deleted when *both*: the git branch itself is gone (merging a PR
+does not delete its branch unless GitHub's own "Automatically delete head
+branches" repo setting is on), and Neon's own "Automatically delete obsolete
+Neon branches" is enabled on the Vercel connection (Neon Console →
+Integrations → Vercel) — and even then, cleanup only runs on the *next*
+preview deployment, not the moment the git branch disappears. Any one of
+those three conditions being off is enough for branches to accumulate past
+10 with just a handful of PRs.
+
+To fix:
+1. **Unblock now** — Neon Console → Branches → delete the `preview/*`
+   branches for PRs that are already merged or closed.
+2. **Turn on both dashboard toggles**: GitHub repo Settings → General →
+   Pull Requests → *Automatically delete head branches*; and Neon Console →
+   Integrations → Vercel connection → *Automatically delete obsolete Neon
+   branches*.
+3. **Optional backstop, independent of either toggle**:
+   `.github/workflows-pending/neon-branch-cleanup.yml` deletes a PR's Neon
+   branch the instant it closes via `neondatabase/delete-branch-action`.
+   Needs `NEON_PROJECT_ID` and `NEON_API_KEY` as repo secrets (a Neon API
+   key scoped to CI secrets, not the remote-agent environment — a different
+   trust boundary from step 3's "no Neon API key for agents" rule) — see
+   `.github/workflows-pending/README.md` before activating it.
+
 **Migrations after the first** are generated locally (`npm run db:generate`),
 committed under `drizzle/`, and applied by `migrate.yml` on merge. Never at app
 boot — serverless instances start concurrently and would race. CI fails if a

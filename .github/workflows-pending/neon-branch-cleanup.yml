@@ -1,0 +1,41 @@
+name: neon-branch-cleanup
+
+# Deletes a PR's Neon preview branch the moment the PR closes, instead of
+# waiting on the Neon-Managed integration's own reconciliation (which only
+# runs on the *next* preview deployment, so a quiet repo can sit on stale
+# branches indefinitely) or on the underlying git branch being deleted.
+#
+# Why this exists: the Free plan caps a project at 10 branches total.
+# "Automatically delete obsolete Neon branches" (Neon Console → Integrations
+# → Vercel connection) is what is *supposed* to reap a branch once its git
+# branch is gone, but that only fires on the next deployment and depends on
+# GitHub's "Automatically delete head branches" repo setting also being on
+# — two dashboard toggles neither of which is visible from the codebase.
+# This workflow is a deterministic backstop that does not depend on either.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  delete-preview-branch:
+    runs-on: ubuntu-latest
+    steps:
+      # Branch name must match what the Neon-Managed integration actually
+      # names its preview branches — confirm against a real branch in the
+      # Neon console before moving this workflow into .github/workflows/.
+      # It was `preview/<git-branch-name>` as of 2026-09, but that mapping
+      # is not committed to config anywhere the codebase can check, so it
+      # can silently drift with a future integration version.
+      - uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: preview/${{ github.event.pull_request.head.ref }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+        # The integration's own cleanup, or a manual delete, may already
+        # have removed the branch by the time this runs — that is a race
+        # this workflow lost, not a failure worth a red X on a merged PR.
+        continue-on-error: true
