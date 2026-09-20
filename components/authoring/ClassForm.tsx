@@ -67,7 +67,6 @@ export function ClassForm({ mode, classId, initialTitle = '', initialRoster = []
         <input
           id="title"
           type="text"
-          required
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
@@ -80,7 +79,6 @@ export function ClassForm({ mode, classId, initialTitle = '', initialRoster = []
         </label>
         <textarea
           id="roster"
-          required
           rows={8}
           value={rosterText}
           onChange={(event) => setRosterText(event.target.value)}
