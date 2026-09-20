@@ -5,9 +5,10 @@ import { listClassesForTeacher } from '@/lib/db/classes';
 import { t } from '@/lib/i18n';
 
 /**
- * Class overview, read-only (docs/TASKS.md, "Results dashboard"). Session
- * creation, roster editing and task authoring are separate, unbuilt work —
- * this only shows what already exists.
+ * Class overview (docs/TASKS.md, "Results dashboard"). Session and task
+ * creation are separate flows linked from here; class creation and roster
+ * editing (docs/TASKS.md, "Class + roster management") happen on this
+ * page's own /classes/new and /classes/[id].
  */
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,9 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{t('dashboard.title')}</h1>
         <div className="flex items-center gap-4">
+          <Link href="/classes/new" className="text-sm text-accent">
+            {t('classForm.newClass')}
+          </Link>
           <Link href="/sessions/new" className="text-sm text-accent">
             {t('sessionBuilder.newSession')}
           </Link>
@@ -44,7 +48,12 @@ export default async function DashboardPage() {
         <ul className="mt-6 space-y-6">
           {classes.map((klass) => (
             <li key={klass.id} className="rounded-md border border-line p-4">
-              <h2 className="text-lg font-semibold text-ink">{klass.title}</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-ink">{klass.title}</h2>
+                <Link href={`/classes/${klass.id}`} className="text-sm text-accent">
+                  {t('classForm.edit')}
+                </Link>
+              </div>
               <p className="mt-1 text-sm text-ink-muted">
                 {t('dashboard.roster')}: {klass.roster.join(', ')}
               </p>

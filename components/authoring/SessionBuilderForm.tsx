@@ -10,6 +10,7 @@
  * filtering happens client-side against the full published list rather than
  * a separate filtered query per topic/grade change.
  */
+import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { t } from '@/lib/i18n';
 import type { SessionMode } from '@/lib/session/types';
@@ -119,7 +120,14 @@ export function SessionBuilderForm({ classes, tasks }: SessionBuilderFormProps) 
   }
 
   if (classes.length === 0) {
-    return <p className="mt-6 text-ink-muted">{t('sessionBuilder.noClasses')}</p>;
+    return (
+      <p className="mt-6 text-ink-muted">
+        {t('sessionBuilder.noClasses')}{' '}
+        <Link href="/classes/new" className="text-accent">
+          {t('classForm.newClass')}
+        </Link>
+      </p>
+    );
   }
 
   return (

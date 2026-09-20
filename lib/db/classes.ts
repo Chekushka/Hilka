@@ -46,6 +46,44 @@ export async function getClassForTeacher(classId: string, teacherId: string): Pr
   return row ?? null;
 }
 
+export interface ClassWithRoster {
+  id: string;
+  title: string;
+  roster: string[];
+}
+
+/** For the class edit form: same ownership check as getClassForTeacher, plus the roster to edit. */
+export async function getClassWithRosterForTeacher(
+  classId: string,
+  teacherId: string
+): Promise<ClassWithRoster | null> {
+  const [row] = await getDb()
+    .select({ id: classes.id, title: classes.title, roster: classes.roster })
+    .from(classes)
+    .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function createClass(teacherId: string, title: string, roster: string[]): Promise<{ id: string }> {
+  const [row] = await getDb().insert(classes).values({ teacherId, title, roster }).returning({ id: classes.id });
+  return row;
+}
+
+/** Returns null if the class does not exist or is not owned by this teacher — same rule as getClassForTeacher. */
+export async function updateClass(
+  classId: string,
+  teacherId: string,
+  fields: { title: string; roster: string[] }
+): Promise<{ id: string } | null> {
+  const [row] = await getDb()
+    .update(classes)
+    .set({ title: fields.title, roster: fields.roster })
+    .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
+    .returning({ id: classes.id });
+  return row ?? null;
+}
+
 export async function listClassesForTeacher(teacherId: string): Promise<TeacherClassSummary[]> {
   const rows = await getDb()
     .select({
