@@ -32,9 +32,16 @@ export default async function SessionDetailPage({
       <Link href="/dashboard" className="text-sm text-accent">
         ← {t('dashboard.backToDashboard')}
       </Link>
-      <h1 className="mt-2 text-xl font-semibold text-ink">
-        {t('dashboard.sessionDetailTitle', { code: session.code })}
-      </h1>
+      <div className="mt-2 flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-ink">
+          {t('dashboard.sessionDetailTitle', { code: session.code })}
+        </h1>
+        {rows.length > 0 && (
+          <a href={`/api/dashboard/sessions/${session.id}/export`} className="text-sm text-accent">
+            {t('dashboard.exportCsv')}
+          </a>
+        )}
+      </div>
 
       {rows.length === 0 ? (
         <p className="mt-4 text-ink-muted">{t('dashboard.attemptsEmpty')}</p>

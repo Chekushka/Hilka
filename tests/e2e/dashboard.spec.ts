@@ -58,6 +58,21 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
   const row = page.locator('tr', { hasText: STUDENT_NAME }).first();
   await expect(row).toContainText('Квадрат');
   await expect(row).toContainText('Зараховано');
+
+  // CSV export (docs/TASKS.md, "CSV export"): same session, same cookie —
+  // page.request shares the browsing context's auth, so this exercises the
+  // real ownership-scoped route rather than the button's mere presence.
+  const exportLink = page.getByRole('link', { name: 'Завантажити CSV' });
+  await expect(exportLink).toBeVisible();
+  const exportUrl = await exportLink.getAttribute('href');
+  if (!exportUrl) throw new Error('export link rendered with no href');
+  const response = await page.request.get(exportUrl);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('text/csv');
+  const csv = await response.text();
+  expect(csv).toContain(STUDENT_NAME);
+  expect(csv).toContain('Квадрат');
+  expect(csv).toContain('Зараховано');
 });
 
 test('an unknown login token bounces back to login with a calm message', async ({ page }) => {

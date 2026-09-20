@@ -104,7 +104,10 @@
     "durationSeconds": "{n} с",
     "durationUnknown": "—",
     "resultPassed": "Зараховано",
-    "resultNotYet": "Не зараховано"
+    "resultNotYet": "Не зараховано",
+    "columnDurationSeconds": "Тривалість (с)",
+    "columnSubmittedAt": "Час подання",
+    "exportCsv": "Завантажити CSV"
   },
   "session": {
     "closedTitle": "Заняття не знайдено",
