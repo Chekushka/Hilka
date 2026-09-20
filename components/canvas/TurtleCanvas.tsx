@@ -17,6 +17,12 @@ interface TurtleCanvasProps {
   width?: number;
   height?: number;
   label?: string;
+  /**
+   * Draws `drawing`'s last segment in the accent colour, thicker. Used by
+   * the playback scrubber to show which step is "current" — by position in
+   * the array, since `Segment.line` is always null (see lib/canvas/playback.ts).
+   */
+  highlightLast?: boolean;
 }
 
 const PADDING = 20;
@@ -27,7 +33,14 @@ function bounds(segments: Segment[]): [number, number, number, number] {
   return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
 }
 
-export function TurtleCanvas({ drawing, target = [], width = 360, height = 300, label }: TurtleCanvasProps) {
+export function TurtleCanvas({
+  drawing,
+  target = [],
+  width = 360,
+  height = 300,
+  label,
+  highlightLast = false
+}: TurtleCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -63,6 +76,7 @@ export function TurtleCanvas({ drawing, target = [], width = 360, height = 300, 
     const styles = getComputedStyle(canvas);
     const ink = styles.getPropertyValue('--ink').trim() || styles.color;
     const muted = styles.getPropertyValue('--ink-muted').trim() || styles.color;
+    const accent = styles.getPropertyValue('--accent').trim() || ink;
 
     function stroke(segments: Segment[], color: string, lineWidth: number, dash: number[]) {
       ctx!.save();
@@ -88,8 +102,13 @@ export function TurtleCanvas({ drawing, target = [], width = 360, height = 300, 
       stroke(target, muted, 1, [7, 5]);
       ctx.globalAlpha = 1;
     }
-    stroke(drawing, ink, 1.5, []);
-  }, [drawing, target, width, height]);
+    if (highlightLast && drawing.length > 0) {
+      stroke(drawing.slice(0, -1), ink, 1.5, []);
+      stroke(drawing.slice(-1), accent, 2.5, []);
+    } else {
+      stroke(drawing, ink, 1.5, []);
+    }
+  }, [drawing, target, width, height, highlightLast]);
 
   return (
     <canvas

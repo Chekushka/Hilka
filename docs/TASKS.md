@@ -68,7 +68,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | `turtle` module stub (records, draws nothing) | ✅ | `lib/runner/modules/turtle.ts`. API fidelity against real CPython `turtle` is now a hard constraint, not just a convenience match — file-delivery code must run unchanged in IDLE (AI_CONTEXT.md, "Turtle"). Signature comparison is SPIKE.md check 7, not yet run |
 | Segment log + source-line attribution | ✅ | Segment log works; `line` is always null by design, playback uses call order |
 | Canvas renderer (student + translucent target, one renderer) | ✅ | `components/canvas/TurtleCanvas.tsx`. One transform for both drawings |
-| Playback scrubber with line highlighting | ❌ | Covers grade 7 lesson 40 without an interpreter stepper |
+| Playback scrubber with line highlighting | ✅ | `components/canvas/PlaybackScrubber.tsx` + `lib/canvas/playback.ts`. `Segment.line` is always null, so stepping is driven by position in the segment array (call order), highlighting the last-drawn segment on `TurtleCanvas` rather than a source line. Wired into `code`, `fix`, `fill`. Covers grade 7 lesson 40 without an interpreter stepper |
 | `random` module stub with deterministic seeding in headless mode | ✅ | `lib/runner/modules/random.ts`. Seeded in headless, genuinely random in interactive |
 | Grid API (`move`/`turn`/`take`) + action log | ❌ | Optional, after turtle, only if still justified |
 
@@ -143,11 +143,9 @@ IDLE before uploading.
 
 | Item | Status | Notes |
 |---|---|---|
-| Practice mode (localStorage progress) | ❌ | Primary store; no server round-trip to resume on the same machine |
-| Progress codes: mint, restore, merge | ❌ | 8 chars, unambiguous alphabet, rate-limited entry, merge-not-replace |
-| Join by 6-char code | ❌ | Code must be legible from the back row on a projector |
-| Name selection from roster | ❌ | No password, no email |
-| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. Now reused by both `/practice` (constant task) and a session (task chosen from its list); an optional `onSubmitAttempt` prop reports each Check's outcome without practice mode knowing sessions exist |
+| Practice mode (localStorage progress) | ✅ | `lib/practice/local-progress.ts`'s `useLocalProgress` — completed task slugs, primary store, no server round-trip to resume on the same machine |
+| Progress codes: mint, restore, merge | ✅ | `lib/practice/code.ts` (format/validate), `lib/db/progress-codes.ts` (mint/update/read), `POST /api/progress` + `POST /api/progress/restore`, rate-limited by `lib/practice/rate-limit.ts`. `components/practice/ProgressPanel.tsx` is the UI, merge-not-replace via `mergeProgress`. `state` holds only `completedTaskSlugs` today — `xp`/"current topic" are Meta Layer, not invented ahead of it; the jsonb column needs no migration to add them later |
+| Task runner shell (three-zone layout) | 🔶 | `components/task/TaskWorkspace.tsx`. Now reused by both `/practice` (constant task, wrapped by `components/practice/PracticePageClient.tsx` for local progress) and a session (task chosen from its list); an optional `onSubmitAttempt` prop reports each Check's outcome without practice mode knowing sessions exist |
 | Join by 6-char code | ✅ | `app/(student)/s/[code]/page.tsx` + `lib/db/sessions.ts` `getOpenSessionByCode`. Case-insensitive; a closed or unknown code lands on the same calm not-found screen, on purpose — the distinction is for the teacher |
 | Name selection from roster | ✅ | `components/session/SessionRoom.tsx`. Kept in `sessionStorage` per session code via `useSyncExternalStore`, so a reload does not ask again |
 | Attempt submission (append-only) | ✅ | `POST /api/attempts` → `lib/db/attempts.ts`. Validated server-side against the open session, its assigned tasks and the roster (`validateAttemptContext`) — the request body itself is untrusted, per "Cheating and Trust" |
@@ -161,8 +159,8 @@ IDLE before uploading.
 | Magic-link auth | 🔶 | `lib/auth/`. Real login mechanism — hashed single-use tokens (`teacher_login_tokens`), a signed cookie, no session table — but no email provider is wired up: `POST /api/auth/request-link` logs the link and returns it as `devLoginUrl` outside a real Vercel deployment. Teachers are provisioned directly in the database; there is no self-signup |
 | Task authoring UI | 🔶 | `code` tasks only, scoped to what the rest of the app actually supports end to end — the other five types have no payload shape or checker support yet, so this is not five sixths done. `/tasks` lists every task (draft + published); `/tasks/new` creates a draft; `/tasks/[id]` edits a draft and runs+publishes its reference, or shows a read-only view once published. `checks` is authored as raw JSON (validated by `validateTaskChecks`, same as `npm run db:seed`), not a per-kind visual builder — 15 check kinds make that a separate, larger slice. `hints`/`gradeTags` are plain-text fields (one per line / comma-separated), not dynamic add-remove lists. `tests/e2e/task-authoring-ui.spec.ts` drives the real forms end to end, on top of the API-level coverage below |
 | Draft / publish + version bump | ✅ | `POST /api/tasks` (draft, `code` only), `PATCH /api/tasks/[id]` (edit while draft), `POST /api/tasks/[id]/publish` (the gate) — all wired to the forms above. No server-side Python (AI_CONTEXT.md), so the reference solution runs in the teacher's browser and the computed run is posted to publish, which re-evaluates it server-side with `evaluateAgainstOwnRun` before writing `reference` + flipping `status` + bumping `version` (0 while draft, 1 on first publish). One-way per version: a published task cannot be re-edited here — re-drafting is separate, unbuilt work. `tests/e2e/task-authoring.spec.ts` covers the API directly; `tests/e2e/task-authoring-ui.spec.ts` covers it through the forms |
-| Class + roster management | ❌ | Roster is a plain string array |
-| Session builder | ❌ | Filter by topic and grade tag, set limit and hint availability. Until this exists, `scripts/db/seed-demo-session.ts` (`npm run db:seed:demo`) creates one demo teacher/class/open session directly, so the join flow has something to join |
+| Class + roster management | ❌ | Roster is a plain string array. Still no UI to create a class, so `/sessions/new` shows a calm empty state until one exists — `scripts/db/seed-demo-session.ts` is the only way to get one today |
+| Session builder | ✅ | `/sessions/new` (`components/authoring/SessionBuilderForm.tsx`) — picks one of the teacher's classes, filters the published task catalog by topic and grade client-side (small enough not to need a filtered query), assigns tasks in click order (`sessions.task_ids`'s order), sets time limit/hints/shuffle. `POST /api/sessions` (`lib/db/session-authoring.ts`) mints a 6-char code unique among open sessions (same bounded-retry shape as `mintProgressCode`) and silently drops any submitted task id that is not actually published. `timeLimitS`/`hintsEnabled` are stored but still unenforced client-side — that is "Exam mode", separate and still ❌ |
 | Results dashboard | 🔶 | `app/(teacher)/dashboard/` — read-only: classes, their sessions, and a session's attempts (student, task, pass/fail, hints, duration), each scoped to the logged-in teacher. No polling yet (a page load is enough for a read-only first cut), no class table "who is stuck" rollup, no CSV |
 | CSV export | ❌ | |
 | JSON export/import of all tasks | ❌ | Backup, git history, handoff to another teacher |
@@ -211,8 +209,10 @@ IDLE before uploading.
 - [x] Default `parsons.indentMode` per topic — `given` only for now: the authoring API rejects
       `'chosen'` and the component never renders it. Revisit once `order_equals` can grade an
       expected indent (docs/TASK_SCHEMA.md).
-- [ ] Lesson 40 (grade 7) requires покрокове виконання, which the platform does not do. Cover
-      with `predict`/`fix` tasks, or teach outside the platform?
+- [x] Lesson 40 (grade 7) requires покрокове виконання. **Covered by the playback scrubber**
+      (`components/canvas/PlaybackScrubber.tsx`), stepping the turtle drawing by call order
+      rather than an interpreter-level stepper — no need to fall back to `predict`/`fix` tasks
+      or to teach it outside the platform.
 - [ ] Which Python version is installed alongside IDLE on the classroom machines, and is it the
       same on all of them? Affects the file-delivery safe subset directly.
 - [ ] Multi-file projects with local imports — needed for the grade 9 projects, or is a single
@@ -256,7 +256,11 @@ IDLE before uploading.
     expected indent from) and predict's `'choice'` mode / `imageOptions`. The shared
     task-component interface this needed (`Task` union, `TaskWorkspace` dispatching by type) is
     what made `fix` and `fill` a new branch and a new file each, not a rewrite.
-11. Turtle canvas, target overlay, playback scrubber. Grid only if still justified afterwards.
+11. ~~Turtle canvas, target overlay, playback scrubber~~ — done. The canvas and target overlay
+    shipped earlier; the playback scrubber (`components/canvas/PlaybackScrubber.tsx`) now steps
+    a turtle drawing segment by segment, driven by call order since `Segment.line` is always
+    null (docs/AI_CONTEXT.md's Gotchas). Wired into `code`, `fix`, `fill`. Grid only if still
+    justified afterwards.
 12. Meta layer.
 
 Building the authoring UI early is the standing temptation, because it feels like foundation.

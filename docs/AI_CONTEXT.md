@@ -573,3 +573,12 @@ so a `page.request` call made after login silently drops the cookie and reads ba
 out. `tests/e2e/task-authoring.spec.ts` uses an in-page `fetch` (via `page.evaluate`) for every
 authenticated call instead, the same way the student flow's own `/api/attempts` call already
 does — that always matches the page's real current origin.
+
+**`/api/progress`'s rate limiter is in-memory, so it only limits per warm serverless
+instance, not globally.** `lib/practice/rate-limit.ts`'s `createFixedWindowLimiter` keeps its
+counters in a `Map` at module scope — correct within one instance, but Vercel can and does run
+several instances of the same function concurrently, each with its own counters, so the
+effective limit on guessing a progress code is `maxAttempts × (instances currently warm)`, not
+`maxAttempts`. Acceptable at this project's scale (~25 concurrent users, and 31^8 codes to
+guess even per instance), but it is not the hard global guarantee the name suggests. A durable
+store (a Postgres table, Upstash) would close the gap if the scale ever changes.

@@ -10,7 +10,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
-import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
+import { PlaybackScrubber } from '@/components/canvas/PlaybackScrubber';
 import { Hints } from '@/components/task/Hints';
 import { ResultPanel } from '@/components/task/ResultPanel';
 import { t } from '@/lib/i18n';
@@ -104,11 +104,7 @@ export function FixTaskView({ task, onSubmitAttempt }: FixTaskViewProps) {
 
         <div className="flex flex-wrap gap-4">
           <figure>
-            <TurtleCanvas
-              drawing={result?.drawing ?? []}
-              target={target}
-              label={t('workspace.yourDrawing')}
-            />
+            <PlaybackScrubber drawing={result?.drawing ?? []} target={target} />
             <figcaption className="mt-1 text-xs text-ink-muted">
               {t('workspace.yourDrawing')} · {t('workspace.target')}
             </figcaption>

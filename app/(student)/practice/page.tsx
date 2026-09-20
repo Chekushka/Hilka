@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { TaskWorkspace } from '@/components/task/TaskWorkspace';
+import { PracticePageClient } from '@/components/practice/PracticePageClient';
 import { getPublishedTask } from '@/lib/db/tasks';
 
 /**
@@ -20,5 +20,5 @@ export default async function PracticePage() {
     // Drafts are invisible to students, so an unpublished task lands here.
     notFound();
   }
-  return <TaskWorkspace task={task} />;
+  return <PracticePageClient task={task} />;
 }

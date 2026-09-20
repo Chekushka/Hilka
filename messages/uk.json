@@ -11,7 +11,13 @@
     "outputEmpty": "Запусти код — і побачиш результат тут.",
     "yourDrawing": "Твій малюнок",
     "target": "Зразок",
-    "editorLabel": "Твій код"
+    "editorLabel": "Твій код",
+    "playbackPlay": "Відтворити крок за кроком",
+    "playbackPause": "Пауза",
+    "playbackPrev": "Попередній крок",
+    "playbackNext": "Наступний крок",
+    "playbackScrubber": "Перемотка малювання",
+    "playbackStep": "Крок {step} з {total}"
   },
   "predict": {
     "answerLabel": "Що виведе ця програма?"
@@ -47,7 +53,26 @@
   },
   "practice": {
     "emptyTitle": "Тут поки що порожньо",
-    "emptyNote": "Це завдання ще не опубліковане. Спитай учителя або зазирни трохи пізніше."
+    "emptyNote": "Це завдання ще не опубліковане. Спитай учителя або зазирни трохи пізніше.",
+    "progressTitle": "Твій прогрес",
+    "progressCount": "Виконано завдань: {n}",
+    "taskCompletedBefore": "Це завдання вже виконано раніше.",
+    "saveCode": "Зберегти код прогресу",
+    "saving": "Зберігаю…",
+    "codeSavedNote": "Якщо прогрес зникне на цьому пристрої, введи цей код на іншому — і продовжиш з того самого місця.",
+    "codeLabel": "Твій код прогресу",
+    "codeCopy": "Скопіювати",
+    "codeCopied": "Скопійовано",
+    "saveError": "Не вдалося зберегти. Перевір з'єднання і спробуй ще раз.",
+    "restoreTitle": "Відновити прогрес",
+    "restoreInputLabel": "Код прогресу з іншого пристрою",
+    "restoreButton": "Відновити",
+    "restoring": "Відновлюю…",
+    "restoreSuccess": "Прогрес відновлено.",
+    "restoreNotFound": "Такого коду не знайдено. Перевір, чи правильно ти його ввів.",
+    "restoreInvalidFormat": "Код має складатися з 8 символів.",
+    "restoreRateLimited": "Забагато спроб. Зачекай кілька хвилин і спробуй ще раз.",
+    "restoreError": "Не вдалося відновити. Спробуй ще раз."
   },
   "auth": {
     "loginTitle": "Вхід для вчителя",
@@ -92,6 +117,32 @@
   },
   "meta": {
     "description": "Python для 7–9 класу"
+  },
+  "sessionBuilder": {
+    "newSession": "Нове заняття",
+    "title": "Нове заняття",
+    "classLabel": "Клас",
+    "modeLabel": "Режим",
+    "modePractice": "Практика",
+    "modeGraded": "З оцінюванням",
+    "topicFilterLabel": "Тема",
+    "gradeFilterLabel": "Клас (рівень)",
+    "filterAll": "Усі",
+    "tasksLabel": "Завдання заняття",
+    "selectedCount": "обрано: {n}",
+    "noMatchingTasks": "Немає опублікованих завдань за цим фільтром.",
+    "timeLimitLabel": "Обмеження часу (хв)",
+    "timeLimitPlaceholder": "без обмеження",
+    "hintsEnabledLabel": "Дозволити підказки",
+    "shuffleLabel": "Перемішати порядок завдань",
+    "noClass": "Оберіть клас.",
+    "noTasks": "Оберіть хоча б одне завдання.",
+    "noClasses": "У тебе ще немає жодного класу — спершу створи клас (ще не реалізовано в інтерфейсі).",
+    "create": "Створити заняття",
+    "creating": "Створюю…",
+    "createError": "Не вдалося створити заняття. Спробуй ще раз.",
+    "created": "Заняття створено. Код для учнів:",
+    "viewSession": "Переглянути заняття"
   },
   "authoring": {
     "tasksTitle": "Завдання",
