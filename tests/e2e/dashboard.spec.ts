@@ -58,6 +58,27 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
   const row = page.locator('tr', { hasText: STUDENT_NAME }).first();
   await expect(row).toContainText('Квадрат');
   await expect(row).toContainText('Зараховано');
+
+  // CSV export (docs/TASKS.md, "CSV export"): fetched from inside the page,
+  // not via page.request — a relative URL there resolves against
+  // playwright.config.ts's baseURL (127.0.0.1), while the login cookie was
+  // set for the `localhost` origin the magic-link redirect landed on
+  // (the same origin/baseURL split session-builder.spec.ts's loginAsTeacher
+  // works around). An in-page fetch uses the page's actual origin and
+  // cookies, exercising the real ownership-scoped route.
+  const exportLink = page.getByRole('link', { name: 'Завантажити CSV' });
+  await expect(exportLink).toBeVisible();
+  const exportUrl = await exportLink.getAttribute('href');
+  if (!exportUrl) throw new Error('export link rendered with no href');
+  const result = await page.evaluate(async (url) => {
+    const response = await fetch(url);
+    return { status: response.status, contentType: response.headers.get('content-type'), body: await response.text() };
+  }, exportUrl);
+  expect(result.status).toBe(200);
+  expect(result.contentType).toContain('text/csv');
+  expect(result.body).toContain(STUDENT_NAME);
+  expect(result.body).toContain('Квадрат');
+  expect(result.body).toContain('Зараховано');
 });
 
 test('an unknown login token bounces back to login with a calm message', async ({ page }) => {
