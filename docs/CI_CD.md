@@ -24,6 +24,7 @@ published tasks.
 | `.github/workflows/ci.yml` | B | typecheck, lint, unit tests, migration drift, runner tests |
 | `.github/workflows-pending/migrate.yml` | B | `drizzle-kit migrate` on merge to `main` |
 | `.github/workflows/reference-check.yml` | C | Re-runs every reference solution against its own checks |
+| `.github/workflows/neon-branch-cleanup.yml` | B | Deletes a PR's Neon preview branch on close. Live but not yet operational — needs secrets, see "Neon branch cleanup" |
 
 Pending workflows are inert: GitHub only runs what is inside `.github/workflows/`.
 
@@ -244,13 +245,19 @@ To fix:
    Pull Requests → *Automatically delete head branches*; and Neon Console →
    Integrations → Vercel connection → *Automatically delete obsolete Neon
    branches*.
-3. **Optional backstop, independent of either toggle**:
-   `.github/workflows-pending/neon-branch-cleanup.yml` deletes a PR's Neon
-   branch the instant it closes via `neondatabase/delete-branch-action`.
-   Needs `NEON_PROJECT_ID` and `NEON_API_KEY` as repo secrets (a Neon API
-   key scoped to CI secrets, not the remote-agent environment — a different
-   trust boundary from step 3's "no Neon API key for agents" rule) — see
-   `.github/workflows-pending/README.md` before activating it.
+3. **Backstop, independent of either toggle**: `.github/workflows/neon-branch-cleanup.yml`
+   deletes a PR's Neon branch the instant it closes via
+   `neondatabase/delete-branch-action`. It is live but **not yet
+   operational** — it still needs `NEON_PROJECT_ID` and `NEON_API_KEY` as
+   repo secrets (Settings → Secrets and variables → Actions; a Neon API
+   key scoped to CI secrets, not the remote-agent environment — a
+   different trust boundary from step 3's "no Neon API key for agents"
+   rule), and its guessed branch-name pattern (`preview/<git-branch>`)
+   confirmed against a real branch in the Neon console. Until both are
+   done, every run silently no-ops (`continue-on-error: true`) rather than
+   failing loudly — check Actions → neon-branch-cleanup after the next PR
+   closes to confirm it actually deleted a branch, not just that the run
+   went green.
 
 **Migrations after the first** are generated locally (`npm run db:generate`),
 committed under `drizzle/`, and applied by `migrate.yml` on merge. Never at app

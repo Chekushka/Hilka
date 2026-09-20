@@ -12,6 +12,13 @@ name: neon-branch-cleanup
 # GitHub's "Automatically delete head branches" repo setting also being on
 # — two dashboard toggles neither of which is visible from the codebase.
 # This workflow is a deterministic backstop that does not depend on either.
+#
+# Live in .github/workflows/, but not yet operational: it needs
+# NEON_PROJECT_ID and NEON_API_KEY as repo secrets (Settings → Secrets and
+# variables → Actions), which nothing here can create. Until both exist,
+# every run no-ops via continue-on-error below rather than failing loudly —
+# check Actions → neon-branch-cleanup after the next PR closes to confirm
+# it actually deleted a branch, not just that the run went green.
 
 on:
   pull_request:
@@ -26,10 +33,9 @@ jobs:
     steps:
       # Branch name must match what the Neon-Managed integration actually
       # names its preview branches — confirm against a real branch in the
-      # Neon console before moving this workflow into .github/workflows/.
-      # It was `preview/<git-branch-name>` as of 2026-09, but that mapping
-      # is not committed to config anywhere the codebase can check, so it
-      # can silently drift with a future integration version.
+      # Neon console; it was `preview/<git-branch-name>` as of 2026-09, but
+      # that mapping is not committed to config anywhere the codebase can
+      # check, so it can silently drift with a future integration version.
       - uses: neondatabase/delete-branch-action@v3
         with:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
