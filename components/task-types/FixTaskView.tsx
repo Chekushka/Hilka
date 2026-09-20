@@ -21,9 +21,10 @@ interface FixTaskViewProps {
   task: FixTask;
   /** Fired once per completed Check. Absent in plain practice — only a session records attempts. */
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
+  hintsEnabled?: boolean;
 }
 
-export function FixTaskView({ task, onSubmitAttempt }: FixTaskViewProps) {
+export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true }: FixTaskViewProps) {
   const [code, setCode] = useState(task.payload.broken);
   const { engine, busy, result, report, target, run, check } = useTaskRunner(task);
 
@@ -61,7 +62,7 @@ export function FixTaskView({ task, onSubmitAttempt }: FixTaskViewProps) {
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
         <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
         <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={task.hints} onReveal={() => (hintsUsedRef.current += 1)} />
+        <Hints hints={hintsEnabled ? task.hints : []} onReveal={() => (hintsUsedRef.current += 1)} />
       </section>
 
       <section className="flex flex-col gap-4">

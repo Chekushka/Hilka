@@ -116,7 +116,14 @@
     "taskListTitle": "Завдання заняття",
     "backToList": "До списку завдань",
     "taskDone": "Виконано",
-    "loadingTask": "Готую завдання…"
+    "taskSubmitted": "Здано",
+    "loadingTask": "Готую завдання…",
+    "timeRemaining": "Залишилось: {time}",
+    "timeUpTitle": "Час вийшов",
+    "timeUpNote": "Заняття завершено. Учитель побачить усе, що ти встиг зробити.",
+    "taskLockedTitle": "Завдання здано",
+    "taskLockedPassedNote": "Зараховано з першої спроби. Можеш перейти до наступного завдання.",
+    "taskLockedFailedNote": "Відповідь зафіксовано — повторна спроба недоступна в занятті з оцінюванням."
   },
   "meta": {
     "description": "Python для 7–9 класу"
