@@ -24,7 +24,7 @@ published tasks.
 | `.github/workflows/ci.yml` | B | typecheck, lint, unit tests, migration drift, runner tests |
 | `.github/workflows-pending/migrate.yml` | B | `drizzle-kit migrate` on merge to `main` |
 | `.github/workflows/reference-check.yml` | C | Re-runs every reference solution against its own checks |
-| `.github/workflows/neon-branch-cleanup.yml` | B | Deletes a PR's Neon preview branch on close. Live but not yet operational — needs secrets, see "Neon branch cleanup" |
+| `.github/workflows/neon-branch-cleanup.yml` | B | Deletes a PR's Neon preview branch on close. Live and operational, see "Neon branch cleanup" |
 
 Pending workflows are inert: GitHub only runs what is inside `.github/workflows/`.
 
@@ -247,17 +247,17 @@ To fix:
    branches*.
 3. **Backstop, independent of either toggle**: `.github/workflows/neon-branch-cleanup.yml`
    deletes a PR's Neon branch the instant it closes via
-   `neondatabase/delete-branch-action`. It is live but **not yet
-   operational** — it still needs `NEON_PROJECT_ID` and `NEON_API_KEY` as
-   repo secrets (Settings → Secrets and variables → Actions; a Neon API
-   key scoped to CI secrets, not the remote-agent environment — a
-   different trust boundary from step 3's "no Neon API key for agents"
-   rule), and its guessed branch-name pattern (`preview/<git-branch>`)
-   confirmed against a real branch in the Neon console. Until both are
-   done, every run silently no-ops (`continue-on-error: true`) rather than
-   failing loudly — check Actions → neon-branch-cleanup after the next PR
-   closes to confirm it actually deleted a branch, not just that the run
-   went green.
+   `neondatabase/delete-branch-action`. **Live and operational** —
+   `NEON_PROJECT_ID`/`NEON_API_KEY` are set as repo secrets (Settings →
+   Secrets and variables → Actions; a Neon API key scoped to CI secrets,
+   not the remote-agent environment — a different trust boundary from
+   step 3's "no Neon API key for agents" rule), and the `preview/<git-branch>`
+   naming pattern was confirmed on 2026-09-20 by querying this project's
+   real branches (`GET /projects/{id}/branches`) via a one-off diagnostic
+   workflow — this project had exactly `preview/<branch>` and `production`,
+   nothing unexpected. Re-verify if this workflow ever stops finding
+   anything to delete, since that mapping is not committed to config
+   anywhere and can silently drift with a future integration version.
 
 **Migrations after the first** are generated locally (`npm run db:generate`),
 committed under `drizzle/`, and applied by `migrate.yml` on merge. Never at app

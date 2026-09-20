@@ -54,7 +54,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
 | `reference-check.yml` — references vs their own checks | ✅ | Live. `npm run verify:references` drives the real runner via `/runner` (no database needed) against `content/seed-tasks/*.json` |
 | Vercel Git integration + preview deploys | ✅ | Installed; PR #7 carried its check. **Deployment Protection is on**, so a logged-out classroom machine cannot open a preview until Vercel Authentication is off or a sharable link is used — CI_CD.md §5 |
-| Neon branch-per-preview | 🔶 | Confirmed working — each PR gets its own `preview/<git-branch>` branch. What was actually broken: cleanup, not creation. Free plan's 10-branch cap was hit because neither dashboard toggle that reaps a closed PR's branch was on; see CI_CD.md, "Neon branch cleanup". `.github/workflows-pending/neon-branch-cleanup.yml` is a backstop, not yet activated |
+| Neon branch-per-preview | ✅ | Confirmed working — each PR gets its own `preview/<git-branch>` branch. What was actually broken: cleanup, not creation — the Free plan's 10-branch cap was hit because neither dashboard toggle that reaps a closed PR's branch was on. `.github/workflows/neon-branch-cleanup.yml` is a backstop that no longer depends on either, live and operational since 2026-09-20 (secrets set, naming pattern confirmed against the real project — see CI_CD.md, "Neon branch cleanup") |
 
 ## Python Runner
 
