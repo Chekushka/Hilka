@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { PlaybackScrubber } from '@/components/canvas/PlaybackScrubber';
 import { Hints } from '@/components/task/Hints';
+import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
 import { t } from '@/lib/i18n';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
@@ -29,7 +30,7 @@ interface CodeTaskViewProps {
 
 export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true }: CodeTaskViewProps) {
   const [code, setCode] = useState(task.payload.starter);
-  const { engine, busy, result, report, target, run, check } = useTaskRunner(task);
+  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(task);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -114,13 +115,8 @@ export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true }: Cod
             </figcaption>
           </figure>
 
-          {task.payload.surface === 'console' || (result?.stdout ?? '').length > 0 ? (
-            <div className="min-w-[220px] flex-1">
-              <p className="text-xs uppercase tracking-wide text-ink-muted">{t('workspace.output')}</p>
-              <pre className="mt-1 min-h-[3rem] whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
-                {result?.stdout || t('workspace.outputEmpty')}
-              </pre>
-            </div>
+          {task.payload.surface === 'console' || (result?.stdout ?? '').length > 0 || pendingInputPrompt !== null ? (
+            <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
           ) : null}
         </div>
 
