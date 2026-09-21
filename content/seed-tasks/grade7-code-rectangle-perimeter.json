@@ -1,0 +1,37 @@
+{
+  "slug": "g7-code-rectangle-perimeter",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Периметр прямокутника",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай довжину і ширину прямокутника, обчисли периметр і виведи його.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "звичайний випадок",
+      "stdin": ["5", "3"],
+      "checks": [{ "kind": "number_close", "value": 16, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "більший прямокутник",
+      "stdin": ["10", "4"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 28, "tol": 0.01, "which": "last" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Периметр прямокутника — сума довжин усіх чотирьох сторін.",
+    "P = 2 * (довжина + ширина)."
+  ],
+  "reference": {
+    "code": "a = float(input())\nb = float(input())\nprint(2 * (a + b))"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -11,6 +11,7 @@
     "outputEmpty": "Запусти код — і побачиш результат тут.",
     "inputLabel": "Відповідь для input()",
     "inputSubmit": "Надіслати",
+    "caseLabel": "Випадок {n}",
     "yourDrawing": "Твій малюнок",
     "target": "Зразок",
     "editorLabel": "Твій код",

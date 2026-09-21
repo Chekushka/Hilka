@@ -119,6 +119,8 @@ export interface CodeTask {
   title: string;
   payload: CodePayload;
   checks: Check[];
+  /** Input-driven only. Absent means a single run with no stdin (docs/TASK_SCHEMA.md, "Run cases"). */
+  cases?: RunCase[];
   hints: string[];
   reference: Reference;
   difficulty: 1 | 2 | 3 | 4 | 5;
@@ -211,6 +213,8 @@ export interface FixTask {
   title: string;
   payload: FixPayload;
   checks: Check[];
+  /** Input-driven only. Absent means a single run with no stdin (docs/TASK_SCHEMA.md, "Run cases"). */
+  cases?: RunCase[];
   hints: string[];
   reference: Reference;
   difficulty: 1 | 2 | 3 | 4 | 5;
