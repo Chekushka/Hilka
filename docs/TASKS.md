@@ -137,7 +137,7 @@ IDLE before uploading.
 | Rule #1: arithmetic on `input()` result | ✅ | First in the rule base, and only fires when the code actually calls `input()` |
 | Starter rule set | ✅ | NameError, SyntaxError (four source-read variants), TypeError, IndexError, ZeroDivisionError, ValueError, AttributeError, ImportError, KeyError, EOFError. Skulpt has no IndentationError — it is a SyntaxError read from the source |
 | Timeout message phrased as "did not finish", not as an error | ✅ | `humanizeTimeout()`; a test asserts the word «помилка» never appears |
-| Unmatched-error logging | 🔶 | Collected in-session behind a reporter seam. The endpoint arrives with the database |
+| Unmatched-error logging | ✅ | `unmatched_errors` table (`drizzle/0002_add_unmatched_errors.sql`), `lib/db/unmatched-errors.ts`, `POST /api/errors/unmatched`. No auth, no student/session/task reference — write-only telemetry to grow the rule base from, not an attempt (CLAUDE.md rule 8). `components/task/ResultPanel.tsx` installs `lib/errors/unmatched.ts`'s reporter seam once it is ever on screen (every task type that can run Python renders one), posting each unmatched `PyError` as it happens. `tests/e2e/practice.spec.ts` proves it with a real `RecursionError` — not in the starter rule set — round-tripping to a 201 and a row |
 
 ## Student Flow
 

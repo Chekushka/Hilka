@@ -11,7 +11,8 @@
  * Interpreter messages never reach the student: lib/errors/ rewrites them into
  * an explanation and a next step, with the student's own line shown inline.
  */
-import { humanize, humanizeTimeout } from '@/lib/errors';
+import { useEffect } from 'react';
+import { humanize, humanizeTimeout, setUnmatchedReporter } from '@/lib/errors';
 import { t } from '@/lib/i18n';
 import type { CheckReport } from '@/lib/checker';
 import type { RunResult } from '@/lib/runner';
@@ -21,6 +22,24 @@ interface ResultPanelProps {
   report: CheckReport | null;
   code: string;
   onRetry: () => void;
+}
+
+/**
+ * Installed once this panel is ever on screen — every task type that can run
+ * Python renders one (CodeTaskView, FixTaskView, FillTaskView), so this is
+ * the one place all of them cross. Re-registering on remount is harmless:
+ * the reporter itself is stateless.
+ */
+function useUnmatchedErrorReporting() {
+  useEffect(() => {
+    setUnmatchedReporter((error) => {
+      fetch('/api/errors/unmatched', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(error)
+      }).catch(() => undefined);
+    });
+  }, []);
 }
 
 function Frame({
@@ -48,6 +67,8 @@ function Frame({
 }
 
 export function ResultPanel({ result, report, code, onRetry }: ResultPanelProps) {
+  useUnmatchedErrorReporting();
+
   if (result.timedOut || result.error) {
     const human = result.timedOut ? humanizeTimeout() : humanize(result.error!, code);
     return (

@@ -111,3 +111,18 @@ test('running a program that calls input() opens a live answer line', async ({ p
   await expect(page.getByText('Привіт, Тарас')).toBeVisible({ timeout: 20_000 });
   await expect(answer).toHaveCount(0);
 });
+
+test('an error no rule recognizes is reported for the rule base', async ({ page }) => {
+  // RecursionError is not in lib/errors/'s starter rule set (docs/TASKS.md),
+  // so it falls back to the calm generic message and, separately,
+  // lib/errors/unmatched.ts's reporter posts it to
+  // /api/errors/unmatched (components/task/ResultPanel.tsx) so the rule
+  // base can grow from it.
+  await typeSolution(page, 'def f():\n    return f()\nf()');
+  const [response] = await Promise.all([
+    page.waitForResponse((r) => r.url().includes('/api/errors/unmatched') && r.request().method() === 'POST'),
+    page.getByRole('button', { name: 'Запустити' }).click()
+  ]);
+  expect(response.status()).toBe(201);
+  await expect(page.getByRole('heading', { name: 'Програма зупинилася' })).toBeVisible({ timeout: 20_000 });
+});
