@@ -14,9 +14,10 @@ import type { AttemptOutcome, QuizTask } from '@/lib/task/types';
 interface QuizTaskViewProps {
   task: QuizTask;
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
+  hintsEnabled?: boolean;
 }
 
-export function QuizTaskView({ task, onSubmitAttempt }: QuizTaskViewProps) {
+export function QuizTaskView({ task, onSubmitAttempt, hintsEnabled = true }: QuizTaskViewProps) {
   const [selected, setSelected] = useState<number[]>([]);
   const [report, setReport] = useState<CheckReport | null>(null);
 
@@ -55,7 +56,7 @@ export function QuizTaskView({ task, onSubmitAttempt }: QuizTaskViewProps) {
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
         <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
         <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={task.hints} onReveal={() => (hintsUsedRef.current += 1)} />
+        <Hints hints={hintsEnabled ? task.hints : []} onReveal={() => (hintsUsedRef.current += 1)} />
       </section>
 
       <section className="flex flex-col gap-4">

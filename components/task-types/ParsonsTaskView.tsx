@@ -42,6 +42,7 @@ import type { AttemptOutcome, ParsonsTask } from '@/lib/task/types';
 interface ParsonsTaskViewProps {
   task: ParsonsTask;
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
+  hintsEnabled?: boolean;
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -99,7 +100,7 @@ function AnswerRow({ item, onRemove }: { item: ParsonsPoolItem; onRemove: () => 
   );
 }
 
-export function ParsonsTaskView({ task, onSubmitAttempt }: ParsonsTaskViewProps) {
+export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true }: ParsonsTaskViewProps) {
   const pool = useMemo(() => parsonsPool(task.payload), [task.payload]);
   const byIndex = useMemo(() => new Map(pool.map((item) => [item.poolIndex, item])), [pool]);
 
@@ -165,7 +166,7 @@ export function ParsonsTaskView({ task, onSubmitAttempt }: ParsonsTaskViewProps)
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
         <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
         <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={task.hints} onReveal={() => (hintsUsedRef.current += 1)} />
+        <Hints hints={hintsEnabled ? task.hints : []} onReveal={() => (hintsUsedRef.current += 1)} />
       </section>
 
       <section className="flex flex-col gap-4">

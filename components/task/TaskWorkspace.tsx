@@ -21,23 +21,25 @@ interface TaskWorkspaceProps {
   task: Task;
   /** Fired once per completed Check. Absent in plain practice — only a session records attempts. */
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
+  /** Off in a graded session with hints disabled (docs/TASKS.md, "Exam mode"); on everywhere else. */
+  hintsEnabled?: boolean;
 }
 
-export function TaskWorkspace({ task, onSubmitAttempt }: TaskWorkspaceProps) {
+export function TaskWorkspace({ task, onSubmitAttempt, hintsEnabled = true }: TaskWorkspaceProps) {
   if (task.type === 'parsons') {
-    return <ParsonsTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+    return <ParsonsTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
   }
   if (task.type === 'quiz') {
-    return <QuizTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+    return <QuizTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
   }
   if (task.type === 'predict') {
-    return <PredictTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+    return <PredictTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
   }
   if (task.type === 'fix') {
-    return <FixTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+    return <FixTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
   }
   if (task.type === 'fill') {
-    return <FillTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+    return <FillTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
   }
-  return <CodeTaskView task={task} onSubmitAttempt={onSubmitAttempt} />;
+  return <CodeTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
 }

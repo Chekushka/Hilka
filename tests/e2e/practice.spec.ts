@@ -89,3 +89,25 @@ test('hints reveal one at a time', async ({ page }) => {
   await page.getByRole('button', { name: 'Ще підказка' }).click();
   await expect(page.getByText('Щоб повернути праворуч')).toBeVisible();
 });
+
+test('running a program that calls input() opens a live answer line', async ({ page }) => {
+  // Plain Run is interactive (lib/task/use-task-runner.ts) — Check stays
+  // headless, unaffected. This is the student exploring their own program,
+  // not the graded square, so the syntax error/mistyped-command fixtures
+  // above are untouched by the switch.
+  await typeSolution(page, 'name = input("Як тебе звати? ")\nprint("Привіт, " + name)');
+  await page.getByRole('button', { name: 'Запустити' }).click();
+
+  const answer = page.getByLabel('Відповідь для input()');
+  await expect(answer).toBeVisible({ timeout: 20_000 });
+  // The prompt passed to input(...) is shown next to the field, not printed
+  // into the output panel above it. Exact match: the editor above also
+  // contains this text as source code.
+  await expect(page.getByText('Як тебе звати?', { exact: true })).toBeVisible();
+
+  await answer.fill('Тарас');
+  await answer.press('Enter');
+
+  await expect(page.getByText('Привіт, Тарас')).toBeVisible({ timeout: 20_000 });
+  await expect(answer).toHaveCount(0);
+});

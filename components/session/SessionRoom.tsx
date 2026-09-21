@@ -12,6 +12,17 @@
  * render and the first client render must agree (null) and the real value
  * appears once React swaps in the client snapshot — the mismatch-free way to
  * read a browser-only store on mount.
+ *
+ * Exam mode (docs/TASKS.md) is not a separate flag — it is what enforcing the
+ * session builder's three existing knobs amounts to: `hintsEnabled` is
+ * threaded into `TaskWorkspace`, `timeLimitS` drives the countdown below, and
+ * a `'graded'` session locks a task to its first Check (`'practice'` keeps
+ * unlimited retries, unchanged) — resolving TASKS.md's open question of
+ * whether a graded attempt is final on first submit. Time running out or a
+ * task already being submitted are both enforced only in the UI, same as
+ * every other client-computed result in this flow (CLAUDE.md rule 4 keeps
+ * the database out of reach here); a teacher reading the dashboard still
+ * sees every attempt actually posted to `/api/attempts`.
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
@@ -26,6 +37,10 @@ interface SessionRoomProps {
 
 function nameStorageKey(code: string) {
   return `hilka:session:${code}:name`;
+}
+
+function examStartStorageKey(code: string) {
+  return `hilka:session:${code}:examStart`;
 }
 
 const noSubscription = () => () => {};
@@ -44,6 +59,32 @@ function useStoredName(code: string): string | null {
   );
 }
 
+/**
+ * The countdown's anchor: the moment this student started the session, kept
+ * in sessionStorage (alongside the name, minted in `pickName`) so a reload
+ * does not hand back extra time.
+ */
+function useStoredExamStart(code: string): number | null {
+  return useSyncExternalStore(
+    noSubscription,
+    () => {
+      try {
+        const stored = sessionStorage.getItem(examStartStorageKey(code));
+        return stored ? Number(stored) : null;
+      } catch {
+        return null;
+      }
+    },
+    () => null
+  );
+}
+
+function formatRemaining(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 export function SessionRoom({ code, session }: SessionRoomProps) {
   const storedName = useStoredName(code);
   const [pickedName, setPickedName] = useState<string | null>(null);
@@ -54,6 +95,23 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   const [taskLoadFailed, setTaskLoadFailed] = useState<string | null>(null);
   const fetchedRef = useRef<Set<string>>(new Set());
   const [passed, setPassed] = useState<ReadonlySet<string>>(new Set());
+  // 'graded' locks a task to its first Check; 'practice' never populates this.
+  const [submitted, setSubmitted] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const graded = session.mode === 'graded';
+
+  const hasTimeLimit = session.timeLimitS !== null;
+  const examStart = useStoredExamStart(code);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!hasTimeLimit || examStart === null) return;
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [hasTimeLimit, examStart]);
+  const remainingS =
+    hasTimeLimit && examStart !== null
+      ? Math.max(0, session.timeLimitS! - Math.floor((nowMs - examStart) / 1000))
+      : null;
+  const timeUp = remainingS === 0;
 
   useEffect(() => {
     if (!selectedTaskId || fetchedRef.current.has(selectedTaskId)) return;
@@ -79,17 +137,25 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       setPickedName(name);
       try {
         sessionStorage.setItem(nameStorageKey(code), name);
+        // The exam clock starts the moment the student begins, and only here
+        // — reading it back on a later reload never resets it.
+        if (session.timeLimitS !== null && !sessionStorage.getItem(examStartStorageKey(code))) {
+          sessionStorage.setItem(examStartStorageKey(code), String(Date.now()));
+        }
       } catch {
         // Nothing to persist across a reload; the student stays on this page.
       }
     },
-    [code]
+    [code, session.timeLimitS]
   );
 
   function submitAttempt(taskId: string, taskVersion: number, outcome: AttemptOutcome) {
     if (!studentName) return;
     if (outcome.passed) {
       setPassed((previous) => new Set(previous).add(taskId));
+    }
+    if (graded) {
+      setSubmitted((previous) => new Map(previous).set(taskId, outcome.passed));
     }
     // Best-effort: a lost attempt does not block the student from moving on.
     // Retrying belongs to a sync layer this slice does not build yet.
@@ -130,18 +196,62 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     );
   }
 
+  const timerBadge = hasTimeLimit && remainingS !== null && !timeUp && (
+    <span
+      className="rounded-full bg-shell px-3 py-1 text-sm font-semibold tabular-nums text-ink"
+      aria-live="off"
+    >
+      {t('session.timeRemaining', { time: formatRemaining(remainingS) })}
+    </span>
+  );
+
+  if (timeUp) {
+    return (
+      <main className="mx-auto max-w-2xl p-6">
+        <section className="rounded-md border-l-4 border-attention bg-surface p-4" aria-live="polite">
+          <h1 className="flex items-center gap-2 text-xl font-semibold text-attention">
+            <span aria-hidden="true">◷</span>
+            {t('session.timeUpTitle')}
+          </h1>
+          <p className="mt-2 text-ink">{t('session.timeUpNote')}</p>
+        </section>
+      </main>
+    );
+  }
+
   if (selectedTaskId) {
+    const lockedPassed = submitted.get(selectedTaskId);
+    const locked = graded && lockedPassed !== undefined;
     return (
       <div>
-        <div className="mx-auto max-w-6xl px-6 pt-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 pt-4">
           <button type="button" onClick={() => setSelectedTaskId(null)} className="text-sm text-accent">
             ← {t('session.backToList')}
           </button>
+          {timerBadge}
         </div>
-        {selectedTask ? (
+        {locked ? (
+          <main className="mx-auto max-w-2xl p-6">
+            <section
+              className={`rounded-md border-l-4 ${lockedPassed ? 'border-growth' : 'border-attention'} bg-surface p-4`}
+              aria-live="polite"
+            >
+              <h1
+                className={`flex items-center gap-2 text-xl font-semibold ${lockedPassed ? 'text-growth' : 'text-attention'}`}
+              >
+                <span aria-hidden="true">{lockedPassed ? '✓' : '○'}</span>
+                {t('session.taskLockedTitle')}
+              </h1>
+              <p className="mt-2 text-ink">
+                {lockedPassed ? t('session.taskLockedPassedNote') : t('session.taskLockedFailedNote')}
+              </p>
+            </section>
+          </main>
+        ) : selectedTask ? (
           <TaskWorkspace
             key={selectedTask.id}
             task={selectedTask}
+            hintsEnabled={session.hintsEnabled}
             onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
           />
         ) : (
@@ -155,7 +265,10 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <h1 className="text-xl font-semibold text-ink">{t('session.taskListTitle')}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-ink">{t('session.taskListTitle')}</h1>
+        {timerBadge}
+      </div>
       <ul className="mt-4 space-y-2">
         {session.tasks.map((task) => (
           <li key={task.id}>
@@ -165,7 +278,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               className="flex w-full items-center justify-between rounded-md border border-line px-4 py-3 text-left text-ink"
             >
               <span>{task.title}</span>
-              {passed.has(task.id) && <span className="text-sm text-growth">{t('session.taskDone')}</span>}
+              {passed.has(task.id) ? (
+                <span className="text-sm text-growth">{t('session.taskDone')}</span>
+              ) : (
+                submitted.has(task.id) && <span className="text-sm text-ink-muted">{t('session.taskSubmitted')}</span>
+              )}
             </button>
           </li>
         ))}
