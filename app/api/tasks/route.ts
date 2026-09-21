@@ -9,7 +9,7 @@ import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { validateTaskChecks, type Check } from '@/lib/checker';
 import { createDraftTask, isUniqueViolation } from '@/lib/db/task-authoring';
 import { getTopicIdBySlug } from '@/lib/db/topics';
-import type { TaskPayload } from '@/lib/task/types';
+import type { RunCase, TaskPayload } from '@/lib/task/types';
 import { isTaskPayload } from '@/lib/task/payload-guards';
 
 interface CreateTaskBody {
@@ -18,6 +18,8 @@ interface CreateTaskBody {
   title: string;
   payload: TaskPayload;
   checks: Check[];
+  /** `code`/`fix` only. */
+  cases?: RunCase[];
   hints?: string[];
   difficulty?: number;
   gradeTags?: number[];
@@ -30,6 +32,18 @@ interface CreateTaskBody {
 // not an adversarial student (CLAUDE.md, "Cheating and Trust").
 function isCheckShaped(value: unknown): value is Check {
   return typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
+}
+
+function isCaseShaped(value: unknown): value is RunCase {
+  if (typeof value !== 'object' || value === null) return false;
+  const c = value as Record<string, unknown>;
+  return (
+    Array.isArray(c.stdin) &&
+    c.stdin.every((line) => typeof line === 'string') &&
+    (c.checks === undefined || (Array.isArray(c.checks) && c.checks.every(isCheckShaped))) &&
+    (c.label === undefined || typeof c.label === 'string') &&
+    (c.hidden === undefined || typeof c.hidden === 'boolean')
+  );
 }
 
 function isValidBody(body: unknown): body is CreateTaskBody {
@@ -45,6 +59,7 @@ function isValidBody(body: unknown): body is CreateTaskBody {
     isTaskPayload(b.payload) &&
     Array.isArray(b.checks) &&
     b.checks.every(isCheckShaped) &&
+    (b.cases === undefined || (Array.isArray(b.cases) && b.cases.every(isCaseShaped))) &&
     (b.hints === undefined || (Array.isArray(b.hints) && b.hints.every((h) => typeof h === 'string'))) &&
     (b.difficulty === undefined || typeof b.difficulty === 'number') &&
     (b.gradeTags === undefined || (Array.isArray(b.gradeTags) && b.gradeTags.every((g) => typeof g === 'number')))
@@ -65,7 +80,10 @@ export async function POST(request: Request) {
   // A draft has no reference solution yet by construction — that arrives at
   // publish time (lib/checker/reference-check.ts's evaluateAgainstOwnRun is
   // the real gate then), so a draft save must not be blocked on it.
-  const errors = validateTaskChecks({ checks: body.checks, type: body.payload.type }, { requireReference: false });
+  const errors = validateTaskChecks(
+    { checks: body.checks, cases: body.cases, type: body.payload.type },
+    { requireReference: false }
+  );
   if (errors.length > 0) {
     return NextResponse.json({ error: 'invalid_checks', details: errors }, { status: 400 });
   }
@@ -82,6 +100,7 @@ export async function POST(request: Request) {
       title: body.title,
       payload: body.payload,
       checks: body.checks,
+      cases: body.cases,
       hints: body.hints ?? [],
       difficulty: body.difficulty ?? 1,
       gradeTags: body.gradeTags ?? []

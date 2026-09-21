@@ -16,7 +16,7 @@
  */
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Check } from '@/lib/checker';
-import type { Reference, TaskPayload, TaskStatus } from '@/lib/task/types';
+import type { Reference, RunCase, TaskPayload, TaskStatus } from '@/lib/task/types';
 import { getDb } from './client';
 import { tasks, topics } from './schema';
 import type { TaskRow } from './task-mapping';
@@ -27,6 +27,14 @@ export interface DraftTaskInput {
   title: string;
   payload: TaskPayload;
   checks: Check[];
+  /**
+   * `code`/`fix` only. `undefined` leaves an existing value untouched on
+   * update (the usual `Partial` meaning); `null` or `[]` explicitly clears
+   * it to a single implicit no-stdin case, matching `tasks.cases`'s own
+   * nullable column rather than the student-facing `Task.cases?: RunCase[]`
+   * (lib/task/types.ts), which only ever needs "absent".
+   */
+  cases?: RunCase[] | null;
   hints: string[];
   difficulty: number;
   gradeTags: number[];
@@ -47,6 +55,7 @@ export async function createDraftTask(input: DraftTaskInput): Promise<{ id: stri
       title: input.title,
       payload: input.payload,
       checks: input.checks,
+      cases: input.cases?.length ? input.cases : null,
       hints: input.hints,
       difficulty: input.difficulty,
       gradeTags: input.gradeTags,
