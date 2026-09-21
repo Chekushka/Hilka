@@ -158,6 +158,11 @@ attempts
   score numeric, hints_used int, duration_ms int,
   flags jsonb,            -- {pasted, edits, tooFast}
   created_at
+
+unmatched_errors
+  id, type, message,      -- a PyError no lib/errors/ rule matched
+  occurred_at,             -- client's Date.now() when it happened
+  created_at
 ```
 
 Non-obvious invariants:
@@ -172,6 +177,9 @@ Non-obvious invariants:
   (`npm run db:seed`). A re-import into a fresh database must update the same rows rather than
   duplicate them, and uuids are not stable across databases. `topics.slug` is the same idea.
   It is a content key, not an identifier: foreign keys still use uuids.
+- `unmatched_errors` carries no student, session or task reference on purpose — it is
+  telemetry to grow `lib/errors/`'s rule base from, not an attempt record, and rule 8 rules
+  out anything that could identify who hit it.
 
 ## Progress Codes
 

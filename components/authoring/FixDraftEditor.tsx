@@ -15,14 +15,15 @@ import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
 import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
 import type { Check } from '@/lib/checker';
-import type { FixPayload, Surface } from '@/lib/task/types';
-import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import type { FixPayload, RunCase, Surface } from '@/lib/task/types';
+import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
 
 export interface DraftFixTask {
   id: string;
   title: string;
   payload: FixPayload;
   checks: Check[];
+  cases?: RunCase[];
   hints: string[];
   difficulty: number;
   gradeTags: number[];
@@ -48,6 +49,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [broken, setBroken] = useState(task.payload.broken);
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
+  const [casesText, setCasesText] = useState(JSON.stringify(task.cases ?? [], null, 2));
   const [hintsText, setHintsText] = useState(task.hints.join('\n'));
   const [difficulty, setDifficulty] = useState(task.difficulty);
   const [gradeTagsText, setGradeTagsText] = useState(task.gradeTags.join(', '));
@@ -56,7 +58,13 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
 
   const [referenceCode, setReferenceCode] = useState('');
   const [running, setRunning] = useState(false);
-  const [run, setRun] = useState<RunResult | null>(null);
+  // One run per case (docs/TASK_SCHEMA.md, "Run cases"); a task with no
+  // cases is a single-element array with no stdin, so `run` (case 0) and the
+  // rest of this component's single-result assumptions still hold.
+  const [caseResults, setCaseResults] = useState<RunResult[] | null>(null);
+  const [casesRun, setCasesRun] = useState<RunCase[]>([]);
+  const [casesError, setCasesError] = useState<string | null>(null);
+  const run = caseResults?.[0] ?? null;
 
   const [runningBroken, setRunningBroken] = useState(false);
   const [brokenRun, setBrokenRun] = useState<RunResult | null>(null);
@@ -75,11 +83,17 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   }, []);
 
   /** Saves the form's current fields, returning them for the caller (Publish chains off this) rather than re-reading state that might race a later keystroke. */
-  async function save(): Promise<{ ok: true; checks: Check[] } | { ok: false }> {
+  async function save(): Promise<{ ok: true; checks: Check[]; cases: RunCase[] } | { ok: false }> {
     const parsedChecks = parseChecksJson(checksText);
     if (!parsedChecks.ok) {
       setSaveState('error');
       setSaveError(t('authoring.checksInvalidJson'));
+      return { ok: false };
+    }
+    const parsedCases = parseCasesJson(casesText);
+    if (!parsedCases.ok) {
+      setSaveState('error');
+      setSaveError(t('authoring.casesInvalidJson'));
       return { ok: false };
     }
     if (broken.trim().length === 0) {
@@ -96,6 +110,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         title,
         payload: { type: 'fix', surface, prompt, broken },
         checks: parsedChecks.checks,
+        cases: parsedCases.cases,
         hints: parseHints(hintsText),
         difficulty,
         gradeTags: parseGradeTags(gradeTagsText)
@@ -107,7 +122,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
       return { ok: false };
     }
     setSaveState('saved');
-    return { ok: true, checks: parsedChecks.checks };
+    return { ok: true, checks: parsedChecks.checks, cases: parsedCases.cases };
   }
 
   async function handleSave(event: FormEvent) {
@@ -118,13 +133,26 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   async function handleRunReference() {
     const runner = runnerRef.current;
     if (!runner) return;
+    const parsedCases = parseCasesJson(casesText);
+    if (!parsedCases.ok) {
+      setCasesError(t('authoring.casesInvalidJson'));
+      return;
+    }
+    setCasesError(null);
+    const cases = parsedCases.cases.length > 0 ? parsedCases.cases : [{ stdin: [] as string[] }];
     setRunning(true);
-    setRun(null);
+    setCaseResults(null);
+    setCasesRun(cases);
     setPublishState({ kind: 'idle' });
-    const result = await runner.run(referenceCode, { mode: 'headless' });
-    setRun(result);
+    const results: RunResult[] = [];
+    for (const runCase of cases) {
+      results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin }));
+    }
+    setCaseResults(results);
     setRunning(false);
   }
+
+  const casesFailed = caseResults?.some((result) => result.error !== null || result.timedOut) ?? false;
 
   async function handleRunBroken() {
     const runner = runnerRef.current;
@@ -138,7 +166,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   }
 
   async function handlePublish() {
-    if (!run || !brokenRun) return;
+    if (!run || !caseResults || casesFailed || !brokenRun) return;
     setPublishState({ kind: 'publishing' });
     const saved = await save();
     if (!saved.ok) {
@@ -148,7 +176,12 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
     const response = await fetch(`/api/tasks/${task.id}/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referenceCode, run, brokenRun })
+      body: JSON.stringify({
+        referenceCode,
+        run,
+        brokenRun,
+        ...(saved.cases.length > 0 ? { caseRuns: caseResults } : {})
+      })
     });
     const body: { error?: string; failures?: string[]; version?: number } = await response
       .json()
@@ -249,6 +282,22 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="cases">
+            {t('authoring.casesLabel')}
+          </label>
+          <textarea
+            id="cases"
+            rows={4}
+            value={casesText}
+            onChange={(event) => setCasesText(event.target.value)}
+            spellCheck={false}
+            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+          />
+          <p className="text-xs text-ink-muted">{t('authoring.casesHint')}</p>
+          {casesError && <p className="text-xs text-attention">{casesError}</p>}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="hints">
             {t('authoring.hintsLabel')}
           </label>
@@ -311,7 +360,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         <CodeEditor
           value={referenceCode}
           onChange={setReferenceCode}
-          errorLine={run?.error?.line ?? null}
+          errorLine={caseResults?.find((result) => result.error)?.error?.line ?? null}
           ariaLabel={t('authoring.referenceEditorLabel')}
         />
 
@@ -324,18 +373,27 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
           {running ? t('authoring.runningReference') : t('authoring.runReference')}
         </button>
 
-        {run && (
-          <div className="flex flex-wrap gap-4">
-            {surface === 'turtle' && <TurtleCanvas drawing={run.drawing} label={t('workspace.yourDrawing')} />}
-            {surface === 'console' && (
-              <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
-                {run.stdout || t('workspace.outputEmpty')}
-              </pre>
+        {caseResults?.map((result, index) => (
+          <div key={index} className="flex flex-col gap-2">
+            {caseResults.length > 1 && (
+              <p className="text-xs uppercase tracking-wide text-ink-muted">
+                {casesRun[index]?.label ?? t('workspace.caseLabel', { n: index + 1 })}
+              </p>
             )}
+            <div className="flex flex-wrap gap-4">
+              {surface === 'turtle' && <TurtleCanvas drawing={result.drawing} label={t('workspace.yourDrawing')} />}
+              {surface === 'console' && (
+                <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
+                  {result.stdout || t('workspace.outputEmpty')}
+                </pre>
+              )}
+            </div>
+            {result.error && (
+              <p className="text-sm text-attention">{humanize(result.error, referenceCode).explanation}</p>
+            )}
+            {result.timedOut && <p className="text-sm text-attention">{humanizeTimeout().explanation}</p>}
           </div>
-        )}
-        {run?.error && <p className="text-sm text-attention">{humanize(run.error, referenceCode).explanation}</p>}
-        {run?.timedOut && <p className="text-sm text-attention">{humanizeTimeout().explanation}</p>}
+        ))}
       </section>
 
       <section className="flex flex-col gap-4 border-t border-line pt-6">
@@ -373,12 +431,12 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         <button
           type="button"
           onClick={handlePublish}
-          disabled={!run || run.error !== null || run.timedOut || !brokenRun || publishState.kind === 'publishing'}
+          disabled={!caseResults || casesFailed || !brokenRun || publishState.kind === 'publishing'}
           className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
           {publishState.kind === 'publishing' ? t('authoring.publishing') : t('authoring.publish')}
         </button>
-        {(!run || !brokenRun) && <p className="text-xs text-ink-muted">{t('authoring.publishNeedsBothRuns')}</p>}
+        {(!caseResults || !brokenRun) && <p className="text-xs text-ink-muted">{t('authoring.publishNeedsBothRuns')}</p>}
 
         {publishState.kind === 'run_failed' && (
           <p className="text-sm text-attention">{t('authoring.publishRunFailed')}</p>

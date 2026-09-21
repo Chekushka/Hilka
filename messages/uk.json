@@ -11,6 +11,7 @@
     "outputEmpty": "Запусти код — і побачиш результат тут.",
     "inputLabel": "Відповідь для input()",
     "inputSubmit": "Надіслати",
+    "caseLabel": "Випадок {n}",
     "yourDrawing": "Твій малюнок",
     "target": "Зразок",
     "editorLabel": "Твій код",
@@ -109,7 +110,14 @@
     "resultNotYet": "Не зараховано",
     "columnDurationSeconds": "Тривалість (с)",
     "columnSubmittedAt": "Час подання",
-    "exportCsv": "Завантажити CSV"
+    "exportCsv": "Завантажити CSV",
+    "rollupTitle": "Хто потребує допомоги",
+    "rollupNote": "Завдання, які учень уже пробував, але ще не зарахував.",
+    "rollupNotStarted": "Ще не розпочато",
+    "rollupStuck": "Не зараховано, спроб: {n}",
+    "rollupAttentionCount": "Потребує уваги: {n}",
+    "attemptsLogTitle": "Усі спроби",
+    "liveUpdating": "Дані оновлюються автоматично, поки заняття активне."
   },
   "session": {
     "closedTitle": "Заняття не знайдено",
@@ -228,6 +236,9 @@
     "checksLabel": "Перевірки (JSON)",
     "checksHint": "Масив об'єктів перевірки — формат описаний у docs/TASK_SCHEMA.md.",
     "checksInvalidJson": "Некоректний JSON у полі перевірок.",
+    "casesLabel": "Тестові випадки (JSON, необов'язково)",
+    "casesHint": "Масив об'єктів { stdin, checks?, label?, hidden? } — окремий запуск на кожен випадок зі своїм stdin, перевірки випадку додаються до перевірок вище. Порожній масив — один запуск без stdin. Формат описаний у docs/TASK_SCHEMA.md.",
+    "casesInvalidJson": "Некоректний JSON у полі тестових випадків.",
     "hintsLabel": "Підказки (по одній на рядок, від найзагальнішої до найконкретнішої)",
     "difficultyLabel": "Складність (1–5)",
     "gradeTagsLabel": "Класи (через кому, напр. 7, 8)",

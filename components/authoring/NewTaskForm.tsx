@@ -18,7 +18,7 @@ import { t } from '@/lib/i18n';
 import { isFillTemplateValid } from '@/lib/task/fill';
 import type { Surface, TaskType } from '@/lib/task/types';
 import { formatParsonsLines, parseParsonsLines } from './parsons-form-utils';
-import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
 
 // Mirrors the database layer's own topic-option shape rather than importing
 // it — the database is off-limits to a client component, even for a type
@@ -70,6 +70,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   const [template, setTemplate] = useState('');
 
   const [checksText, setChecksText] = useState('[]');
+  // code/fix-only; input-driven tasks add cases later on their own page,
+  // where the reference can actually be run against each one's stdin.
+  const [casesText, setCasesText] = useState('[]');
   const [hintsText, setHintsText] = useState('');
   const [difficulty, setDifficulty] = useState(2);
   const [gradeTagsText, setGradeTagsText] = useState('');
@@ -86,6 +89,11 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
     const parsedChecks = parseChecksJson(checksText);
     if (!parsedChecks.ok) {
       setError(t('authoring.checksInvalidJson'));
+      return;
+    }
+    const parsedCases = parseCasesJson(casesText);
+    if (!parsedCases.ok) {
+      setError(t('authoring.casesInvalidJson'));
       return;
     }
     if (taskType === 'parsons' && parsedLines.length === 0) {
@@ -136,6 +144,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                     ? { type: 'fix', surface, prompt, broken: brokenCode }
                     : { type: 'fill', prompt, template },
         checks: parsedChecks.checks,
+        ...((taskType === 'code' || taskType === 'fix') && parsedCases.cases.length > 0
+          ? { cases: parsedCases.cases }
+          : {}),
         hints: parseHints(hintsText),
         difficulty,
         gradeTags: parseGradeTags(gradeTagsText)
@@ -378,6 +389,23 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         />
         <p className="text-xs text-ink-muted">{t('authoring.checksHint')}</p>
       </div>
+
+      {taskType === 'code' || taskType === 'fix' ? (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="cases">
+            {t('authoring.casesLabel')}
+          </label>
+          <textarea
+            id="cases"
+            rows={4}
+            value={casesText}
+            onChange={(event) => setCasesText(event.target.value)}
+            spellCheck={false}
+            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+          />
+          <p className="text-xs text-ink-muted">{t('authoring.casesHint')}</p>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm text-ink-muted" htmlFor="hints">

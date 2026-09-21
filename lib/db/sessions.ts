@@ -5,7 +5,7 @@
  * state.
  */
 import { and, eq, inArray, isNull } from 'drizzle-orm';
-import type { JoinedSession } from '@/lib/session/types';
+import type { JoinedSession, SessionTaskSummary } from '@/lib/session/types';
 import { getDb } from './client';
 import { classes, sessions, tasks } from './schema';
 import { orderSessionTasks } from './session-mapping';
@@ -14,6 +14,11 @@ export interface TeacherSessionDetail {
   id: string;
   code: string;
   classTitle: string;
+  /** `closesAt === null` — drives the dashboard's polling and the "still open" note. */
+  open: boolean;
+  roster: string[];
+  /** The session's assigned tasks, in the order a student meets them — the "who is stuck" rollup's columns. */
+  tasks: SessionTaskSummary[];
 }
 
 /** A session detail, but only for the teacher who owns its class — never another teacher's. */
@@ -21,13 +26,30 @@ export async function getSessionForTeacher(
   sessionId: string,
   teacherId: string
 ): Promise<TeacherSessionDetail | null> {
-  const [row] = await getDb()
-    .select({ id: sessions.id, code: sessions.code, classTitle: classes.title })
+  const db = getDb();
+  const [row] = await db
+    .select({ session: sessions, classTitle: classes.title, roster: classes.roster })
     .from(sessions)
     .innerJoin(classes, eq(sessions.classId, classes.id))
     .where(and(eq(sessions.id, sessionId), eq(classes.teacherId, teacherId)))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+
+  const taskRows = row.session.taskIds.length
+    ? await db
+        .select({ id: tasks.id, slug: tasks.slug, title: tasks.title })
+        .from(tasks)
+        .where(inArray(tasks.id, row.session.taskIds))
+    : [];
+
+  return {
+    id: row.session.id,
+    code: row.session.code,
+    classTitle: row.classTitle,
+    open: row.session.closesAt === null,
+    roster: row.roster,
+    tasks: orderSessionTasks(row.session.taskIds, taskRows)
+  };
 }
 
 export async function getOpenSessionByCode(code: string): Promise<JoinedSession | null> {

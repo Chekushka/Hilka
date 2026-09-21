@@ -1,11 +1,37 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
 import { getSessionForTeacher } from '@/lib/db/sessions';
+import { buildRollup, type CellStatus } from '@/lib/dashboard/rollup';
 import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
+
+/** Shape and icon carry the meaning, not colour alone (design-brief-python-platform.md). */
+function RollupCell({ status, attempts }: { status: CellStatus; attempts: number }) {
+  if (status === 'passed') {
+    return (
+      <span className="text-growth" aria-label={t('dashboard.resultPassed')} title={t('dashboard.resultPassed')}>
+        ✓
+      </span>
+    );
+  }
+  if (status === 'stuck') {
+    const label = t('dashboard.rollupStuck', { n: attempts });
+    return (
+      <span className="text-attention" aria-label={label} title={label}>
+        ○ {attempts}
+      </span>
+    );
+  }
+  return (
+    <span className="text-ink-muted" aria-label={t('dashboard.rollupNotStarted')}>
+      —
+    </span>
+  );
+}
 
 export default async function SessionDetailPage({
   params
@@ -26,9 +52,11 @@ export default async function SessionDetailPage({
   }
 
   const rows = await listAttemptsForSession(session.id);
+  const rollup = buildRollup(session.roster, session.tasks, rows);
 
   return (
     <main className="mx-auto max-w-3xl p-6">
+      {session.open && <AutoRefresh everyMs={5000} />}
       <Link href="/dashboard" className="text-sm text-accent">
         ← {t('dashboard.backToDashboard')}
       </Link>
@@ -42,7 +70,47 @@ export default async function SessionDetailPage({
           </a>
         )}
       </div>
+      {session.open && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.liveUpdating')}</p>}
 
+      {session.tasks.length > 0 && (
+        <section className="mt-6">
+          <h2 className="text-lg font-semibold text-ink">{t('dashboard.rollupTitle')}</h2>
+          <p className="mt-1 text-sm text-ink-muted">{t('dashboard.rollupNote')}</p>
+          <table className="mt-3 w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-ink-muted">
+                <th className="py-2 pr-3">{t('dashboard.columnStudent')}</th>
+                {session.tasks.map((task) => (
+                  <th key={task.id} className="px-2 py-2 text-center font-normal" title={task.title}>
+                    {task.title}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rollup.map((studentRow) => (
+                <tr key={studentRow.studentName} className="border-b border-line">
+                  <td className="py-2 pr-3 text-ink">
+                    {studentRow.studentName}
+                    {studentRow.stuckCount > 0 && (
+                      <span className="ml-2 text-xs text-attention">
+                        {t('dashboard.rollupAttentionCount', { n: studentRow.stuckCount })}
+                      </span>
+                    )}
+                  </td>
+                  {studentRow.cells.map((cell, index) => (
+                    <td key={session.tasks[index].id} className="px-2 py-2 text-center">
+                      <RollupCell status={cell.status} attempts={cell.attempts} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      <h2 className="mt-6 text-lg font-semibold text-ink">{t('dashboard.attemptsLogTitle')}</h2>
       {rows.length === 0 ? (
         <p className="mt-4 text-ink-muted">{t('dashboard.attemptsEmpty')}</p>
       ) : (

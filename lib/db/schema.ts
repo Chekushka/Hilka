@@ -169,3 +169,21 @@ export const attempts = pgTable(
   },
   (table) => [index('attempts_session_idx').on(table.sessionId, table.studentName)]
 );
+
+/**
+ * `lib/errors/`'s highest-value growth signal: a `PyError` no rule matched,
+ * so the humanizer fell back to its calm generic message instead of a real
+ * explanation (docs/AI_CONTEXT.md, "Error Humanization"). No student, session
+ * or task reference on purpose — this is telemetry to grow the rule base
+ * from, not an attempt record, and CLAUDE.md rule 8 rules out anything that
+ * could identify who hit it.
+ */
+export const unmatchedErrors = pgTable('unmatched_errors', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  // Skulpt's exception type name and its own message text — see PyError.
+  type: text('type').notNull(),
+  message: text('message').notNull(),
+  // The client's Date.now() when lib/errors/ first saw it.
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+});

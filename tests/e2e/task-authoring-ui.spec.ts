@@ -274,3 +274,64 @@ test('a teacher builds a fill task from the forms, writes a reference, and publi
   await page.getByRole('button', { name: 'Опублікувати' }).click();
   await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
 });
+
+test('a teacher adds cases to a console code task, and a hidden case blocks publish until the reference actually solves it', async ({
+  page
+}) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  await page.getByRole('link', { name: 'Завдання' }).click();
+  await page.getByRole('link', { name: 'Нове завдання' }).click();
+  await expect(page.getByRole('heading', { name: 'Нове завдання' })).toBeVisible();
+
+  await page.getByLabel('Середовище').selectOption('console');
+
+  const slug = `e2e-ui-cases-${Date.now()}`;
+  await page.getByLabel('Ідентифікатор (slug)').fill(slug);
+  await page.getByLabel('Назва').fill('UI Периметр');
+  await page.getByLabel('Умова').fill('Прочитай довжину і ширину прямокутника, виведи периметр.');
+  // Task-level checks stay empty; every case carries its own — the same
+  // shape content/seed-tasks/grade7-code-rectangle-perimeter.json uses.
+  await page.getByLabel(/Тестові випадки/).fill(
+    JSON.stringify([
+      {
+        label: 'звичайний випадок',
+        stdin: ['5', '3'],
+        checks: [{ kind: 'number_close', value: 16, tol: 0.01, which: 'last' }]
+      },
+      {
+        label: 'більший прямокутник',
+        stdin: ['10', '4'],
+        hidden: true,
+        checks: [{ kind: 'number_close', value: 28, tol: 0.01, which: 'last' }]
+      }
+    ])
+  );
+  await page.getByLabel(/Складність/).fill('2');
+
+  await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().endsWith('/api/tasks') && response.request().method() === 'POST'
+    ),
+    page.getByRole('button', { name: 'Створити чернетку' }).click()
+  ]);
+
+  await expect(page.getByRole('heading', { name: 'Редагування чернетки' })).toBeVisible();
+
+  // Editor 0 is `starter` (the save form above); editor 1 is the reference
+  // run section below — same indexing as the turtle/fill tests.
+  // A reference hardcoded to the visible case's expected number passes it,
+  // but the hidden case's different expected number catches it — exactly
+  // why cases exist.
+  await typeIntoEditor(page, 1, 'input()\ninput()\nprint(16)');
+  await page.getByRole('button', { name: 'Запустити еталон' }).click();
+  await expect(page.getByText('більший прямокутник')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: 'Опублікувати' })).toBeDisabled();
+
+  await typeIntoEditor(page, 1, 'a = float(input())\nb = float(input())\nprint(2 * (a + b))');
+  await page.getByRole('button', { name: 'Запустити еталон' }).click();
+  await expect(page.getByRole('button', { name: 'Опублікувати' })).toBeEnabled({ timeout: 15_000 });
+
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
+});

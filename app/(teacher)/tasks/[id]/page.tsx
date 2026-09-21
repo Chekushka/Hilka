@@ -47,6 +47,15 @@ function PublishedCodeView({ task }: { task: TaskRow }) {
           {JSON.stringify(task.checks, null, 2)}
         </pre>
       </div>
+
+      {task.cases && task.cases.length > 0 && (
+        <div>
+          <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.casesLabel')}</p>
+          <pre className="mt-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-xs text-ink">
+            {JSON.stringify(task.cases, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
@@ -184,6 +193,15 @@ function PublishedFixView({ task }: { task: TaskRow }) {
           {JSON.stringify(task.checks, null, 2)}
         </pre>
       </div>
+
+      {task.cases && task.cases.length > 0 && (
+        <div>
+          <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.casesLabel')}</p>
+          <pre className="mt-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-xs text-ink">
+            {JSON.stringify(task.cases, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
@@ -279,6 +297,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             title: task.title,
             payload,
             checks: task.checks,
+            cases: task.cases ?? undefined,
             hints: task.hints,
             difficulty: task.difficulty,
             gradeTags: task.gradeTags
@@ -327,6 +346,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             title: task.title,
             payload,
             checks: task.checks,
+            cases: task.cases ?? undefined,
             hints: task.hints,
             difficulty: task.difficulty,
             gradeTags: task.gradeTags

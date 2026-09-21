@@ -7,13 +7,15 @@ import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { validateTaskChecks, type Check } from '@/lib/checker';
 import { getTaskForAuthoring, updateDraftTask } from '@/lib/db/task-authoring';
-import type { TaskPayload } from '@/lib/task/types';
+import type { RunCase, TaskPayload } from '@/lib/task/types';
 import { isTaskPayload } from '@/lib/task/payload-guards';
 
 interface UpdateTaskBody {
   title?: string;
   payload?: TaskPayload;
   checks?: Check[];
+  /** `code`/`fix` only. */
+  cases?: RunCase[];
   hints?: string[];
   difficulty?: number;
   gradeTags?: number[];
@@ -23,6 +25,18 @@ function isCheckShaped(value: unknown): value is Check {
   return typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
 }
 
+function isCaseShaped(value: unknown): value is RunCase {
+  if (typeof value !== 'object' || value === null) return false;
+  const c = value as Record<string, unknown>;
+  return (
+    Array.isArray(c.stdin) &&
+    c.stdin.every((line) => typeof line === 'string') &&
+    (c.checks === undefined || (Array.isArray(c.checks) && c.checks.every(isCheckShaped))) &&
+    (c.label === undefined || typeof c.label === 'string') &&
+    (c.hidden === undefined || typeof c.hidden === 'boolean')
+  );
+}
+
 function isValidBody(body: unknown): body is UpdateTaskBody {
   if (typeof body !== 'object' || body === null) return false;
   const b = body as Record<string, unknown>;
@@ -30,6 +44,7 @@ function isValidBody(body: unknown): body is UpdateTaskBody {
     (b.title === undefined || (typeof b.title === 'string' && b.title.length > 0)) &&
     (b.payload === undefined || isTaskPayload(b.payload)) &&
     (b.checks === undefined || (Array.isArray(b.checks) && b.checks.every(isCheckShaped))) &&
+    (b.cases === undefined || (Array.isArray(b.cases) && b.cases.every(isCaseShaped))) &&
     (b.hints === undefined || (Array.isArray(b.hints) && b.hints.every((h) => typeof h === 'string'))) &&
     (b.difficulty === undefined || typeof b.difficulty === 'number') &&
     (b.gradeTags === undefined || (Array.isArray(b.gradeTags) && b.gradeTags.every((g) => typeof g === 'number')))
@@ -71,7 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   if (body.checks) {
     const errors = validateTaskChecks(
-      { checks: body.checks, type: body.payload?.type ?? existing.type },
+      { checks: body.checks, cases: body.cases ?? existing.cases ?? undefined, type: body.payload?.type ?? existing.type },
       { requireReference: false }
     );
     if (errors.length > 0) {
@@ -79,7 +94,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
-  const updated = await updateDraftTask(id, body);
+  const updated = await updateDraftTask(id, {
+    ...body,
+    // An explicit empty array clears cases to null (updateDraftTask's own
+    // Partial semantics) rather than leaving the previous value in place —
+    // that is how a teacher removes every case.
+    cases: body.cases === undefined ? undefined : body.cases.length > 0 ? body.cases : null
+  });
   if (!updated) {
     // Published between the check above and the write — same report either way.
     return NextResponse.json({ error: 'not_editable' }, { status: 409 });

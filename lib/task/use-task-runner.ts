@@ -9,9 +9,10 @@
  * overlaid against.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { evaluateChecks, type Check, type CheckReport } from '@/lib/checker';
+import { evaluateChecks, type Check, type CheckReport, type CheckResult } from '@/lib/checker';
+import { t } from '@/lib/i18n';
 import { createRunner, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
-import type { Reference } from './types';
+import type { Reference, RunCase } from './types';
 
 export type EngineState = 'loading' | 'ready' | 'failed';
 
@@ -53,6 +54,8 @@ const EMPTY_RESULT: RunResult = {
  */
 export interface RunnableTask {
   checks: Check[];
+  /** Input-driven only. Absent (or empty) means a single implicit case with no stdin. */
+  cases?: RunCase[];
   reference: Reference;
 }
 
@@ -61,6 +64,10 @@ export function useTaskRunner(task: RunnableTask) {
   // Not state: resolving it is how the worker's postMessage round trip
   // continues, not something a re-render should ever trigger on its own.
   const inputResolveRef = useRef<((value: string) => void) | null>(null);
+  // Check's case loop needs the warmed-up target mid-run, before the final
+  // setState — a ref survives that gap without going stale between renders
+  // the way a value closed over by the memoized `execute` below would.
+  const targetRef = useRef<Segment[]>([]);
   const [state, setState] = useState<TaskRunnerState>({
     engine: 'loading',
     busy: false,
@@ -77,9 +84,13 @@ export function useTaskRunner(task: RunnableTask) {
 
     runner
       .warmUp()
-      .then(() => runner.run(task.reference.code, { mode: 'headless' }))
+      // The first case's stdin, if there is one — a console-surface
+      // reference that calls input() needs it to run at all. Turtle
+      // references never have cases, so this is `[]` for them, unchanged.
+      .then(() => runner.run(task.reference.code, { mode: 'headless', stdin: task.cases?.[0]?.stdin ?? [] }))
       .then((reference) => {
         if (cancelled) return;
+        targetRef.current = reference.drawing;
         setState((previous) => ({
           ...previous,
           engine: 'ready',
@@ -97,12 +108,99 @@ export function useTaskRunner(task: RunnableTask) {
       runner.dispose();
       runnerRef.current = null;
     };
-  }, [task.reference.code]);
+  }, [task.reference.code, task.cases]);
+
+  /**
+   * Check: one headless run per case (docs/TASK_SCHEMA.md, "Run cases"), a
+   * single implicit no-stdin case when the task has none — that fallback is
+   * exactly the old single-run behaviour, so a task with no `cases` is
+   * unaffected. Every case's checks (task-level plus its own) are evaluated
+   * and merged into one report; a case beyond the first is a case that must
+   * ALSO pass for the task to pass. A case that errors or times out stops
+   * the run there — that becomes the shown result, same as a plain run's own
+   * error/timeout — rather than piling one failure on top of another.
+   */
+  const runChecks = useCallback(
+    async (code: string) => {
+      const runner = runnerRef.current;
+      if (!runner) return;
+      const cases: RunCase[] = task.cases && task.cases.length > 0 ? task.cases : [{ stdin: [] }];
+      const multipleCases = cases.length > 1;
+
+      let shownResult: RunResult | null = null;
+      let erroredResult: RunResult | null = null;
+      let allPassed = true;
+      const results: CheckResult[] = [];
+
+      for (const [i, runCase] of cases.entries()) {
+        const caseChecks = [...task.checks, ...(runCase.checks ?? [])];
+        const exprs = caseChecks.filter((c): c is Check & { kind: 'expr' } => c.kind === 'expr').map((c) => c.python);
+        const caseResult = await runner.run(code, { mode: 'headless', stdin: runCase.stdin, exprs });
+        shownResult ??= caseResult;
+        if (caseResult.error || caseResult.timedOut) {
+          erroredResult = caseResult;
+          break;
+        }
+        const caseReport = evaluateChecks(caseChecks, {
+          submission: { code },
+          run: {
+            stdout: caseResult.stdout,
+            drawing: caseResult.drawing,
+            error: caseResult.error,
+            timedOut: caseResult.timedOut,
+            vars: caseResult.vars,
+            exprResults: caseResult.exprResults
+          },
+          reference: { drawing: targetRef.current }
+        });
+        if (!caseReport.passed) allPassed = false;
+        const label = multipleCases ? (runCase.label ?? t('workspace.caseLabel', { n: i + 1 })) : null;
+        for (const result of caseReport.results) {
+          results.push(label ? { ...result, message: `${label}: ${result.message}` } : result);
+        }
+      }
+
+      setState((previous) => ({
+        ...previous,
+        busy: false,
+        pendingInputPrompt: null,
+        result: erroredResult ?? shownResult ?? EMPTY_RESULT,
+        report: erroredResult ? null : { passed: allPassed, results }
+      }));
+    },
+    [task.checks, task.cases]
+  );
+
+  /**
+   * Plain Run: interactive, so the student answers their own program's
+   * input() calls live and sees stdout as it streams in — see
+   * docs/TASKS.md, "Interactive input line in the output panel". Never
+   * judged, and never paged through `cases` — the student is exploring
+   * their own program, not being graded against the author's scenarios.
+   */
+  const runInteractive = useCallback(async (code: string) => {
+    const runner = runnerRef.current;
+    if (!runner) return;
+    const result = await runner.run(code, {
+      mode: 'interactive',
+      onStdout: (chunk) =>
+        setState((previous) => ({
+          ...previous,
+          result: { ...(previous.result ?? EMPTY_RESULT), stdout: (previous.result ?? EMPTY_RESULT).stdout + chunk }
+        })),
+      onInputRequest: (prompt) =>
+        new Promise<string>((resolve) => {
+          inputResolveRef.current = resolve;
+          setState((previous) => ({ ...previous, pendingInputPrompt: prompt }));
+        })
+    });
+    inputResolveRef.current = null;
+    setState((previous) => ({ ...previous, busy: false, pendingInputPrompt: null, result, report: null }));
+  }, []);
 
   const execute = useCallback(
     async (code: string, judge: boolean) => {
-      const runner = runnerRef.current;
-      if (!runner) return;
+      if (!runnerRef.current) return;
       inputResolveRef.current = null;
       setState((previous) => ({
         ...previous,
@@ -113,54 +211,13 @@ export function useTaskRunner(task: RunnableTask) {
         // result on screen until its own single result replaces it below.
         result: judge ? previous.result : EMPTY_RESULT
       }));
-      // Only a judged run needs the expr epilogue — a plain Run must not pay
-      // for it or risk it changing behaviour the student didn't ask to check.
-      const exprs = judge
-        ? task.checks.filter((c): c is Check & { kind: 'expr' } => c.kind === 'expr').map((c) => c.python)
-        : undefined;
-      // Check grades against a fixed, pre-queued stdin (headless) so a
-      // result is reproducible; a plain Run is the student exploring their
-      // own program and answers input() live (interactive) — see
-      // docs/TASKS.md, "Interactive input line in the output panel".
-      const result = judge
-        ? await runner.run(code, { mode: 'headless', exprs })
-        : await runner.run(code, {
-            mode: 'interactive',
-            onStdout: (chunk) =>
-              setState((previous) => ({
-                ...previous,
-                result: { ...(previous.result ?? EMPTY_RESULT), stdout: (previous.result ?? EMPTY_RESULT).stdout + chunk }
-              })),
-            onInputRequest: (prompt) =>
-              new Promise<string>((resolve) => {
-                inputResolveRef.current = resolve;
-                setState((previous) => ({ ...previous, pendingInputPrompt: prompt }));
-              })
-          });
-      inputResolveRef.current = null;
-      setState((previous) => ({
-        ...previous,
-        busy: false,
-        pendingInputPrompt: null,
-        result,
-        report:
-          judge && !result.error && !result.timedOut
-            ? evaluateChecks(task.checks, {
-                submission: { code },
-                run: {
-                  stdout: result.stdout,
-                  drawing: result.drawing,
-                  error: result.error,
-                  timedOut: result.timedOut,
-                  vars: result.vars,
-                  exprResults: result.exprResults
-                },
-                reference: { drawing: previous.target }
-              })
-            : null
-      }));
+      if (judge) {
+        await runChecks(code);
+      } else {
+        await runInteractive(code);
+      }
     },
-    [task.checks]
+    [runChecks, runInteractive]
   );
 
   const run = useCallback((code: string) => execute(code, false), [execute]);

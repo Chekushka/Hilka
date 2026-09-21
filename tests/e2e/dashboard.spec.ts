@@ -29,6 +29,17 @@ async function requestLoginLink(page: Page, email: string): Promise<string> {
   return href;
 }
 
+/**
+ * Scoped to the "Хто потребує допомоги" <section> specifically (docs/TASKS.md,
+ * "Results dashboard") — with more than one assigned task, a student's row
+ * in the plain attempts log below can otherwise share every filter text a
+ * rollup-row lookup might use, since each log row only names one task.
+ */
+function rollupRowFor(page: Page, studentName: string) {
+  const section = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Хто потребує допомоги' }) });
+  return section.locator('tr').filter({ hasText: studentName });
+}
+
 test('a teacher logs in and sees a student\'s attempt on the dashboard', async ({ page }) => {
   // Complete the task as a student first, so there is something to see.
   await page.goto(`/s/${DEMO_CODE}`);
@@ -52,12 +63,18 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
 
   await page.getByRole('link', { name: /DEMO01/ }).click();
   await expect(page.getByRole('heading', { name: 'Заняття DEMO01' })).toBeVisible();
+  // The rollup table above also has a row naming the student, without the
+  // task title (docs/TASKS.md, "Results dashboard") — filtering on both
+  // texts finds the attempts-log row specifically, regardless of DOM order.
   // Attempts are append-only (docs/AI_CONTEXT.md) — a retried test run adds a
   // row rather than replacing one, so this matches whichever comes first
   // rather than assuming there is exactly one.
-  const row = page.locator('tr', { hasText: STUDENT_NAME }).first();
-  await expect(row).toContainText('Квадрат');
+  const row = page.locator('tr').filter({ hasText: STUDENT_NAME }).filter({ hasText: 'Квадрат' }).first();
   await expect(row).toContainText('Зараховано');
+
+  // The rollup marks the same result too, just without the task's own name
+  // in the row — it is a checkmark in that task's column instead.
+  await expect(rollupRowFor(page, STUDENT_NAME).getByLabel('Зараховано').first()).toBeVisible();
 
   // CSV export (docs/TASKS.md, "CSV export"): fetched from inside the page,
   // not via page.request — a relative URL there resolves against
@@ -79,6 +96,36 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
   expect(result.body).toContain(STUDENT_NAME);
   expect(result.body).toContain('Квадрат');
   expect(result.body).toContain('Зараховано');
+});
+
+test('the rollup shows a student who has tried a task but never passed it', async ({ page }) => {
+  const STUCK_STUDENT = 'Соломія';
+
+  await page.goto(`/s/${DEMO_CODE}`);
+  await page.getByRole('button', { name: STUCK_STUDENT }).click();
+  await page.getByRole('button', { name: 'Квадрат' }).click();
+  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  // A rectangle, not a square — fails on purpose.
+  await typeSolution(
+    page,
+    'import turtle\nfor i in range(2):\n    turtle.forward(150)\n    turtle.right(90)\n    turtle.forward(100)\n    turtle.right(90)'
+  );
+  await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'
+    ),
+    page.getByRole('button', { name: 'Перевірити' }).click()
+  ]);
+  await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
+
+  const href = await requestLoginLink(page, TEACHER_EMAIL);
+  await page.goto(href);
+  await page.getByRole('link', { name: /DEMO01/ }).click();
+  await expect(page.getByRole('heading', { name: 'Заняття DEMO01' })).toBeVisible();
+
+  const rollupRow = rollupRowFor(page, STUCK_STUDENT);
+  await expect(rollupRow).toContainText('Потребує уваги: 1');
+  await expect(rollupRow.getByLabel(/Не зараховано, спроб: \d+/)).toBeVisible();
 });
 
 test('an unknown login token bounces back to login with a calm message', async ({ page }) => {

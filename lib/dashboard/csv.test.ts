@@ -6,6 +6,7 @@ function row(overrides: Partial<SessionAttemptRow> = {}): SessionAttemptRow {
   return {
     id: '1',
     studentName: 'Олена',
+    taskId: 'task-1',
     taskTitle: 'Квадрат',
     passed: true,
     hintsUsed: 0,

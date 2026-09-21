@@ -15,6 +15,13 @@
       "when": 1789541511147,
       "tag": "0001_add_teacher_login_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789972386882,
+      "tag": "0002_add_unmatched_errors",
+      "breakpoints": true
     }
   ]
 }
