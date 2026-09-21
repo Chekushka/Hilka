@@ -110,7 +110,14 @@
     "resultNotYet": "Не зараховано",
     "columnDurationSeconds": "Тривалість (с)",
     "columnSubmittedAt": "Час подання",
-    "exportCsv": "Завантажити CSV"
+    "exportCsv": "Завантажити CSV",
+    "rollupTitle": "Хто потребує допомоги",
+    "rollupNote": "Завдання, які учень уже пробував, але ще не зарахував.",
+    "rollupNotStarted": "Ще не розпочато",
+    "rollupStuck": "Не зараховано, спроб: {n}",
+    "rollupAttentionCount": "Потребує уваги: {n}",
+    "attemptsLogTitle": "Усі спроби",
+    "liveUpdating": "Дані оновлюються автоматично, поки заняття активне."
   },
   "session": {
     "closedTitle": "Заняття не знайдено",

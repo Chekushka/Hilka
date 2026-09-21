@@ -12,6 +12,7 @@ import { getDb } from './client';
 export interface SessionAttemptRow {
   id: string;
   studentName: string;
+  taskId: string;
   taskTitle: string;
   passed: boolean;
   hintsUsed: number;
@@ -25,6 +26,7 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
     .select({
       id: attempts.id,
       studentName: attempts.studentName,
+      taskId: attempts.taskId,
       taskTitle: tasks.title,
       passed: attempts.passed,
       hintsUsed: attempts.hintsUsed,
