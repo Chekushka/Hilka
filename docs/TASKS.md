@@ -192,9 +192,14 @@ IDLE before uploading.
 - [x] Visual style — cozy; tool-like workspace, game-like reward layer.
 - [ ] Neon cold start on the first request of a lesson. Unmeasured, and it lands on the
       student who opens `/practice` first — measure it on the classroom machine, not a laptop.
-- [ ] What a student should see when the database is unreachable mid-lesson. A task that is
-      merely unpublished has a calm Ukrainian page; a connection failure currently falls through
-      to Next's own error page, in English.
+- [x] What a student should see when the database is unreachable mid-lesson. **A calm Ukrainian
+      error boundary with a retry button** — `app/error.tsx`, deliberately generic (no way to
+      tell a connection failure from any other unexpected error at this boundary). Distinct from
+      a task being unpublished or a session being closed, which stay their own specific
+      `not-found.tsx` screens reached through `notFound()`. `app/(dev)/error-boundary/` throws on
+      purpose so `tests/e2e/error-boundary.spec.ts` can exercise it deterministically, without
+      taking down the shared database other specs run against. The root layout touches no
+      database, so `global-error.tsx` is not needed yet.
 - [ ] Grade→score mapping to the 12-point scale — needs a teacher's decision, not a default.
 - [x] Is a graded attempt final on first submit, or best-of-N? **Final on first submit** —
       exam mode locks a task to its first Check result once `session.mode === 'graded'`
