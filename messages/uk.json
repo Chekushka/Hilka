@@ -182,6 +182,12 @@
   "authoring": {
     "tasksTitle": "Завдання",
     "newTask": "Нове завдання",
+    "exportAll": "Експортувати все (JSON)",
+    "importAll": "Імпортувати з JSON",
+    "importing": "Імпортую…",
+    "importSuccess": "Імпортовано: тем — {topics}, завдань — {tasks}.",
+    "importError": "Не вдалося імпортувати. Перевір файл і повтори спробу.",
+    "importInvalidJson": "Файл не є коректним JSON.",
     "backToTasks": "До списку завдань",
     "empty": "Завдань ще немає.",
     "columnTitle": "Назва",

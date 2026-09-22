@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { ImportExportControls } from '@/components/authoring/ImportExportControls';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listTasksForAuthoring } from '@/lib/db/task-authoring';
 import { t } from '@/lib/i18n';
@@ -36,6 +37,8 @@ export default async function TasksPage() {
           {t('authoring.newTask')}
         </Link>
       </div>
+
+      <ImportExportControls />
 
       {tasks.length === 0 ? (
         <p className="mt-6 text-ink-muted">{t('authoring.empty')}</p>
