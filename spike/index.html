@@ -71,8 +71,10 @@
 <body>
 <div class="wrap">
   <h1>Skulpt spike</h1>
-  <p class="lede">Six checks from <code>docs/SPIKE.md</code>. Run them on the weakest machine in
-    the classroom, on the school network. Then paste the export into SPIKE.md.</p>
+  <p class="lede">Checks from <code>docs/SPIKE.md</code>, including the file-delivery additions
+    (format specs, BOM/CRLF, and the turtle signature comparison in check 7). Run them on the
+    weakest machine in the classroom, on the school network. Then paste the export into
+    SPIKE.md.</p>
 
   <div class="bar row">
     <button id="run-all">Run automatic checks</button>
@@ -83,7 +85,10 @@
   <section id="s1">
     <div class="head"><span class="n">1</span><h2>Language coverage</h2></div>
     <p class="why">Each feature runs on its own, so a failure is attributable. Cyrillic is on the
-      list because an engine that mangles «Привіт» is unusable regardless of everything else.</p>
+      list because an engine that mangles «Привіт» is unusable regardless of everything else.
+      Includes the file-delivery additions: f-string format specs and conversion flags, and a
+      BOM/CRLF file whose error line must still land on the right line after upload
+      normalization.</p>
     <div class="row"><button data-run="1">Run</button></div>
     <div id="t1"></div>
     <p class="why" style="margin-top:12px">Combined snippet from SPIKE.md:</p>
@@ -137,6 +142,18 @@
     <div class="row"><button data-run="6">Run measurements</button></div>
     <div id="t6"></div>
     <canvas id="c6" width="440" height="260"></canvas>
+  </section>
+
+  <section id="s7">
+    <div class="head"><span class="n">7</span><h2>Turtle stub vs CPython signatures (file delivery)</h2></div>
+    <p class="why">File delivery means turtle code written in Hilka has to run unchanged in IDLE,
+      on real CPython's <code>turtle</code> module — not this stub. This page cannot call real
+      CPython, so it renders a comparison table instead of running one: Hilka's side is
+      transcribed straight from <code>lib/runner/modules/turtle.ts</code>; the CPython side from
+      the documented stdlib API. Confirm each row against IDLE on this machine and record what
+      you find — that confirmation, not this table by itself, is what answers check 7.</p>
+    <div class="row"><button data-run="7">Show comparison table</button></div>
+    <div id="t7"></div>
   </section>
 </div>
 <script src="spike.js"></script>

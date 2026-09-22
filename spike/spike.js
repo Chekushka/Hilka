@@ -122,7 +122,12 @@ var FEATURES = [
   ['math', 'import math\nprint(math.sqrt(16), round(math.pi, 2))', '4.0 3.14'],
   ['random', 'import random\nrandom.seed(1)\nx = random.randint(1, 6)\nprint(1 <= x <= 6)', 'True'],
   ['try / except', 'try:\n    int("nope")\nexcept ValueError:\n    print("caught")', 'caught'],
-  ['str/int conversion', 'print(abs(-3), int("5") + 1, str(5) + "x")', '3 6 5x']
+  ['str/int conversion', 'print(abs(-3), int("5") + 1, str(5) + "x")', '3 6 5x'],
+  // File-delivery additions (docs/SPIKE.md check 1, "not yet checked" rows).
+  // Not previously run — the grade 8 BMI/quadratic-roots projects are the
+  // likeliest place a student's file-delivered program hits either of these.
+  ['f-string format spec, e.g. f"{x:.2f}"', 'x = 3.14159\nprint(f"{x:.2f}")', '3.14'],
+  ['f-string conversion flag, e.g. f"{x!r}"', 'x = "hi"\nprint(f"{x!r}")', "'hi'"]
 ];
 
 var COMBINED = [
@@ -138,6 +143,26 @@ var COMBINED = [
   'print(abs(-3), int("5") + 1, str(5) + "x")', '',
   'try:', '    int("nope")', 'except ValueError:', '    print("caught")'
 ].join('\n');
+
+// File-delivery addition (docs/SPIKE.md check 1, "not yet run"): a file
+// written in IDLE can carry a UTF-8 BOM, CRLF line endings, and non-ASCII
+// comments together. TASK_SCHEMA.md's upload validation strips the BOM and
+// normalizes CRLF -> \n before anything runs; this checks that normalization
+// actually happens (raw Skulpt may choke on the BOM) and, more importantly,
+// that the reported error line still points at the right source line
+// afterward — a shift here would be invisible in every other check, since
+// none of them touch a file with mixed encoding and endings.
+var BOM = '﻿';
+var CRLF_ERROR_LINE = 4;
+var CRLF_SOURCE = BOM +
+  '# Коментар з BOM\r\n' +
+  'print("рядок 2")\r\n' +
+  'print("рядок 3")\r\n' +
+  'print(undefined_name)\r\n';
+
+function normalizeUpload(src) {
+  return src.replace(/^﻿/, '').replace(/\r\n/g, '\n');
+}
 
 function check1() {
   var rows = [];
@@ -162,6 +187,33 @@ function check1() {
     return run(COMBINED, { out: 'o1' });
   }).then(function (r) {
     if (r.error) { append('o1', '\n[' + r.error.type + '] ' + r.error.message); }
+  }).then(function () {
+    return run(CRLF_SOURCE);
+  }).then(function (raw) {
+    rows.push({
+      item: 'raw upload, unnormalized (BOM + CRLF, before TASK_SCHEMA.md\'s upload validation)',
+      state: raw.error ? 'wait' : 'no',
+      detail: raw.error ? (raw.error.type + ' at line ' + raw.error.line + ' — expect this to differ ' +
+                            'from the normalized result below; that difference is what normalization fixes')
+                        : 'ran with no error — unexpected for a NameError on line ' + CRLF_ERROR_LINE
+    });
+    record(1, 'raw BOM+CRLF file (unnormalized)',
+           raw.error ? raw.error.type + ' at line ' + raw.error.line : 'no error (unexpected)');
+    return run(normalizeUpload(CRLF_SOURCE));
+  }).then(function (norm) {
+    var ok = !!norm.error && norm.error.line === CRLF_ERROR_LINE;
+    rows.push({
+      item: 'normalized upload (BOM stripped, CRLF→\\n): error line still points at line ' + CRLF_ERROR_LINE,
+      state: ok ? 'ok' : 'no',
+      detail: norm.error ? (norm.error.type + ' at line ' + norm.error.line +
+                            (ok ? '' : ' — WRONG, expected ' + CRLF_ERROR_LINE))
+                         : 'ran with no error — unexpected'
+    });
+    record(1, 'normalized BOM+CRLF file — error line',
+           ok ? 'correct: line ' + norm.error.line
+              : 'WRONG: ' + (norm.error ? 'line ' + norm.error.line : 'no error') +
+                ', expected line ' + CRLF_ERROR_LINE);
+    table('t1', rows);
   });
 }
 
@@ -473,10 +525,86 @@ function drawSegments(segments) {
   ctx.stroke();
 }
 
+// ---------------------------------------------------------------- check 7 ---
+
+// docs/SPIKE.md check 7: file delivery means turtle code written in Hilka has
+// to run unchanged in IDLE, on real CPython's turtle module — not this stub.
+// This machine has no CPython for the page itself to call, so this renders a
+// comparison table instead of running one: the Hilka column is transcribed
+// directly from lib/runner/modules/turtle.ts as shipped, the CPython column
+// from the documented stdlib API (docs.python.org/3/library/turtle.html).
+// Confirm each row against IDLE on this machine — `import turtle;
+// help(turtle.forward)` at the prompt, repeated per function — and record
+// what you find; that confirmation, not this table, is what check 7 answers.
+//
+// [CPython signature, Hilka signature, what to watch for]
+var TURTLE_SIGNATURES = [
+  ['forward(distance)', 'forward(d)',
+   'Name only (positional calls match either way): turtle.forward(100)'],
+  ['backward(distance)', 'backward(d)', 'Name only, same as forward'],
+  ['left(angle)', 'left(a)', 'Name only, same as forward'],
+  ['right(angle)', 'right(a)', 'Name only, same as forward'],
+  ['goto(x, y=None)', 'goto(x, y)',
+   'CPython also accepts a single (x, y) tuple: turtle.goto((100, 50)). Hilka requires two ' +
+   'separate positional numbers — a file using the tuple form fails on Hilka but works in IDLE'],
+  ['setheading(to_angle)', 'setheading(a)', 'Name only'],
+  ['penup()', 'penup()', 'Match'],
+  ['pendown()', 'pendown()', 'Match'],
+  ['pencolor(*args)', 'pencolor(c)',
+   'CPython also accepts pencolor(r, g, b) or no arguments (returns the current colour). ' +
+   'Hilka accepts exactly one colour string and never returns a value'],
+  ['pensize(width=None)', 'pensize(w)',
+   'CPython with no argument returns the current width. Hilka silently keeps the previous ' +
+   'width instead of returning anything'],
+  ['circle(radius, extent=None, steps=None)', 'circle(r, extent)',
+   'Hilka has no steps parameter — a file calling circle(50, steps=6) to approximate a ' +
+   'hexagon behaves differently on Hilka'],
+  ['speed(speed=None)', 'speed()',
+   'Hilka ignores the argument (nothing is animated) and never returns a value; CPython with ' +
+   'no argument returns the current speed'],
+  ['home()', 'home()', 'Match'],
+  ['dot(size=None, *color)', 'dot(size)',
+   'CPython also accepts an inline colour: dot(10, "red"). Hilka has no colour parameter — ' +
+   'call pencolor() first instead']
+];
+
+function turtleFindingKey(row) { return row[0] + ' vs ' + row[1]; }
+
+function renderTurtleSignatures() {
+  var html = '<table><tr><th>CPython (docs.python.org)</th><th>Hilka (lib/runner/modules/turtle.ts)</th>' +
+             '<th>What to watch for</th><th>Confirmed on this machine?</th></tr>';
+  TURTLE_SIGNATURES.forEach(function (row, i) {
+    html += '<tr><td class="v">' + esc(row[0]) + '</td><td class="v">' + esc(row[1]) + '</td>' +
+            '<td>' + esc(row[2]) + '</td>' +
+            '<td><select data-sig="' + i + '">' +
+            '<option value="">not checked yet</option>' +
+            '<option value="matches CPython on this machine">matches CPython on this machine</option>' +
+            '<option value="the divergence noted is real on this machine">the divergence noted is real on this machine</option>' +
+            '<option value="other — see notes">other divergence (see notes)</option>' +
+            '</select></td></tr>';
+  });
+  $('t7').innerHTML = html + '</table>' +
+    '<p class="why" style="margin-top:8px">In IDLE on this machine: <code>import turtle; ' +
+    'help(turtle.forward)</code>, repeated per function, or Help ▸ Turtle Graphics in the ' +
+    'docs. Set each row above as you confirm it — the export picks up your answers.</p>';
+}
+
+document.addEventListener('change', function (e) {
+  var idx = e.target.getAttribute && e.target.getAttribute('data-sig');
+  if (idx === null || idx === undefined) { return; }
+  var row = TURTLE_SIGNATURES[Number(idx)];
+  record(7, turtleFindingKey(row), e.target.value || 'not checked yet');
+});
+
+function check7() {
+  renderTurtleSignatures();
+  return Promise.resolve();
+}
+
 // ------------------------------------------------------------------ wiring ---
 
 var CHECKS = { '1': check1, '2': check2, '3': check3, '3i': check3i,
-               '4': check4, '4i': check4i, '5': check5, '6': check6 };
+               '4': check4, '4i': check4i, '5': check5, '6': check6, '7': check7 };
 
 document.addEventListener('click', function (e) {
   var key = e.target.getAttribute && e.target.getAttribute('data-run');
@@ -499,7 +627,7 @@ $('run-all').addEventListener('click', function () {
     return chain.then(function () { setStatus('running check ' + k + '…'); return CHECKS[k](); });
   }, Promise.resolve()).then(function () {
     btn.disabled = false;
-    setStatus('automatic checks done — now run the two interactive ones by hand');
+    setStatus('automatic checks done — now run the two interactive ones and check 7 by hand');
   });
 });
 
