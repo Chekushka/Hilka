@@ -55,6 +55,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   // parsons-only
   const [linesText, setLinesText] = useState(DEFAULT_PARSONS_LINES);
   const [distractorsText, setDistractorsText] = useState('');
+  const [parsonsIndentMode, setParsonsIndentMode] = useState<'given' | 'chosen'>('given');
 
   // quiz-only
   const [optionsText, setOptionsText] = useState('');
@@ -141,7 +142,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                   prompt,
                   lines: parsedLines,
                   distractors: parseHints(distractorsText),
-                  indentMode: 'given'
+                  indentMode: parsonsIndentMode
                 }
               : taskType === 'quiz'
                 ? { type: 'quiz', prompt, options: parsedOptions, multiple }
@@ -321,6 +322,24 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
               onChange={(event) => setDistractorsText(event.target.value)}
               className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
             />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="parsonsIndentMode">
+              {t('authoring.parsonsIndentModeLabel')}
+            </label>
+            <select
+              id="parsonsIndentMode"
+              value={parsonsIndentMode}
+              onChange={(event) => setParsonsIndentMode(event.target.value as 'given' | 'chosen')}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            >
+              <option value="given">{t('authoring.parsonsIndentModeGiven')}</option>
+              <option value="chosen">{t('authoring.parsonsIndentModeChosen')}</option>
+            </select>
+            {parsonsIndentMode === 'chosen' && (
+              <p className="text-xs text-ink-muted">{t('authoring.parsonsIndentModeChosenHint')}</p>
+            )}
           </div>
         </>
       ) : taskType === 'quiz' ? (

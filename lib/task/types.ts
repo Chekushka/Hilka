@@ -22,10 +22,12 @@ export interface ParsonsLine {
 }
 
 /**
- * `indentMode: 'chosen'` is documented in TASK_SCHEMA.md but not built yet —
- * the checker's `order_equals` has nowhere to read an expected indent from,
- * so nothing here can grade it. Every parsons task is authored and rendered
- * as `'given'` until that lands (docs/TASKS.md Open Questions).
+ * `indentMode: 'given'` shows each line's indent for context; the student
+ * only orders the lines. `'chosen'` hides it — the student sets each line's
+ * indent too (`components/task-types/ParsonsTaskView.tsx`), graded by
+ * `order_equals`'s `checkIndent`/`indents` against `lines[i].indent`, the
+ * same value that already IS the correct answer either way
+ * (`lib/task/parsons.ts`'s `parsonsCanonicalSubmission`).
  */
 export interface ParsonsPayload {
   type: 'parsons';

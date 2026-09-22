@@ -94,7 +94,7 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | `code` | ✅ | Turtle surface and console surface both end to end. Console: plain Run is interactive (Python Runner, above), and Check runs `cases` — `lib/task/types.ts`'s `CodeTask`/`FixTask` carry `cases?: RunCase[]`, `lib/db/task-mapping.ts` copies `row.cases` through, and `useTaskRunner`'s warm-up seeds `target` from the first case's stdin instead of none. `runChecks` runs the student's code once per case (headless, that case's own stdin), evaluates `[...task.checks, ...case.checks]` against each, and merges every case's results into one report — a case beyond the first is a case that must also pass, exactly what stops a solution hardcoded to the visible case; a task with no `cases` is one implicit no-stdin case, so the old single-run behaviour is unchanged. `cases` now has an authoring surface too (Teacher Flow, "Task authoring UI") — a task with cases no longer requires hand-editing `content/seed-tasks/*.json`. `content/seed-tasks/grade7-code-rectangle-perimeter.json` exercises the whole path (a hidden second case with different expected numbers), proved by `tests/e2e/cases.spec.ts`, `tests/e2e/task-authoring-ui.spec.ts` and `tests/references/verify.spec.ts` |
 | `quiz` | ✅ | Single/multiple choice, end to end: authoring (`NewTaskForm`, `QuizDraftEditor`), instant client-side checking (`choice_equals`, already in `lib/checker`), and a publish gate with no run and no canonical submission either — the correct answer lives entirely in `checks`, so `lib/task/quiz.ts` instead confirms every `choice_equals` index actually names an option (and exactly one, on a single-answer quiz) |
 | `predict` | 🔶 | `answerMode: 'text'` and `'choice'` both end to end now: authoring (`NewTaskForm`, `PredictDraftEditor` — an answer-format selector plus an options textarea, reusing the same one-per-line convention as quiz), instant client-side checking (`text_equals` for text, `choice_equals` for choice, both already in `lib/checker`), and a publish gate that runs `payload.code` (there is no separate reference to write — it IS the code shown to the student). Text mode confirms the checks actually match its real stdout (`evaluatePredictionAgainstOwnRun`); choice mode additionally confirms `choice_equals` is structurally sound — exactly one index, in range (`lib/task/predict.ts`'s `validatePredictChoiceChecks`) — and that the chosen option's own text actually equals the real stdout (`evaluatePredictionChoiceAgainstOwnRun`), same rule 5 guarantee applied to a chosen option instead of a typed string. `PredictTaskView` renders radio options instead of a text input in choice mode. `tests/e2e/predict-choice.spec.ts` drives the whole path through the real forms and a real session join; `tests/e2e/task-authoring.spec.ts` covers the publish gate's success/failure/malformed-check paths directly. `imageOptions` is still not built — its data shape (where the N reference programs themselves would live) is undecided |
-| `parsons` | 🔶 | `indentMode: 'given'` end to end: authoring (`NewTaskForm`, `ParsonsDraftEditor`), drag-and-keyboard assembly (`ParsonsTaskView`, dnd-kit), instant client-side checking (`order_equals`, already in `lib/checker`), and a publish gate with no run to post — `payload.lines` is already the correct order, checked server-side (`lib/task/parsons.ts`). `indentMode: 'chosen'` is not built: `order_equals` has nowhere to read an expected indent from, so the authoring API rejects it and the component only ever renders `'given'` |
+| `parsons` | ✅ | Both `indentMode: 'given'` and `'chosen'` end to end: authoring (`NewTaskForm`, `ParsonsDraftEditor` — an indent-mode selector alongside the lines/distractors fields), drag-and-keyboard assembly (`ParsonsTaskView`, dnd-kit), instant client-side checking (`order_equals`, already in `lib/checker`), and a publish gate with no run to post — `payload.lines` is already the correct order, checked server-side (`lib/task/parsons.ts`). `order_equals` gained an `indents` field alongside `checkIndent` (`lib/checker/evaluate.ts`): every line starts flat in chosen mode and the student sets each one's indent with Indent/Outdent buttons, graded against `payload.lines[i].indent` the same value `parsonsCanonicalSubmission` already used as the canonical answer. `tests/e2e/parsons-chosen.spec.ts` drives the whole path through the real forms and a real session join; `tests/e2e/task-authoring.spec.ts` and `lib/checker/evaluate.test.ts` cover the publish gate and the evaluator directly |
 | `fill` | ✅ | End to end, also reusing `code`'s machinery: `FillTaskView` renders `payload.template` (`lib/task/fill.ts`'s `parseFillTemplate`) with an inline `<input>` at every `{{n}}` gap, substitutes the student's answers into a `code` string on Run/Check, and hands it to the same `useTaskRunner`/`RunnableTask` shape `fix` uses. Authoring (`NewTaskForm`, `FillDraftEditor`) writes a separately authored reference, exactly like `code`'s starter vs reference — the publish gate needed no special-casing at all, it falls into the same generic branch |
 | `fix` | ✅ | End to end, reusing `code`'s machinery: `FixTaskView` and `useTaskRunner` are shared verbatim via a `RunnableTask` shape (`lib/task/use-task-runner.ts`) — the student edits `payload.broken` instead of `payload.starter`, same run/check/result flow. Authoring (`NewTaskForm`, `FixDraftEditor`) posts two runs to publish: `reference.code` must pass every check, and `payload.broken` (read from the saved row, not re-trusted from the request) must fail at least one — `lib/checker/reference-check.ts` already proved this exact rule for `checkTaskReference`/CI, and the publish route now enforces the same thing browser-side with `evaluateRun` |
 
@@ -212,9 +212,10 @@ IDLE before uploading.
 - [ ] Is the grid world worth building at all now that turtle is the curriculum's visual layer?
 - [x] Does interactive input need SharedArrayBuffer? **No.** Verified with
       `crossOriginIsolated=false`; no COOP/COEP headers on Vercel, embeds stay possible.
-- [x] Default `parsons.indentMode` per topic — `given` only for now: the authoring API rejects
-      `'chosen'` and the component never renders it. Revisit once `order_equals` can grade an
-      expected indent (docs/TASK_SCHEMA.md).
+- [x] Default `parsons.indentMode` per topic — **both modes are built now** (`order_equals` grades
+      an expected indent via `checkIndent`/`indents`, docs/TASK_SCHEMA.md); the recommendation
+      itself stands as authored: `'given'` for a topic's first Parsons task, `'chosen'` later,
+      left to the author per task rather than enforced per topic.
 - [x] Lesson 40 (grade 7) requires покрокове виконання. **Covered by the playback scrubber**
       (`components/canvas/PlaybackScrubber.tsx`), stepping the turtle drawing by call order
       rather than an interpreter-level stepper — no need to fall back to `predict`/`fix` tasks
@@ -255,14 +256,13 @@ IDLE before uploading.
    (edit a draft, run and publish its reference, or view it read-only once published). Checks
    are authored as raw JSON, not a per-kind visual builder; that and the other five task types
    are still open.
-10. ~~Remaining task types, `parsons` first~~ — done. All six types (`parsons` with
-    `indentMode: 'given'`, `quiz`, `predict` with `answerMode: 'text'` and `'choice'`, `code`,
-    `fix`, `fill`) work end to end (docs/TASK_SCHEMA.md). Two partial builds remain, both
-    documented rather than silently missing: parsons' `'chosen'` indent mode (`order_equals` has
-    nowhere to read an expected indent from) and predict's `imageOptions` (its data shape — where
-    the N reference programs would live — is undecided). The shared task-component interface this
-    needed (`Task` union, `TaskWorkspace` dispatching by type) is what made `fix` and `fill` a new
-    branch and a new file each, not a rewrite.
+10. ~~Remaining task types, `parsons` first~~ — done. All six types (`parsons` with both
+    `indentMode`s, `quiz`, `predict` with `answerMode: 'text'` and `'choice'`, `code`, `fix`,
+    `fill`) work end to end (docs/TASK_SCHEMA.md). One partial build remains, documented rather
+    than silently missing: predict's `imageOptions` (its data shape — where the N reference
+    programs would live — is undecided). The shared task-component interface this needed (`Task`
+    union, `TaskWorkspace` dispatching by type) is what made `fix` and `fill` a new branch and a
+    new file each, not a rewrite.
 11. ~~Turtle canvas, target overlay, playback scrubber~~ — done. The canvas and target overlay
     shipped earlier; the playback scrubber (`components/canvas/PlaybackScrubber.tsx`) now steps
     a turtle drawing segment by segment, driven by call order since `Segment.line` is always

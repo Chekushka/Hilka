@@ -78,10 +78,11 @@ editing surface, so there is no separate file to hand out.
 
 Notes:
 - `parsons.indentMode: 'chosen'` is the harder variant and the only one that teaches Python
-  indentation. Default to `'given'` for a topic's first Parsons task and `'chosen'` later.
-  **Not built**: `order_equals` has nowhere to read an expected indent from (see "Implementation
-  status" below), so the authoring API rejects `'chosen'` and `components/task-types/ParsonsTaskView.tsx`
-  only ever renders `'given'` — indentation is shown for context, never set or graded.
+  indentation. Default to `'given'` for a topic's first Parsons task and `'chosen'` later. Every
+  line starts flat in `components/task-types/ParsonsTaskView.tsx`; the student sets each one's
+  indent with Indent/Outdent buttons on the answer row, graded by `order_equals`'s
+  `checkIndent`/`indents` against `payload.lines[i].indent` — the same value that already IS the
+  correct answer either way (`lib/task/parsons.ts`'s `parsonsCanonicalSubmission`).
 - `predict.imageOptions` renders N turtle reference programs as pictures and asks which one the
   shown code produces. The author writes N short programs; the platform renders them. No
   hand-drawn assets anywhere.
@@ -230,7 +231,7 @@ the «таблиця тестування» the grade 9 programme asks for.
 type Check = { message?: string } & (
   // --- no execution -------------------------------------------------------
   | { kind: 'choice_equals';   indices: number[] }
-  | { kind: 'order_equals';    lines: number[]; checkIndent?: boolean }
+  | { kind: 'order_equals';    lines: number[]; checkIndent?: boolean; indents?: number[] }
   | { kind: 'text_equals';     value: string; normalize?: 'trim' | 'loose' }
 
   // --- console output -----------------------------------------------------
@@ -269,11 +270,11 @@ type Check = { message?: string } & (
 `number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`,
 `uses`, `forbids`, `var_equals`, `expr`.
 
-`order_equals`'s `checkIndent` is declared but not evaluated — the check only ever compares
-`submission.orderedLines[i].index` against `check.lines[i]`, never `.indent`, because nothing
-carries the *expected* indent for it to compare against. This is exactly what blocks
-`parsons.indentMode: 'chosen'` above; giving `order_equals` an `indents` field (or similar) to
-compare against is the smallest fix, the same commit that builds `'chosen'` should add it.
+`order_equals` compares `submission.orderedLines[i].index` against `check.lines[i]` always, and
+additionally `.indent` against `check.indents[i]` when `checkIndent` is true — `indents` is the
+field TASK_SCHEMA previously lacked, now what `parsons.indentMode: 'chosen'` is graded with. A
+`checkIndent: true` with no `indents` (or a mismatched length) never passes — an authoring
+mistake, not a lenient default.
 
 `uses`/`forbids` run against `Submission.code` through `lib/checker/ast.ts`, a
 small Python tokenizer (not a full parser) that skips string and comment

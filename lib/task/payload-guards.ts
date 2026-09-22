@@ -36,9 +36,7 @@ export function isParsonsPayload(value: unknown): value is ParsonsPayload {
     p.lines.every(isParsonsLine) &&
     (p.distractors === undefined ||
       (Array.isArray(p.distractors) && p.distractors.every((d) => typeof d === 'string'))) &&
-    // 'chosen' is documented but not built yet (lib/task/types.ts) — reject
-    // it here rather than storing a payload nothing can grade.
-    p.indentMode === 'given'
+    (p.indentMode === 'given' || p.indentMode === 'chosen')
   );
 }
 

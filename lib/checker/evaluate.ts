@@ -67,7 +67,18 @@ function evaluateOne(check: Check, evidence: Evidence): boolean {
       if (!lines || lines.length !== check.lines.length) {
         return false;
       }
-      return lines.every((line, i) => line.index === check.lines[i]);
+      if (!lines.every((line, i) => line.index === check.lines[i])) {
+        return false;
+      }
+      if (!check.checkIndent) {
+        return true;
+      }
+      // A check declaring checkIndent with nothing to compare against
+      // cannot claim a pass — an authoring mistake, not a lenient default.
+      if (!check.indents || check.indents.length !== check.lines.length) {
+        return false;
+      }
+      return lines.every((line, i) => line.indent === check.indents![i]);
     }
 
     case 'text_equals': {

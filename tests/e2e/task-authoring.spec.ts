@@ -273,6 +273,73 @@ test('a choice-mode predict task with a malformed choice_equals is rejected befo
   expect((published.body as { error: string }).error).toBe('reference_fails_checks');
 });
 
+test('a chosen-indent parsons task publishes once checkIndent matches payload.lines\' own indent', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-parsons-chosen-${Date.now()}`;
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'turtle-loops',
+      title: 'E2E parsons chosen',
+      payload: {
+        type: 'parsons',
+        prompt: 'Тест',
+        indentMode: 'chosen',
+        lines: [
+          { text: 'import turtle', indent: 0 },
+          { text: 'for i in range(3):', indent: 0 },
+          { text: 'turtle.forward(100)', indent: 1 },
+          { text: 'turtle.right(120)', indent: 1 }
+        ]
+      },
+      checks: [{ kind: 'order_equals', lines: [0, 1, 2, 3], checkIndent: true, indents: [0, 0, 1, 1] }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const published = await api(page, `/api/tasks/${id}/publish`, { method: 'POST' });
+  expect(published.status).toBe(200);
+  expect((published.body as { status: string }).status).toBe('published');
+});
+
+test('a chosen-indent parsons task is rejected when checkIndent\'s indents do not match the lines\' own indent', async ({
+  page
+}) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-parsons-chosen-wrong-${Date.now()}`;
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'turtle-loops',
+      title: 'E2E parsons chosen (хибні відступи)',
+      payload: {
+        type: 'parsons',
+        prompt: 'Тест',
+        indentMode: 'chosen',
+        lines: [
+          { text: 'import turtle', indent: 0 },
+          { text: 'for i in range(3):', indent: 0 },
+          { text: 'turtle.forward(100)', indent: 1 },
+          { text: 'turtle.right(120)', indent: 1 }
+        ]
+      },
+      // The real answer has the last two lines indented — this says none are.
+      checks: [{ kind: 'order_equals', lines: [0, 1, 2, 3], checkIndent: true, indents: [0, 0, 0, 0] }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const published = await api(page, `/api/tasks/${id}/publish`, { method: 'POST' });
+  expect(published.status).toBe(422);
+  expect((published.body as { error: string }).error).toBe('reference_fails_checks');
+});
+
 test('a fix task publishes once the reference passes and the broken code fails', async ({ page }) => {
   await loginAsTeacher(page, TEACHER_EMAIL);
 
