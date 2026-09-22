@@ -379,11 +379,33 @@ Values are derived from `seed = hash(sessionId + studentName + taskId)` via a se
 `lib/seed/`, so the same student always sees the same variant and a teacher's report reproduces
 it exactly.
 
-Expected artifacts for a parameterized task cannot be precomputed for every seed. Compute them
-on demand by running the substituted reference, and cache by `(taskId, version, seed)`.
+There is no server-side Python (AI_CONTEXT.md, "Python Runner"), so "expected artifacts" are
+never precomputed or cached — `GET /api/sessions/[code]/tasks/[taskId]` substitutes the
+placeholders server-side (`lib/task/params.ts`'s `resolveTaskParams`) and hands the browser an
+otherwise-ordinary task; `lib/task/use-task-runner.ts`'s existing warm-up run (which already
+re-executes `reference.code` fresh on every page load, parameterized or not) does the rest with
+no changes of its own.
+
+This means only checks whose expected value comes from *running* the reference actually work
+today — `shape_equals`/`shape_contains` (turtle) and anything with no fixed value at all
+(`shape_props`, `uses`, `forbids`). A check with a hand-typed expected value —
+`number_close`/`text_equals`/`stdout_equals`/`var_equals` — stays fixed across every variant, so
+it is very likely wrong for at least one combination. `npm run verify:references` (which checks
+*every* combination, not a sampled seed) catches this immediately as a normal reference-check
+failure — it is a real authoring mistake, not a special case to detect separately. `expr` is the
+one exception: `check.python` is plain text, so writing the placeholder directly into the
+expression (e.g. `"total == {a} * 4"`) substitutes the same way `reference.code` does — that
+path is untested today.
 
 Keep parameter spaces small and every combination valid. A range that can produce a division by
 zero or a negative square root will produce it, in a graded session, for exactly one student.
+`lib/seed/params.ts`'s `enumerateParamCombinations` throws past 500 combinations rather than
+silently taking a long time to verify or publish.
+
+**Not built**: an authoring UI — a parameterized task is hand-authored JSON in
+`content/seed-tasks/`, the same way `cases` started (docs/TASKS.md); `params` on `fix` or
+`predict`; anything beyond `code`. `/practice` has no session or student identity, so a
+parameterized task must only ever be assigned to a session, never opened there.
 
 ## Randomness and determinism
 

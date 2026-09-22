@@ -13,6 +13,7 @@ import { evaluateChecks } from './evaluate';
 import { normalizeText } from './text';
 import type { Check, Evidence, Submission } from './types';
 import type { RunOptions, RunResult } from '@/lib/runner';
+import { enumerateParamCombinations, substituteParams, type ParamSpec } from '@/lib/seed';
 
 export type RunPython = (code: string, options: RunOptions) => Promise<RunResult>;
 
@@ -133,6 +134,8 @@ export interface ReferenceCheckTask {
   cases?: { stdin: string[]; checks?: Check[]; label?: string }[] | null;
   reference?: { code: string } | null;
   payload?: { broken?: string; answerMode?: 'text' | 'choice'; options?: string[] };
+  /** `code` only (docs/TASK_SCHEMA.md, "Parameterization") — every combination is checked, not just one seed. */
+  params?: ParamSpec | null;
 }
 
 export interface ReferenceCheckFailure {
@@ -151,9 +154,12 @@ export interface ReferenceCheckOutcome {
 
 /**
  * Runs `task.reference.code` — once per case, or once with no stdin when
- * there are none — and confirms every check passes. For a `fix` task with a
- * `broken` payload, also confirms `broken` does NOT pass, per TASK_SCHEMA.md:
- * a "broken" program that passes is a bug in the task, not a strict solution.
+ * there are none, and once per parameter combination when the task has
+ * `params` (docs/TASK_SCHEMA.md, "Parameterization" — the whole point of
+ * verifying every combination rather than a sampled seed) — and confirms
+ * every check passes. For a `fix` task with a `broken` payload, also
+ * confirms `broken` does NOT pass, per TASK_SCHEMA.md: a "broken" program
+ * that passes is a bug in the task, not a strict solution.
  */
 export async function checkTaskReference(
   task: ReferenceCheckTask,
@@ -167,41 +173,49 @@ export async function checkTaskReference(
   const failures: ReferenceCheckFailure[] = [];
   const hasCases = (task.cases?.length ?? 0) > 0;
   const cases = hasCases ? task.cases! : [{ stdin: [], checks: [] as Check[] }];
+  const combinations = task.params ? enumerateParamCombinations(task.params) : [{}];
 
   // The target for a broken payload's shape_equals etc. below: the correct
-  // reference's own drawing/stdout from its first case.
+  // reference's own drawing/stdout from its first case (first combination,
+  // for a parameterized task — fix and params are never combined today).
   let referenceArtifacts: Evidence['reference'] = null;
 
-  for (const [i, runCase] of cases.entries()) {
-    const context = runCase.label ?? (hasCases ? `case ${i + 1}` : 'no cases');
-    const checks = [...task.checks, ...(runCase.checks ?? [])];
-    const result = await runPython(referenceCode, {
-      mode: 'headless',
-      stdin: runCase.stdin,
-      exprs: exprsOf(checks)
-    });
-    // `predict` has no code of its own to submit — a perfect prediction IS
-    // the reference's real stdout (lib/task/types.ts). Choice mode compares
-    // that stdout to the chosen option's text instead of a typed string.
-    const outcome =
-      task.type === 'predict'
-        ? task.payload?.answerMode === 'choice'
-          ? evaluatePredictionChoiceAgainstOwnRun(task.payload.options ?? [], checks, result)
-          : evaluatePredictionAgainstOwnRun(result.stdout, checks, result)
-        : evaluateAgainstOwnRun(referenceCode, checks, result);
-    if (!outcome.ranCleanly) {
-      failures.push({
-        context,
-        message: result.error
-          ? `reference solution raised ${result.error.type}: ${result.error.message}`
-          : 'reference solution timed out'
+  for (const combo of combinations) {
+    const comboCode = task.params ? substituteParams(referenceCode, combo) : referenceCode;
+    const comboLabel = task.params ? ` (${JSON.stringify(combo)})` : '';
+
+    for (const [i, runCase] of cases.entries()) {
+      const context = (runCase.label ?? (hasCases ? `case ${i + 1}` : 'no cases')) + comboLabel;
+      const checks = [...task.checks, ...(runCase.checks ?? [])];
+      const stdin = task.params ? runCase.stdin.map((line) => substituteParams(line, combo)) : runCase.stdin;
+      const result = await runPython(comboCode, {
+        mode: 'headless',
+        stdin,
+        exprs: exprsOf(checks)
       });
-      continue;
+      // `predict` has no code of its own to submit — a perfect prediction IS
+      // the reference's real stdout (lib/task/types.ts). Choice mode compares
+      // that stdout to the chosen option's text instead of a typed string.
+      const outcome =
+        task.type === 'predict'
+          ? task.payload?.answerMode === 'choice'
+            ? evaluatePredictionChoiceAgainstOwnRun(task.payload.options ?? [], checks, result)
+            : evaluatePredictionAgainstOwnRun(result.stdout, checks, result)
+          : evaluateAgainstOwnRun(comboCode, checks, result);
+      if (!outcome.ranCleanly) {
+        failures.push({
+          context,
+          message: result.error
+            ? `reference solution raised ${result.error.type}: ${result.error.message}`
+            : 'reference solution timed out'
+        });
+        continue;
+      }
+      if (referenceArtifacts === null) {
+        referenceArtifacts = { stdout: result.stdout, drawing: result.drawing };
+      }
+      outcome.failures.forEach((message) => failures.push({ context, message }));
     }
-    if (referenceArtifacts === null) {
-      referenceArtifacts = { stdout: result.stdout, drawing: result.drawing };
-    }
-    outcome.failures.forEach((message) => failures.push({ context, message }));
   }
 
   if (task.type === 'fix' && task.payload?.broken) {

@@ -4,6 +4,7 @@
  * built, rather than being declared in full and left half-implemented.
  */
 import type { Check, ReferenceArtifacts } from '@/lib/checker';
+import type { ParamSpec } from '@/lib/seed';
 
 export type TaskType = 'quiz' | 'predict' | 'parsons' | 'fill' | 'code' | 'fix';
 export type TaskStatus = 'draft' | 'published' | 'archived';
@@ -134,6 +135,16 @@ export interface CodeTask {
   gradeTags: number[];
   version: number;
   status: TaskStatus;
+  /**
+   * Session-only (docs/TASK_SCHEMA.md, "Parameterization"): `{name}`
+   * placeholders in `payload.prompt`/`starter`, `cases[].stdin` and
+   * `reference.code` are substituted server-side, per student, before this
+   * ever reaches a browser — `GET /api/sessions/[code]/tasks/[taskId]`
+   * strips this field from what it actually sends. Meaningless in
+   * `/practice`, which has no student identity to derive a seed from; a
+   * parameterized task must only be assigned to a session.
+   */
+  params?: ParamSpec;
 }
 
 /**

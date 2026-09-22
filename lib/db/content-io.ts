@@ -15,6 +15,7 @@
 import { asc, eq } from 'drizzle-orm';
 import { validateTaskChecks } from '@/lib/checker';
 import type { Check } from '@/lib/checker';
+import type { ParamSpec } from '@/lib/seed';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { tasks, topics } from './schema';
@@ -38,6 +39,8 @@ export interface TaskContent {
   cases?: RunCase[];
   hints: string[];
   reference?: Reference;
+  /** `code` only (docs/TASK_SCHEMA.md, "Parameterization"). */
+  params?: ParamSpec;
   difficulty: number;
   gradeTags: number[];
   version: number;
@@ -97,6 +100,7 @@ export async function exportContent(): Promise<ContentBundle> {
       cases: task.cases ?? undefined,
       hints: task.hints,
       reference: task.reference ?? undefined,
+      params: task.params ?? undefined,
       difficulty: task.difficulty,
       gradeTags: task.gradeTags,
       version: task.version,
@@ -166,6 +170,7 @@ export async function importContent(bundle: ContentBundle): Promise<ImportResult
       checks: task.checks,
       cases: task.cases?.length ? task.cases : null,
       reference: task.reference ?? null,
+      params: task.params ?? null,
       hints: task.hints ?? [],
       difficulty: task.difficulty,
       gradeTags: task.gradeTags,

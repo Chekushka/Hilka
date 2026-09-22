@@ -31,6 +31,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { Check } from '@/lib/checker';
 import type { PracticeProgress } from '@/lib/practice/progress';
+import type { ParamSpec } from '@/lib/seed';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 
 export const topics = pgTable('topics', {
@@ -62,7 +63,7 @@ export const tasks = pgTable(
     // author's reference solution on publish, never hand-written.
     reference: jsonb('reference').$type<Reference>(),
     hints: jsonb('hints').$type<string[]>().notNull().default([]),
-    params: jsonb('params').$type<Record<string, unknown>>(),
+    params: jsonb('params').$type<ParamSpec>(),
     difficulty: smallint('difficulty').notNull(),
     gradeTags: integer('grade_tags').array().notNull().default([]),
     // Bumped on publish, never on save: that is what makes it safe to edit a

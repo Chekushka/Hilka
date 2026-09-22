@@ -461,9 +461,12 @@ The client-side checker means a student with devtools can mark any task passed. 
 v1, mitigated rather than solved:
 
 1. **Parameterized variants.** `tasks.params` defines placeholder ranges; concrete values are
-   derived from `seed = hash(session_id + student_name + task_id)`. Deterministic, so a
-   teacher's report reproduces what the student saw, and different at adjacent desks. This
-   defeats copying from a neighbour, which is the realistic threat.
+   derived from `seed = hash(session_id + student_name + task_id)` (`lib/seed/`). Deterministic,
+   so a teacher's report reproduces what the student saw, and different at adjacent desks. This
+   defeats copying from a neighbour, which is the realistic threat. Built for `code` tasks,
+   session-only: `GET /api/sessions/[code]/tasks/[taskId]` resolves and substitutes the variant
+   server-side before the response reaches a browser (docs/TASKS.md has the full picture,
+   including what is still not built — an authoring UI, `fix`/`predict` support).
 2. **Task shuffling** within a graded session.
 3. **Behavioural flags** on the attempt: large paste, near-zero edit count, implausibly fast
    submission. The teacher sees a flag and decides. The system never accuses anyone.
