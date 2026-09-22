@@ -176,6 +176,103 @@ test('a predict task is rejected when its checks do not match what the code prin
   expect((published.body as { error: string }).error).toBe('reference_fails_checks');
 });
 
+test('a choice-mode predict task publishes once the chosen option matches what the code prints', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-predict-choice-${Date.now()}`;
+  const code = 'a = 2\nb = 3\nprint(a + b * 4)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'arithmetic',
+      title: 'E2E предикт choice',
+      payload: { type: 'predict', prompt: 'Тест', code, answerMode: 'choice', options: ['20', '14', '8'] },
+      checks: [{ kind: 'choice_equals', indices: [1] }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, code);
+  expect(run.error).toBeNull();
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode: code, run }
+  });
+  expect(published.status).toBe(200);
+  const publishedTask = published.body as { status: string; version: number };
+  expect(publishedTask.status).toBe('published');
+  expect(publishedTask.version).toBe(1);
+});
+
+test('a choice-mode predict task is rejected when the chosen option does not match what the code prints', async ({
+  page
+}) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-predict-choice-wrong-${Date.now()}`;
+  const code = 'a = 2\nb = 3\nprint(a + b * 4)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'arithmetic',
+      title: 'E2E предикт choice (хибний варіант)',
+      payload: { type: 'predict', prompt: 'Тест', code, answerMode: 'choice', options: ['20', '14', '8'] },
+      // The code actually prints 14 (index 1), not 20 (index 0) — must not publish.
+      checks: [{ kind: 'choice_equals', indices: [0] }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, code);
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode: code, run }
+  });
+  expect(published.status).toBe(422);
+  expect((published.body as { error: string }).error).toBe('reference_fails_checks');
+});
+
+test('a choice-mode predict task with a malformed choice_equals is rejected before any run counts', async ({ page }) => {
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const slug = `e2e-predict-choice-malformed-${Date.now()}`;
+  const code = 'a = 2\nb = 3\nprint(a + b * 4)';
+
+  const created = await api(page, '/api/tasks', {
+    method: 'POST',
+    body: {
+      slug,
+      topicSlug: 'arithmetic',
+      title: 'E2E предикт choice (два варіанти)',
+      payload: { type: 'predict', prompt: 'Тест', code, answerMode: 'choice', options: ['20', '14', '8'] },
+      // A prediction has exactly one real output — more than one index is an authoring mistake.
+      checks: [{ kind: 'choice_equals', indices: [0, 1] }]
+    }
+  });
+  expect(created.status).toBe(201);
+  const { id } = created.body as { id: string };
+
+  const run = await runInBrowser(page, code);
+  await loginAsTeacher(page, TEACHER_EMAIL);
+
+  const published = await api(page, `/api/tasks/${id}/publish`, {
+    method: 'POST',
+    body: { referenceCode: code, run }
+  });
+  expect(published.status).toBe(422);
+  expect((published.body as { error: string }).error).toBe('reference_fails_checks');
+});
+
 test('a fix task publishes once the reference passes and the broken code fails', async ({ page }) => {
   await loginAsTeacher(page, TEACHER_EMAIL);
 

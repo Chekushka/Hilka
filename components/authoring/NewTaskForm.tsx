@@ -62,6 +62,8 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
 
   // predict-only
   const [predictCode, setPredictCode] = useState('');
+  const [predictAnswerMode, setPredictAnswerMode] = useState<'text' | 'choice'>('text');
+  const [predictOptionsText, setPredictOptionsText] = useState('');
 
   // fix-only
   const [brokenCode, setBrokenCode] = useState('');
@@ -81,6 +83,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
 
   const parsedLines = parseParsonsLines(linesText);
   const parsedOptions = parseHints(optionsText);
+  const parsedPredictOptions = parseHints(predictOptionsText);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -106,6 +109,10 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
     }
     if (taskType === 'predict' && predictCode.trim().length === 0) {
       setError(t('authoring.predictCodeEmpty'));
+      return;
+    }
+    if (taskType === 'predict' && predictAnswerMode === 'choice' && parsedPredictOptions.length < 2) {
+      setError(t('authoring.predictOptionsEmpty'));
       return;
     }
     if (taskType === 'fix' && brokenCode.trim().length === 0) {
@@ -139,7 +146,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
               : taskType === 'quiz'
                 ? { type: 'quiz', prompt, options: parsedOptions, multiple }
                 : taskType === 'predict'
-                  ? { type: 'predict', prompt, code: predictCode, answerMode: 'text' }
+                  ? predictAnswerMode === 'choice'
+                    ? { type: 'predict', prompt, code: predictCode, answerMode: 'choice', options: parsedPredictOptions }
+                    : { type: 'predict', prompt, code: predictCode, answerMode: 'text' }
                   : taskType === 'fix'
                     ? { type: 'fix', surface, prompt, broken: brokenCode }
                     : { type: 'fill', prompt, template },
@@ -343,13 +352,53 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
           </label>
         </>
       ) : taskType === 'predict' ? (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="predictCode">
-            {t('authoring.predictCodeLabel')}
-          </label>
-          <CodeEditor value={predictCode} onChange={setPredictCode} ariaLabel={t('authoring.predictCodeLabel')} />
-          <p className="text-xs text-ink-muted">{t('authoring.predictCodeHint')}</p>
-        </div>
+        <>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="predictCode">
+              {t('authoring.predictCodeLabel')}
+            </label>
+            <CodeEditor value={predictCode} onChange={setPredictCode} ariaLabel={t('authoring.predictCodeLabel')} />
+            <p className="text-xs text-ink-muted">{t('authoring.predictCodeHint')}</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="predictAnswerMode">
+              {t('authoring.predictAnswerModeLabel')}
+            </label>
+            <select
+              id="predictAnswerMode"
+              value={predictAnswerMode}
+              onChange={(event) => setPredictAnswerMode(event.target.value as 'text' | 'choice')}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            >
+              <option value="text">{t('authoring.predictAnswerModeText')}</option>
+              <option value="choice">{t('authoring.predictAnswerModeChoice')}</option>
+            </select>
+          </div>
+
+          {predictAnswerMode === 'choice' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-ink-muted" htmlFor="predictOptions">
+                {t('authoring.predictOptionsLabel')}
+              </label>
+              <textarea
+                id="predictOptions"
+                rows={4}
+                value={predictOptionsText}
+                onChange={(event) => setPredictOptionsText(event.target.value)}
+                className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+              />
+              <p className="text-xs text-ink-muted">{t('authoring.predictOptionsHint')}</p>
+              <ul className="mt-1 text-xs text-ink-muted">
+                {parsedPredictOptions.map((option, index) => (
+                  <li key={index}>
+                    {index}: {option}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       ) : taskType === 'fix' ? (
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="brokenCode">

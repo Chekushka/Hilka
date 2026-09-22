@@ -85,13 +85,19 @@ Notes:
 - `predict.imageOptions` renders N turtle reference programs as pictures and asks which one the
   shown code produces. The author writes N short programs; the platform renders them. No
   hand-drawn assets anywhere.
-- **Not built**: `predict.answerMode: 'choice'` and `imageOptions`. Only `'text'` is graded
-  today — the authoring API rejects anything else, and
-  `components/task-types/PredictTaskView.tsx` only ever renders a text input. `payload.code` IS
-  the reference solution (there is nothing separate to write); the publish gate runs it once and
-  checks that the author's `text_equals` value actually matches its real stdout
-  (`lib/checker/reference-check.ts`'s `evaluatePredictionAgainstOwnRun`), the same rule 5
-  guarantee `code` gets.
+- `predict.answerMode: 'choice'` picks one of `options` — the candidate predicted outputs —
+  graded with a single `choice_equals` check, same mechanism as `quiz`'s single-answer mode.
+  `payload.code` IS the reference solution either way; in choice mode the publish gate both
+  confirms `choice_equals` is structurally sound (exactly one index, in range —
+  `lib/task/predict.ts`'s `validatePredictChoiceChecks`) and runs the code once to confirm the
+  chosen option's own text actually equals its real stdout
+  (`lib/checker/reference-check.ts`'s `evaluatePredictionChoiceAgainstOwnRun`) — the same rule 5
+  guarantee text mode gets from `evaluatePredictionAgainstOwnRun`, applied to a chosen option
+  instead of a typed string. `components/task-types/PredictTaskView.tsx` renders radio options
+  instead of a text input when `answerMode === 'choice'`.
+- **Not built**: `predict.imageOptions`. Its data shape — where the N reference programs
+  themselves would be stored on the payload — is not decided yet, so there is nothing to author
+  or render for it.
 
 ## File Delivery
 

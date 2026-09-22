@@ -44,18 +44,23 @@ export interface QuizPayload {
 }
 
 /**
- * `answerMode: 'choice'` and `imageOptions` are documented in TASK_SCHEMA.md
- * but not built yet — only a free-text prediction is graded today. The
- * authoring API rejects anything but `'text'`, and
- * `components/task-types/PredictTaskView.tsx` only ever renders a text
- * input (docs/TASKS.md Open Questions has the parsons `'chosen'` precedent
- * for this kind of partial build).
+ * `answerMode: 'choice'` picks one of `options` — the candidate predicted
+ * outputs — graded with `choice_equals`, same as `quiz`'s single-answer
+ * mode; exactly one option must be correct (lib/task/predict.ts). `text`
+ * stays free-typed, graded with `text_equals`. `imageOptions` (N turtle
+ * reference programs rendered as pictures) is documented in TASK_SCHEMA.md
+ * but not built yet — its data shape (where the N programs themselves would
+ * live) is not decided, so there is nothing here to author or render for it
+ * (docs/TASKS.md Open Questions has the parsons `'chosen'` precedent for
+ * this kind of partial build).
  */
 export interface PredictPayload {
   type: 'predict';
   prompt: string;
   code: string;
-  answerMode: 'text';
+  answerMode: 'text' | 'choice';
+  /** `answerMode: 'choice'` only. */
+  options?: string[];
 }
 
 /**

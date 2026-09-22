@@ -1,11 +1,14 @@
 'use client';
 
 /**
- * "What does this print?" — the student reads a fixed snippet and types the
- * predicted output. Like quiz, nothing executes for the student: Check runs
- * the declarative evaluator directly against the typed text, no runner
- * involved. `payload.code` already ran once, at publish time, to confirm the
- * checks' expected value actually matches its real output (lib/task/types.ts).
+ * "What does this print?" — the student reads a fixed snippet and answers
+ * either by typing the predicted output (`answerMode: 'text'`) or by
+ * picking one of `payload.options` (`answerMode: 'choice'`, graded like
+ * quiz's single-answer mode). Like quiz, nothing executes for the student
+ * either way: Check runs the declarative evaluator directly against the
+ * submitted text or index, no runner involved. `payload.code` already ran
+ * once, at publish time, to confirm the checks' expected value — or chosen
+ * option — actually matches its real output (lib/task/types.ts).
  */
 import { useEffect, useRef, useState } from 'react';
 import { evaluateChecks, type CheckReport } from '@/lib/checker';
@@ -20,7 +23,9 @@ interface PredictTaskViewProps {
 }
 
 export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true }: PredictTaskViewProps) {
+  const isChoice = task.payload.answerMode === 'choice';
   const [text, setText] = useState('');
+  const [selected, setSelected] = useState<number | null>(null);
   const [report, setReport] = useState<CheckReport | null>(null);
 
   const hintsUsedRef = useRef(0);
@@ -30,7 +35,7 @@ export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true }: 
   }, []);
 
   function check() {
-    const submission = { text };
+    const submission = isChoice ? { choiceIndices: selected === null ? [] : [selected] } : { text };
     const nextReport = evaluateChecks(task.checks, { submission });
     setReport(nextReport);
     onSubmitAttempt?.({
@@ -55,25 +60,48 @@ export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true }: 
           {task.payload.code}
         </pre>
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="predict-answer">
-            {t('predict.answerLabel')}
-          </label>
-          <input
-            id="predict-answer"
-            value={text}
-            onChange={(event) => {
-              setReport(null);
-              setText(event.target.value);
-            }}
-            className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
-          />
-        </div>
+        {isChoice ? (
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-sm text-ink-muted">{t('predict.answerLabel')}</legend>
+            {(task.payload.options ?? []).map((option, index) => (
+              <label
+                key={index}
+                className="flex items-center gap-3 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              >
+                <input
+                  type="radio"
+                  name="predict-option"
+                  checked={selected === index}
+                  onChange={() => {
+                    setReport(null);
+                    setSelected(index);
+                  }}
+                />
+                {option}
+              </label>
+            ))}
+          </fieldset>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="predict-answer">
+              {t('predict.answerLabel')}
+            </label>
+            <input
+              id="predict-answer"
+              value={text}
+              onChange={(event) => {
+                setReport(null);
+                setText(event.target.value);
+              }}
+              className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
+            />
+          </div>
+        )}
 
         <button
           type="button"
           onClick={check}
-          disabled={text.trim().length === 0}
+          disabled={isChoice ? selected === null : text.trim().length === 0}
           className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
           {t('workspace.check')}

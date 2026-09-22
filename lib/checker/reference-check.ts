@@ -10,6 +10,7 @@
  * by Playwright, for CI) build on.
  */
 import { evaluateChecks } from './evaluate';
+import { normalizeText } from './text';
 import type { Check, Evidence, Submission } from './types';
 import type { RunOptions, RunResult } from '@/lib/runner';
 
@@ -84,6 +85,46 @@ export function evaluatePredictionAgainstOwnRun(text: string, checks: Check[], r
   return evaluateRun({ text }, checks, run, { stdout: run.stdout, drawing: run.drawing });
 }
 
+/**
+ * `predict`'s choice-mode equivalent: the author picks which of
+ * `payload.options` the code prints via a single `choice_equals` check, but
+ * nothing stops that index from being wrong by hand. This runs the code and
+ * confirms the chosen option's own text actually equals the real stdout —
+ * the same rule 5 guarantee `evaluatePredictionAgainstOwnRun` gives text
+ * mode, applied to a chosen option instead of a typed string. Structural
+ * problems (no check, more than one, an out-of-range index) are reported
+ * here too rather than assumed already caught — `lib/task/predict.ts`'s
+ * `validatePredictChoiceChecks` gives the same errors before anything runs,
+ * but this function has no dependency on it (lib/checker/ never imports
+ * lib/task/ — the dependency runs the other way).
+ */
+export function evaluatePredictionChoiceAgainstOwnRun(options: string[], checks: Check[], run: RunOutcome): CheckRunOutcome {
+  if (run.error || run.timedOut) {
+    return { ranCleanly: false, passed: false, failures: [] };
+  }
+  const choiceChecks = checks.filter((check): check is Check & { kind: 'choice_equals' } => check.kind === 'choice_equals');
+  if (choiceChecks.length !== 1 || choiceChecks[0].indices.length !== 1) {
+    return {
+      ranCleanly: true,
+      passed: false,
+      failures: ['a choice-mode predict task needs exactly one choice_equals check naming exactly one index']
+    };
+  }
+  const [index] = choiceChecks[0].indices;
+  const chosenOption = options[index];
+  if (chosenOption === undefined) {
+    return { ranCleanly: true, passed: false, failures: [`choice_equals references option ${index}, but there is no such option`] };
+  }
+  const matches = normalizeText(chosenOption, 'trim') === normalizeText(run.stdout, 'trim');
+  return {
+    ranCleanly: true,
+    passed: matches,
+    failures: matches
+      ? []
+      : [`option "${chosenOption}" does not match the code's real output: "${run.stdout.trim()}"`]
+  };
+}
+
 /** The subset of a task's shape this needs — mirrors validate.ts's TaskShape. */
 export interface ReferenceCheckTask {
   slug: string;
@@ -91,7 +132,7 @@ export interface ReferenceCheckTask {
   checks: Check[];
   cases?: { stdin: string[]; checks?: Check[]; label?: string }[] | null;
   reference?: { code: string } | null;
-  payload?: { broken?: string };
+  payload?: { broken?: string; answerMode?: 'text' | 'choice'; options?: string[] };
 }
 
 export interface ReferenceCheckFailure {
@@ -140,10 +181,13 @@ export async function checkTaskReference(
       exprs: exprsOf(checks)
     });
     // `predict` has no code of its own to submit — a perfect prediction IS
-    // the reference's real stdout (lib/task/types.ts).
+    // the reference's real stdout (lib/task/types.ts). Choice mode compares
+    // that stdout to the chosen option's text instead of a typed string.
     const outcome =
       task.type === 'predict'
-        ? evaluatePredictionAgainstOwnRun(result.stdout, checks, result)
+        ? task.payload?.answerMode === 'choice'
+          ? evaluatePredictionChoiceAgainstOwnRun(task.payload.options ?? [], checks, result)
+          : evaluatePredictionAgainstOwnRun(result.stdout, checks, result)
         : evaluateAgainstOwnRun(referenceCode, checks, result);
     if (!outcome.ranCleanly) {
       failures.push({
