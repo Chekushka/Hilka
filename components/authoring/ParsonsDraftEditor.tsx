@@ -40,6 +40,7 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [linesText, setLinesText] = useState(formatParsonsLines(task.payload.lines));
   const [distractorsText, setDistractorsText] = useState((task.payload.distractors ?? []).join('\n'));
+  const [indentMode, setIndentMode] = useState<'given' | 'chosen'>(task.payload.indentMode);
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
   const [hintsText, setHintsText] = useState(task.hints.join('\n'));
   const [difficulty, setDifficulty] = useState(task.difficulty);
@@ -74,7 +75,7 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
           prompt,
           lines: parsedLines,
           distractors: parseHints(distractorsText),
-          indentMode: 'given'
+          indentMode
         },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
@@ -196,6 +197,22 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
             onChange={(event) => setDistractorsText(event.target.value)}
             className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="parsonsIndentMode">
+            {t('authoring.parsonsIndentModeLabel')}
+          </label>
+          <select
+            id="parsonsIndentMode"
+            value={indentMode}
+            onChange={(event) => setIndentMode(event.target.value as 'given' | 'chosen')}
+            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+          >
+            <option value="given">{t('authoring.parsonsIndentModeGiven')}</option>
+            <option value="chosen">{t('authoring.parsonsIndentModeChosen')}</option>
+          </select>
+          {indentMode === 'chosen' && <p className="text-xs text-ink-muted">{t('authoring.parsonsIndentModeChosenHint')}</p>}
         </div>
 
         <div className="flex flex-col gap-1.5">

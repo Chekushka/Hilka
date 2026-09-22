@@ -1,0 +1,31 @@
+{
+  "slug": "g7-predict-for-range-sum",
+  "topicSlug": "loops-for",
+  "type": "predict",
+  "title": "Що виведе цикл?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "total = 0\nfor i in range(1, 5):\n    total += i\nprint(total)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "10",
+      "normalize": "trim",
+      "message": "range(1, 5) дає числа 1, 2, 3, 4 — їхня сума дорівнює 10."
+    }
+  ],
+  "hints": [
+    "range(1, 5) перебирає числа від 1 до 4 включно — 5 у результат не входить.",
+    "На кожному кроці total збільшується на поточне i: 1, потім +2, потім +3, потім +4."
+  ],
+  "reference": {
+    "code": "total = 0\nfor i in range(1, 5):\n    total += i\nprint(total)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

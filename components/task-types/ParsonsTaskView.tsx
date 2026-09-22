@@ -7,9 +7,10 @@
  * declarative evaluator directly against the assembled order, no runner
  * involved.
  *
- * Only `indentMode: 'given'` is supported (lib/task/types.ts) — indentation
- * is shown for context but is not something the student sets or is graded
- * on here.
+ * `indentMode: 'given'` shows each line's indent for context, fixed, not
+ * graded. `'chosen'` (lib/task/types.ts) hides it — every line starts flat
+ * and the student sets its indent with the Indent/Outdent buttons on each
+ * answer row, graded by `order_equals`'s `checkIndent`/`indents`.
  *
  * Reordering works by drag (@dnd-kit, pointer + keyboard sensors) and by the
  * add/remove buttons alone, so a student who cannot or does not want to drag
@@ -65,7 +66,18 @@ function BankRow({ item, onAdd }: { item: ParsonsPoolItem; onAdd: () => void }) 
   );
 }
 
-function AnswerRow({ item, onRemove }: { item: ParsonsPoolItem; onRemove: () => void }) {
+function AnswerRow({
+  item,
+  indent,
+  onRemove,
+  onIndentChange
+}: {
+  item: ParsonsPoolItem;
+  indent: number;
+  onRemove: () => void;
+  /** Present only in `indentMode: 'chosen'` — absent means indent is fixed, per `'given'`. */
+  onIndentChange?: (delta: number) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.poolIndex
   });
@@ -73,7 +85,7 @@ function AnswerRow({ item, onRemove }: { item: ParsonsPoolItem; onRemove: () => 
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    paddingLeft: `${1 + item.indent * 1.5}rem`
+    paddingLeft: `${1 + indent * 1.5}rem`
   };
   return (
     <li
@@ -93,20 +105,55 @@ function AnswerRow({ item, onRemove }: { item: ParsonsPoolItem; onRemove: () => 
         </button>
         {item.text}
       </span>
-      <button type="button" onClick={onRemove} className="shrink-0 text-xs text-accent">
-        {t('parsons.remove')}
-      </button>
+      <span className="flex shrink-0 items-center gap-2">
+        {onIndentChange && (
+          <span className="flex items-center gap-1 text-xs text-ink-muted">
+            <button
+              type="button"
+              onClick={() => onIndentChange(-1)}
+              disabled={indent === 0}
+              aria-label={t('parsons.indentOut')}
+              className="disabled:opacity-30"
+            >
+              ←
+            </button>
+            <span aria-live="polite">{t('parsons.indentLabel', { level: indent })}</span>
+            <button type="button" onClick={() => onIndentChange(1)} aria-label={t('parsons.indentIn')}>
+              →
+            </button>
+          </span>
+        )}
+        <button type="button" onClick={onRemove} className="text-xs text-accent">
+          {t('parsons.remove')}
+        </button>
+      </span>
     </li>
   );
 }
 
 export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true }: ParsonsTaskViewProps) {
+  const isChosen = task.payload.indentMode === 'chosen';
   const pool = useMemo(() => parsonsPool(task.payload), [task.payload]);
   const byIndex = useMemo(() => new Map(pool.map((item) => [item.poolIndex, item])), [pool]);
 
   const [bank, setBank] = useState<number[]>(() => shuffled(pool.map((item) => item.poolIndex)));
   const [answer, setAnswer] = useState<number[]>([]);
+  // 'chosen' only — every line starts flat; the student sets each one's
+  // indent, which is the whole thing being graded. Unset entries read as 0.
+  const [chosenIndents, setChosenIndents] = useState<Record<number, number>>({});
   const [report, setReport] = useState<CheckReport | null>(null);
+
+  function indentOf(poolIndex: number): number {
+    return isChosen ? (chosenIndents[poolIndex] ?? 0) : (byIndex.get(poolIndex)?.indent ?? 0);
+  }
+
+  function changeIndent(poolIndex: number, delta: number) {
+    setReport(null);
+    setChosenIndents((previous) => ({
+      ...previous,
+      [poolIndex]: Math.max(0, (previous[poolIndex] ?? 0) + delta)
+    }));
+  }
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -129,6 +176,10 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true }: 
     setReport(null);
     setAnswer((previous) => previous.filter((i) => i !== poolIndex));
     setBank((previous) => [...previous, poolIndex].sort((a, b) => a - b));
+    // Re-adding starts flat again, same as its first placement.
+    setChosenIndents((previous) =>
+      Object.fromEntries(Object.entries(previous).filter(([key]) => Number(key) !== poolIndex))
+    );
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -145,10 +196,7 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true }: 
 
   function check() {
     const submission = {
-      orderedLines: answer.map((poolIndex) => {
-        const item = byIndex.get(poolIndex);
-        return { index: poolIndex, indent: item?.indent ?? 0 };
-      })
+      orderedLines: answer.map((poolIndex) => ({ index: poolIndex, indent: indentOf(poolIndex) }))
     };
     const nextReport = evaluateChecks(task.checks, { submission });
     setReport(nextReport);
@@ -190,7 +238,13 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true }: 
                 {answer.map((poolIndex) => {
                   const item = byIndex.get(poolIndex);
                   return item ? (
-                    <AnswerRow key={poolIndex} item={item} onRemove={() => removeFromAnswer(poolIndex)} />
+                    <AnswerRow
+                      key={poolIndex}
+                      item={item}
+                      indent={indentOf(poolIndex)}
+                      onRemove={() => removeFromAnswer(poolIndex)}
+                      onIndentChange={isChosen ? (delta) => changeIndent(poolIndex, delta) : undefined}
+                    />
                   ) : null;
                 })}
               </ul>

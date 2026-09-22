@@ -1,0 +1,38 @@
+{
+  "slug": "g7-code-sum-until-zero",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Сума чисел до нуля",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Зчитуй цілі числа одне за одним, поки не введуть 0. Після цього виведи їхню суму (без урахування самого нуля).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "три числа",
+      "stdin": ["3", "5", "0"],
+      "checks": [{ "kind": "number_close", "value": 8, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "з від'ємним числом",
+      "stdin": ["10", "-2", "7", "0"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 15, "tol": 0.01, "which": "last" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "while повторює тіло циклу, поки умова істинна — тут поки число не дорівнює 0.",
+    "Заведи змінну для суми й додавай до неї кожне зчитане число.",
+    "Не забудь зчитати наступне число всередині циклу — інакше він ніколи не завершиться."
+  ],
+  "reference": {
+    "code": "total = 0\nn = int(input())\nwhile n != 0:\n    total += n\n    n = int(input())\nprint(total)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

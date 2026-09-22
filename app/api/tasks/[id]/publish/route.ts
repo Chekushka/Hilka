@@ -23,9 +23,14 @@
  *
  * `predict` — runs exactly like `code`: `payload.code` IS the reference,
  * there is no separate solution to write. The posted run's stdout stands in
- * for a perfect prediction (`evaluatePredictionAgainstOwnRun`), so this
- * confirms the checks the author wrote (e.g. `text_equals`) actually match
- * what the code prints, instead of trusting a hand-typed value.
+ * for a perfect prediction. In text mode (`evaluatePredictionAgainstOwnRun`)
+ * this confirms the checks the author wrote (e.g. `text_equals`) actually
+ * match what the code prints; in choice mode
+ * (`validatePredictChoiceChecks` + `evaluatePredictionChoiceAgainstOwnRun`)
+ * it additionally confirms the `choice_equals` index is structurally sound
+ * (exactly one, in range) and that the option it names is actually what the
+ * code prints — instead of trusting a hand-typed value or a hand-picked
+ * index either way.
  *
  * `fix` — like `code`, plus one extra proof: `payload.broken` (already
  * saved, read from `task` rather than re-trusted from the request body)
@@ -54,12 +59,14 @@ import {
   evaluateAgainstOwnRun,
   evaluateChecks,
   evaluatePredictionAgainstOwnRun,
+  evaluatePredictionChoiceAgainstOwnRun,
   evaluateRun,
   type Check,
   type RunOutcome
 } from '@/lib/checker';
 import { getTaskForAuthoring, publishTask } from '@/lib/db/task-authoring';
 import { parsonsCanonicalSubmission } from '@/lib/task/parsons';
+import { validatePredictChoiceChecks } from '@/lib/task/predict';
 import { validateQuizChecks } from '@/lib/task/quiz';
 import type { RunCase } from '@/lib/task/types';
 
@@ -228,6 +235,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
+  if (task.type === 'predict' && task.payload?.type === 'predict' && task.payload.answerMode === 'choice') {
+    const structuralErrors = validatePredictChoiceChecks(task.payload, task.checks);
+    if (structuralErrors.length > 0) {
+      return NextResponse.json({ error: 'reference_fails_checks', failures: structuralErrors }, { status: 422 });
+    }
+  }
+
   // Only `code` ever has cases here — `predict`'s payload.code and `fill`'s
   // template have no stdin story of their own.
   if (task.type === 'code' && task.cases && task.cases.length > 0) {
@@ -245,8 +259,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
   } else {
     const outcome =
-      task.type === 'predict'
-        ? evaluatePredictionAgainstOwnRun(body.run.stdout, task.checks, body.run)
+      task.type === 'predict' && task.payload?.type === 'predict'
+        ? task.payload.answerMode === 'choice'
+          ? evaluatePredictionChoiceAgainstOwnRun(task.payload.options ?? [], task.checks, body.run)
+          : evaluatePredictionAgainstOwnRun(body.run.stdout, task.checks, body.run)
         : evaluateAgainstOwnRun(body.referenceCode, task.checks, body.run);
     if (!outcome.ranCleanly) {
       return NextResponse.json({ error: 'reference_run_failed', detail: body.run.error }, { status: 422 });

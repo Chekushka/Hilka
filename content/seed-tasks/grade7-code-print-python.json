@@ -1,0 +1,31 @@
+{
+  "slug": "g7-code-print-python",
+  "topicSlug": "intro",
+  "type": "code",
+  "title": "Перший вивід",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Виведи на екран слово Python за допомогою функції print().",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Python",
+      "trim": true,
+      "message": "Програма має вивести рівно одне слово: Python."
+    }
+  ],
+  "hints": [
+    "Функція print() виводить текст на екран.",
+    "Текст (рядок) пишеться в лапках: print(\"Python\")."
+  ],
+  "reference": {
+    "code": "print(\"Python\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

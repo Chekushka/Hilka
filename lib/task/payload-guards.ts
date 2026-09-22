@@ -36,9 +36,7 @@ export function isParsonsPayload(value: unknown): value is ParsonsPayload {
     p.lines.every(isParsonsLine) &&
     (p.distractors === undefined ||
       (Array.isArray(p.distractors) && p.distractors.every((d) => typeof d === 'string'))) &&
-    // 'chosen' is documented but not built yet (lib/task/types.ts) — reject
-    // it here rather than storing a payload nothing can grade.
-    p.indentMode === 'given'
+    (p.indentMode === 'given' || p.indentMode === 'chosen')
   );
 }
 
@@ -58,14 +56,19 @@ export function isQuizPayload(value: unknown): value is QuizPayload {
 export function isPredictPayload(value: unknown): value is PredictPayload {
   if (typeof value !== 'object' || value === null) return false;
   const p = value as Record<string, unknown>;
+  if (p.type !== 'predict' || typeof p.prompt !== 'string' || typeof p.code !== 'string' || p.code.length === 0) {
+    return false;
+  }
+  if (p.answerMode === 'text') {
+    return true;
+  }
+  // imageOptions is documented but not built yet (lib/task/types.ts) — reject
+  // it here rather than storing a payload nothing can render or grade.
   return (
-    p.type === 'predict' &&
-    typeof p.prompt === 'string' &&
-    typeof p.code === 'string' &&
-    p.code.length > 0 &&
-    // 'choice' and imageOptions are documented but not built yet (lib/task/types.ts) — reject
-    // them here rather than storing a payload nothing can render or grade.
-    p.answerMode === 'text'
+    p.answerMode === 'choice' &&
+    Array.isArray(p.options) &&
+    p.options.length >= 2 &&
+    p.options.every((option) => typeof option === 'string')
   );
 }
 

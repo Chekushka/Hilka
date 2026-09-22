@@ -114,10 +114,12 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   const timeUp = remainingS === 0;
 
   useEffect(() => {
-    if (!selectedTaskId || fetchedRef.current.has(selectedTaskId)) return;
+    if (!selectedTaskId || !studentName || fetchedRef.current.has(selectedTaskId)) return;
     fetchedRef.current.add(selectedTaskId);
     let cancelled = false;
-    fetch(`/api/sessions/${code}/tasks/${selectedTaskId}`)
+    // `student` lets a parameterized task (docs/TASK_SCHEMA.md) resolve to
+    // this student's own variant server-side; a task with no params ignores it.
+    fetch(`/api/sessions/${code}/tasks/${selectedTaskId}?student=${encodeURIComponent(studentName)}`)
       .then((response) => (response.ok ? (response.json() as Promise<Task>) : Promise.reject()))
       .then((task) => {
         if (!cancelled) setTaskCache((previous) => ({ ...previous, [selectedTaskId]: task }));
@@ -128,7 +130,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     return () => {
       cancelled = true;
     };
-  }, [code, selectedTaskId]);
+  }, [code, selectedTaskId, studentName]);
 
   const selectedTask = selectedTaskId ? (taskCache[selectedTaskId] ?? null) : null;
 
@@ -274,6 +276,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
           <li key={task.id}>
             <button
               type="button"
+              data-task-id={task.id}
               onClick={() => setSelectedTaskId(task.id)}
               className="flex w-full items-center justify-between rounded-md border border-line px-4 py-3 text-left text-ink"
             >

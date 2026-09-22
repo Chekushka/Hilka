@@ -43,6 +43,8 @@ export function PredictDraftEditor({ task }: PredictDraftEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [code, setCode] = useState(task.payload.code);
+  const [answerMode, setAnswerMode] = useState<'text' | 'choice'>(task.payload.answerMode);
+  const [optionsText, setOptionsText] = useState((task.payload.options ?? []).join('\n'));
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
   const [hintsText, setHintsText] = useState(task.hints.join('\n'));
   const [difficulty, setDifficulty] = useState(task.difficulty);
@@ -78,6 +80,12 @@ export function PredictDraftEditor({ task }: PredictDraftEditorProps) {
       setSaveError(t('authoring.predictCodeEmpty'));
       return { ok: false };
     }
+    const parsedOptions = parseHints(optionsText);
+    if (answerMode === 'choice' && parsedOptions.length < 2) {
+      setSaveState('error');
+      setSaveError(t('authoring.predictOptionsEmpty'));
+      return { ok: false };
+    }
     setSaveState('saving');
     setSaveError(null);
     const response = await fetch(`/api/tasks/${task.id}`, {
@@ -85,7 +93,10 @@ export function PredictDraftEditor({ task }: PredictDraftEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'predict', prompt, code, answerMode: 'text' },
+        payload:
+          answerMode === 'choice'
+            ? { type: 'predict', prompt, code, answerMode: 'choice', options: parsedOptions }
+            : { type: 'predict', prompt, code, answerMode: 'text' },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -200,6 +211,44 @@ export function PredictDraftEditor({ task }: PredictDraftEditorProps) {
           />
           <p className="text-xs text-ink-muted">{t('authoring.predictCodeHint')}</p>
         </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="predictAnswerMode">
+            {t('authoring.predictAnswerModeLabel')}
+          </label>
+          <select
+            id="predictAnswerMode"
+            value={answerMode}
+            onChange={(event) => setAnswerMode(event.target.value as 'text' | 'choice')}
+            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+          >
+            <option value="text">{t('authoring.predictAnswerModeText')}</option>
+            <option value="choice">{t('authoring.predictAnswerModeChoice')}</option>
+          </select>
+        </div>
+
+        {answerMode === 'choice' && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="predictOptions">
+              {t('authoring.predictOptionsLabel')}
+            </label>
+            <textarea
+              id="predictOptions"
+              rows={4}
+              value={optionsText}
+              onChange={(event) => setOptionsText(event.target.value)}
+              className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+            />
+            <p className="text-xs text-ink-muted">{t('authoring.predictOptionsHint')}</p>
+            <ul className="mt-1 text-xs text-ink-muted">
+              {parseHints(optionsText).map((option, index) => (
+                <li key={index}>
+                  {index}: {option}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="checks">

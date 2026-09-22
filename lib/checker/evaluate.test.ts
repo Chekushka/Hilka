@@ -32,6 +32,26 @@ describe('checks that need no execution', () => {
     expect(evaluateChecks(checks, evidence({ submission: wrong })).passed).toBe(false);
   });
 
+  it('ignores indent when checkIndent is not set, even if it differs', () => {
+    const checks: Check[] = [{ kind: 'order_equals', lines: [0, 1] }];
+    const submission = { orderedLines: [{ index: 0, indent: 3 }, { index: 1, indent: 0 }] };
+    expect(evaluateChecks(checks, evidence({ submission })).passed).toBe(true);
+  });
+
+  it('checks indent too when checkIndent is set (indentMode: chosen)', () => {
+    const checks: Check[] = [{ kind: 'order_equals', lines: [0, 1], checkIndent: true, indents: [0, 1] }];
+    const right = { orderedLines: [{ index: 0, indent: 0 }, { index: 1, indent: 1 }] };
+    const wrong = { orderedLines: [{ index: 0, indent: 0 }, { index: 1, indent: 0 }] };
+    expect(evaluateChecks(checks, evidence({ submission: right })).passed).toBe(true);
+    expect(evaluateChecks(checks, evidence({ submission: wrong })).passed).toBe(false);
+  });
+
+  it('never passes checkIndent with no indents to compare against — an authoring mistake, not a lenient default', () => {
+    const checks: Check[] = [{ kind: 'order_equals', lines: [0, 1], checkIndent: true }];
+    const submission = { orderedLines: [{ index: 0, indent: 0 }, { index: 1, indent: 0 }] };
+    expect(evaluateChecks(checks, evidence({ submission })).passed).toBe(false);
+  });
+
   it('compares text with the requested normalization', () => {
     const checks: Check[] = [{ kind: 'text_equals', value: 'привіт', normalize: 'loose' }];
     expect(evaluateChecks(checks, evidence({ submission: { text: ' Привіт ' } })).passed).toBe(true);

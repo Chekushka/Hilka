@@ -4,6 +4,7 @@
  * built, rather than being declared in full and left half-implemented.
  */
 import type { Check, ReferenceArtifacts } from '@/lib/checker';
+import type { ParamSpec } from '@/lib/seed';
 
 export type TaskType = 'quiz' | 'predict' | 'parsons' | 'fill' | 'code' | 'fix';
 export type TaskStatus = 'draft' | 'published' | 'archived';
@@ -22,10 +23,12 @@ export interface ParsonsLine {
 }
 
 /**
- * `indentMode: 'chosen'` is documented in TASK_SCHEMA.md but not built yet —
- * the checker's `order_equals` has nowhere to read an expected indent from,
- * so nothing here can grade it. Every parsons task is authored and rendered
- * as `'given'` until that lands (docs/TASKS.md Open Questions).
+ * `indentMode: 'given'` shows each line's indent for context; the student
+ * only orders the lines. `'chosen'` hides it — the student sets each line's
+ * indent too (`components/task-types/ParsonsTaskView.tsx`), graded by
+ * `order_equals`'s `checkIndent`/`indents` against `lines[i].indent`, the
+ * same value that already IS the correct answer either way
+ * (`lib/task/parsons.ts`'s `parsonsCanonicalSubmission`).
  */
 export interface ParsonsPayload {
   type: 'parsons';
@@ -44,18 +47,23 @@ export interface QuizPayload {
 }
 
 /**
- * `answerMode: 'choice'` and `imageOptions` are documented in TASK_SCHEMA.md
- * but not built yet — only a free-text prediction is graded today. The
- * authoring API rejects anything but `'text'`, and
- * `components/task-types/PredictTaskView.tsx` only ever renders a text
- * input (docs/TASKS.md Open Questions has the parsons `'chosen'` precedent
- * for this kind of partial build).
+ * `answerMode: 'choice'` picks one of `options` — the candidate predicted
+ * outputs — graded with `choice_equals`, same as `quiz`'s single-answer
+ * mode; exactly one option must be correct (lib/task/predict.ts). `text`
+ * stays free-typed, graded with `text_equals`. `imageOptions` (N turtle
+ * reference programs rendered as pictures) is documented in TASK_SCHEMA.md
+ * but not built yet — its data shape (where the N programs themselves would
+ * live) is not decided, so there is nothing here to author or render for it
+ * (docs/TASKS.md Open Questions has the parsons `'chosen'` precedent for
+ * this kind of partial build).
  */
 export interface PredictPayload {
   type: 'predict';
   prompt: string;
   code: string;
-  answerMode: 'text';
+  answerMode: 'text' | 'choice';
+  /** `answerMode: 'choice'` only. */
+  options?: string[];
 }
 
 /**
@@ -127,6 +135,16 @@ export interface CodeTask {
   gradeTags: number[];
   version: number;
   status: TaskStatus;
+  /**
+   * Session-only (docs/TASK_SCHEMA.md, "Parameterization"): `{name}`
+   * placeholders in `payload.prompt`/`starter`, `cases[].stdin` and
+   * `reference.code` are substituted server-side, per student, before this
+   * ever reaches a browser — `GET /api/sessions/[code]/tasks/[taskId]`
+   * strips this field from what it actually sends. Meaningless in
+   * `/practice`, which has no student identity to derive a seed from; a
+   * parameterized task must only be assigned to a session.
+   */
+  params?: ParamSpec;
 }
 
 /**

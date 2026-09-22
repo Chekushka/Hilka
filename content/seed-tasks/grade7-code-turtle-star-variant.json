@@ -1,0 +1,40 @@
+{
+  "slug": "g7-code-turtle-star-variant",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Зірка (своя сторона)",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй п'ятикутну зірку зі стороною {side}.",
+    "starter": "import turtle\n\n"
+  },
+  "params": {
+    "side": { "choice": ["60", "80", "100", "120"] }
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 5,
+      "message": "Фігура має складатися з п'яти сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Сторони не такі, як на зразку. Перевір довжину сторони з умови й кут повороту."
+    }
+  ],
+  "hints": [
+    "Черепашка вміє йти вперед: turtle.forward(...).",
+    "Зірка — це п'ять однакових кроків із поворотом на 144° після кожного.",
+    "Довжину сторони бери з умови завдання — у кожного вона своя."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(5):\n    turtle.forward({side})\n    turtle.right(144)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

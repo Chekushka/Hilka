@@ -10,8 +10,10 @@
  * by Playwright, for CI) build on.
  */
 import { evaluateChecks } from './evaluate';
+import { normalizeText } from './text';
 import type { Check, Evidence, Submission } from './types';
 import type { RunOptions, RunResult } from '@/lib/runner';
+import { enumerateParamCombinations, substituteParams, type ParamSpec } from '@/lib/seed';
 
 export type RunPython = (code: string, options: RunOptions) => Promise<RunResult>;
 
@@ -84,6 +86,46 @@ export function evaluatePredictionAgainstOwnRun(text: string, checks: Check[], r
   return evaluateRun({ text }, checks, run, { stdout: run.stdout, drawing: run.drawing });
 }
 
+/**
+ * `predict`'s choice-mode equivalent: the author picks which of
+ * `payload.options` the code prints via a single `choice_equals` check, but
+ * nothing stops that index from being wrong by hand. This runs the code and
+ * confirms the chosen option's own text actually equals the real stdout —
+ * the same rule 5 guarantee `evaluatePredictionAgainstOwnRun` gives text
+ * mode, applied to a chosen option instead of a typed string. Structural
+ * problems (no check, more than one, an out-of-range index) are reported
+ * here too rather than assumed already caught — `lib/task/predict.ts`'s
+ * `validatePredictChoiceChecks` gives the same errors before anything runs,
+ * but this function has no dependency on it (lib/checker/ never imports
+ * lib/task/ — the dependency runs the other way).
+ */
+export function evaluatePredictionChoiceAgainstOwnRun(options: string[], checks: Check[], run: RunOutcome): CheckRunOutcome {
+  if (run.error || run.timedOut) {
+    return { ranCleanly: false, passed: false, failures: [] };
+  }
+  const choiceChecks = checks.filter((check): check is Check & { kind: 'choice_equals' } => check.kind === 'choice_equals');
+  if (choiceChecks.length !== 1 || choiceChecks[0].indices.length !== 1) {
+    return {
+      ranCleanly: true,
+      passed: false,
+      failures: ['a choice-mode predict task needs exactly one choice_equals check naming exactly one index']
+    };
+  }
+  const [index] = choiceChecks[0].indices;
+  const chosenOption = options[index];
+  if (chosenOption === undefined) {
+    return { ranCleanly: true, passed: false, failures: [`choice_equals references option ${index}, but there is no such option`] };
+  }
+  const matches = normalizeText(chosenOption, 'trim') === normalizeText(run.stdout, 'trim');
+  return {
+    ranCleanly: true,
+    passed: matches,
+    failures: matches
+      ? []
+      : [`option "${chosenOption}" does not match the code's real output: "${run.stdout.trim()}"`]
+  };
+}
+
 /** The subset of a task's shape this needs — mirrors validate.ts's TaskShape. */
 export interface ReferenceCheckTask {
   slug: string;
@@ -91,7 +133,9 @@ export interface ReferenceCheckTask {
   checks: Check[];
   cases?: { stdin: string[]; checks?: Check[]; label?: string }[] | null;
   reference?: { code: string } | null;
-  payload?: { broken?: string };
+  payload?: { broken?: string; answerMode?: 'text' | 'choice'; options?: string[] };
+  /** `code` only (docs/TASK_SCHEMA.md, "Parameterization") — every combination is checked, not just one seed. */
+  params?: ParamSpec | null;
 }
 
 export interface ReferenceCheckFailure {
@@ -110,9 +154,12 @@ export interface ReferenceCheckOutcome {
 
 /**
  * Runs `task.reference.code` — once per case, or once with no stdin when
- * there are none — and confirms every check passes. For a `fix` task with a
- * `broken` payload, also confirms `broken` does NOT pass, per TASK_SCHEMA.md:
- * a "broken" program that passes is a bug in the task, not a strict solution.
+ * there are none, and once per parameter combination when the task has
+ * `params` (docs/TASK_SCHEMA.md, "Parameterization" — the whole point of
+ * verifying every combination rather than a sampled seed) — and confirms
+ * every check passes. For a `fix` task with a `broken` payload, also
+ * confirms `broken` does NOT pass, per TASK_SCHEMA.md: a "broken" program
+ * that passes is a bug in the task, not a strict solution.
  */
 export async function checkTaskReference(
   task: ReferenceCheckTask,
@@ -126,38 +173,49 @@ export async function checkTaskReference(
   const failures: ReferenceCheckFailure[] = [];
   const hasCases = (task.cases?.length ?? 0) > 0;
   const cases = hasCases ? task.cases! : [{ stdin: [], checks: [] as Check[] }];
+  const combinations = task.params ? enumerateParamCombinations(task.params) : [{}];
 
   // The target for a broken payload's shape_equals etc. below: the correct
-  // reference's own drawing/stdout from its first case.
+  // reference's own drawing/stdout from its first case (first combination,
+  // for a parameterized task — fix and params are never combined today).
   let referenceArtifacts: Evidence['reference'] = null;
 
-  for (const [i, runCase] of cases.entries()) {
-    const context = runCase.label ?? (hasCases ? `case ${i + 1}` : 'no cases');
-    const checks = [...task.checks, ...(runCase.checks ?? [])];
-    const result = await runPython(referenceCode, {
-      mode: 'headless',
-      stdin: runCase.stdin,
-      exprs: exprsOf(checks)
-    });
-    // `predict` has no code of its own to submit — a perfect prediction IS
-    // the reference's real stdout (lib/task/types.ts).
-    const outcome =
-      task.type === 'predict'
-        ? evaluatePredictionAgainstOwnRun(result.stdout, checks, result)
-        : evaluateAgainstOwnRun(referenceCode, checks, result);
-    if (!outcome.ranCleanly) {
-      failures.push({
-        context,
-        message: result.error
-          ? `reference solution raised ${result.error.type}: ${result.error.message}`
-          : 'reference solution timed out'
+  for (const combo of combinations) {
+    const comboCode = task.params ? substituteParams(referenceCode, combo) : referenceCode;
+    const comboLabel = task.params ? ` (${JSON.stringify(combo)})` : '';
+
+    for (const [i, runCase] of cases.entries()) {
+      const context = (runCase.label ?? (hasCases ? `case ${i + 1}` : 'no cases')) + comboLabel;
+      const checks = [...task.checks, ...(runCase.checks ?? [])];
+      const stdin = task.params ? runCase.stdin.map((line) => substituteParams(line, combo)) : runCase.stdin;
+      const result = await runPython(comboCode, {
+        mode: 'headless',
+        stdin,
+        exprs: exprsOf(checks)
       });
-      continue;
+      // `predict` has no code of its own to submit — a perfect prediction IS
+      // the reference's real stdout (lib/task/types.ts). Choice mode compares
+      // that stdout to the chosen option's text instead of a typed string.
+      const outcome =
+        task.type === 'predict'
+          ? task.payload?.answerMode === 'choice'
+            ? evaluatePredictionChoiceAgainstOwnRun(task.payload.options ?? [], checks, result)
+            : evaluatePredictionAgainstOwnRun(result.stdout, checks, result)
+          : evaluateAgainstOwnRun(comboCode, checks, result);
+      if (!outcome.ranCleanly) {
+        failures.push({
+          context,
+          message: result.error
+            ? `reference solution raised ${result.error.type}: ${result.error.message}`
+            : 'reference solution timed out'
+        });
+        continue;
+      }
+      if (referenceArtifacts === null) {
+        referenceArtifacts = { stdout: result.stdout, drawing: result.drawing };
+      }
+      outcome.failures.forEach((message) => failures.push({ context, message }));
     }
-    if (referenceArtifacts === null) {
-      referenceArtifacts = { stdout: result.stdout, drawing: result.drawing };
-    }
-    outcome.failures.forEach((message) => failures.push({ context, message }));
   }
 
   if (task.type === 'fix' && task.payload?.broken) {

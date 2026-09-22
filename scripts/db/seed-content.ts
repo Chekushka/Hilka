@@ -15,6 +15,7 @@ import { validateTaskChecks } from '@/lib/checker';
 import { getDb } from '@/lib/db/client';
 import { tasks, topics } from '@/lib/db/schema';
 import type { Check } from '@/lib/checker';
+import type { ParamSpec } from '@/lib/seed';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 
 const root = path.join(process.cwd(), 'content');
@@ -38,6 +39,8 @@ interface TaskContent {
   cases?: RunCase[];
   hints: string[];
   reference?: Reference;
+  /** `code` only (docs/TASK_SCHEMA.md, "Parameterization"). */
+  params?: ParamSpec;
   difficulty: number;
   gradeTags: number[];
   version: number;
@@ -108,6 +111,7 @@ async function main() {
       checks: task.checks,
       cases: task.cases ?? null,
       reference: task.reference ?? null,
+      params: task.params ?? null,
       hints: task.hints ?? [],
       difficulty: task.difficulty,
       gradeTags: task.gradeTags,

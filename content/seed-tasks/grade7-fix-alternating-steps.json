@@ -1,0 +1,36 @@
+{
+  "slug": "g7-fix-alternating-steps",
+  "topicSlug": "turtle-conditions",
+  "type": "fix",
+  "title": "Парні й непарні кроки",
+  "payload": {
+    "type": "fix",
+    "surface": "turtle",
+    "prompt": "Ця програма мала малювати довгі кроки на парних номерах (0, 2, ...) і короткі на непарних, але зараз усе навпаки. Знайди помилку в умові й виправ її.",
+    "broken": "import turtle\nfor i in range(4):\n    if i % 2 != 0:\n        turtle.forward(100)\n    else:\n        turtle.forward(50)\n    turtle.right(90)"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 4,
+      "message": "Фігура має складатися з чотирьох сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Довжини сторін не такі, як на зразку. Перевір, для яких i умова i % 2 == 0 істинна."
+    }
+  ],
+  "hints": [
+    "i % 2 == 0 істинна для парних i (0, 2, 4, ...), а не для непарних.",
+    "Зараз довгий крок малюється при i % 2 != 0 — це навпаки."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    if i % 2 == 0:\n        turtle.forward(100)\n    else:\n        turtle.forward(50)\n    turtle.right(90)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

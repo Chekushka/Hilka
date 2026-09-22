@@ -1,0 +1,44 @@
+{
+  "slug": "g7-code-sign-of-number",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Додатне, від'ємне чи нуль",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число. Якщо воно додатне — виведи «додатне», якщо від'ємне — виведи «від'ємне», а якщо це нуль — виведи «нуль».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "додатне",
+      "stdin": ["5"],
+      "checks": [{ "kind": "last_line_equals", "value": "додатне", "normalize": "trim" }]
+    },
+    {
+      "label": "від'ємне",
+      "stdin": ["-3"],
+      "hidden": true,
+      "checks": [{ "kind": "last_line_equals", "value": "від'ємне", "normalize": "trim" }]
+    },
+    {
+      "label": "нуль",
+      "stdin": ["0"],
+      "hidden": true,
+      "checks": [{ "kind": "last_line_equals", "value": "нуль", "normalize": "trim" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порівняй число з нулем за допомогою if.",
+    "Три варіанти відповіді — це if, elif і else.",
+    "n > 0 перевіряє «більше за нуль», n < 0 — «менше за нуль»."
+  ],
+  "reference": {
+    "code": "n = int(input())\nif n > 0:\n    print(\"додатне\")\nelif n < 0:\n    print(\"від'ємне\")\nelse:\n    print(\"нуль\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

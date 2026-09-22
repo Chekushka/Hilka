@@ -11,7 +11,7 @@ import type { Segment } from '@/lib/runner';
 export type Check = { message?: string } & (
   // --- no execution ---------------------------------------------------------
   | { kind: 'choice_equals'; indices: number[] }
-  | { kind: 'order_equals'; lines: number[]; checkIndent?: boolean }
+  | { kind: 'order_equals'; lines: number[]; checkIndent?: boolean; indents?: number[] }
   | { kind: 'text_equals'; value: string; normalize?: 'trim' | 'loose' }
 
   // --- console output -------------------------------------------------------

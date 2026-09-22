@@ -20,7 +20,12 @@ export type {
   ShapeNormalization,
   Submission
 } from './types';
-export { evaluateAgainstOwnRun, evaluatePredictionAgainstOwnRun, evaluateRun } from './reference-check';
+export {
+  evaluateAgainstOwnRun,
+  evaluatePredictionAgainstOwnRun,
+  evaluatePredictionChoiceAgainstOwnRun,
+  evaluateRun
+} from './reference-check';
 export type {
   CheckRunOutcome,
   ReferenceCheckFailure,

@@ -70,6 +70,11 @@ function PublishedParsonsView({ task }: { task: TaskRow }) {
       </p>
       <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
       <p className="text-ink">{task.payload.prompt}</p>
+      <p className="text-sm text-ink-muted">
+        {task.payload.indentMode === 'chosen'
+          ? t('authoring.parsonsIndentModeChosen')
+          : t('authoring.parsonsIndentModeGiven')}
+      </p>
 
       <div>
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.parsonsLinesLabel')}</p>

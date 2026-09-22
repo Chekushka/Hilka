@@ -78,20 +78,27 @@ editing surface, so there is no separate file to hand out.
 
 Notes:
 - `parsons.indentMode: 'chosen'` is the harder variant and the only one that teaches Python
-  indentation. Default to `'given'` for a topic's first Parsons task and `'chosen'` later.
-  **Not built**: `order_equals` has nowhere to read an expected indent from (see "Implementation
-  status" below), so the authoring API rejects `'chosen'` and `components/task-types/ParsonsTaskView.tsx`
-  only ever renders `'given'` — indentation is shown for context, never set or graded.
+  indentation. Default to `'given'` for a topic's first Parsons task and `'chosen'` later. Every
+  line starts flat in `components/task-types/ParsonsTaskView.tsx`; the student sets each one's
+  indent with Indent/Outdent buttons on the answer row, graded by `order_equals`'s
+  `checkIndent`/`indents` against `payload.lines[i].indent` — the same value that already IS the
+  correct answer either way (`lib/task/parsons.ts`'s `parsonsCanonicalSubmission`).
 - `predict.imageOptions` renders N turtle reference programs as pictures and asks which one the
   shown code produces. The author writes N short programs; the platform renders them. No
   hand-drawn assets anywhere.
-- **Not built**: `predict.answerMode: 'choice'` and `imageOptions`. Only `'text'` is graded
-  today — the authoring API rejects anything else, and
-  `components/task-types/PredictTaskView.tsx` only ever renders a text input. `payload.code` IS
-  the reference solution (there is nothing separate to write); the publish gate runs it once and
-  checks that the author's `text_equals` value actually matches its real stdout
-  (`lib/checker/reference-check.ts`'s `evaluatePredictionAgainstOwnRun`), the same rule 5
-  guarantee `code` gets.
+- `predict.answerMode: 'choice'` picks one of `options` — the candidate predicted outputs —
+  graded with a single `choice_equals` check, same mechanism as `quiz`'s single-answer mode.
+  `payload.code` IS the reference solution either way; in choice mode the publish gate both
+  confirms `choice_equals` is structurally sound (exactly one index, in range —
+  `lib/task/predict.ts`'s `validatePredictChoiceChecks`) and runs the code once to confirm the
+  chosen option's own text actually equals its real stdout
+  (`lib/checker/reference-check.ts`'s `evaluatePredictionChoiceAgainstOwnRun`) — the same rule 5
+  guarantee text mode gets from `evaluatePredictionAgainstOwnRun`, applied to a chosen option
+  instead of a typed string. `components/task-types/PredictTaskView.tsx` renders radio options
+  instead of a text input when `answerMode === 'choice'`.
+- **Not built**: `predict.imageOptions`. Its data shape — where the N reference programs
+  themselves would be stored on the payload — is not decided yet, so there is nothing to author
+  or render for it.
 
 ## File Delivery
 
@@ -224,7 +231,7 @@ the «таблиця тестування» the grade 9 programme asks for.
 type Check = { message?: string } & (
   // --- no execution -------------------------------------------------------
   | { kind: 'choice_equals';   indices: number[] }
-  | { kind: 'order_equals';    lines: number[]; checkIndent?: boolean }
+  | { kind: 'order_equals';    lines: number[]; checkIndent?: boolean; indents?: number[] }
   | { kind: 'text_equals';     value: string; normalize?: 'trim' | 'loose' }
 
   // --- console output -----------------------------------------------------
@@ -263,11 +270,11 @@ type Check = { message?: string } & (
 `number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`,
 `uses`, `forbids`, `var_equals`, `expr`.
 
-`order_equals`'s `checkIndent` is declared but not evaluated — the check only ever compares
-`submission.orderedLines[i].index` against `check.lines[i]`, never `.indent`, because nothing
-carries the *expected* indent for it to compare against. This is exactly what blocks
-`parsons.indentMode: 'chosen'` above; giving `order_equals` an `indents` field (or similar) to
-compare against is the smallest fix, the same commit that builds `'chosen'` should add it.
+`order_equals` compares `submission.orderedLines[i].index` against `check.lines[i]` always, and
+additionally `.indent` against `check.indents[i]` when `checkIndent` is true — `indents` is the
+field TASK_SCHEMA previously lacked, now what `parsons.indentMode: 'chosen'` is graded with. A
+`checkIndent: true` with no `indents` (or a mismatched length) never passes — an authoring
+mistake, not a lenient default.
 
 `uses`/`forbids` run against `Submission.code` through `lib/checker/ast.ts`, a
 small Python tokenizer (not a full parser) that skips string and comment
@@ -372,11 +379,33 @@ Values are derived from `seed = hash(sessionId + studentName + taskId)` via a se
 `lib/seed/`, so the same student always sees the same variant and a teacher's report reproduces
 it exactly.
 
-Expected artifacts for a parameterized task cannot be precomputed for every seed. Compute them
-on demand by running the substituted reference, and cache by `(taskId, version, seed)`.
+There is no server-side Python (AI_CONTEXT.md, "Python Runner"), so "expected artifacts" are
+never precomputed or cached — `GET /api/sessions/[code]/tasks/[taskId]` substitutes the
+placeholders server-side (`lib/task/params.ts`'s `resolveTaskParams`) and hands the browser an
+otherwise-ordinary task; `lib/task/use-task-runner.ts`'s existing warm-up run (which already
+re-executes `reference.code` fresh on every page load, parameterized or not) does the rest with
+no changes of its own.
+
+This means only checks whose expected value comes from *running* the reference actually work
+today — `shape_equals`/`shape_contains` (turtle) and anything with no fixed value at all
+(`shape_props`, `uses`, `forbids`). A check with a hand-typed expected value —
+`number_close`/`text_equals`/`stdout_equals`/`var_equals` — stays fixed across every variant, so
+it is very likely wrong for at least one combination. `npm run verify:references` (which checks
+*every* combination, not a sampled seed) catches this immediately as a normal reference-check
+failure — it is a real authoring mistake, not a special case to detect separately. `expr` is the
+one exception: `check.python` is plain text, so writing the placeholder directly into the
+expression (e.g. `"total == {a} * 4"`) substitutes the same way `reference.code` does — that
+path is untested today.
 
 Keep parameter spaces small and every combination valid. A range that can produce a division by
 zero or a negative square root will produce it, in a graded session, for exactly one student.
+`lib/seed/params.ts`'s `enumerateParamCombinations` throws past 500 combinations rather than
+silently taking a long time to verify or publish.
+
+**Not built**: an authoring UI — a parameterized task is hand-authored JSON in
+`content/seed-tasks/`, the same way `cases` started (docs/TASKS.md); `params` on `fix` or
+`predict`; anything beyond `code`. `/practice` has no session or student identity, so a
+parameterized task must only ever be assigned to a session, never opened there.
 
 ## Randomness and determinism
 

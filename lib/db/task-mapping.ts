@@ -35,7 +35,8 @@ export function toCodeTask(row: TaskRow): CodeTask | null {
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
     version: row.version,
-    status: row.status
+    status: row.status,
+    params: row.params ?? undefined
   };
 }
 

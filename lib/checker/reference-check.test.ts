@@ -3,6 +3,7 @@ import {
   checkTaskReference,
   evaluateAgainstOwnRun,
   evaluatePredictionAgainstOwnRun,
+  evaluatePredictionChoiceAgainstOwnRun,
   type ReferenceCheckTask,
   type RunPython
 } from './reference-check';
@@ -167,6 +168,36 @@ describe('checkTaskReference', () => {
     expect(outcome.passed).toBe(false);
     expect(outcome.failures).toEqual([{ context: 'no cases', message: 'Очікували 20' }]);
   });
+
+  it('checks a choice-mode predict task by comparing the chosen option to the real stdout', async () => {
+    const task: ReferenceCheckTask = {
+      slug: 'g7-predict-choice',
+      type: 'predict',
+      checks: [{ kind: 'choice_equals', indices: [1] }],
+      reference: { code: 'a = 2\nb = 3\nprint(a + b * 4)' },
+      payload: { answerMode: 'choice', options: ['20', '14', '8'] }
+    };
+    const runPython: RunPython = async () => result({ stdout: '14\n' });
+    const outcome = await checkTaskReference(task, runPython);
+    expect(outcome.passed).toBe(true);
+    expect(outcome.failures).toEqual([]);
+  });
+
+  it('reports a choice-mode predict task whose chosen option does not match the real output', async () => {
+    const task: ReferenceCheckTask = {
+      slug: 'g7-predict-choice-wrong',
+      type: 'predict',
+      checks: [{ kind: 'choice_equals', indices: [0] }],
+      reference: { code: 'a = 2\nb = 3\nprint(a + b * 4)' },
+      payload: { answerMode: 'choice', options: ['20', '14', '8'] }
+    };
+    const runPython: RunPython = async () => result({ stdout: '14\n' });
+    const outcome = await checkTaskReference(task, runPython);
+    expect(outcome.passed).toBe(false);
+    expect(outcome.failures).toEqual([
+      { context: 'no cases', message: 'option "20" does not match the code\'s real output: "14"' }
+    ]);
+  });
 });
 
 describe('evaluateAgainstOwnRun', () => {
@@ -215,5 +246,63 @@ describe('evaluatePredictionAgainstOwnRun', () => {
       result({ stdout: '14\n' })
     );
     expect(outcome).toEqual({ ranCleanly: true, passed: false, failures: ['Очікували 20'] });
+  });
+});
+
+describe('evaluatePredictionChoiceAgainstOwnRun', () => {
+  it('passes when the chosen option equals the run\'s own stdout', () => {
+    const outcome = evaluatePredictionChoiceAgainstOwnRun(
+      ['20', '14', '8'],
+      [{ kind: 'choice_equals', indices: [1] }],
+      result({ stdout: '14\n' })
+    );
+    expect(outcome).toEqual({ ranCleanly: true, passed: true, failures: [] });
+  });
+
+  it('fails when the chosen option does not equal the real output', () => {
+    const outcome = evaluatePredictionChoiceAgainstOwnRun(
+      ['20', '14', '8'],
+      [{ kind: 'choice_equals', indices: [0] }],
+      result({ stdout: '14\n' })
+    );
+    expect(outcome.ranCleanly).toBe(true);
+    expect(outcome.passed).toBe(false);
+    expect(outcome.failures).toEqual(['option "20" does not match the code\'s real output: "14"']);
+  });
+
+  it('fails structurally when there is no choice_equals check at all', () => {
+    const outcome = evaluatePredictionChoiceAgainstOwnRun(['20', '14'], [], result({ stdout: '14\n' }));
+    expect(outcome.ranCleanly).toBe(true);
+    expect(outcome.passed).toBe(false);
+  });
+
+  it('fails structurally when choice_equals names more than one index', () => {
+    const outcome = evaluatePredictionChoiceAgainstOwnRun(
+      ['20', '14', '8'],
+      [{ kind: 'choice_equals', indices: [0, 1] }],
+      result({ stdout: '14\n' })
+    );
+    expect(outcome.ranCleanly).toBe(true);
+    expect(outcome.passed).toBe(false);
+  });
+
+  it('fails when choice_equals references an option that does not exist', () => {
+    const outcome = evaluatePredictionChoiceAgainstOwnRun(
+      ['20', '14'],
+      [{ kind: 'choice_equals', indices: [5] }],
+      result({ stdout: '14\n' })
+    );
+    expect(outcome.ranCleanly).toBe(true);
+    expect(outcome.passed).toBe(false);
+    expect(outcome.failures).toEqual(['choice_equals references option 5, but there is no such option']);
+  });
+
+  it('marks a run that errored as not having run cleanly', () => {
+    const outcome = evaluatePredictionChoiceAgainstOwnRun(
+      ['20', '14'],
+      [{ kind: 'choice_equals', indices: [1] }],
+      result({ error: { type: 'ZeroDivisionError', message: 'division by zero', line: 1, col: 0 } })
+    );
+    expect(outcome).toEqual({ ranCleanly: false, passed: false, failures: [] });
   });
 });
