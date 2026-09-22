@@ -22,10 +22,15 @@ Three findings that changed something, now in the Gotchas of AI_CONTEXT.md: the 
 not reachable from inside a module stub, Skulpt's `str + int` message differs from CPython's, and
 Skulpt does not echo an `input()` prompt to output.
 
-**File delivery added open items, not yet run:** two rows in check 1 (f-string format specs and
-conversion flags), a BOM/CRLF/line-number check under check 1, and a new check 7 comparing the
-turtle stub's signatures against CPython's. None of the original six checks changed; these are
-additions for the file-delivery mode (AI_CONTEXT.md, TASK_SCHEMA.md) and must be run and recorded
+**File delivery added open items.** Three of the four are done: check 1's f-string format-spec
+and conversion-flag rows, and the BOM/CRLF/line-number check, all ran clean (results above) —
+these are engine and normalization-logic properties, so a dev-machine run answers them the same
+way it would anywhere. What is still open is check 7, comparing the turtle stub's signatures
+against real CPython's — that one genuinely needs a real Python interpreter (IDLE) on the actual
+classroom machine to compare against, which nothing running inside this page can substitute for.
+The harness now renders the comparison table and records the answer; someone still has to sit at
+the machine and check each row. None of the original six checks changed; these are additions for
+the file-delivery mode (AI_CONTEXT.md, TASK_SCHEMA.md), and check 7 must be run and recorded
 before that mode's safe subset can be trusted.
 
 ## Rules
@@ -88,19 +93,27 @@ except ValueError:
 | `math`, `random` | grades 8, 9 | Work. `math.sqrt(16)` → `4.0`, `round(math.pi, 2)` → `3.14` |
 | `try / except` | grade 9 lesson 36 | Works |
 | Cyrillic in strings and output | everything | Works in literals, `print`, f-strings, `len`, and `input()` prompts |
-| f-string format specifiers, e.g. `f"{x:.2f}"` | grade 8 projects (BMI, quadratic roots) via file delivery | **Not yet checked.** Add before the next spike pass — this is the most likely engine divergence a student hits taking a file-delivery task home to IDLE. Until checked, TASK_SCHEMA.md excludes format specs from the safe subset and documents `round(x, 2)` as the replacement |
-| f-string conversion flags, e.g. `f"{x!r}"` | same | **Not yet checked**, same reasoning |
+| f-string format specifiers, e.g. `f"{x:.2f}"` | grade 8 projects (BMI, quadratic roots) via file delivery | **Works.** `x = 3.14159; f"{x:.2f}"` → `3.14`. Only `.2f` was tested — the exact form the BMI/price use case needs — not the rest of CPython's format-spec mini-language (padding, alignment, `,`, `%`, …) |
+| f-string conversion flags, e.g. `f"{x!r}"` | same | **Works.** `x = "hi"; f"{x!r}"` → `'hi'`, matching CPython's `repr()` quoting |
 
 Cyrillic is on the list deliberately. An engine that mangles «Привіт» in `print` output or in a
 string literal is unusable regardless of everything else, and it is the cheapest thing to check.
 
-**File-delivery addition, not yet run:** parse a `.py` file containing a UTF-8 BOM, CRLF line
-endings, and Ukrainian comments together, after the normalization TASK_SCHEMA.md's upload
-validation performs (BOM stripped, CRLF → `\n`), and confirm reported error line numbers still
-point at the right source line. A line-ending or BOM bug that only shifts line numbers would be
-invisible in every other check here, since none of them touch a file with mixed encoding and
-endings — it would surface for the first time as a student's IDLE-written file reporting an error
-on the wrong line.
+**File-delivery addition — done.** Parsed a `.py` source containing a UTF-8 BOM, CRLF line
+endings, and Ukrainian comments together, both raw and after the normalization TASK_SCHEMA.md's
+upload validation is specified to perform (BOM stripped, CRLF → `\n`), with a `NameError` planted
+on a known line (line 4) to check the reported line number against.
+
+| Question | Result |
+|---|---|
+| Does the raw file (BOM + CRLF, unnormalized) parse at all? | **No.** `SyntaxError` at line 1 — the BOM breaks Skulpt's parse before it reaches the real error. This is exactly why normalization has to run before anything else touches the source |
+| After normalization, does the error still land on the right line? | **Yes.** `NameError` at line 4, precisely — normalization does not shift line numbers |
+
+A line-ending or BOM bug that only shifts line numbers would have been invisible in every other
+check here, since none of them touch a file with mixed encoding and endings — it would have
+surfaced for the first time as a student's IDLE-written file reporting an error on the wrong
+line. This checks Skulpt's own parsing behaviour and the normalization logic as specified; the
+actual upload endpoint (TASKS.md, "Upload endpoint + validation pipeline") is not built yet.
 
 ### 2. Turtle as a stub
 
@@ -246,11 +259,29 @@ nicety and becomes the difference between a working lesson and twenty students p
 
 ### 7. Turtle stub vs CPython signatures (file delivery)
 
-**Not yet run.** For every function the stub in `lib/runner/modules/turtle.ts` implements
-(`forward`, `backward`, `left`, `right`, `goto`, `setheading`, `penup`, `pendown`, `pencolor`,
-`pensize`, `circle`, `speed`, `home`, `dot`, and their short aliases), compare name, parameter
-order, and defaults against real CPython's `turtle` module for the functions grade 7 actually
-uses. Record any divergence found — do not assume a match because the names line up.
+**Harness ready; not yet run on a real machine.** For every function the stub in
+`lib/runner/modules/turtle.ts` implements (`forward`, `backward`, `left`, `right`, `goto`,
+`setheading`, `penup`, `pendown`, `pencolor`, `pensize`, `circle`, `speed`, `home`, `dot`, and
+their short aliases), compare name, parameter order, and defaults against real CPython's `turtle`
+module for the functions grade 7 actually uses. Record any divergence found — do not assume a
+match because the names line up.
+
+This is the one check nothing in this page can answer by itself — there is no CPython here to
+call, only Skulpt. `spike/`'s check 7 instead renders a comparison table: Hilka's side
+transcribed straight from `lib/runner/modules/turtle.ts`, CPython's side from the documented
+stdlib API, and a per-row dropdown to record what you find comparing against real CPython
+(`import turtle; help(turtle.forward)` in IDLE, repeated per function) on the classroom machine
+itself. Four divergences are flagged for confirmation already, based on the documented CPython
+API rather than a run on this exact machine — **treat these as things to verify, not settled
+facts**, until someone actually checks them there:
+
+- `goto(x, y)` — CPython also accepts a single `(x, y)` tuple; the stub requires two separate
+  arguments.
+- `pencolor(c)` — CPython also accepts `pencolor(r, g, b)` or no arguments (returns the current
+  colour); the stub takes exactly one colour string and returns nothing.
+- `pensize(w)` — CPython with no argument returns the current width; the stub has no return.
+- `circle(r, extent)` — CPython also takes a `steps` parameter to approximate a regular polygon;
+  the stub has no equivalent.
 
 This exists because file delivery means turtle code written in Hilka has to run unchanged in
 IDLE, on real `turtle`, not the stub. AI_CONTEXT.md's "Turtle" section states the constraint;

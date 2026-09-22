@@ -38,8 +38,9 @@ than decorative.
 
 ## CI/CD and Remote Development
 
-See CI_CD.md. Phases A and B are live — CI on every PR, and deploys to Vercel against
-Neon. What is left of B is the `production` environment that gates `migrate.yml`.
+See CI_CD.md. Phases A and B are live — CI on every PR, deploys to Vercel against Neon,
+Pages serving the spike, branch protection on `main`, and the `production` environment
+`migrate.yml` gates on.
 
 | Item | Status | Notes |
 |---|---|---|
@@ -47,11 +48,11 @@ Neon. What is left of B is the `production` environment that gates `migrate.yml`
 | Cloud environment for remote sessions | 🔶 | Sessions run, but the network policy blocks `*.vercel.app` and `*.neon.tech`: an agent can neither open a deploy nor reach the database, and has to ask a human what the live site shows |
 | `SessionStart` hook + permission allowlist | ✅ | `.claude/settings.json`; no-op until `package.json` exists |
 | Guardrail script + workflow | ✅ | CLAUDE.md rules 1, 3, 4 and the convention rules, as checks |
-| GitHub Pages deploy of `spike/` | 🔶 | Workflow committed; Pages source must be switched on in repo settings |
+| GitHub Pages deploy of `spike/` | ✅ | Pages source switched on; the `spike` workflow has deployed it successfully on every push to `main` since |
 | Spike harness itself | ✅ | `spike/` — six checks, Skulpt vendored, turtle stub, interactive input |
-| Branch protection on `main` | 🔶 | Ruleset committed at `.github/rulesets/main.json`; must be imported in repo settings |
+| Branch protection on `main` | ✅ | Ruleset at `.github/rulesets/main.json` imported into repo settings |
 | `ci.yml` — typecheck, lint, tests | ✅ | Live, with the migration-drift step. The browser job runs a Postgres service, migrates and seeds — the workspace reads its task from the database |
-| `migrate.yml` — Drizzle on merge | 🔶 | Staged; needs the `production` GitHub environment |
+| `migrate.yml` — Drizzle on merge | ✅ | The `production` GitHub environment it gates on exists |
 | `reference-check.yml` — references vs their own checks | ✅ | Live. `npm run verify:references` drives the real runner via `/runner` (no database needed) against `content/seed-tasks/*.json` |
 | Vercel Git integration + preview deploys | ✅ | Installed; PR #7 carried its check. **Deployment Protection is on**, so a logged-out classroom machine cannot open a preview until Vercel Authentication is off or a sharable link is used — CI_CD.md §5 |
 | Neon branch-per-preview | 🔶 | Integration installed. Unverified: that *"create a branch for each preview deployment"* is on and a PR preview really gets its own branch |
