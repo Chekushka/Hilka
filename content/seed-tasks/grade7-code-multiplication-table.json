@@ -1,0 +1,49 @@
+{
+  "slug": "g7-code-multiplication-table",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Таблиця множення",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n. Виведи таблицю множення n на числа від 1 до 10 — кожен результат на новому рядку.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 4",
+      "stdin": ["4"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "n = 3",
+      "stdin": ["3"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
+          "tol": 0.01
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "for i in range(1, 11) перебирає числа від 1 до 10 включно.",
+    "На кожному кроці виведи i * n окремим print()."
+  ],
+  "reference": {
+    "code": "n = int(input())\nfor i in range(1, 11):\n    print(i * n)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

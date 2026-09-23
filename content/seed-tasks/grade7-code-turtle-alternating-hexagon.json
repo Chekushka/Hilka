@@ -1,0 +1,37 @@
+{
+  "slug": "g7-code-turtle-alternating-hexagon",
+  "topicSlug": "turtle-conditions",
+  "type": "code",
+  "title": "Фігура з чергуванням кроків",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй фігуру із шести сторін: на парних кроках (0, 2, 4) черепашка йде 60, на непарних (1, 3, 5) — 30. Після кожного кроку повертай праворуч на 60°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 6,
+      "message": "Фігура має складатися з шести сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Довжини сторін не такі, як на зразку. Перевір, для яких i умова i % 2 == 0 істинна."
+    }
+  ],
+  "hints": [
+    "Використай цикл for i in range(6) і всередині нього if i % 2 == 0.",
+    "На парних i (0, 2, 4) — крок 60, на непарних (1, 3, 5) — крок 30.",
+    "Повертай на 60° після кожного кроку — тоді 6 сторін замкнуть фігуру (6 * 60 = 360)."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    if i % 2 == 0:\n        turtle.forward(60)\n    else:\n        turtle.forward(30)\n    turtle.right(60)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

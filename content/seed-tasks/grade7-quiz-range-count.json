@@ -1,0 +1,27 @@
+{
+  "slug": "g7-quiz-range-count",
+  "topicSlug": "loops-for",
+  "type": "quiz",
+  "title": "Скільки разів виконається цикл",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Скільки разів виконається тіло цього циклу: for i in range(2, 9): ...?",
+    "options": ["5", "6", "7", "8"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [2],
+      "message": "range(2, 9) дає числа 2, 3, 4, 5, 6, 7, 8 — рівно сім значень. Останнє число (9) у діапазон не входить."
+    }
+  ],
+  "hints": [
+    "range(a, b) перебирає числа від a до b-1 включно — b не входить.",
+    "Порахуй числа від 2 до 8: 2, 3, 4, 5, 6, 7, 8."
+  ],
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

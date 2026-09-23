@@ -1,0 +1,32 @@
+{
+  "slug": "g7-quiz-print-purpose",
+  "topicSlug": "intro",
+  "type": "quiz",
+  "title": "Навіщо потрібна функція print()",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Що робить функція print() у Python?",
+    "options": [
+      "Виводить текст або значення на екран",
+      "Зчитує число від користувача",
+      "Створює нову змінну",
+      "Завершує виконання програми"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [0],
+      "message": "print() виводить те, що всередині дужок, на екран — це основний спосіб побачити результат роботи програми."
+    }
+  ],
+  "hints": [
+    "print(\"Python\") показує слово Python на екрані.",
+    "Зчитування від користувача робить інша функція — input()."
+  ],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

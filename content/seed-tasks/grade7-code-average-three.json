@@ -1,0 +1,37 @@
+{
+  "slug": "g7-code-average-three",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Середнє трьох чисел",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай три числа і виведи їхнє середнє арифметичне.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "звичайний випадок",
+      "stdin": ["3", "6", "9"],
+      "checks": [{ "kind": "number_close", "value": 6, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "більші числа",
+      "stdin": ["10", "20", "30"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 20, "tol": 0.01, "which": "last" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Середнє арифметичне — сума чисел, поділена на їхню кількість.",
+    "Тут чисел три, тому суму треба поділити на 3."
+  ],
+  "reference": {
+    "code": "a = float(input())\nb = float(input())\nc = float(input())\nprint((a + b + c) / 3)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

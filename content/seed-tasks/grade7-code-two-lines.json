@@ -1,0 +1,31 @@
+{
+  "slug": "g7-code-two-lines",
+  "topicSlug": "intro",
+  "type": "code",
+  "title": "Два рядки виводу",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Виведи на екран два рядки: спочатку «Привіт!», а потім «Мене звати Python».",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Привіт!\nМене звати Python",
+      "trim": true,
+      "message": "Потрібно рівно два рядки: спочатку «Привіт!», потім «Мене звати Python»."
+    }
+  ],
+  "hints": [
+    "Кожен виклик print() починає новий рядок.",
+    "Для двох рядків потрібні два окремі виклики print()."
+  ],
+  "reference": {
+    "code": "print(\"Привіт!\")\nprint(\"Мене звати Python\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,31 @@
+{
+  "slug": "g7-code-city-sentence",
+  "topicSlug": "variables",
+  "type": "code",
+  "title": "Речення зі змінною",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Створи змінну city зі значенням \"Київ\" і виведи речення: Я живу в місті Київ.",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Я живу в місті Київ.",
+      "trim": true,
+      "message": "Речення має бути рівно таким: Я живу в місті Київ."
+    }
+  ],
+  "hints": [
+    "Спочатку створи змінну: city = \"Київ\".",
+    "f-рядок вставляє значення змінної в текст: f\"Я живу в місті {city}.\""
+  ],
+  "reference": {
+    "code": "city = \"Київ\"\nprint(f\"Я живу в місті {city}.\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

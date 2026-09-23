@@ -1,0 +1,37 @@
+{
+  "slug": "g7-code-rectangle-area",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Площа прямокутника",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай довжину і ширину прямокутника, обчисли його площу і виведи її.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "звичайний випадок",
+      "stdin": ["5", "3"],
+      "checks": [{ "kind": "number_close", "value": 15, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "більший прямокутник",
+      "stdin": ["10", "4"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 40, "tol": 0.01, "which": "last" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Площа прямокутника — це довжина, помножена на ширину.",
+    "S = a * b."
+  ],
+  "reference": {
+    "code": "a = float(input())\nb = float(input())\nprint(a * b)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

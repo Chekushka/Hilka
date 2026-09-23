@@ -1,0 +1,27 @@
+{
+  "slug": "g7-quiz-integer-division",
+  "topicSlug": "arithmetic",
+  "type": "quiz",
+  "title": "Цілочисельне ділення",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Скільки буде 7 // 2 у Python?",
+    "options": ["3.5", "3", "4", "Виникне помилка"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [1],
+      "message": "// — цілочисельне ділення: результат округлюється вниз до цілого. 7 поділити на 2 дає 3,5, а // залишає лише 3."
+    }
+  ],
+  "hints": [
+    "Оператор / дає дробовий результат (3.5), а // — тільки цілу частину.",
+    "// відкидає залишок, а не округлює за правилами математики."
+  ],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}
