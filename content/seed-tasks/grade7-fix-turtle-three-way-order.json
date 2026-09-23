@@ -1,0 +1,36 @@
+{
+  "slug": "g7-fix-turtle-three-way-order",
+  "topicSlug": "turtle-conditions",
+  "type": "fix",
+  "title": "Переплутаний порядок elif",
+  "payload": {
+    "type": "fix",
+    "surface": "turtle",
+    "prompt": "Ця програма мала повторювати кроки 70, 50, 30 (для i % 3 == 0, 1 і 2 відповідно), але хтось переплутав умови в elif — кроки 50 і 30 виходять не на своїх місцях. Знайди помилку й виправ її.",
+    "broken": "import turtle\nfor i in range(6):\n    if i % 3 == 0:\n        turtle.forward(70)\n    elif i % 3 == 2:\n        turtle.forward(50)\n    else:\n        turtle.forward(30)\n    turtle.right(60)"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 6,
+      "message": "Фігура має складатися з шести сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Довжини сторін не такі, як на зразку. Перевір, яке значення i % 3 має відповідати кроку 50, а яке — 30."
+    }
+  ],
+  "hints": [
+    "elif перевіряються по порядку зверху вниз — переплутаний порядок умов дає неправильну довжину.",
+    "50 має бути на кроці, де i % 3 == 1, а не де i % 3 == 2."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    if i % 3 == 0:\n        turtle.forward(70)\n    elif i % 3 == 1:\n        turtle.forward(50)\n    else:\n        turtle.forward(30)\n    turtle.right(60)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

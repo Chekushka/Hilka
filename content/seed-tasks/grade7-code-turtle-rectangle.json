@@ -1,0 +1,37 @@
+{
+  "slug": "g7-code-turtle-rectangle",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Прямокутник",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй прямокутник зі сторонами 120 і 60.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 4,
+      "message": "Фігура має складатися з чотирьох сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Сторони не такі, як на зразку. Прямокутник має дві сторони по 120 і дві по 60."
+    }
+  ],
+  "hints": [
+    "У прямокутника протилежні сторони однакові: дві по 120 і дві по 60.",
+    "Після кожного кроку поверни на 90°.",
+    "Спробуй цикл for i in range(2), у якому два різні forward()."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(2):\n    turtle.forward(120)\n    turtle.right(90)\n    turtle.forward(60)\n    turtle.right(90)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

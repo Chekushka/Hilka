@@ -1,0 +1,44 @@
+{
+  "slug": "g7-code-power-of-two-while",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Найменший степінь двійки",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n. Знайди найменший степінь двійки (1, 2, 4, 8, ...), який більший або дорівнює n, і виведи його.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "звичайний випадок",
+      "stdin": ["5"],
+      "checks": [{ "kind": "number_close", "value": 8, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "n є точним степенем двійки",
+      "stdin": ["16"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 16, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "n дорівнює одиниці",
+      "stdin": ["1"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 1, "tol": 0.01, "which": "last" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Заведи змінну result, що починається з 1, і подвоюй її, поки вона менша за n.",
+    "while result < n: result = result * 2.",
+    "Якщо n уже дорівнює 1, цикл не повинен виконатись жодного разу."
+  ],
+  "reference": {
+    "code": "n = int(input())\nresult = 1\nwhile result < n:\n    result *= 2\nprint(result)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

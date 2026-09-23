@@ -1,0 +1,31 @@
+{
+  "slug": "g7-predict-count-halving",
+  "topicSlug": "loops-while",
+  "type": "predict",
+  "title": "Скільки разів повториться цикл?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "count = 0\nn = 100\nwhile n > 1:\n    n = n // 2\n    count += 1\nprint(count)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "6",
+      "normalize": "trim",
+      "message": "100 → 50 → 25 → 12 → 6 → 3 → 1 — це шість кроків, поки n не стане рівним 1."
+    }
+  ],
+  "hints": [
+    "Пройди цикл вручну, крок за кроком: 100, потім 100 // 2, і так далі.",
+    "Цикл зупиняється, щойно n перестає бути більшим за 1 — тобто коли n дорівнює 1."
+  ],
+  "reference": {
+    "code": "count = 0\nn = 100\nwhile n > 1:\n    n = n // 2\n    count += 1\nprint(count)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

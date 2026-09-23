@@ -1,0 +1,37 @@
+{
+  "slug": "g7-code-product-two-numbers",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Добуток двох чисел",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два цілих числа і виведи їхній добуток (результат множення).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "звичайний випадок",
+      "stdin": ["4", "5"],
+      "checks": [{ "kind": "number_close", "value": 20, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "з від'ємним числом",
+      "stdin": ["7", "-6"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": -42, "tol": 0.01, "which": "last" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "int(input()) зчитує ціле число.",
+    "Добуток — це результат множення: a * b."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nprint(a * b)"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

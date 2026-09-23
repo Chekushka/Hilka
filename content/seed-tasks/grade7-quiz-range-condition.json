@@ -1,0 +1,27 @@
+{
+  "slug": "g7-quiz-range-condition",
+  "topicSlug": "conditions",
+  "type": "quiz",
+  "title": "Умова для діапазону",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яка умова перевіряє, що число x лежить у межах від 1 до 10 включно?",
+    "options": ["1 <= x <= 10", "x == 1 or x == 10", "x > 1 and x > 10", "1 < x > 10"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [0],
+      "message": "1 <= x <= 10 означає «x не менше за 1 і не більше за 10» — саме це і є межі від 1 до 10 включно."
+    }
+  ],
+  "hints": [
+    "У Python можна писати подвійну нерівність підряд: a <= x <= b.",
+    "«Включно» означає, що самі межі (1 і 10) теж підходять — тому потрібен знак <=, а не <."
+  ],
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

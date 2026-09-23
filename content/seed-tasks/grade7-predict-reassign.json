@@ -1,0 +1,31 @@
+{
+  "slug": "g7-predict-reassign",
+  "topicSlug": "variables",
+  "type": "predict",
+  "title": "Що станеться зі змінною?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 5\nx = x + 3\nprint(x)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "8",
+      "normalize": "trim",
+      "message": "Другий рядок бере поточне значення x (5), додає 3 і записує результат назад у x."
+    }
+  ],
+  "hints": [
+    "x = x + 3 не рівняння — це «взяти x, додати 3, зберегти назад у x».",
+    "На момент другого рядка x уже дорівнює 5."
+  ],
+  "reference": {
+    "code": "x = 5\nx = x + 3\nprint(x)"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

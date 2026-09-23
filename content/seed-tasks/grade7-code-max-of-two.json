@@ -1,0 +1,43 @@
+{
+  "slug": "g7-code-max-of-two",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Більше з двох чисел",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два цілих числа і виведи більше з них.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "друге більше",
+      "stdin": ["3", "7"],
+      "checks": [{ "kind": "number_close", "value": 7, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "перше більше",
+      "stdin": ["10", "2"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 10, "tol": 0.01, "which": "last" }]
+    },
+    {
+      "label": "числа рівні",
+      "stdin": ["5", "5"],
+      "hidden": true,
+      "checks": [{ "kind": "number_close", "value": 5, "tol": 0.01, "which": "last" }]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порівняй два числа за допомогою if.",
+    "Якщо a > b, виведи a, інакше виведи b."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nif a > b:\n    print(a)\nelse:\n    print(b)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}
