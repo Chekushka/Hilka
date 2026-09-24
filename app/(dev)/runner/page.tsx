@@ -6,7 +6,7 @@
  * driven by hand and by the integration tests before any UI exists.
  */
 import { useEffect, useRef, useState } from 'react';
-import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
+import { createRunner, type ParseResult, type PythonRunner, type RunResult } from '@/lib/runner';
 
 interface TestHooks {
   run(
@@ -14,6 +14,7 @@ interface TestHooks {
     options: { mode: 'headless'; stdin?: string[]; timeoutMs?: number; randomSeed?: number; exprs?: string[] }
   ): Promise<RunResult>;
   runInteractive(code: string, answers: string[], delayMs: number): Promise<RunResult>;
+  parse(code: string): Promise<ParseResult>;
 }
 
 declare global {
@@ -33,6 +34,7 @@ export default function RunnerDevPage() {
     runnerRef.current = runner;
     window.__runner__ = {
       run: (source, options) => runner.run(source, options),
+      parse: (source) => runner.parse(source),
       runInteractive: (source, answers, delayMs) => {
         const queue = [...answers];
         return runner.run(source, {

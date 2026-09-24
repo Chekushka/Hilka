@@ -236,6 +236,9 @@ interface PythonRunner {
     onStdout?(chunk: string): void;
     onInputRequest?(prompt: string): Promise<string>;   // interactive only
   }): Promise<RunResult>;
+  // Parse only, nothing executes: file delivery's upload linter reads the tree first.
+  // The tree is engine-neutral and CPython-`ast`-shaped (PyAstNode), not Skulpt's.
+  parse(code: string): Promise<ParseResult>;
 }
 
 interface RunResult {
@@ -261,7 +264,8 @@ inside a Worker over `postMessage` — no `SharedArrayBuffer`, so no COOP/COEP h
 `Sk.execLimit` is wall-clock. It must be **paused while waiting for input**, or a slow typist
 gets "your program stopped responding". Same for `time.sleep`.
 
-Module stubs live in `lib/runner/modules/`. `turtle` and `random` are replaced (see below);
+Module stubs live in `lib/runner/modules/`, alongside `str-unicode.ts`, which patches Skulpt's
+ASCII-only `str` letter/case methods at load. `turtle` and `random` are replaced (see below);
 `math` and `time` pass through. `time.sleep` must yield a suspension rather than block.
 
 Verification of Skulpt's actual language coverage, turtle behaviour, and input loop is the
@@ -388,7 +392,7 @@ code the student did not write destroys trust in the grade. Two stages:
 - **v1 — safe subset + compatibility linter.** A documented allow-list of constructs confirmed
   empirically by SPIKE.md (TASK_SCHEMA.md has the list). On upload, the AST is parsed before
   anything runs; a construct outside the list is rejected with a message naming the replacement
-  (e.g. `f"{x:.2f}"` → `round(x, 2)`) and stating plainly that this is a limitation of Hilka's
+  (e.g. an unverified format spec like `f"{x:>8}"` → `round(x, 2)` or `+`) and stating plainly that this is a limitation of Hilka's
   engine, not a mistake by the student. See TASK_SCHEMA.md's `FILE_UNSUPPORTED`.
 - **v2 — server-side CPython, for file tasks only.** The planned completion of this feature, not
   a vague possibility to revisit later — without it the linter is easy to mistake for the final
@@ -421,9 +425,13 @@ actually ran the code can tell them apart.
 - Limited standard library — `math` and `random` are covered (SPIKE.md check 1); most of the rest
   is unverified and therefore outside the safe subset by default.
 - Built-in types are not subclassable the way CPython allows.
-- f-string format specifiers are incomplete (see TASK_SCHEMA.md's replacement table) — the most
-  likely divergence in the grade 8 projects specifically, since `f"{x:.2f}"` is a natural way to
-  print a computed BMI or price.
+- f-string format specs: `.Nf`, widths, alignment, `,`, `%` and `e` are confirmed (SPIKE.md
+  check 1, "File-delivery safe subset"), but `.Nf` rounds an exact binary tie away from zero where
+  CPython rounds to even — `f"{2.5:.0f}"` is `3` in Hilka, `2` in IDLE.
+- Skulpt's own `str.isalpha`/`isalnum`/`isupper`/`islower`/`istitle`/`title`/`swapcase` are
+  ASCII-only; the runner replaces them with CPython-matching versions (see Gotchas).
+- Float repr is shorter: `0.1 + 0.2` prints `0.3`, where IDLE prints `0.30000000000000004`.
+- `:=`, `match` and `f"{x=}"` are SyntaxErrors.
 - Error message text differs from CPython's (see the Gotchas entry on `str + int`) — irrelevant
   inside Hilka, where `lib/errors/` matches Skulpt's wording, but it means a student cannot use
   Hilka's error message to debug the same program in IDLE, and vice versa.
@@ -593,3 +601,22 @@ effective limit on guessing a progress code is `maxAttempts × (instances curren
 `maxAttempts`. Acceptable at this project's scale (~25 concurrent users, and 31^8 codes to
 guess even per instance), but it is not the hard global guarantee the name suggests. A durable
 store (a Postgres table, Upstash) would close the gap if the scale ever changes.
+
+**Skulpt's letter and case methods are ASCII-only — patched.** Unpatched, `"абв".isalpha()`,
+`"ж1".isalnum()`, `"ЖУК".isupper()` and `"жук".islower()` are all `False`, and `"кіт".title()`
+and `.swapcase()` leave Cyrillic alone: silently wrong grades on any Ukrainian string task.
+`lib/runner/modules/str-unicode.ts` replaces those seven at load, in both the Worker and the Node
+loader. A method descriptor keeps its function in **two** places — `$meth` (called via the type,
+`str.isalpha(s)`) and `d$def.$meth` (what a bound method `s.isalpha` is built from) — and patching
+only one leaves the other path ASCII. `upper`, `lower`, `capitalize` were already Unicode-aware;
+`isdigit`/`isnumeric` remain ASCII-only (harmless for Ukrainian). If the Skulpt upgrade ever
+renames these internals, the corpus's `methods-str-unicode-sweep` goes red in CI.
+
+**Skulpt's AST is not CPython's, in three non-obvious ways.** `lib/runner/ast.ts` normalizes it,
+but anyone reading Skulpt's tree directly will trip on them: operators are the
+`Sk.astnodes.Add` constructors themselves (name on `prototype._astname`), not node instances;
+contexts (`Load`/`Store`) carry no name at all and are only recognizable by identity with
+`Sk.astnodes.Load`; and every expression inside an f-string reports **line 1**, not its own
+line. Also, `Sk.parse` reads the language version from `Sk.configure` — before any run has
+configured the engine it parses as Python 2, so both loaders configure Python 3 at startup.
+

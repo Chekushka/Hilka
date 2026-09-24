@@ -1,0 +1,33 @@
+{
+  "slug": "g8-code-idle-hello",
+  "topicSlug": "intro",
+  "type": "code",
+  "title": "Перша програма в IDLE",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Завантаж файл і відкрий його в IDLE. Допиши програму, яка виводить на екран рядок Привіт, IDLE! Запусти її в IDLE (F5), збережи файл і надішли його сюди.",
+    "starter": "# Твій код — нижче цього рядка\n",
+    "delivery": "file",
+    "file": { "filename": "hello_idle.py", "headerComment": true, "maxBytes": 65536 }
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Привіт, IDLE!",
+      "trim": true,
+      "message": "Програма має вивести рівно один рядок: Привіт, IDLE!"
+    }
+  ],
+  "hints": [
+    "Так само, як у браузері: print() виводить текст на екран.",
+    "Не забудь зберегти файл (Ctrl+S) перед тим, як надсилати його."
+  ],
+  "reference": {
+    "code": "print(\"Привіт, IDLE!\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "version": 1,
+  "status": "published"
+}

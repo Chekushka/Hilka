@@ -11,6 +11,9 @@ export function createRunner(): PythonRunner {
 
 export type {
   Dot,
+  ParseResult,
+  PyAstNode,
+  PyAstValue,
   PyError,
   PythonRunner,
   PyValue,

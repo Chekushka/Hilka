@@ -164,3 +164,41 @@ test('an error carries type, message and line', async ({ page }) => {
   expect(result.error).toMatchObject({ type: 'TypeError', line: 2 });
   expect(result.error?.message).toContain('concatenate');
 });
+
+test('parse returns an engine-neutral tree without running anything', async ({ page }) => {
+  const parsed = await page.evaluate(() => window.__runner__!.parse('x = 1 + 2\nprint(f"{x:.2f}")\nraise ValueError()\n'));
+  expect(parsed.ok).toBe(true);
+  const json = JSON.stringify(parsed);
+  expect(json).toContain('"type":"Constant"');
+  expect(json).toContain('"type":"Add"');
+  expect(json).not.toContain('"type":"Num"');
+});
+
+test('parse reports a SyntaxError as its answer', async ({ page }) => {
+  const parsed = await page.evaluate(() => window.__runner__!.parse('x = 1\nif x\n'));
+  expect(parsed).toMatchObject({ ok: false, error: { type: 'SyntaxError', line: 2 } });
+});
+
+test('parse answers while a run is waiting on input()', async ({ page }) => {
+  const parsed = await page.evaluate(async () => {
+    const runner = window.__runner__!;
+    // The run blocks on input() for 1.5 s; the parse must not queue behind it.
+    const running = runner.runInteractive('name = input()\nprint(name)', ['a'], 1500);
+    const started = Date.now();
+    const result = await runner.parse('y = 2\n');
+    const elapsed = Date.now() - started;
+    await running;
+    return { ok: result.ok, elapsed };
+  });
+  expect(parsed.ok).toBe(true);
+  expect(parsed.elapsed).toBeLessThan(1000);
+});
+
+test('str letter and case methods follow CPython on Ukrainian text', async ({ page }) => {
+  const result = await run(
+    page,
+    'w = "Їжак"\nprint(w.isalpha(), "ЖУК".isupper(), "жук".islower(), "ж1".isalnum(), "кіт і пес".title(), w.swapcase(), w.istitle())'
+  );
+  expect(result.error).toBeNull();
+  expect(result.stdout).toBe('True True True True Кіт І Пес їЖАК True\n');
+});

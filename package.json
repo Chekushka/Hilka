@@ -16,7 +16,8 @@
     "db:seed": "tsx scripts/db/seed-content.ts",
     "db:seed:demo": "tsx scripts/db/seed-demo-session.ts",
     "test:browser": "playwright test",
-    "verify:references": "playwright test --config=playwright.references.config.ts"
+    "verify:references": "playwright test --config=playwright.references.config.ts",
+    "confirm:safe-subset": "tsx scripts/safe-subset/confirm.ts"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",

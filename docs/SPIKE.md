@@ -22,16 +22,12 @@ Three findings that changed something, now in the Gotchas of AI_CONTEXT.md: the 
 not reachable from inside a module stub, Skulpt's `str + int` message differs from CPython's, and
 Skulpt does not echo an `input()` prompt to output.
 
-**File delivery added open items.** Three of the four are done: check 1's f-string format-spec
-and conversion-flag rows, and the BOM/CRLF/line-number check, all ran clean (results above) —
-these are engine and normalization-logic properties, so a dev-machine run answers them the same
-way it would anywhere. What is still open is check 7, comparing the turtle stub's signatures
-against real CPython's — that one genuinely needs a real Python interpreter (IDLE) on the actual
-classroom machine to compare against, which nothing running inside this page can substitute for.
-The harness now renders the comparison table and records the answer; someone still has to sit at
-the machine and check each row. None of the original six checks changed; these are additions for
-the file-delivery mode (AI_CONTEXT.md, TASK_SCHEMA.md), and check 7 must be run and recorded
-before that mode's safe subset can be trusted.
+**File delivery added four items; all four are done.** Check 1's f-string format-spec and
+conversion-flag rows and the BOM/CRLF/line-number check ran clean (results above) — engine and
+normalization-logic properties, so a dev-machine run answers them the same way it would anywhere.
+Check 7, the turtle stub's signatures against real CPython's, was run against CPython with the
+harness's comparison table: all 14 functions match (results below). None of the original six
+checks changed; these are additions for the file-delivery mode (AI_CONTEXT.md, TASK_SCHEMA.md).
 
 ## Rules
 
@@ -112,8 +108,93 @@ on a known line (line 4) to check the reported line number against.
 A line-ending or BOM bug that only shifts line numbers would have been invisible in every other
 check here, since none of them touch a file with mixed encoding and endings — it would have
 surfaced for the first time as a student's IDLE-written file reporting an error on the wrong
-line. This checks Skulpt's own parsing behaviour and the normalization logic as specified; the
-actual upload endpoint (TASKS.md, "Upload endpoint + validation pipeline") is not built yet.
+line. This checks Skulpt's own parsing behaviour and the normalization logic as specified;
+`lib/task/file.ts`'s `validateUpload` now implements it, and `tests/e2e/file-delivery.spec.ts`
+uploads a BOM + CRLF file through the real UI.
+
+**File-delivery safe subset — done, and re-run by CI.** The rows above were enough to start file
+delivery but not to define its allow-list: the linter needs every construct it lets through to
+be *confirmed*, not assumed. `scripts/safe-subset/corpus.ts` is a corpus of small programs, each
+exercising one group of constructs; `npm run confirm:safe-subset` runs every one on Skulpt (in
+Node, with Hilka's own stubs) and on real CPython and compares stdout, then refuses any
+allow-list entry (TASK_SCHEMA.md, "Safe subset") that no matching entry actually exercises.
+Engine properties again, so any machine answers them — but CPython's side is whatever
+`python3` the script finds, so re-run it with the classroom machine's interpreter
+(`PYTHON=py npm run confirm:safe-subset`) once its version is known (TASKS.md, Open Questions).
+
+Run against CPython 3.11.15:
+
+| Entry | Result | Divergence |
+|---|---|---|
+| `core-statements` | Match |  |
+| `operators-arith` | Match |  |
+| `operators-bool-compare` | Match |  |
+| `operators-bitwise` | Match |  |
+| `functions` | Match |  |
+| `lambda` | Match |  |
+| `containers` | Match |  |
+| `comprehensions` | Match |  |
+| `try-except` | Match |  |
+| `assert` | Match |  |
+| `imports` | Match |  |
+| `star-import` | Match |  |
+| `fstrings` | Match |  |
+| `builtins-core` | Match |  |
+| `builtins-more` | Match |  |
+| `builtins-input` | Match |  |
+| `builtins-exceptions` | Match |  |
+| `methods-str-case` | Match |  |
+| `methods-str-search` | Match |  |
+| `methods-str-digit-space` | Match |  |
+| `methods-str-letter-predicates` | Match |  |
+| `methods-str-case-transforms` | Match |  |
+| `methods-str-unicode-sweep` | Match |  |
+| `methods-str-padding` | Match |  |
+| `methods-list` | Match |  |
+| `methods-dict` | Match |  |
+| `methods-format` | Match |  |
+| `module-math` | Match |  |
+| `module-random` | Match |  |
+| `module-time` | Match |  |
+| `format-fixed` | Match |  |
+| `format-int` | Match |  |
+| `format-width` | Match |  |
+| `format-grouping` | Match |  |
+| `format-percent` | Match |  |
+| `format-exponent` | Match |  |
+| `float-repr` | **Differs** | CPython: 1.4142135623730951 0.30000000000000004 0.3333333333333333 0.6666666666666666 1.4285714285714286⏎ — Skulpt: 1.414213562373095 0.3 0.3333333333333333 0.6666666666666666 1.428571428571429⏎ |
+| `format-fixed-exact-tie` | **Differs** | CPython: 0 2 2 -0 0.12 0.38⏎ — Skulpt: 1 2 3 -1 0.13 0.38⏎ |
+| `round-exact-tie` | Match |  |
+| `fstring-self-documenting` | **Differs** | CPython: x=5⏎ — Skulpt: SyntaxError: SyntaxError: bad input on line 2 |
+| `walrus` | **Differs** | CPython: 5⏎ — Skulpt: SyntaxError: SyntaxError: bad input on line 1 |
+| `match` | **Differs** | CPython: other⏎ — Skulpt: SyntaxError: SyntaxError: bad input on line 2 |
+| `percent-format` | Match |  |
+| `class` | Match |  |
+
+What the divergences mean:
+
+- **Fixed in the runner: `isalpha`/`isalnum`/`isupper`/`islower`/`istitle`/`title`/`swapcase`
+  were ASCII-only in Skulpt.** Every Cyrillic case was wrong: `"абв".isalpha()` and
+  `"ЖУК".isupper()` were `False`, `"кіт і пес".title()` came back unchanged — for inline tasks
+  too, not only file delivery. `lib/runner/modules/str-unicode.ts` replaces all seven with ports of
+  CPython's own algorithms. They now match CPython on every character of Latin, Greek and
+  Cyrillic (`methods-str-unicode-sweep`, one character at a time) and on the targeted cases
+  (apostrophes, `ǅ`, `ß`, `ŉ`), and are on the safe subset. The sweep leaves out U+019B `ƛ`: it
+  gained an uppercase in Unicode 16, which the browser's JS engine knows and CPython 3.11–3.13
+  (Unicode 14–15.1) do not — a Unicode-version difference, not a runner bug.
+- **`.Nf` rounds exact binary ties away from zero**, where CPython rounds half to even:
+  `f"{2.5:.0f}"` is `3` against `2`, `f"{0.125:.2f}"` `0.13` against `0.12`. Non-tie values —
+  including `2.675`, which is below the tie in binary — match, and `round()` itself matches on
+  ties. Accepted rather than excluded: excluding `.2f` would exclude the grade 8 projects, the
+  linter cannot see values, and grading is unaffected because the reference runs on the same
+  engine. What the student sees in IDLE can differ in the last digit on an exact tie.
+- **Float repr is shorter in Skulpt**: `0.1 + 0.2` prints `0.3` (CPython
+  `0.30000000000000004`), `math.sqrt(2)` `1.414213562373095` (CPython `…0951`). Same reasoning:
+  unlintable, grading-neutral, visible only as a difference between IDLE's output and Hilka's.
+- **`f"{x=}"`, `:=` and `match` do not parse at all.** Excluded; the linter recognizes them from
+  the source when the parse fails.
+- `class` and `%`-formatting matched but prove nothing on the allow-list's behalf (probes);
+  `class` stays out by scope (TASK_SCHEMA.md).
 
 ### 2. Turtle as a stub
 
@@ -259,7 +340,7 @@ nicety and becomes the difference between a working lesson and twenty students p
 
 ### 7. Turtle stub vs CPython signatures (file delivery)
 
-**Harness ready; not yet run on a real machine.** For every function the stub in
+**Done — all 14 match.** For every function the stub in
 `lib/runner/modules/turtle.ts` implements (`forward`, `backward`, `left`, `right`, `goto`,
 `setheading`, `penup`, `pendown`, `pencolor`, `pensize`, `circle`, `speed`, `home`, `dot`, and
 their short aliases), compare name, parameter order, and defaults against real CPython's `turtle`
@@ -286,6 +367,35 @@ facts**, until someone actually checks them there:
 This exists because file delivery means turtle code written in Hilka has to run unchanged in
 IDLE, on real `turtle`, not the stub. AI_CONTEXT.md's "Turtle" section states the constraint;
 this check is what verifies it holds.
+
+**Result**, recorded from the harness's table (CPython signature vs Hilka's):
+
+| Function | CPython | Hilka | Result |
+|---|---|---|---|
+| `forward` | `forward(distance)` | `forward(d)` | Matches |
+| `backward` | `backward(distance)` | `backward(d)` | Matches |
+| `left` | `left(angle)` | `left(a)` | Matches |
+| `right` | `right(angle)` | `right(a)` | Matches |
+| `goto` | `goto(x, y=None)` | `goto(x, y)` | Matches |
+| `setheading` | `setheading(to_angle)` | `setheading(a)` | Matches |
+| `penup` | `penup()` | `penup()` | Matches |
+| `pendown` | `pendown()` | `pendown()` | Matches |
+| `pencolor` | `pencolor(*args)` | `pencolor(c)` | Matches |
+| `pensize` | `pensize(width=None)` | `pensize(w)` | Matches |
+| `circle` | `circle(radius, extent=None, steps=None)` | `circle(r, extent)` | Matches |
+| `speed` | `speed(speed=None)` | `speed()` | Matches |
+| `home` | `home()` | `home()` | Matches |
+| `dot` | `dot(size=None, *color)` | `dot(size)` | Matches |
+
+What "matches" establishes: every call form the stub accepts means the same thing in CPython, so
+turtle code written and passing in Hilka runs unchanged in IDLE — the direction the constraint
+above is about. The four rows flagged earlier (`goto`, `pencolor`, `pensize`, `circle`) are the
+stub accepting a **subset** of CPython's call forms, not a conflicting one. The reverse direction
+is not what this check covers: a file written in IDLE using a CPython-only form — `goto((x, y))`,
+`pencolor(r, g, b)`, `circle(r, steps=n)` — is valid Python that the stub does not implement.
+That matters only for uploaded turtle files, and grade 8, where file delivery starts, has no
+turtle (CURRICULUM.md); it becomes a linter concern (TASK_SCHEMA.md step 9) if a grade 9
+file-delivery task ever uses turtle.
 
 ## Decision gates
 

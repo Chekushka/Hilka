@@ -14,6 +14,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { PlaybackScrubber } from '@/components/canvas/PlaybackScrubber';
+import { FileDelivery } from '@/components/task/FileDelivery';
 import { Hints } from '@/components/task/Hints';
 import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
@@ -29,8 +30,10 @@ interface CodeTaskViewProps {
 }
 
 export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true }: CodeTaskViewProps) {
-  const [code, setCode] = useState(task.payload.starter);
-  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(task);
+  // File delivery: the code arrives by upload, not typing — nothing to run until it does.
+  const fileSpec = task.payload.delivery === 'file' ? task.payload.file : undefined;
+  const [code, setCode] = useState(fileSpec ? '' : task.payload.starter);
+  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput, parse } = useTaskRunner(task);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -58,7 +61,7 @@ export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true }: Cod
   }, [report]);
 
   const loading = engine === 'loading';
-  const disabled = loading || busy;
+  const disabled = loading || busy || (fileSpec !== undefined && code.length === 0);
 
   return (
     <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-[minmax(280px,1fr)_minmax(420px,1.4fr)]">
@@ -70,12 +73,31 @@ export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true }: Cod
       </section>
 
       <section className="flex flex-col gap-4">
-        <CodeEditor
-          value={code}
-          onChange={setCode}
-          errorLine={result?.error?.line ?? null}
-          ariaLabel={t('workspace.editorLabel')}
-        />
+        {fileSpec && (
+          <FileDelivery
+            taskId={task.id}
+            version={task.version}
+            spec={fileSpec}
+            prompt={task.payload.prompt}
+            starterCode={task.payload.starter}
+            onAccepted={setCode}
+            parse={parse}
+            disabled={loading || busy}
+          />
+        )}
+        {(!fileSpec || code.length > 0) && (
+          // Read-only in file mode: what gets checked must be exactly the file
+          // the student sent, so edits go through IDLE and a new upload.
+          <CodeEditor
+            // CodeMirror owns its document after mount; a new upload remounts it.
+            key={fileSpec ? code : undefined}
+            value={code}
+            onChange={setCode}
+            errorLine={result?.error?.line ?? null}
+            readOnly={fileSpec !== undefined}
+            ariaLabel={t('workspace.editorLabel')}
+          />
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <button
