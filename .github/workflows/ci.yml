@@ -29,6 +29,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test -- --run --passWithNoTests
+      # The file-delivery allow-list (lib/task/file-lint.ts) is only as good as
+      # the runs behind it: every entry must still behave identically on Skulpt
+      # and real CPython. Re-proves it on every change, a Skulpt bump included.
+      - run: npm run confirm:safe-subset
       # A schema edit committed without its migration is invisible until a
       # deploy tries to run against the old tables. Generating again must
       # produce nothing: anything new means the migration is missing.

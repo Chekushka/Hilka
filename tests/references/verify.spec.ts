@@ -2,7 +2,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { checkTaskReference, type ReferenceCheckTask } from '@/lib/checker';
-import type { RunOptions, RunResult } from '@/lib/runner';
+import type { ParseResult, RunOptions, RunResult } from '@/lib/runner';
+import { lintFile } from '@/lib/task/file-lint';
 
 /**
  * Re-runs every seed task's reference solution against its own checks — the
@@ -44,6 +45,19 @@ for (const file of files) {
     const outcome = await checkTaskReference(task, runPython);
     expect(outcome.failures.map((f) => `[${f.context}] ${f.message}`)).toEqual([]);
   });
+
+  const payload = task.payload as { delivery?: string; starter?: string; broken?: string };
+  if (payload.delivery === 'file') {
+    // A file task must not require what its own upload would reject
+    // (docs/TASK_SCHEMA.md, "Safe subset"): the reference and the starting
+    // code both have to get through step 9.
+    test(`${task.slug}: reference and starting code pass the file-upload linter`, async ({ page }) => {
+      for (const code of [task.reference?.code ?? '', payload.starter ?? payload.broken ?? '']) {
+        const parsed = await page.evaluate((source) => window.__runner__!.parse(source), code) as ParseResult;
+        expect(lintFile(parsed, code)).toEqual([]);
+      }
+    });
+  }
 }
 
 test('seed-tasks directory is not silently empty', () => {

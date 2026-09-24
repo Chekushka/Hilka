@@ -236,6 +236,9 @@ interface PythonRunner {
     onStdout?(chunk: string): void;
     onInputRequest?(prompt: string): Promise<string>;   // interactive only
   }): Promise<RunResult>;
+  // Parse only, nothing executes: file delivery's upload linter reads the tree first.
+  // The tree is engine-neutral and CPython-`ast`-shaped (PyAstNode), not Skulpt's.
+  parse(code: string): Promise<ParseResult>;
 }
 
 interface RunResult {
@@ -421,9 +424,13 @@ actually ran the code can tell them apart.
 - Limited standard library — `math` and `random` are covered (SPIKE.md check 1); most of the rest
   is unverified and therefore outside the safe subset by default.
 - Built-in types are not subclassable the way CPython allows.
-- f-string format specifiers are only partly verified: `f"{x:.2f}"` — the natural way to print a
-  computed BMI or price in the grade 8 projects — works (SPIKE.md check 1); padding, alignment,
-  `,` and `%` are unverified and outside the safe subset (TASK_SCHEMA.md's replacement table).
+- f-string format specs: `.Nf`, widths, alignment, `,`, `%` and `e` are confirmed (SPIKE.md
+  check 1, "File-delivery safe subset"), but `.Nf` rounds an exact binary tie away from zero where
+  CPython rounds to even — `f"{2.5:.0f}"` is `3` in Hilka, `2` in IDLE.
+- `str.isalpha`/`isalnum`/`isupper`/`islower` are ASCII-only and `str.title` ignores Cyrillic —
+  wrong answers on Ukrainian text, silently (see Gotchas).
+- Float repr is shorter: `0.1 + 0.2` prints `0.3`, where IDLE prints `0.30000000000000004`.
+- `:=`, `match` and `f"{x=}"` are SyntaxErrors.
 - Error message text differs from CPython's (see the Gotchas entry on `str + int`) — irrelevant
   inside Hilka, where `lib/errors/` matches Skulpt's wording, but it means a student cannot use
   Hilka's error message to debug the same program in IDLE, and vice versa.
@@ -593,3 +600,20 @@ effective limit on guessing a progress code is `maxAttempts × (instances curren
 `maxAttempts`. Acceptable at this project's scale (~25 concurrent users, and 31^8 codes to
 guess even per instance), but it is not the hard global guarantee the name suggests. A durable
 store (a Postgres table, Upstash) would close the gap if the scale ever changes.
+
+**Skulpt's letter predicates are ASCII-only.** `"абв".isalpha()`, `"ж1".isalnum()`,
+`"ЖУК".isupper()` and `"жук".islower()` are all `False`, and `"кіт".title()` returns it unchanged;
+`upper`, `lower`, `capitalize` and `isdigit` handle Cyrillic correctly. Found by the safe-subset
+corpus (SPIKE.md). File delivery rejects them, but an **inline** task gets no such protection: a
+grade 9 string task that asks "is this a letter" about Ukrainian text will grade a correct
+CPython-style answer as wrong. Author such tasks with `ch.lower() != ch.upper()` until the runner
+patches these methods.
+
+**Skulpt's AST is not CPython's, in three non-obvious ways.** `lib/runner/ast.ts` normalizes it,
+but anyone reading Skulpt's tree directly will trip on them: operators are the
+`Sk.astnodes.Add` constructors themselves (name on `prototype._astname`), not node instances;
+contexts (`Load`/`Store`) carry no name at all and are only recognizable by identity with
+`Sk.astnodes.Load`; and every expression inside an f-string reports **line 1**, not its own
+line. Also, `Sk.parse` reads the language version from `Sk.configure` — before any run has
+configured the engine it parses as Python 2, so both loaders configure Python 3 at startup.
+

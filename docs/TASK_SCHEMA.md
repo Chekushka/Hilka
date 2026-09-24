@@ -163,33 +163,84 @@ with a zip/PDF/OLE/PNG/JPEG signature, or contains a NUL byte"; step 5 also norm
 `\r`. Step 8's picker only applies where the task is not already known — uploading from inside a
 task's own screen already names the task, so there a missing or altered header is a quiet note
 and a header naming a *different* task is a warning; the file is graded against the open task
-either way. Step 9 is not built yet.
+either way. Step 9 is `lib/task/file-lint.ts` (below).
 
 ### Safe subset (v1)
 
 Automatic rewriting of student code is rejected outright: checking code the student did not
 write destroys trust in the grade. Instead, v1 restricts what a file-delivery task may require —
-an allow-list confirmed empirically in SPIKE.md check 1, not assumed from documentation. A
-construct outside this list fails upload validation step 9, never silently produces a wrong
-result.
+an allow-list confirmed empirically, not assumed from documentation. A construct outside it fails
+upload validation step 9, never silently produces a wrong result.
 
-Confirmed, from SPIKE.md check 1: f-strings, including the `.2f` format spec and the `!r`
-conversion flag, dict `.items()`/`.keys()`/
-`.values()`, `enumerate`, `zip`, slicing (including `[::-1]`), `str.split`/`str.join`,
-`sorted(reverse=...)`, `max`/`min`/`sum`/`len`, the `math` and `random` modules, `try`/`except`,
-and Cyrillic in strings, `print`, f-strings, `len`, and `input()` prompts. Core syntax
-(variables, arithmetic, `if`/`while`/`for`, functions, the built-in types) is the baseline the
-rest of the platform already depends on and is not re-listed here.
+**The evidence is a corpus, not a list.** `scripts/safe-subset/corpus.ts` holds programs that
+each exercise a group of constructs; `npm run confirm:safe-subset` runs every one on Skulpt (with
+Hilka's own stubs, via `lib/runner/node.ts`) and on real CPython, and compares stdout. The
+allow-list itself is `SAFE_SUBSET` in `lib/task/file-lint.ts`, and the script **fails** if any
+entry on it lacks a corpus program that both matched and — read through the linter's own
+`collectUsage` — actually exercises it. CI runs it on every change (`ci.yml`), so a Skulpt
+upgrade that breaks a construct turns red instead of letting it through. Results and the CPython
+version they were taken against are in SPIKE.md check 1, "File-delivery safe subset".
 
-**Not yet in the safe subset** — SPIKE.md check 1's file-delivery rows confirmed `.2f` and `!r`,
-and nothing else from the format-spec mini-language:
+What it covers, as of that run:
 
-| Construct outside the safe subset | Why it is excluded | Replacement to suggest |
+| Kind | Allowed |
+|---|---|
+| Syntax | Assignment and augmented assignment; `if`/`elif`/`else`, `while`, `for` (with `else`), `break`, `continue`, `pass`; `def` with defaults and keyword arguments, `return`, `global`, `lambda`; list/tuple/dict/set literals, subscripts, slices, `del`, starred unpacking; list/dict/set comprehensions and generator expressions; `try`/`except`/`else`/`finally`, `raise`, `assert`; `import`, `import … as`, `from … import` (including `*`); every arithmetic, comparison, boolean and bitwise operator except `@`; f-strings with `!r`/`!s` |
+| Modules | `math`, `random`, `time`, `turtle` — nothing else, and a relative import is out (v1 is single-file) |
+| Module attributes | `math`: `sqrt pi e floor ceil pow fabs trunc hypot factorial gcd radians degrees sin cos tan log log10`; `random`: `randint random choice shuffle uniform randrange sample seed`; `time`: `sleep time`; `turtle`: `TURTLE_SUBSET` below |
+| Builtins | `print input int float str bool len range abs round max min sum sorted reversed enumerate zip list dict tuple set type isinstance any all chr ord divmod pow map filter`, and the exceptions `Exception ValueError TypeError ZeroDivisionError IndexError KeyError NameError AssertionError` |
+| Methods | `str`: `upper lower capitalize strip lstrip rstrip split join replace find index count startswith endswith isdigit isspace center ljust rjust zfill format`; `list`: `append extend insert remove pop clear sort reverse copy`; `dict`: `keys values items get update setdefault` |
+| Format specs | `.Nf`, `d`, a width with optional `<`/`>`/`^` or a leading `0` (and `W.Nf`), `,` and `,.Nf`, `%`/`.N%`, `e`/`.Ne` |
+
+`turtle` is confirmed separately — CPython's `turtle` needs a display, so it cannot run in the
+corpus. `TURTLE_SUBSET` is SPIKE.md check 7's 14 functions and their aliases, `setx`/`sety` (same
+signature in CPython's `turtle.py`), and calls that only affect the window rather than the graded
+drawing, which the stub accepts and ignores: `hideturtle`/`showturtle`, `shape`, `done`,
+`mainloop`, `exitonclick`, `Turtle`, `Screen`, and `setup`/`bgcolor`/`title`/`tracer`/`update`.
+`begin_fill`/`end_fill` are in on the same grounds — IDLE fills the shape, Hilka draws its
+outline, and the outline is what the checks compare. Call forms the stub does not implement are
+rejected even for allowed names: `goto`/`setpos` with other than two positional arguments,
+`pencolor`/`color` with other than one, `pensize`/`width` with none (CPython returns the width),
+`circle` with `steps`, `dot` with a colour.
+
+**What the linter never flags.** A name CPython does not know either — `math.sqr`, `prnt`,
+`"a".uper()`, `import mth` aside — is a typo, the student's own error, and is left to fail at
+runtime with a humanized message; `lib/task/cpython-names.json` (generated by
+`scripts/safe-subset/cpython_names.py` from the real interpreter) is how the linter tells the two
+apart. Reporting a platform limitation for a mistake would be as wrong as the reverse. A file
+that fails to parse for an ordinary reason is the student's SyntaxError and runs as such.
+
+**Outside the safe subset**, each from a confirmed divergence or deliberately out of scope:
+
+| Construct | Why it is excluded | Replacement to suggest |
 |---|---|---|
-| f-string format spec other than `.Nf`, e.g. `f"{x:>8}"`, `f"{x:,}"`, `f"{x:%}"` | Only `.2f` was run (SPIKE.md); padding, alignment, `,` and `%` are unverified | `round(x, 2)`, or build the string with `+` |
+| `str.isalpha`/`isalnum`/`isupper`/`islower` | ASCII-only in Skulpt: `"абв".isalpha()` is `False` (SPIKE.md) | For a character `ch`: `ch.lower() != ch.upper()`; for case, `s == s.upper() and s != s.lower()` |
+| `str.title` | Leaves Cyrillic unchanged in Skulpt | `w[0].upper() + w[1:]` per word |
+| `f"{x=}"` | SyntaxError in Skulpt | `f"x={x}"` |
+| `:=` | SyntaxError in Skulpt | Assign on its own line first |
+| `match` | SyntaxError in Skulpt | `if`/`elif`/`else` |
+| Format specs outside the table above, or a spec computed at runtime (`f"{x:{w}}"`) | Not run | `round(x, 2)`, or one of the confirmed specs |
+| `with`, `open()` | No filesystem in Skulpt | Read data with `input()` |
+| `class` | Out of scope, not a divergence — the corpus's one class ran identically. Excluded because nothing in the curriculum needs one and a class would break the linter's assumption that any `.method()` on a value is a built-in type's | Functions and dicts |
+| Any other module, builtin, method or module attribute CPython has | Not run | — |
 
-This table grows only from a confirmed SPIKE.md divergence — never from a guess about what
-Skulpt might not support.
+Skulpt cannot parse `:=`, `match` or `f"{x=}"` at all, so there is no tree to read; the linter
+recognizes those three from the source text, and only after the parse has already failed — a
+false match can only turn an already-broken file's SyntaxError into this message.
+
+This table grows only from a confirmed divergence — never from a guess about what Skulpt might not
+support — and the allow-list only from a corpus entry that matched.
+
+**A file-delivery task must itself pass.** `tests/references/verify.spec.ts` lints every
+file-delivery seed task's reference and starting code through the real runner's parse.
+
+**Known limits.** String formatting through `.format()` or `%` is not linted (it matched in the
+corpus for plain `{}`/`%d %s %.2f`, but its spec strings are not checked). Two divergences cannot
+be linted at all because they depend on values, not syntax, and are accepted: float repr (Skulpt
+prints `0.1 + 0.2` as `0.3`, CPython as `0.30000000000000004`) and `.Nf` on an exact binary tie
+(`f"{2.5:.0f}"` is `3` in Skulpt, `2` in CPython). Neither affects grading — the reference runs on
+the same engine as the student's file — only what the student sees differs between IDLE and
+Hilka.
 
 ### `FILE_UNSUPPORTED`
 
@@ -199,6 +250,14 @@ cannot run. The message must say exactly that — a platform limitation, not a m
 unsupported construct, offer the replacement from the table above when one exists, and tell the
 student to report it to the teacher. It is never phrased as a wrong answer, and it is raised
 before the program runs at all: the AST is parsed on upload, ahead of any execution.
+
+Implemented as `lintFile` (`lib/task/file-lint.ts`), a pure function over the engine-neutral
+tree `PythonRunner.parse` returns (`PyAstNode`, shaped like CPython's own `ast`, so a v2
+server-side CPython dump feeds it unchanged). Each finding carries its kind, the construct as
+the student wrote it, its line, and a replacement key; `components/task/FileDelivery.tsx`
+renders them from `messages/uk.json` (`file.unsupported`, `file.replacement`). A rejected file is
+not an attempt. If the parse itself cannot complete (the engine restarted), the upload is
+refused with a retry message — a file the linter never saw is not let through.
 
 ### Worked example — grade 8 `fix`, file delivery
 

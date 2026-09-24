@@ -70,3 +70,27 @@ test('a wrong extension is rejected before anything else', async ({ page }) => {
     .setInputFiles({ name: 'hello_idle.txt', mimeType: 'text/plain', buffer: Buffer.from('print(1)\n') });
   await expect(page.getByRole('alert').filter({ hasText: /./ })).toContainText('.py');
 });
+
+test('valid Python Hilka cannot run is FILE_UNSUPPORTED, named, with a replacement', async ({ page }) => {
+  await openFileTask(page, 'Олена');
+  const source = 'import os\nword = input()\nprint(word.isalpha())\n';
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: Buffer.from(source, 'utf8') });
+
+  const notice = page.getByRole('alert').filter({ hasText: 'Hilka поки що не вміє' });
+  await expect(notice).toBeVisible({ timeout: 30_000 });
+  // A platform limitation, stated as one — never a wrong answer.
+  await expect(notice).toContainText('не твоя помилка');
+  await expect(notice).toContainText('Рядок 1: модуль os');
+  await expect(notice).toContainText('Рядок 3: метод .isalpha()');
+  await expect(notice).toContainText('ch.lower() != ch.upper()');
+  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeDisabled();
+
+  // Fixing it and sending it again clears the notice and lets Check through.
+  await page
+    .locator('input[type="file"]')
+    .setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: Buffer.from('print("Привіт, IDLE!")\n', 'utf8') });
+  await expect(notice).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+});

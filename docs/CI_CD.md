@@ -21,7 +21,7 @@ published tasks.
 | `.github/workflows/guardrails.yml` | A | Runs the above on every PR |
 | `.github/workflows/spike-pages.yml` | A | Publishes `spike/` to GitHub Pages |
 | `spike/index.html` | A | Placeholder harness — replace with the real one |
-| `.github/workflows/ci.yml` | B | typecheck, lint, unit tests, migration drift, runner tests |
+| `.github/workflows/ci.yml` | B | typecheck, lint, unit tests, safe-subset confirmation (Skulpt vs the runner image's `python3`), migration drift, runner tests |
 | `.github/workflows-pending/migrate.yml` | B | `drizzle-kit migrate` on merge to `main` |
 | `.github/workflows/reference-check.yml` | C | Re-runs every reference solution against its own checks |
 

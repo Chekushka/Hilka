@@ -104,9 +104,10 @@ Pages serving the spike, branch protection on `main`, and the `production` envir
 In progress. `delivery: 'file'` on `code` and `fix` (TASK_SCHEMA.md); no new task type, no
 change to `lib/checker/`. SPIKE.md's file-delivery checks (1's f-string rows, the
 BOM/CRLF/line-number check, and check 7) have all been run. The download → IDLE → upload → Check
-path works end to end for a single file in a session or in practice; the linter (step 9) is the
-next piece. `content/seed-tasks/grade8-code-idle-hello.json` (grade 8 lesson 43) exercises it,
-proved by `tests/e2e/file-delivery.spec.ts`.
+path works end to end for a single file in a session or in practice, all nine upload steps
+included. `content/seed-tasks/grade8-code-idle-hello.json` (grade 8 lesson 43) exercises it,
+proved by `tests/e2e/file-delivery.spec.ts`. What is left is teacher-facing (hash flagging, bulk
+download) and the authoring-UI control.
 
 | Item | Status | Notes |
 |---|---|---|
@@ -114,8 +115,11 @@ proved by `tests/e2e/file-delivery.spec.ts`.
 | Starter-file generation (header + prompt + starter/broken) | ✅ | `lib/task/file.ts`'s `generateStarterFile`, downloaded client-side as a Blob by `components/task/FileDelivery.tsx`. No seed line — the browser never has the seed (TASK_SCHEMA.md, "Starter file generation") |
 | Upload validation, steps 1–8 | ✅ | `lib/task/file.ts`'s `validateUpload`, pure and unit-tested (`file.test.ts`). Runs in the browser, since grading is client-side today anyway ("Cheating and Trust"); being pure, it moves to a route unchanged when v2 needs it. The accepted source is shown read-only and goes through the same `useTaskRunner` Run/Check as inline code; `submittedAnswer.code` stores it normalized |
 | Header parsing (`taskId`/`version`/`seed`) with manual-selection fallback | 🔶 | `parseHeader` distinguishes ok / missing / altered. The picker is not built: uploading from inside a task already names it, so there the fallback is a note, and a header naming another task is a warning. The picker matters only for a future session-level upload with no task open |
-| AST-based compatibility linter + safe-subset allow-list | ❌ | Next. SPIKE.md check 1's file-delivery rows are run, so the allow-list in TASK_SCHEMA.md is no longer provisional. Needs a Python parse outside the runner (Skulpt's parser lives behind `lib/runner/`, rule 3) — how to get an AST without importing Skulpt elsewhere is the first decision |
-| `FILE_UNSUPPORTED` error class | ❌ | Distinct from `lib/errors/`'s `PyError` mapping — raised at upload, before any run, and phrased as a platform limitation, never a wrong answer |
+| `PythonRunner.parse` + engine-neutral AST | ✅ | The parse question is answered by keeping it inside the runner: `parse()` on the interface, answered by the Worker (safe mid-run), and `lib/runner/ast.ts` converts Skulpt's 3.7-shaped tree to a CPython-`ast`-shaped `PyAstNode` so nothing outside `lib/runner/` sees Skulpt and a v2 CPython dump can feed the same linter. `lib/runner/node.ts` is the Node entry for scripts and unit tests. `ast.test.ts` plus three runner integration tests |
+| AST-based compatibility linter + safe-subset allow-list | ✅ | `lib/task/file-lint.ts`, 23 unit tests on real Skulpt parses. The allow-list is proven, not asserted: `npm run confirm:safe-subset` runs the `scripts/safe-subset/` corpus on Skulpt and CPython and fails on any allow-list entry without matching, actually-exercised evidence — in CI too. Flags only names CPython knows (`cpython-names.json`), so a typo stays the student's error. Found four real divergences on the way (SPIKE.md check 1). Seed file tasks are linted in `verify.spec.ts` |
+| `FILE_UNSUPPORTED` error class | ✅ | `LintFinding`s rendered by `FileDelivery.tsx` from `file.unsupported`/`file.replacement` in `messages/uk.json`: names the construct and line, offers a replacement, says it is Hilka's limitation, asks the student to tell the teacher. Not an attempt. Fails closed if the parse cannot complete |
+| Runner fix: Unicode-aware `isalpha`/`isalnum`/`isupper`/`islower`/`title` | ❌ | Skulpt's are ASCII-only (AI_CONTEXT.md, Gotchas) — wrong grades on Ukrainian text for **inline** tasks too, where no linter protects the student. Once patched and re-confirmed by the corpus, they can join the safe subset |
+| Delivery control in the authoring UI | ❌ | `delivery`/`file` can only be set in task JSON today |
 | Duplicate-hash flagging across students in a session | ❌ | Per-attempt hash of the uploaded source; identical hashes across different students flagged to the teacher, never auto-accused (AI_CONTEXT.md, "Cheating and Trust") |
 | Per-session bulk download of submitted files, for the teacher | ❌ | Dashboard feature — a teacher reviewing a file-delivery task needs the actual files, not just pass/fail |
 
@@ -227,7 +231,10 @@ IDLE before uploading.
       rather than an interpreter-level stepper — no need to fall back to `predict`/`fix` tasks
       or to teach it outside the platform.
 - [ ] Which Python version is installed alongside IDLE on the classroom machines, and is it the
-      same on all of them? Affects the file-delivery safe subset directly.
+      same on all of them? Affects the file-delivery safe subset directly: the corpus was
+      confirmed against CPython 3.11; re-run it there with
+      `PYTHON=<that interpreter> npm run confirm:safe-subset`, and regenerate
+      `lib/task/cpython-names.json` with `scripts/safe-subset/cpython_names.py` on it.
 - [ ] Multi-file projects with local imports — needed for the grade 9 projects, or is a single
       file enough for v1? See AI_CONTEXT.md's "File Delivery" v1 scope limit.
 - [ ] Should a file-delivery task be blocked in the UI until its in-browser prerequisite is

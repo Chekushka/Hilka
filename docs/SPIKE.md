@@ -108,8 +108,91 @@ on a known line (line 4) to check the reported line number against.
 A line-ending or BOM bug that only shifts line numbers would have been invisible in every other
 check here, since none of them touch a file with mixed encoding and endings — it would have
 surfaced for the first time as a student's IDLE-written file reporting an error on the wrong
-line. This checks Skulpt's own parsing behaviour and the normalization logic as specified; the
-actual upload endpoint (TASKS.md, "Upload endpoint + validation pipeline") is not built yet.
+line. This checks Skulpt's own parsing behaviour and the normalization logic as specified;
+`lib/task/file.ts`'s `validateUpload` now implements it, and `tests/e2e/file-delivery.spec.ts`
+uploads a BOM + CRLF file through the real UI.
+
+**File-delivery safe subset — done, and re-run by CI.** The rows above were enough to start file
+delivery but not to define its allow-list: the linter needs every construct it lets through to
+be *confirmed*, not assumed. `scripts/safe-subset/corpus.ts` is a corpus of small programs, each
+exercising one group of constructs; `npm run confirm:safe-subset` runs every one on Skulpt (in
+Node, with Hilka's own stubs) and on real CPython and compares stdout, then refuses any
+allow-list entry (TASK_SCHEMA.md, "Safe subset") that no matching entry actually exercises.
+Engine properties again, so any machine answers them — but CPython's side is whatever
+`python3` the script finds, so re-run it with the classroom machine's interpreter
+(`PYTHON=py npm run confirm:safe-subset`) once its version is known (TASKS.md, Open Questions).
+
+Run against CPython 3.11.15:
+
+| Entry | Result | Divergence |
+|---|---|---|
+| `core-statements` | Match |  |
+| `operators-arith` | Match |  |
+| `operators-bool-compare` | Match |  |
+| `operators-bitwise` | Match |  |
+| `functions` | Match |  |
+| `lambda` | Match |  |
+| `containers` | Match |  |
+| `comprehensions` | Match |  |
+| `try-except` | Match |  |
+| `assert` | Match |  |
+| `imports` | Match |  |
+| `star-import` | Match |  |
+| `fstrings` | Match |  |
+| `builtins-core` | Match |  |
+| `builtins-more` | Match |  |
+| `builtins-input` | Match |  |
+| `builtins-exceptions` | Match |  |
+| `methods-str-case` | Match |  |
+| `methods-str-search` | Match |  |
+| `methods-str-digit-space` | Match |  |
+| `methods-str-letter-predicates-cyrillic` | **Differs** | CPython: True True True True True⏎ — Skulpt: False False False False False⏎ |
+| `methods-str-letter-predicates-ascii` | Match |  |
+| `methods-str-padding` | Match |  |
+| `methods-str-title-latin` | Match |  |
+| `methods-list` | Match |  |
+| `methods-dict` | Match |  |
+| `methods-format` | Match |  |
+| `module-math` | Match |  |
+| `module-random` | Match |  |
+| `module-time` | Match |  |
+| `format-fixed` | Match |  |
+| `format-int` | Match |  |
+| `format-width` | Match |  |
+| `format-grouping` | Match |  |
+| `format-percent` | Match |  |
+| `format-exponent` | Match |  |
+| `float-repr` | **Differs** | CPython: 1.4142135623730951 0.30000000000000004 0.3333333333333333 0.6666666666666666 1.4285714285714286⏎ — Skulpt: 1.414213562373095 0.3 0.3333333333333333 0.6666666666666666 1.428571428571429⏎ |
+| `str-title-cyrillic` | **Differs** | CPython: Кіт І Пес⏎ — Skulpt: кіт і пес⏎ |
+| `format-fixed-exact-tie` | **Differs** | CPython: 0 2 2 -0 0.12 0.38⏎ — Skulpt: 1 2 3 -1 0.13 0.38⏎ |
+| `round-exact-tie` | Match |  |
+| `fstring-self-documenting` | **Differs** | CPython: x=5⏎ — Skulpt: SyntaxError: SyntaxError: bad input on line 2 |
+| `walrus` | **Differs** | CPython: 5⏎ — Skulpt: SyntaxError: SyntaxError: bad input on line 1 |
+| `match` | **Differs** | CPython: other⏎ — Skulpt: SyntaxError: SyntaxError: bad input on line 2 |
+| `percent-format` | Match |  |
+| `class` | Match |  |
+
+What the divergences mean:
+
+- **`isalpha`/`isalnum`/`isupper`/`islower` are ASCII-only in Skulpt.** Every Cyrillic case is
+  `False`: `"абв".isalpha()`, `"ЖУК".isupper()`. ASCII input matches. This is not only a
+  file-delivery problem — an inline grade 9 task that uses them on Ukrainian text gets wrong
+  answers today (AI_CONTEXT.md, Gotchas). Excluded from the safe subset, with a replacement.
+- **`str.title()` leaves Cyrillic unchanged** (`upper`, `lower` and `capitalize` handle it).
+  Excluded.
+- **`.Nf` rounds exact binary ties away from zero**, where CPython rounds half to even:
+  `f"{2.5:.0f}"` is `3` against `2`, `f"{0.125:.2f}"` `0.13` against `0.12`. Non-tie values —
+  including `2.675`, which is below the tie in binary — match, and `round()` itself matches on
+  ties. Accepted rather than excluded: excluding `.2f` would exclude the grade 8 projects, the
+  linter cannot see values, and grading is unaffected because the reference runs on the same
+  engine. What the student sees in IDLE can differ in the last digit on an exact tie.
+- **Float repr is shorter in Skulpt**: `0.1 + 0.2` prints `0.3` (CPython
+  `0.30000000000000004`), `math.sqrt(2)` `1.414213562373095` (CPython `…0951`). Same reasoning:
+  unlintable, grading-neutral, visible only as a difference between IDLE's output and Hilka's.
+- **`f"{x=}"`, `:=` and `match` do not parse at all.** Excluded; the linter recognizes them from
+  the source when the parse fails.
+- `class` and `%`-formatting matched but prove nothing on the allow-list's behalf (probes);
+  `class` stays out by scope (TASK_SCHEMA.md).
 
 ### 2. Turtle as a stub
 

@@ -5,8 +5,9 @@
  * when the v2 CPython path arrives.
  *
  * Upload validation implements steps 1–8 of TASK_SCHEMA.md's table, in its
- * order. Step 9 (the safe-subset linter) is not built yet; a file that passes
- * here goes straight to the same runner and checks an inline task uses.
+ * order. Step 9, the safe-subset linter, needs the engine's parse and lives
+ * in file-lint.ts; a file that passes both goes to the same runner and checks
+ * an inline task uses.
  */
 import { t } from '@/lib/i18n';
 import type { FileSpec } from './types';

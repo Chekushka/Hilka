@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { evaluateChecks, type Check, type CheckReport, type CheckResult } from '@/lib/checker';
 import { t } from '@/lib/i18n';
-import { createRunner, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
+import { createRunner, type ParseResult, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
 import type { Reference, RunCase } from './types';
 
 export type EngineState = 'loading' | 'ready' | 'failed';
@@ -232,5 +232,16 @@ export function useTaskRunner(task: RunnableTask) {
     resolve(value);
   }, []);
 
-  return { ...state, run, check, submitInput };
+  /**
+   * File delivery's upload lint (lib/task/file-lint.ts) reads the parse
+   * before anything runs. Rejects if the engine is not up or restarts
+   * mid-parse — never resolves as "unparseable", which would skip the lint.
+   */
+  const parse = useCallback(async (code: string): Promise<ParseResult> => {
+    const runner = runnerRef.current;
+    if (!runner) throw new Error('Runner not ready');
+    return runner.parse(code);
+  }, []);
+
+  return { ...state, run, check, submitInput, parse };
 }

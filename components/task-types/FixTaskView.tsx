@@ -30,7 +30,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true }: FixT
   // File delivery: the code arrives by upload, not typing — nothing to run until it does.
   const fileSpec = task.payload.delivery === 'file' ? task.payload.file : undefined;
   const [code, setCode] = useState(fileSpec ? '' : task.payload.broken);
-  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(task);
+  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput, parse } = useTaskRunner(task);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -78,6 +78,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true }: FixT
             prompt={task.payload.prompt}
             starterCode={task.payload.broken}
             onAccepted={setCode}
+            parse={parse}
             disabled={loading || busy}
           />
         )}
