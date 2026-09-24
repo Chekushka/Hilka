@@ -99,8 +99,33 @@ export interface PythonRunner {
    */
   warmUp(): Promise<void>;
   run(code: string, options: RunOptions): Promise<RunResult>;
+  /**
+   * Parses without running anything — file delivery's upload linter reads
+   * the tree before a single line executes (docs/TASK_SCHEMA.md, step 9).
+   * Safe to call while a run is in flight.
+   */
+  parse(code: string): Promise<ParseResult>;
   /** Kills a run in progress. The next run starts a fresh interpreter. */
   cancel(): void;
   /** Releases the worker. */
   dispose(): void;
 }
+
+/**
+ * A parsed program, engine-neutral: node and field names follow CPython's
+ * own `ast` module (3.9+ — `Constant`, no `Index`), so a server-side CPython
+ * `ast` dump can produce the same shape and anything that reads it
+ * (lib/task/file-lint.ts) runs unchanged on either engine. Operators and
+ * contexts (`Add`, `Load`, …) are nodes with no fields, as in CPython.
+ */
+export interface PyAstNode {
+  type: string;
+  /** 1-based source line; null for operator/context nodes, which have none. */
+  line: number | null;
+  fields: { [field: string]: PyAstValue };
+}
+
+export type PyAstValue = null | boolean | number | string | PyAstNode | PyAstValue[];
+
+/** A SyntaxError is not a failure of `parse` — it is its answer. */
+export type ParseResult = { ok: true; ast: PyAstNode } | { ok: false; error: PyError };

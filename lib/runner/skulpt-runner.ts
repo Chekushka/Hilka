@@ -3,7 +3,7 @@
  * interface exists so it does not have to be the only one forever.
  */
 import type { FromWorker, RunRequest, ToWorker } from './protocol';
-import type { PythonRunner, RunOptions, RunResult } from './types';
+import type { ParseResult, PythonRunner, RunOptions, RunResult } from './types';
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
@@ -16,6 +16,8 @@ interface Pending {
 export class SkulptRunner implements PythonRunner {
   private worker: Worker | null = null;
   private pending: Pending | null = null;
+  /** Keyed by request id: parses are independent of the one run in flight. */
+  private parses = new Map<number, { resolve: (result: ParseResult) => void; reject: (error: Error) => void }>();
   private nextId = 1;
   private ready: Promise<void> | null = null;
   private markReady: (() => void) | null = null;
@@ -42,6 +44,11 @@ export class SkulptRunner implements PythonRunner {
     if (message.type === 'ready') {
       this.markReady?.();
       this.markReady = null;
+      return;
+    }
+    if (message.type === 'parsed') {
+      this.parses.get(message.id)?.resolve(message.result);
+      this.parses.delete(message.id);
       return;
     }
     if (!this.pending) {
@@ -100,6 +107,16 @@ export class SkulptRunner implements PythonRunner {
     });
   }
 
+  async parse(code: string): Promise<ParseResult> {
+    const worker = this.ensureWorker();
+    await this.ready;
+    const id = this.nextId++;
+    return new Promise<ParseResult>((resolve, reject) => {
+      this.parses.set(id, { resolve, reject });
+      worker.postMessage({ type: 'parse', id, code } satisfies ToWorker);
+    });
+  }
+
   /**
    * Hard stop. Sk.execLimit handles a runaway loop cooperatively; this is for
    * when that is not enough, and costs a worker restart (~80 ms).
@@ -125,6 +142,11 @@ export class SkulptRunner implements PythonRunner {
   }
 
   dispose(): void {
+    // A parse cut off by a restart can never be answered. Rejecting, not
+    // resolving as a failed parse: that would read as "unparseable" and let
+    // the file skip the linter.
+    this.parses.forEach(({ reject }) => reject(new Error('Runner restarted during parse')));
+    this.parses.clear();
     this.worker?.terminate();
     this.worker = null;
     this.ready = null;

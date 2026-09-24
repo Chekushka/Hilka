@@ -1,5 +1,5 @@
 /** Messages between the adapter on the main thread and the worker. */
-import type { Dot, PyError, PyValue, Segment } from './types';
+import type { Dot, ParseResult, PyError, PyValue, Segment } from './types';
 
 export interface RunRequest {
   type: 'run';
@@ -18,7 +18,13 @@ export interface InputResponse {
   value: string;
 }
 
-export type ToWorker = RunRequest | InputResponse;
+export interface ParseRequest {
+  type: 'parse';
+  id: number;
+  code: string;
+}
+
+export type ToWorker = RunRequest | InputResponse | ParseRequest;
 
 export interface ReadyMessage {
   type: 'ready';
@@ -50,4 +56,10 @@ export interface DoneMessage {
   exprResults: Record<string, boolean>;
 }
 
-export type FromWorker = ReadyMessage | StdoutMessage | InputRequestMessage | DoneMessage;
+export interface ParsedMessage {
+  type: 'parsed';
+  id: number;
+  result: ParseResult;
+}
+
+export type FromWorker = ReadyMessage | StdoutMessage | InputRequestMessage | DoneMessage | ParsedMessage;

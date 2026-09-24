@@ -35,8 +35,25 @@ export interface SkulptConfig {
   __future__: unknown;
 }
 
+/**
+ * A node of Skulpt's own AST (Python 3.7-shaped: `Num`, `Str`, `Index`).
+ * `_fields` alternates field name and getter. Operators and contexts are
+ * not objects but functions carrying `_astname` and `_isenum`.
+ */
+export interface SkulptAstNode {
+  _astname: string;
+  _fields: (string | ((node: SkulptAstNode) => unknown))[];
+  lineno?: number;
+  [field: string]: unknown;
+}
+
 export interface SkulptGlobal {
-  configure(config: SkulptConfig): void;
+  /** Unset keys fall back to Skulpt's defaults — `__future__` to Python 2, so always pass it. */
+  configure(config: Partial<SkulptConfig> & { __future__: unknown }): void;
+  parse(filename: string, source: string): { cst: unknown; flags: unknown };
+  astFromParse(cst: unknown, filename: string, flags: unknown): SkulptAstNode;
+  /** AST node constructors and context markers, keyed by CPython's name. */
+  astnodes: Record<string, unknown>;
   importMainWithBody(name: string, dumpJS: boolean, body: string, canSuspend: boolean): unknown;
   misceval: {
     asyncToPromise(fn: () => unknown): Promise<unknown>;

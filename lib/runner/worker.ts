@@ -8,8 +8,10 @@
 import { buildExprEpilogue, createExprRecorder, EXPR_MODULE_PATH, EXPR_MODULE_SOURCE } from './modules/expr-recorder';
 import { RANDOM_MODULE_PATH, RANDOM_MODULE_SOURCE } from './modules/random';
 import { createRecorder, TURTLE_MODULE_PATH, TURTLE_MODULE_SOURCE } from './modules/turtle';
+import { skulptToAst } from './ast';
+import { describeError } from './describe-error';
 import { extractVars } from './py-values';
-import type { SkulptException, SkulptGlobal, SkulptModule, SkulptPyObject } from './skulpt.d';
+import type { SkulptException, SkulptGlobal, SkulptModule } from './skulpt.d';
 import type { DoneMessage, FromWorker, ToWorker } from './protocol';
 import type { PyError, PyValue } from './types';
 
@@ -36,6 +38,10 @@ Sk.builtinFiles.files[TURTLE_MODULE_PATH] = TURTLE_MODULE_SOURCE;
 Sk.builtinFiles.files[RANDOM_MODULE_PATH] = RANDOM_MODULE_SOURCE;
 Sk.builtinFiles.files[EXPR_MODULE_PATH] = EXPR_MODULE_SOURCE;
 
+// A parse can arrive before the first run; the parser reads the language
+// version from the configuration, which otherwise defaults to Python 2.
+Sk.configure({ __future__: Sk.python3 });
+
 let pendingInput: ((value: string) => void) | null = null;
 
 function post(message: FromWorker): void {
@@ -48,26 +54,6 @@ function read(path: string): string {
     throw new Error(`File not found: '${path}'`);
   }
   return file;
-}
-
-function describeError(error: unknown): PyError {
-  const e = error as SkulptException;
-  let message = '';
-  const args = e.args?.v;
-  if (args && args.length > 0) {
-    const first = Sk.ffi.remapToJs(args[0] as SkulptPyObject);
-    message = typeof first === 'string' ? first : String(first);
-  }
-  if (!message) {
-    message = String(e);
-  }
-  const frame = e.traceback?.[0];
-  return {
-    type: e.tp$name ?? 'Error',
-    message,
-    line: frame?.lineno ?? null,
-    col: frame?.colno ?? null
-  };
 }
 
 function isTimeout(error: unknown): boolean {
@@ -144,7 +130,7 @@ async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<v
     vars = extractVars(finished as SkulptModule);
   } catch (caught) {
     timedOut = isTimeout(caught);
-    error = describeError(caught);
+    error = describeError(Sk, caught);
   }
 
   const exprResults: Record<string, boolean> = {};
@@ -174,6 +160,10 @@ self.onmessage = (event: MessageEvent<ToWorker>) => {
   const message = event.data;
   if (message.type === 'run') {
     void handleRun(message);
+  } else if (message.type === 'parse') {
+    // Synchronous and side-effect free, so it can answer between a run's
+    // suspensions without disturbing the run.
+    post({ type: 'parsed', id: message.id, result: skulptToAst(Sk, message.code) });
   } else if (message.type === 'input' && pendingInput) {
     pendingInput(message.value);
   }
