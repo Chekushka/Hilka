@@ -388,7 +388,7 @@ code the student did not write destroys trust in the grade. Two stages:
 - **v1 — safe subset + compatibility linter.** A documented allow-list of constructs confirmed
   empirically by SPIKE.md (TASK_SCHEMA.md has the list). On upload, the AST is parsed before
   anything runs; a construct outside the list is rejected with a message naming the replacement
-  (e.g. `f"{x:.2f}"` → `round(x, 2)`) and stating plainly that this is a limitation of Hilka's
+  (e.g. an unverified format spec like `f"{x:>8}"` → `round(x, 2)` or `+`) and stating plainly that this is a limitation of Hilka's
   engine, not a mistake by the student. See TASK_SCHEMA.md's `FILE_UNSUPPORTED`.
 - **v2 — server-side CPython, for file tasks only.** The planned completion of this feature, not
   a vague possibility to revisit later — without it the linter is easy to mistake for the final
@@ -421,9 +421,9 @@ actually ran the code can tell them apart.
 - Limited standard library — `math` and `random` are covered (SPIKE.md check 1); most of the rest
   is unverified and therefore outside the safe subset by default.
 - Built-in types are not subclassable the way CPython allows.
-- f-string format specifiers are incomplete (see TASK_SCHEMA.md's replacement table) — the most
-  likely divergence in the grade 8 projects specifically, since `f"{x:.2f}"` is a natural way to
-  print a computed BMI or price.
+- f-string format specifiers are only partly verified: `f"{x:.2f}"` — the natural way to print a
+  computed BMI or price in the grade 8 projects — works (SPIKE.md check 1); padding, alignment,
+  `,` and `%` are unverified and outside the safe subset (TASK_SCHEMA.md's replacement table).
 - Error message text differs from CPython's (see the Gotchas entry on `str + int`) — irrelevant
   inside Hilka, where `lib/errors/` matches Skulpt's wording, but it means a student cannot use
   Hilka's error message to debug the same program in IDLE, and vice versa.

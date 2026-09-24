@@ -10,11 +10,31 @@ export type TaskType = 'quiz' | 'predict' | 'parsons' | 'fill' | 'code' | 'fix';
 export type TaskStatus = 'draft' | 'published' | 'archived';
 export type Surface = 'console' | 'turtle' | 'grid';
 
+/**
+ * `delivery: 'file'` on `code`/`fix` (docs/TASK_SCHEMA.md, "File Delivery"):
+ * the student downloads a generated `.py`, edits it in IDLE and uploads it
+ * back. Grading is unchanged — `lib/checker/` never sees this field.
+ */
+export type Delivery = 'inline' | 'file';
+
+export interface FileSpec {
+  /** Expected name, e.g. "bmi.py". A different name is a warning, never a rejection. */
+  filename: string;
+  /** Inject the taskId/version/seed header into the generated starter file. */
+  headerComment: boolean;
+  /** Upload size cap after BOM/CRLF normalization. TASK_SCHEMA.md's default is 65536. */
+  maxBytes: number;
+}
+
 export interface CodePayload {
   type: 'code';
   surface: Surface;
   prompt: string;
   starter: string;
+  /** Absent means `'inline'`. */
+  delivery?: Delivery;
+  /** Required when `delivery` is `'file'`. */
+  file?: FileSpec;
 }
 
 export interface ParsonsLine {
@@ -78,6 +98,10 @@ export interface FixPayload {
   surface: Surface;
   prompt: string;
   broken: string;
+  /** Absent means `'inline'`. */
+  delivery?: Delivery;
+  /** Required when `delivery` is `'file'`. */
+  file?: FileSpec;
 }
 
 /**

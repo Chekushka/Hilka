@@ -8,6 +8,25 @@
 import { isFillTemplateValid } from './fill';
 import type { CodePayload, FillPayload, FixPayload, ParsonsPayload, PredictPayload, QuizPayload, TaskPayload } from './types';
 
+function isFileSpec(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+  const f = value as Record<string, unknown>;
+  return (
+    typeof f.filename === 'string' &&
+    /\.py$/i.test(f.filename) &&
+    typeof f.headerComment === 'boolean' &&
+    typeof f.maxBytes === 'number' &&
+    Number.isInteger(f.maxBytes) &&
+    f.maxBytes > 0
+  );
+}
+
+/** `delivery` absent or `'inline'` needs nothing more; `'file'` needs a well-formed `file`. */
+function isDeliveryValid(p: Record<string, unknown>): boolean {
+  if (p.delivery === undefined || p.delivery === 'inline') return true;
+  return p.delivery === 'file' && isFileSpec(p.file);
+}
+
 export function isCodePayload(value: unknown): value is CodePayload {
   if (typeof value !== 'object' || value === null) return false;
   const p = value as Record<string, unknown>;
@@ -15,7 +34,8 @@ export function isCodePayload(value: unknown): value is CodePayload {
     p.type === 'code' &&
     typeof p.surface === 'string' &&
     typeof p.prompt === 'string' &&
-    typeof p.starter === 'string'
+    typeof p.starter === 'string' &&
+    isDeliveryValid(p)
   );
 }
 
@@ -80,7 +100,8 @@ export function isFixPayload(value: unknown): value is FixPayload {
     typeof p.surface === 'string' &&
     typeof p.prompt === 'string' &&
     typeof p.broken === 'string' &&
-    p.broken.length > 0
+    p.broken.length > 0 &&
+    isDeliveryValid(p)
   );
 }
 

@@ -126,6 +126,12 @@ For a file-delivery task, the download the student receives is generated, never 
    the browser tab.
 3. `payload.starter` (for `code`) or `payload.broken` (for `fix`), unchanged.
 
+The header's machine lines are `# hilka-task: <taskId>`, `# hilka-version: <n>` and, only when
+the server resolved a seed, `# hilka-seed: <n>`, preceded by one Ukrainian line asking the student
+not to edit them (`lib/task/file.ts`). They are read only from the file's leading comment block.
+The browser never learns a parameterized task's seed (the session route resolves it server-side
+and strips `params`), so a file downloaded from the task view carries no seed line today.
+
 The header is what makes the upload path able to identify which task a returned file belongs to
 without the student typing anything. See "Upload validation" step 8 for what happens when it is
 missing or edited.
@@ -152,6 +158,13 @@ Steps 4–5 run before step 6's byte count, since a BOM and CRLF padding are not
 student wrote. Step 9 runs last because it is the only check that requires a successful parse,
 which steps 1–3 exist to guarantee.
 
+Steps 1–8 are `lib/task/file.ts`'s `validateUpload`. Two implementation choices: step 2 is "starts
+with a zip/PDF/OLE/PNG/JPEG signature, or contains a NUL byte"; step 5 also normalizes a bare
+`\r`. Step 8's picker only applies where the task is not already known — uploading from inside a
+task's own screen already names the task, so there a missing or altered header is a quiet note
+and a header naming a *different* task is a warning; the file is graded against the open task
+either way. Step 9 is not built yet.
+
 ### Safe subset (v1)
 
 Automatic rewriting of student code is rejected outright: checking code the student did not
@@ -160,19 +173,20 @@ an allow-list confirmed empirically in SPIKE.md check 1, not assumed from docume
 construct outside this list fails upload validation step 9, never silently produces a wrong
 result.
 
-Confirmed, from SPIKE.md check 1: f-strings without format specs, dict `.items()`/`.keys()`/
+Confirmed, from SPIKE.md check 1: f-strings, including the `.2f` format spec and the `!r`
+conversion flag, dict `.items()`/`.keys()`/
 `.values()`, `enumerate`, `zip`, slicing (including `[::-1]`), `str.split`/`str.join`,
 `sorted(reverse=...)`, `max`/`min`/`sum`/`len`, the `math` and `random` modules, `try`/`except`,
 and Cyrillic in strings, `print`, f-strings, `len`, and `input()` prompts. Core syntax
 (variables, arithmetic, `if`/`while`/`for`, functions, the built-in types) is the baseline the
 rest of the platform already depends on and is not re-listed here.
 
-**Not yet in the safe subset** — pending the SPIKE.md check 1 additions for file delivery:
+**Not yet in the safe subset** — SPIKE.md check 1's file-delivery rows confirmed `.2f` and `!r`,
+and nothing else from the format-spec mini-language:
 
 | Construct outside the safe subset | Why it is excluded | Replacement to suggest |
 |---|---|---|
-| f-string format spec, e.g. `f"{x:.2f}"` | Skulpt's format mini-language is not confirmed complete (SPIKE.md) | `round(x, 2)` — format the rounded value, or build the string with `+` |
-| f-string conversion flag, e.g. `f"{x!r}"` | same | `repr(x)` concatenated with `+`, or drop the flag |
+| f-string format spec other than `.Nf`, e.g. `f"{x:>8}"`, `f"{x:,}"`, `f"{x:%}"` | Only `.2f` was run (SPIKE.md); padding, alignment, `,` and `%` are unverified | `round(x, 2)`, or build the string with `+` |
 
 This table grows only from a confirmed SPIKE.md divergence — never from a guess about what
 Skulpt might not support.
