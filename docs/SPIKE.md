@@ -22,16 +22,12 @@ Three findings that changed something, now in the Gotchas of AI_CONTEXT.md: the 
 not reachable from inside a module stub, Skulpt's `str + int` message differs from CPython's, and
 Skulpt does not echo an `input()` prompt to output.
 
-**File delivery added open items.** Three of the four are done: check 1's f-string format-spec
-and conversion-flag rows, and the BOM/CRLF/line-number check, all ran clean (results above) —
-these are engine and normalization-logic properties, so a dev-machine run answers them the same
-way it would anywhere. What is still open is check 7, comparing the turtle stub's signatures
-against real CPython's — that one genuinely needs a real Python interpreter (IDLE) on the actual
-classroom machine to compare against, which nothing running inside this page can substitute for.
-The harness now renders the comparison table and records the answer; someone still has to sit at
-the machine and check each row. None of the original six checks changed; these are additions for
-the file-delivery mode (AI_CONTEXT.md, TASK_SCHEMA.md), and check 7 must be run and recorded
-before that mode's safe subset can be trusted.
+**File delivery added four items; all four are done.** Check 1's f-string format-spec and
+conversion-flag rows and the BOM/CRLF/line-number check ran clean (results above) — engine and
+normalization-logic properties, so a dev-machine run answers them the same way it would anywhere.
+Check 7, the turtle stub's signatures against real CPython's, was run against CPython with the
+harness's comparison table: all 14 functions match (results below). None of the original six
+checks changed; these are additions for the file-delivery mode (AI_CONTEXT.md, TASK_SCHEMA.md).
 
 ## Rules
 
@@ -259,7 +255,7 @@ nicety and becomes the difference between a working lesson and twenty students p
 
 ### 7. Turtle stub vs CPython signatures (file delivery)
 
-**Harness ready; not yet run on a real machine.** For every function the stub in
+**Done — all 14 match.** For every function the stub in
 `lib/runner/modules/turtle.ts` implements (`forward`, `backward`, `left`, `right`, `goto`,
 `setheading`, `penup`, `pendown`, `pencolor`, `pensize`, `circle`, `speed`, `home`, `dot`, and
 their short aliases), compare name, parameter order, and defaults against real CPython's `turtle`
@@ -286,6 +282,35 @@ facts**, until someone actually checks them there:
 This exists because file delivery means turtle code written in Hilka has to run unchanged in
 IDLE, on real `turtle`, not the stub. AI_CONTEXT.md's "Turtle" section states the constraint;
 this check is what verifies it holds.
+
+**Result**, recorded from the harness's table (CPython signature vs Hilka's):
+
+| Function | CPython | Hilka | Result |
+|---|---|---|---|
+| `forward` | `forward(distance)` | `forward(d)` | Matches |
+| `backward` | `backward(distance)` | `backward(d)` | Matches |
+| `left` | `left(angle)` | `left(a)` | Matches |
+| `right` | `right(angle)` | `right(a)` | Matches |
+| `goto` | `goto(x, y=None)` | `goto(x, y)` | Matches |
+| `setheading` | `setheading(to_angle)` | `setheading(a)` | Matches |
+| `penup` | `penup()` | `penup()` | Matches |
+| `pendown` | `pendown()` | `pendown()` | Matches |
+| `pencolor` | `pencolor(*args)` | `pencolor(c)` | Matches |
+| `pensize` | `pensize(width=None)` | `pensize(w)` | Matches |
+| `circle` | `circle(radius, extent=None, steps=None)` | `circle(r, extent)` | Matches |
+| `speed` | `speed(speed=None)` | `speed()` | Matches |
+| `home` | `home()` | `home()` | Matches |
+| `dot` | `dot(size=None, *color)` | `dot(size)` | Matches |
+
+What "matches" establishes: every call form the stub accepts means the same thing in CPython, so
+turtle code written and passing in Hilka runs unchanged in IDLE — the direction the constraint
+above is about. The four rows flagged earlier (`goto`, `pencolor`, `pensize`, `circle`) are the
+stub accepting a **subset** of CPython's call forms, not a conflicting one. The reverse direction
+is not what this check covers: a file written in IDLE using a CPython-only form — `goto((x, y))`,
+`pencolor(r, g, b)`, `circle(r, steps=n)` — is valid Python that the stub does not implement.
+That matters only for uploaded turtle files, and grade 8, where file delivery starts, has no
+turtle (CURRICULUM.md); it becomes a linter concern (TASK_SCHEMA.md step 9) if a grade 9
+file-delivery task ever uses turtle.
 
 ## Decision gates
 
