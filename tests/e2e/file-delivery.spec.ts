@@ -73,7 +73,7 @@ test('a wrong extension is rejected before anything else', async ({ page }) => {
 
 test('valid Python Hilka cannot run is FILE_UNSUPPORTED, named, with a replacement', async ({ page }) => {
   await openFileTask(page, 'Олена');
-  const source = 'import os\nword = input()\nprint(word.isalpha())\n';
+  const source = 'import os\nwith open("data.txt") as f:\n    print(f.read())\n';
   await page
     .locator('input[type="file"]')
     .setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: Buffer.from(source, 'utf8') });
@@ -83,8 +83,8 @@ test('valid Python Hilka cannot run is FILE_UNSUPPORTED, named, with a replaceme
   // A platform limitation, stated as one — never a wrong answer.
   await expect(notice).toContainText('не твоя помилка');
   await expect(notice).toContainText('Рядок 1: модуль os');
-  await expect(notice).toContainText('Рядок 3: метод .isalpha()');
-  await expect(notice).toContainText('ch.lower() != ch.upper()');
+  await expect(notice).toContainText('Рядок 2: конструкція with');
+  await expect(notice).toContainText('читай через input()');
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeDisabled();
 
   // Fixing it and sending it again clears the notice and lets Check through.

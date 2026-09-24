@@ -61,6 +61,10 @@ turtle.done()
     expect(lint(source)).toEqual([]);
   });
 
+  it('passes the letter and case methods, Unicode-aware in the runner', () => {
+    expect(lint('s = input()\nprint(s.isalpha(), s.isalnum(), s.isupper(), s.islower(), s.istitle(), s.title(), s.swapcase())\n')).toEqual([]);
+  });
+
   it('passes `from turtle import *`', () => {
     expect(lint('from turtle import *\nforward(100)\nleft(90)\ncolor("blue")\n')).toEqual([]);
   });
@@ -75,10 +79,6 @@ turtle.done()
 
   it('does not treat a student\'s own name as a builtin', () => {
     expect(lint('def open(x):\n    return x\nprint(open(1))\n')).toEqual([]);
-  });
-
-  it('lets turtle\'s title() through when turtle is imported, as Screen.title', () => {
-    expect(lint('import turtle\ns = turtle.Screen()\ns.title("Гра")\n')).toEqual([]);
   });
 
   it('does not mistake dict.update for turtle\'s update', () => {
@@ -108,10 +108,11 @@ describe('lintFile — rejects what Hilka cannot be trusted to run', () => {
     expect(names('from math import *\nprint(prod([1, 2]))\n')).toEqual(['module_attr:math.prod']);
   });
 
-  it('rejects the letter predicates and title(), ASCII-only in Skulpt', () => {
-    const findings = lint('s = input()\nprint(s.isalpha(), s.isupper(), s.title())\n');
-    expect(findings.map((f) => f.name)).toEqual(['.isalpha()', '.isupper()', '.title()']);
-    expect(findings.every((f) => f.replacement !== undefined && f.line === 2)).toBe(true);
+  it('rejects an unconfirmed str method, naming its line', () => {
+    expect(lint('s = input()\nprint(s.casefold(), s.isnumeric())\n')).toEqual([
+      { kind: 'method', name: '.casefold()', line: 2 },
+      { kind: 'method', name: '.isnumeric()', line: 2 }
+    ]);
   });
 
   it('rejects turtle call forms the stub does not implement', () => {

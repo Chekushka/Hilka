@@ -44,7 +44,8 @@ export const SAFE_SUBSET = {
   method: [
     'upper', 'lower', 'capitalize', 'strip', 'lstrip', 'rstrip',
     'split', 'join', 'replace', 'find', 'index', 'count', 'startswith', 'endswith',
-    'isdigit', 'isspace', 'center', 'ljust', 'rjust', 'zfill', 'format',
+    'isdigit', 'isspace', 'isalpha', 'isalnum', 'isupper', 'islower', 'istitle', 'title', 'swapcase',
+    'center', 'ljust', 'rjust', 'zfill', 'format',
     'append', 'extend', 'insert', 'remove', 'pop', 'clear', 'sort', 'reverse', 'copy',
     'keys', 'values', 'items', 'get', 'update', 'setdefault'
   ],
@@ -131,11 +132,6 @@ const REPLACEMENTS: Record<string, string> = {
   'syntax::=': 'walrus',
   'syntax:match': 'match',
   'syntax:f"{x=}"': 'fstringDebug',
-  'method:.isalpha()': 'isalpha',
-  'method:.isalnum()': 'isalnum',
-  'method:.isupper()': 'isupper',
-  'method:.islower()': 'islower',
-  'method:.title()': 'title',
   'turtle_call:goto': 'goto',
   'turtle_call:pencolor': 'pencolor',
   'turtle_call:color': 'pencolor',

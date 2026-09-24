@@ -47,6 +47,20 @@ export interface SkulptAstNode {
   [field: string]: unknown;
 }
 
+/** A Python `str` instance: its value as a JS string. */
+export interface SkulptStr extends SkulptPyObject {
+  v: string;
+}
+
+/**
+ * A builtin method as `str.prototype` holds it. The function lives in two
+ * places: `$meth` for a call through the type, `d$def.$meth` for bound methods.
+ */
+export interface SkulptMethodDescriptor {
+  $meth: (this: SkulptStr, ...args: SkulptPyObject[]) => unknown;
+  d$def: { $meth: (this: SkulptStr, ...args: SkulptPyObject[]) => unknown };
+}
+
 export interface SkulptGlobal {
   /** Unset keys fall back to Skulpt's defaults — `__future__` to Python 2, so always pass it. */
   configure(config: Partial<SkulptConfig> & { __future__: unknown }): void;
@@ -64,6 +78,11 @@ export interface SkulptGlobal {
     remapToPy(value: unknown): SkulptPyObject;
   };
   builtin: {
+    str: {
+      new (value: string): SkulptPyObject;
+      prototype: Record<string, SkulptMethodDescriptor | undefined>;
+    };
+    bool: { true$: SkulptPyObject; false$: SkulptPyObject };
     func: new (fn: (...args: SkulptPyObject[]) => unknown) => unknown;
     none: { none$: unknown };
     int_: new (value: number) => SkulptPyObject;

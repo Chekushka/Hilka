@@ -146,10 +146,10 @@ Run against CPython 3.11.15:
 | `methods-str-case` | Match |  |
 | `methods-str-search` | Match |  |
 | `methods-str-digit-space` | Match |  |
-| `methods-str-letter-predicates-cyrillic` | **Differs** | CPython: True True True True True⏎ — Skulpt: False False False False False⏎ |
-| `methods-str-letter-predicates-ascii` | Match |  |
+| `methods-str-letter-predicates` | Match |  |
+| `methods-str-case-transforms` | Match |  |
+| `methods-str-unicode-sweep` | Match |  |
 | `methods-str-padding` | Match |  |
-| `methods-str-title-latin` | Match |  |
 | `methods-list` | Match |  |
 | `methods-dict` | Match |  |
 | `methods-format` | Match |  |
@@ -163,7 +163,6 @@ Run against CPython 3.11.15:
 | `format-percent` | Match |  |
 | `format-exponent` | Match |  |
 | `float-repr` | **Differs** | CPython: 1.4142135623730951 0.30000000000000004 0.3333333333333333 0.6666666666666666 1.4285714285714286⏎ — Skulpt: 1.414213562373095 0.3 0.3333333333333333 0.6666666666666666 1.428571428571429⏎ |
-| `str-title-cyrillic` | **Differs** | CPython: Кіт І Пес⏎ — Skulpt: кіт і пес⏎ |
 | `format-fixed-exact-tie` | **Differs** | CPython: 0 2 2 -0 0.12 0.38⏎ — Skulpt: 1 2 3 -1 0.13 0.38⏎ |
 | `round-exact-tie` | Match |  |
 | `fstring-self-documenting` | **Differs** | CPython: x=5⏎ — Skulpt: SyntaxError: SyntaxError: bad input on line 2 |
@@ -174,12 +173,15 @@ Run against CPython 3.11.15:
 
 What the divergences mean:
 
-- **`isalpha`/`isalnum`/`isupper`/`islower` are ASCII-only in Skulpt.** Every Cyrillic case is
-  `False`: `"абв".isalpha()`, `"ЖУК".isupper()`. ASCII input matches. This is not only a
-  file-delivery problem — an inline grade 9 task that uses them on Ukrainian text gets wrong
-  answers today (AI_CONTEXT.md, Gotchas). Excluded from the safe subset, with a replacement.
-- **`str.title()` leaves Cyrillic unchanged** (`upper`, `lower` and `capitalize` handle it).
-  Excluded.
+- **Fixed in the runner: `isalpha`/`isalnum`/`isupper`/`islower`/`istitle`/`title`/`swapcase`
+  were ASCII-only in Skulpt.** Every Cyrillic case was wrong: `"абв".isalpha()` and
+  `"ЖУК".isupper()` were `False`, `"кіт і пес".title()` came back unchanged — for inline tasks
+  too, not only file delivery. `lib/runner/modules/str-unicode.ts` replaces all seven with ports of
+  CPython's own algorithms. They now match CPython on every character of Latin, Greek and
+  Cyrillic (`methods-str-unicode-sweep`, one character at a time) and on the targeted cases
+  (apostrophes, `ǅ`, `ß`, `ŉ`), and are on the safe subset. The sweep leaves out U+019B `ƛ`: it
+  gained an uppercase in Unicode 16, which the browser's JS engine knows and CPython 3.11–3.13
+  (Unicode 14–15.1) do not — a Unicode-version difference, not a runner bug.
 - **`.Nf` rounds exact binary ties away from zero**, where CPython rounds half to even:
   `f"{2.5:.0f}"` is `3` against `2`, `f"{0.125:.2f}"` `0.13` against `0.12`. Non-tie values —
   including `2.675`, which is below the tie in binary — match, and `round()` itself matches on

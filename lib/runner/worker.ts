@@ -7,6 +7,7 @@
  */
 import { buildExprEpilogue, createExprRecorder, EXPR_MODULE_PATH, EXPR_MODULE_SOURCE } from './modules/expr-recorder';
 import { RANDOM_MODULE_PATH, RANDOM_MODULE_SOURCE } from './modules/random';
+import { patchStrUnicode } from './modules/str-unicode';
 import { createRecorder, TURTLE_MODULE_PATH, TURTLE_MODULE_SOURCE } from './modules/turtle';
 import { skulptToAst } from './ast';
 import { describeError } from './describe-error';
@@ -37,6 +38,10 @@ scope.__exprRecorder__ = exprRecorder;
 Sk.builtinFiles.files[TURTLE_MODULE_PATH] = TURTLE_MODULE_SOURCE;
 Sk.builtinFiles.files[RANDOM_MODULE_PATH] = RANDOM_MODULE_SOURCE;
 Sk.builtinFiles.files[EXPR_MODULE_PATH] = EXPR_MODULE_SOURCE;
+
+// Skulpt's letter and case predicates are ASCII-only; Ukrainian text needs
+// CPython's Unicode behaviour (modules/str-unicode.ts).
+patchStrUnicode(Sk);
 
 // A parse can arrive before the first run; the parser reads the language
 // version from the configuration, which otherwise defaults to Python 2.

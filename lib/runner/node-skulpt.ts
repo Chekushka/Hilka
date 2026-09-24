@@ -8,6 +8,7 @@
 import { createRequire } from 'node:module';
 import { skulptToAst } from './ast';
 import { RANDOM_MODULE_PATH, RANDOM_MODULE_SOURCE } from './modules/random';
+import { patchStrUnicode } from './modules/str-unicode';
 import { createRecorder, TURTLE_MODULE_PATH, TURTLE_MODULE_SOURCE } from './modules/turtle';
 import type { SkulptException, SkulptGlobal } from './skulpt.d';
 import type { ParseResult } from './types';
@@ -33,6 +34,7 @@ function skulpt(): SkulptGlobal {
   if (!Sk) throw new Error('Skulpt did not load');
   Sk.builtinFiles.files[TURTLE_MODULE_PATH] = TURTLE_MODULE_SOURCE;
   Sk.builtinFiles.files[RANDOM_MODULE_PATH] = RANDOM_MODULE_SOURCE;
+  patchStrUnicode(Sk);
   Sk.configure({ __future__: Sk.python3 });
   loaded = Sk;
   return Sk;

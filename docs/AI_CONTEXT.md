@@ -264,7 +264,8 @@ inside a Worker over `postMessage` — no `SharedArrayBuffer`, so no COOP/COEP h
 `Sk.execLimit` is wall-clock. It must be **paused while waiting for input**, or a slow typist
 gets "your program stopped responding". Same for `time.sleep`.
 
-Module stubs live in `lib/runner/modules/`. `turtle` and `random` are replaced (see below);
+Module stubs live in `lib/runner/modules/`, alongside `str-unicode.ts`, which patches Skulpt's
+ASCII-only `str` letter/case methods at load. `turtle` and `random` are replaced (see below);
 `math` and `time` pass through. `time.sleep` must yield a suspension rather than block.
 
 Verification of Skulpt's actual language coverage, turtle behaviour, and input loop is the
@@ -427,8 +428,8 @@ actually ran the code can tell them apart.
 - f-string format specs: `.Nf`, widths, alignment, `,`, `%` and `e` are confirmed (SPIKE.md
   check 1, "File-delivery safe subset"), but `.Nf` rounds an exact binary tie away from zero where
   CPython rounds to even — `f"{2.5:.0f}"` is `3` in Hilka, `2` in IDLE.
-- `str.isalpha`/`isalnum`/`isupper`/`islower` are ASCII-only and `str.title` ignores Cyrillic —
-  wrong answers on Ukrainian text, silently (see Gotchas).
+- Skulpt's own `str.isalpha`/`isalnum`/`isupper`/`islower`/`istitle`/`title`/`swapcase` are
+  ASCII-only; the runner replaces them with CPython-matching versions (see Gotchas).
 - Float repr is shorter: `0.1 + 0.2` prints `0.3`, where IDLE prints `0.30000000000000004`.
 - `:=`, `match` and `f"{x=}"` are SyntaxErrors.
 - Error message text differs from CPython's (see the Gotchas entry on `str + int`) — irrelevant
@@ -601,13 +602,15 @@ effective limit on guessing a progress code is `maxAttempts × (instances curren
 guess even per instance), but it is not the hard global guarantee the name suggests. A durable
 store (a Postgres table, Upstash) would close the gap if the scale ever changes.
 
-**Skulpt's letter predicates are ASCII-only.** `"абв".isalpha()`, `"ж1".isalnum()`,
-`"ЖУК".isupper()` and `"жук".islower()` are all `False`, and `"кіт".title()` returns it unchanged;
-`upper`, `lower`, `capitalize` and `isdigit` handle Cyrillic correctly. Found by the safe-subset
-corpus (SPIKE.md). File delivery rejects them, but an **inline** task gets no such protection: a
-grade 9 string task that asks "is this a letter" about Ukrainian text will grade a correct
-CPython-style answer as wrong. Author such tasks with `ch.lower() != ch.upper()` until the runner
-patches these methods.
+**Skulpt's letter and case methods are ASCII-only — patched.** Unpatched, `"абв".isalpha()`,
+`"ж1".isalnum()`, `"ЖУК".isupper()` and `"жук".islower()` are all `False`, and `"кіт".title()`
+and `.swapcase()` leave Cyrillic alone: silently wrong grades on any Ukrainian string task.
+`lib/runner/modules/str-unicode.ts` replaces those seven at load, in both the Worker and the Node
+loader. A method descriptor keeps its function in **two** places — `$meth` (called via the type,
+`str.isalpha(s)`) and `d$def.$meth` (what a bound method `s.isalpha` is built from) — and patching
+only one leaves the other path ASCII. `upper`, `lower`, `capitalize` were already Unicode-aware;
+`isdigit`/`isnumeric` remain ASCII-only (harmless for Ukrainian). If the Skulpt upgrade ever
+renames these internals, the corpus's `methods-str-unicode-sweep` goes red in CI.
 
 **Skulpt's AST is not CPython's, in three non-obvious ways.** `lib/runner/ast.ts` normalizes it,
 but anyone reading Skulpt's tree directly will trip on them: operators are the

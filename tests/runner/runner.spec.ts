@@ -193,3 +193,12 @@ test('parse answers while a run is waiting on input()', async ({ page }) => {
   expect(parsed.ok).toBe(true);
   expect(parsed.elapsed).toBeLessThan(1000);
 });
+
+test('str letter and case methods follow CPython on Ukrainian text', async ({ page }) => {
+  const result = await run(
+    page,
+    'w = "Їжак"\nprint(w.isalpha(), "ЖУК".isupper(), "жук".islower(), "ж1".isalnum(), "кіт і пес".title(), w.swapcase(), w.istitle())'
+  );
+  expect(result.error).toBeNull();
+  expect(result.stdout).toBe('True True True True Кіт І Пес їЖАК True\n');
+});

@@ -237,28 +237,41 @@ print(t.find("і"), t.find("я"), t.index("пес"), t.count("і"), t.startswith
 `
   },
   {
-    id: 'methods-str-letter-predicates-cyrillic',
-    confirms: { kind: 'method', names: [] },
-    // ASCII-only in Skulpt: every Cyrillic case below is False there.
-    code: `print("абв".isalpha(), "їжак".isalpha(), "ж1".isalnum(), "ЖУК".isupper(), "жук".islower())
+    id: 'methods-str-letter-predicates',
+    // Skulpt's own are ASCII-only; these run lib/runner/modules/str-unicode.ts.
+    confirms: method(['isalpha', 'isalnum', 'isupper', 'islower', 'istitle']),
+    code: `for s in ["абв", "їжак", "Ґанок", "м'ята", "ж1", "abc", "a1", "", " ", "1", "ЖУК", "ЖУК 1", "жук", "Жук", "ЖУк", "Жук Їжак", "123", "ß", "ǅ", "ǅemal", "Σίσυφος"]:
+    print(repr(s), s.isalpha(), s.isalnum(), s.isupper(), s.islower(), s.istitle())
 `
   },
   {
-    id: 'methods-str-letter-predicates-ascii',
-    confirms: { kind: 'method', names: [] },
-    code: `print("abc".isalpha(), "a1".isalnum(), "AB".isupper(), "ab".islower())
+    id: 'methods-str-case-transforms',
+    confirms: method(['title', 'swapcase']),
+    code: `for s in ["кіт і пес", "ґанок-їжак", "they're bill's", "hello wORLD", "straße", "ǆemal", "Привіт, СВІТ", "3кіт", "ﬁre", ""]:
+    print(repr(s.title()), repr(s.swapcase()))
+`
+  },
+  {
+    id: 'methods-str-unicode-sweep',
+    // Every character of Latin, Greek and Cyrillic, one at a time. U+019B (ƛ)
+    // is left out: it gained an uppercase in Unicode 16, which the browser's
+    // JS engine knows and CPython 3.11–3.13 (Unicode 14–15.1) do not — a
+    // Unicode-version difference, not a runner bug.
+    confirms: method(['isalpha', 'isalnum', 'isupper', 'islower', 'istitle', 'title', 'swapcase']),
+    code: `chars = [chr(i) for i in list(range(0x20, 0x250)) + list(range(0x370, 0x530)) if i != 0x19B]
+print("".join("1" if c.isalpha() else "0" for c in chars))
+print("".join("1" if c.isalnum() else "0" for c in chars))
+print("".join("1" if c.isupper() else "0" for c in chars))
+print("".join("1" if c.islower() else "0" for c in chars))
+print("".join("1" if c.istitle() else "0" for c in chars))
+print("|".join(c.title() for c in chars))
+print("|".join(c.swapcase() for c in chars))
 `
   },
   {
     id: 'methods-str-padding',
     confirms: method(['center', 'ljust', 'rjust', 'zfill']),
     code: `print(repr("ab".center(6)), repr("ab".ljust(4)), repr("ab".rjust(4)), "7".zfill(3), repr("жук".center(7, "*")))
-`
-  },
-  {
-    id: 'methods-str-title-latin',
-    confirms: { kind: 'method', names: [] },
-    code: `print("cat and dog".title())
 `
   },
   {
@@ -367,12 +380,6 @@ print(f"{x:.0f} {x:.1f} {x:.2f} {x:.3f} {22.857:.2f} {2.675:.2f} {1.005:.2f} {99
     confirms: { kind: 'node', names: [] },
     code: `import math
 print(math.sqrt(2), 0.1 + 0.2, 1 / 3, 2 / 3, 10 / 7)
-`
-  },
-  {
-    id: 'str-title-cyrillic',
-    confirms: { kind: 'method', names: [] },
-    code: `print("кіт і пес".title())
 `
   },
   {

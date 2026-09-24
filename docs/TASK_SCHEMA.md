@@ -189,7 +189,7 @@ What it covers, as of that run:
 | Modules | `math`, `random`, `time`, `turtle` — nothing else, and a relative import is out (v1 is single-file) |
 | Module attributes | `math`: `sqrt pi e floor ceil pow fabs trunc hypot factorial gcd radians degrees sin cos tan log log10`; `random`: `randint random choice shuffle uniform randrange sample seed`; `time`: `sleep time`; `turtle`: `TURTLE_SUBSET` below |
 | Builtins | `print input int float str bool len range abs round max min sum sorted reversed enumerate zip list dict tuple set type isinstance any all chr ord divmod pow map filter`, and the exceptions `Exception ValueError TypeError ZeroDivisionError IndexError KeyError NameError AssertionError` |
-| Methods | `str`: `upper lower capitalize strip lstrip rstrip split join replace find index count startswith endswith isdigit isspace center ljust rjust zfill format`; `list`: `append extend insert remove pop clear sort reverse copy`; `dict`: `keys values items get update setdefault` |
+| Methods | `str`: `upper lower capitalize strip lstrip rstrip split join replace find index count startswith endswith isdigit isspace isalpha isalnum isupper islower istitle title swapcase center ljust rjust zfill format` (the letter/case ones patched in the runner, SPIKE.md); `list`: `append extend insert remove pop clear sort reverse copy`; `dict`: `keys values items get update setdefault` |
 | Format specs | `.Nf`, `d`, a width with optional `<`/`>`/`^` or a leading `0` (and `W.Nf`), `,` and `,.Nf`, `%`/`.N%`, `e`/`.Ne` |
 
 `turtle` is confirmed separately — CPython's `turtle` needs a display, so it cannot run in the
@@ -214,8 +214,6 @@ that fails to parse for an ordinary reason is the student's SyntaxError and runs
 
 | Construct | Why it is excluded | Replacement to suggest |
 |---|---|---|
-| `str.isalpha`/`isalnum`/`isupper`/`islower` | ASCII-only in Skulpt: `"абв".isalpha()` is `False` (SPIKE.md) | For a character `ch`: `ch.lower() != ch.upper()`; for case, `s == s.upper() and s != s.lower()` |
-| `str.title` | Leaves Cyrillic unchanged in Skulpt | `w[0].upper() + w[1:]` per word |
 | `f"{x=}"` | SyntaxError in Skulpt | `f"x={x}"` |
 | `:=` | SyntaxError in Skulpt | Assign on its own line first |
 | `match` | SyntaxError in Skulpt | `if`/`elif`/`else` |
