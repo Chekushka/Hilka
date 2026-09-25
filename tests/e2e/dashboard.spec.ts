@@ -44,7 +44,7 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
   // Complete the task as a student first, so there is something to see.
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name: STUDENT_NAME }).click();
-  await page.getByRole('button', { name: 'Квадрат' }).click();
+  await page.getByRole('button', { name: 'Квадрат', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
   await Promise.all([
@@ -103,7 +103,7 @@ test('the rollup shows a student who has tried a task but never passed it', asyn
 
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name: STUCK_STUDENT }).click();
-  await page.getByRole('button', { name: 'Квадрат' }).click();
+  await page.getByRole('button', { name: 'Квадрат', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
   // A rectangle, not a square — fails on purpose.
   await typeSolution(

@@ -28,7 +28,7 @@ test('a teacher builds a session, and a student can join it', async ({ page }) =
   // picks the seed square specifically rather than assuming it is the only
   // (or the first) item in the list.
   await page.getByLabel('Тема', { exact: true }).selectOption({ label: 'Черепашача графіка' });
-  const squareItem = page.getByRole('listitem').filter({ hasText: 'Квадрат' });
+  const squareItem = page.getByRole('listitem').filter({ has: page.getByText('Квадрат', { exact: true }) });
   await expect(squareItem).toBeVisible();
   await squareItem.getByRole('checkbox').check();
   await expect(page.getByText('обрано: 1')).toBeVisible();
@@ -48,7 +48,7 @@ test('a teacher builds a session, and a student can join it', async ({ page }) =
   await page.goto(`/s/${code.toLowerCase()}`);
   await expect(page.getByRole('button', { name: 'Олена' })).toBeVisible();
   await page.getByRole('button', { name: 'Олена' }).click();
-  await expect(page.getByRole('button', { name: 'Квадрат' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Квадрат', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Трикутник' })).toHaveCount(0);
 });
 

@@ -1,0 +1,35 @@
+{
+  "slug": "g7-code-turtle-fan",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Віяло",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй «віяло» з 12 променів довжиною 100, що виходять з однієї точки. Після кожного променя повернись у центр і поверни на 30°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Віяло відрізняється від зразка. Перевір довжину променів і кут 30°."
+    }
+  ],
+  "hints": [
+    "12 променів — range(12). 12 · 30 = 360°.",
+    "turtle.backward(100) повертає черепашку в центр по тому самому променю."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(12):\n    turtle.forward(100)\n    turtle.backward(100)\n    turtle.left(30)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

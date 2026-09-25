@@ -53,19 +53,22 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
   expect(taskLinks.map((text) => text.replace(/^\d+\./, '').trim())).toEqual([
     'Периметр прямокутника',
     'Площа прямокутника',
-    'Середнє трьох чисел'
+    'Середнє трьох чисел',
+    'Вартість поїздки'
   ]);
 
   // The next-task link walks core into additional.
   await page.getByRole('link', { name: /Площа прямокутника/ }).click();
   await page.getByRole('link', { name: 'Наступне завдання →' }).click();
   await expect(page.getByRole('heading', { name: 'Середнє трьох чисел' })).toBeVisible();
+  await page.getByRole('link', { name: 'Наступне завдання →' }).click();
+  await expect(page.getByRole('heading', { name: 'Вартість поїздки' })).toBeVisible();
   await expect(page.getByText('Це останнє завдання уроку.')).toBeVisible();
 });
 
 test('solving a task marks it done in the lesson and on the lesson list', async ({ page }) => {
   await page.goto('/practice/g7-29-turtle');
-  await page.getByRole('link', { name: /Квадрат/ }).click();
+  await page.getByRole('link', { name: /^1\.\s*Квадрат/ }).click();
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
 
   const editor = page.locator('.cm-content');
@@ -77,9 +80,9 @@ test('solving a task marks it done in the lesson and on the lesson list', async 
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 
   await page.getByRole('link', { name: /До уроку/ }).click();
-  await expect(page.getByRole('listitem').filter({ hasText: 'Квадрат' })).toContainText('виконано');
+  await expect(page.getByRole('listitem').filter({ hasText: /^1\.\s*Квадрат/ })).toContainText('виконано');
   await page.getByRole('link', { name: 'Усі уроки' }).click();
-  await expect(page.getByRole('listitem').filter({ hasText: 'Черепашка малює' })).toContainText('1 з 1');
+  await expect(page.getByRole('listitem').filter({ hasText: 'Черепашка малює' })).toContainText('1 з 3');
 });
 
 test('a parameterized task is listed in its lesson but only opens in a session', async ({ page }) => {
@@ -102,22 +105,23 @@ test('the session builder adds a whole lesson and warns in graded mode', async (
   // A mandatory lesson's core tasks: graded material, no warning.
   await page.getByLabel('Додати урок цілком').selectOption({ label: "7 кл. · урок 29: Черепашка малює (Обов'язковий)" });
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 1')).toBeVisible();
+  await expect(page.getByText('обрано: 3')).toBeVisible();
   await expect(page.locator('form').getByRole('alert')).toHaveCount(0);
 
   // A practice lesson with an additional task: both kinds of warning.
   await page.getByLabel('Додати урок цілком').selectOption({ label: '7 кл. · урок 28: Лінійний алгоритм (Практика)' });
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 4')).toBeVisible();
+  await expect(page.getByText('обрано: 7')).toBeVisible();
   const warning = page.locator('form').getByRole('alert');
   await expect(warning).toContainText('Периметр прямокутника — з практичного уроку');
   await expect(warning).toContainText('Площа прямокутника — з практичного уроку');
   await expect(warning).toContainText('Середнє трьох чисел — додаткове');
-  await expect(warning).not.toContainText('Квадрат');
+  await expect(warning).toContainText('Вартість поїздки — додаткове');
+  await expect(warning).not.toContainText('Сходинки');
 
   // Adding the same lesson again changes nothing.
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 4')).toBeVisible();
+  await expect(page.getByText('обрано: 7')).toBeVisible();
 
   // Practice mode never warns.
   await page.getByLabel('Режим').selectOption('practice');

@@ -1,0 +1,103 @@
+{
+  "slug": "g7-code-min-of-three",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Найменше з трьох",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай три цілих числа і виведи найменше з них. Функцію min() не використовуй — розв'яжи через if.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3, 1, 2",
+      "stdin": [
+        "3",
+        "1",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "два однакові",
+      "stdin": [
+        "5",
+        "5",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "від'ємні",
+      "stdin": [
+        "-1",
+        "-7",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -7,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "найменше останнє",
+      "stdin": [
+        "4",
+        "6",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "forbids",
+      "names": [
+        "min"
+      ],
+      "message": "Тут треба обійтися без min — ні як функції, ні як імені змінної. Порівняй числа через if."
+    }
+  ],
+  "hints": [
+    "Нехай спочатку найменшим буде a.",
+    "Порівняй з ним b, потім c, і щоразу бери менше."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\nsmallest = a\nif b < smallest:\n    smallest = b\nif c < smallest:\n    smallest = c\nprint(smallest)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,107 @@
+{
+  "slug": "g7-code-triangle-type",
+  "topicSlug": "conditions-nested",
+  "type": "code",
+  "title": "Вид трикутника",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай три сторони. Якщо трикутник не існує, виведи «не існує». Інакше виведи його вид: «рівносторонній», «рівнобедрений» або «різносторонній».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1, 2, 3",
+      "stdin": [
+        "1",
+        "2",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "не існує",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "5, 5, 5",
+      "stdin": [
+        "5",
+        "5",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "рівносторонній",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "5, 5, 8",
+      "stdin": [
+        "5",
+        "5",
+        "8"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "рівнобедрений",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "8, 5, 5",
+      "stdin": [
+        "8",
+        "5",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "рівнобедрений",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "3, 4, 5",
+      "stdin": [
+        "3",
+        "4",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "різносторонній",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу перевір, чи трикутник існує (як у задачі «Чи існує трикутник?»).",
+    "Лише всередині цієї гілки визначай вид.",
+    "Рівносторонній перевіряй раніше за рівнобедрений — у ньому теж є дві однакові сторони."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\nif a < b + c and b < a + c and c < a + b:\n    if a == b and b == c:\n        print(\"рівносторонній\")\n    elif a == b or b == c or a == c:\n        print(\"рівнобедрений\")\n    else:\n        print(\"різносторонній\")\nelse:\n    print(\"не існує\")"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

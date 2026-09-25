@@ -1,0 +1,124 @@
+{
+  "slug": "g7-code-ticket-price",
+  "topicSlug": "conditions-nested",
+  "type": "code",
+  "title": "Ціна квитка",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай вік відвідувача і число 1, якщо сьогодні вихідний, або 0 — якщо ні.\nДіти до 7 років проходять безкоштовно. Від 7 до 17 років квиток коштує 50, з 18 — 100. У вихідні платний квиток дорожчий на 20.\nВиведи ціну квитка.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "дитина 5 років у вихідний",
+      "stdin": [
+        "5",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для дітей до 7 років квиток безкоштовний навіть у вихідний."
+        }
+      ]
+    },
+    {
+      "label": "12 років, будній",
+      "stdin": [
+        "12",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 50,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "12 років, вихідний",
+      "stdin": [
+        "12",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 70,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "30 років, вихідний",
+      "stdin": [
+        "30",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 120,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "рівно 18, будній",
+      "stdin": [
+        "18",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 100,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "рівно 7, будній",
+      "stdin": [
+        "7",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 50,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу розберися з віком, а вже потім — з вихідним.",
+    "Для дітей до 7 років вихідний нічого не змінює.",
+    "Надбавку +20 додавай лише всередині гілки для платних квитків."
+  ],
+  "reference": {
+    "code": "age = int(input())\nweekend = int(input())\nif age < 7:\n    price = 0\nelse:\n    if age < 18:\n        price = 50\n    else:\n        price = 100\n    if weekend == 1:\n        price = price + 20\nprint(price)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

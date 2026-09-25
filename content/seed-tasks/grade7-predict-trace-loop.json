@@ -1,0 +1,33 @@
+{
+  "slug": "g7-predict-trace-loop",
+  "topicSlug": "debugging",
+  "type": "predict",
+  "title": "Покрокове виконання",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 1\nfor i in range(4):\n    x = x * 2 + i\nprint(x)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "27",
+      "normalize": "trim",
+      "message": "i = 0: x = 1·2 + 0 = 2; i = 1: x = 5; i = 2: x = 12; i = 3: x = 27."
+    }
+  ],
+  "hints": [
+    "Склади таблицю: i та x після кожного повтору.",
+    "i = 0: x = 2; i = 1: x = 5; далі сам."
+  ],
+  "reference": {
+    "code": "x = 1\nfor i in range(4):\n    x = x * 2 + i\nprint(x)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

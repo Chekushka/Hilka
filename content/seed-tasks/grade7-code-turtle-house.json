@@ -1,0 +1,35 @@
+{
+  "slug": "g7-code-turtle-house",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Будиночок",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй будиночок: квадрат зі стороною 100, а над ним дах — рівносторонній трикутник зі стороною 100.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Будиночок відрізняється від зразка. Перевір, де починається дах і на які кути повертає черепашка."
+    }
+  ],
+  "hints": [
+    "Спершу намалюй квадрат і повернись у кут, з якого почав.",
+    "Дійди до верхнього лівого кута квадрата — там починається дах.",
+    "Дах — дві сторони трикутника: повернути на 60° від горизонталі, 100 уперед, повернути праворуч на 120°, 100 уперед."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.left(90)\nturtle.left(90)\nturtle.forward(100)\nturtle.right(90)\nturtle.left(60)\nturtle.forward(100)\nturtle.right(120)\nturtle.forward(100)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,41 @@
+{
+  "slug": "g7-code-turtle-triangle",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Трикутник",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй рівносторонній трикутник зі стороною 100. Усі кути такого трикутника однакові.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 3,
+      "message": "Трикутник має складатися з трьох сторін і бути замкненим."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Сторони чи кути не такі, як на зразку. Кут повороту для рівностороннього трикутника — 120°."
+    }
+  ],
+  "hints": [
+    "Трикутник — це три сторони і три повороти.",
+    "Черепашка повертає на зовнішній кут: 180 - 60 = 120°."
+  ],
+  "reference": {
+    "code": "import turtle\nturtle.forward(100)\nturtle.left(120)\nturtle.forward(100)\nturtle.left(120)\nturtle.forward(100)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

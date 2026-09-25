@@ -1,0 +1,33 @@
+{
+  "slug": "g7-predict-elif-chain",
+  "topicSlug": "conditions",
+  "type": "predict",
+  "title": "Яка гілка спрацює?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 7\nif x > 10:\n    print(\"A\")\nelif x > 5:\n    print(\"B\")\nelif x > 0:\n    print(\"C\")\nelse:\n    print(\"D\")",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "B",
+      "normalize": "trim",
+      "message": "7 > 10 — ні, 7 > 5 — так. Виконується друга гілка, а x > 0 вже не перевіряється."
+    }
+  ],
+  "hints": [
+    "Умови перевіряються згори донизу.",
+    "Спрацьовує тільки перша правдива умова — решта пропускаються."
+  ],
+  "reference": {
+    "code": "x = 7\nif x > 10:\n    print(\"A\")\nelif x > 5:\n    print(\"B\")\nelif x > 0:\n    print(\"C\")\nelse:\n    print(\"D\")"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

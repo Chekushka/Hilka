@@ -1,0 +1,63 @@
+{
+  "slug": "g7-code-countdown",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Зворотний відлік",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n і виведи числа від n до 1 — кожне в новому рядку. Використай цикл while.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "з 5",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            5,
+            4,
+            3,
+            2,
+            1
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "з 1",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "while n > 0: — поки n більше нуля.",
+    "Не забудь зменшувати n на 1 всередині циклу."
+  ],
+  "reference": {
+    "code": "n = int(input())\nwhile n > 0:\n    print(n)\n    n = n - 1"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "g7-predict-nested-if",
+  "topicSlug": "conditions-nested",
+  "type": "predict",
+  "title": "Умова в умові",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 5\ny = -2\nif x > 0:\n    if y > 0:\n        print(\"I\")\n    else:\n        print(\"IV\")\nelse:\n    print(\"ліворуч\")",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "IV",
+      "normalize": "trim",
+      "message": "x > 0 правда, тож перевіряється y > 0. Це неправда, тому виконується внутрішній else: «IV»."
+    }
+  ],
+  "hints": [
+    "Спершу перевір зовнішню умову x > 0.",
+    "Внутрішня умова перевіряється лише тоді, коли зовнішня правдива."
+  ],
+  "reference": {
+    "code": "x = 5\ny = -2\nif x > 0:\n    if y > 0:\n        print(\"I\")\n    else:\n        print(\"IV\")\nelse:\n    print(\"ліворуч\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

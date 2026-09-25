@@ -1,0 +1,40 @@
+{
+  "slug": "g7-code-turtle-two-squares",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Два квадрати",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй два квадрати зі стороною 50, один поруч з одним, з проміжком 20 між ними. Між квадратами черепашка не має залишати сліду.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 8,
+      "message": "Мають бути два квадрати — вісім сторін."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Квадрати не там, де на зразку. Проміжок між ними — 20, і його треба пройти з піднятим олівцем."
+    }
+  ],
+  "hints": [
+    "turtle.penup() піднімає олівець, turtle.pendown() — опускає.",
+    "Після першого квадрата черепашка знову в початковій точці і дивиться праворуч.",
+    "Щоб перейти до другого квадрата, треба пройти 50 + 20 = 70 з піднятим олівцем."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    turtle.forward(50)\n    turtle.left(90)\nturtle.penup()\nturtle.forward(70)\nturtle.pendown()\nfor i in range(4):\n    turtle.forward(50)\n    turtle.left(90)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

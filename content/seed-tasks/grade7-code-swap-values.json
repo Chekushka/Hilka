@@ -1,0 +1,83 @@
+{
+  "slug": "g7-code-swap-values",
+  "topicSlug": "variables",
+  "type": "code",
+  "title": "Обмін значеннями",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Програма зчитує два числа в змінні a і b. Допиши її так, щоб значення помінялися місцями, і виведи a і b через пробіл.\nНаприклад, для 3 і 8 програма має вивести: 8 3",
+    "starter": "a = int(input())\nb = int(input())\n\nprint(a, b)\n"
+  },
+  "cases": [
+    {
+      "label": "3 і 8",
+      "stdin": [
+        "3",
+        "8"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            8,
+            3
+          ],
+          "tol": 0.01,
+          "message": "Після обміну a має дорівнювати старому b, а b — старому a."
+        }
+      ]
+    },
+    {
+      "label": "інші числа",
+      "stdin": [
+        "5",
+        "-2"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -2,
+            5
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "однакові числа",
+      "stdin": [
+        "7",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            7,
+            7
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Якщо одразу написати a = b, старе значення a загубиться.",
+    "Збережи a в третю змінну, наприклад tmp = a.",
+    "tmp = a, потім a = b, потім b = tmp."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\ntmp = a\na = b\nb = tmp\nprint(a, b)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

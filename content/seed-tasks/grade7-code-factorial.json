@@ -1,0 +1,96 @@
+{
+  "slug": "g7-code-factorial",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Факторіал",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Факторіал числа n — це добуток усіх чисел від 1 до n: 5! = 1 · 2 · 3 · 4 · 5 = 120. Прочитай n і виведи n!. Факторіал нуля дорівнює 1.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 5",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 120,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "n = 1",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "n = 0",
+      "stdin": [
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "n = 10",
+      "stdin": [
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3628800,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "forbids",
+      "names": [
+        "factorial"
+      ],
+      "message": "Порахуй добуток сам, у циклі for."
+    }
+  ],
+  "hints": [
+    "Для добутку почни не з 0, а з 1.",
+    "Множ result на i для кожного i від 1 до n.",
+    "Якщо n = 0, цикл не виконається жодного разу, і result залишиться 1 — саме те, що треба."
+  ],
+  "reference": {
+    "code": "n = int(input())\nresult = 1\nfor i in range(1, n + 1):\n    result *= i\nprint(result)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

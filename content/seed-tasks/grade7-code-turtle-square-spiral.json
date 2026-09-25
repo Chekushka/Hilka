@@ -1,0 +1,40 @@
+{
+  "slug": "g7-code-turtle-square-spiral",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Квадратна спіраль",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй спіраль із 10 відрізків: перший — 10 кроків, кожен наступний на 10 довший (10, 20, …, 100). Після кожного відрізка поворот праворуч на 90°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 10,
+      "message": "Спіраль має складатися з десяти відрізків."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Спіраль відрізняється від зразка. Перевір довжини відрізків і напрям повороту."
+    }
+  ],
+  "hints": [
+    "Довжина залежить від номера кроку — використай змінну циклу.",
+    "for i in range(1, 11): turtle.forward(i * 10)"
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(1, 11):\n    turtle.forward(i * 10)\n    turtle.right(90)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

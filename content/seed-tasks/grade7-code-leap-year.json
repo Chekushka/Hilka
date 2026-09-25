@@ -1,0 +1,84 @@
+{
+  "slug": "g7-code-leap-year",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Високосний рік",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рік. Рік високосний, якщо він ділиться на 4, але не ділиться на 100, або якщо він ділиться на 400. Виведи «так» або «ні».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "2024",
+      "stdin": [
+        "2024"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "1900 — ділиться на 100",
+      "stdin": [
+        "1900"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ні",
+          "normalize": "loose",
+          "message": "Рік, що ділиться на 100, не високосний — якщо тільки він не ділиться на 400."
+        }
+      ]
+    },
+    {
+      "label": "2000 — ділиться на 400",
+      "stdin": [
+        "2000"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "2023",
+      "stdin": [
+        "2023"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ні",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "«Ділиться на 4» — це year % 4 == 0.",
+    "Умову можна скласти з and і or. Дужки допоможуть не заплутатися.",
+    "(year % 4 == 0 and year % 100 != 0) or year % 400 == 0"
+  ],
+  "reference": {
+    "code": "year = int(input())\nif (year % 4 == 0 and year % 100 != 0) or year % 400 == 0:\n    print(\"так\")\nelse:\n    print(\"ні\")"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

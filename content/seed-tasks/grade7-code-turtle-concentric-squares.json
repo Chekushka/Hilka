@@ -1,0 +1,40 @@
+{
+  "slug": "g7-code-turtle-concentric-squares",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Квадрати навколо центру",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй п'ять квадратів зі спільним центром у точці (0, 0): зі сторонами 20, 40, 60, 80 і 100. Сторони паралельні осям.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 20,
+      "message": "Має бути п'ять квадратів — 20 сторін."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Квадрати відрізняються від зразка. У всіх має бути спільний центр."
+    }
+  ],
+  "hints": [
+    "Квадрат зі стороною s і центром у (0, 0) починається з кута (-s / 2, -s / 2).",
+    "Переходь у кут з піднятим олівцем: penup, goto, pendown.",
+    "Розмір рахуй у зовнішньому циклі: size = k * 20."
+  ],
+  "reference": {
+    "code": "import turtle\nfor k in range(1, 6):\n    size = k * 20\n    turtle.penup()\n    turtle.goto(-size / 2, -size / 2)\n    turtle.pendown()\n    for i in range(4):\n        turtle.forward(size)\n        turtle.left(90)"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

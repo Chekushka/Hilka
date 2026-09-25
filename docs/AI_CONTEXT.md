@@ -669,3 +669,11 @@ configured the engine it parses as Python 2, so both loaders configure Python 3 
 `page.getByRole('alert')` in a Playwright spec always finds at least one element, even on a page
 that shows no alert. Scope the locator to the component (`page.locator('form').getByRole('alert')`
 in `tests/e2e/lessons.spec.ts`).
+
+**`turtle.goto` raised `AttributeError` — patched.** Skulpt's `fixReserved` applies to attribute
+names too: a Python attribute whose name is a JS reserved word (`Sk.builtin.str.reservedWords_`)
+is looked up under `name + '_$rw$'`. A `$builtinmodule` that only sets `mod.goto` is therefore
+invisible to `turtle.goto(...)`. `goto` was the only turtle name affected, and no seed task used it
+until the grade 7 animation lessons did. `lib/runner/modules/turtle.ts` now registers any
+reserved name under both keys, on the module and on `Turtle`; a future JS-side module needs the
+same treatment for names like `delete`, `new` or `default`.

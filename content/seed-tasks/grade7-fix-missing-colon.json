@@ -1,0 +1,32 @@
+{
+  "slug": "g7-fix-missing-colon",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Забута двокрапка",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала вивести числа 0, 1 і 2 — кожне в новому рядку, але Python її навіть не запускає. Знайди синтаксичну помилку.",
+    "broken": "for i in range(3)\n    print(i)\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "0\n1\n2",
+      "message": "Програма має вивести 0, 1 і 2 — кожне в новому рядку."
+    }
+  ],
+  "hints": [
+    "Подивись, чим закінчується рядок із for.",
+    "Після for, if, while і else завжди ставиться двокрапка."
+  ],
+  "reference": {
+    "code": "for i in range(3):\n    print(i)\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

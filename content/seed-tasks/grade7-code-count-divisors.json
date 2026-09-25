@@ -1,0 +1,73 @@
+{
+  "slug": "g7-code-count-divisors",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Кількість дільників",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле додатне число n і виведи, скільки в нього дільників (чисел від 1 до n, на які n ділиться без остачі).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 12",
+      "stdin": [
+        "12"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 6,
+          "tol": 0.01,
+          "which": "last",
+          "message": "У 12 шість дільників: 1, 2, 3, 4, 6, 12. Не забудь 1 і саме число."
+        }
+      ]
+    },
+    {
+      "label": "просте",
+      "stdin": [
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "n = 1",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Перебери всі числа d від 1 до n.",
+    "d — дільник, якщо n % d == 0."
+  ],
+  "reference": {
+    "code": "n = int(input())\ncount = 0\nfor d in range(1, n + 1):\n    if n % d == 0:\n        count += 1\nprint(count)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

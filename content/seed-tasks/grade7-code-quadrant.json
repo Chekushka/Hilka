@@ -1,0 +1,91 @@
+{
+  "slug": "g7-code-quadrant",
+  "topicSlug": "conditions-nested",
+  "type": "code",
+  "title": "Координатна чверть",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай координати точки x і y (обидві не дорівнюють нулю). Виведи номер координатної чверті: 1, 2, 3 або 4.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "(3, 4)",
+      "stdin": [
+        "3",
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "(-2, 5)",
+      "stdin": [
+        "-2",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "(-1, -1)",
+      "stdin": [
+        "-1",
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "(4, -9)",
+      "stdin": [
+        "4",
+        "-9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Перша чверть — x > 0 і y > 0. Друга — x < 0 і y > 0.",
+    "Третя — обидві від'ємні, четверта — x > 0 і y < 0.",
+    "Зовнішня умова може перевіряти x, а внутрішня — y."
+  ],
+  "reference": {
+    "code": "x = int(input())\ny = int(input())\nif x > 0:\n    if y > 0:\n        print(1)\n    else:\n        print(4)\nelse:\n    if y > 0:\n        print(2)\n    else:\n        print(3)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}
