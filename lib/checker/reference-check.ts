@@ -75,6 +75,31 @@ export function evaluateAgainstOwnRun(code: string, checks: Check[], run: RunOut
 }
 
 /**
+ * `evaluateAgainstOwnRun` for an input-driven task: `taskChecks` plus each
+ * case's own, against that case's own run — the publish-time equivalent of
+ * `lib/task/use-task-runner.ts`'s `runChecks`, which does the same merge at
+ * grading time. Shared by the publish route and the authoring editors, so
+ * the editor's Publish button and the gate behind it cannot disagree. Any run
+ * that did not finish cleanly makes the whole outcome `!ranCleanly`.
+ */
+export function evaluateCasesAgainstOwnRuns(
+  code: string,
+  taskChecks: Check[],
+  cases: readonly { checks?: Check[] }[],
+  caseRuns: readonly RunOutcome[]
+): CheckRunOutcome {
+  const failures: string[] = [];
+  for (let i = 0; i < cases.length; i += 1) {
+    const outcome = evaluateAgainstOwnRun(code, [...taskChecks, ...(cases[i].checks ?? [])], caseRuns[i]);
+    if (!outcome.ranCleanly) {
+      return { ranCleanly: false, passed: false, failures: [] };
+    }
+    failures.push(...outcome.failures);
+  }
+  return { ranCleanly: true, passed: failures.length === 0, failures };
+}
+
+/**
  * `predict`'s equivalent of `evaluateAgainstOwnRun`: the fixed snippet in
  * `payload.code` IS the reference, and a perfect prediction is exactly its
  * real stdout — so checking that stdout as a `text` submission against the

@@ -57,6 +57,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import {
   evaluateAgainstOwnRun,
+  evaluateCasesAgainstOwnRuns,
   evaluateChecks,
   evaluatePredictionAgainstOwnRun,
   evaluatePredictionChoiceAgainstOwnRun,
@@ -115,23 +116,16 @@ type CaseValidation =
   | { ok: false; kind: 'reference_fails_checks'; failures: string[] };
 
 /**
- * `task.checks` plus each case's own, evaluated against that case's own
- * already-computed run — the publish-time equivalent of
- * `lib/task/use-task-runner.ts`'s `runChecks`, which does the same merge at
- * grading time. Every case must pass; the first one that doesn't even run
- * cleanly stops the check there, same as a single-run task's own failure.
+ * `lib/checker`'s `evaluateCasesAgainstOwnRuns` — the same evaluation the
+ * editors run to enable Publish — plus the first unclean run's error, for
+ * `reference_run_failed`'s detail.
  */
 function validateCases(referenceCode: string, taskChecks: Check[], cases: RunCase[], caseRuns: RunOutcome[]): CaseValidation {
-  const failures: string[] = [];
-  for (let i = 0; i < cases.length; i += 1) {
-    const checks = [...taskChecks, ...(cases[i].checks ?? [])];
-    const outcome = evaluateAgainstOwnRun(referenceCode, checks, caseRuns[i]);
-    if (!outcome.ranCleanly) {
-      return { ok: false, kind: 'reference_run_failed', detail: caseRuns[i].error };
-    }
-    failures.push(...outcome.failures);
+  const outcome = evaluateCasesAgainstOwnRuns(referenceCode, taskChecks, cases, caseRuns);
+  if (!outcome.ranCleanly) {
+    return { ok: false, kind: 'reference_run_failed', detail: caseRuns.find((run) => run.error || run.timedOut)?.error };
   }
-  return failures.length > 0 ? { ok: false, kind: 'reference_fails_checks', failures } : { ok: true };
+  return outcome.passed ? { ok: true } : { ok: false, kind: 'reference_fails_checks', failures: outcome.failures };
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {

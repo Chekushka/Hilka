@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { evaluateChecks, type CheckReport } from '@/lib/checker';
 import { Hints } from '@/components/task/Hints';
+import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
 import { t } from '@/lib/i18n';
 import type { AttemptOutcome, QuizTask } from '@/lib/task/types';
 
@@ -15,9 +16,10 @@ interface QuizTaskViewProps {
   task: QuizTask;
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   hintsEnabled?: boolean;
+  next?: NextTaskAction;
 }
 
-export function QuizTaskView({ task, onSubmitAttempt, hintsEnabled = true }: QuizTaskViewProps) {
+export function QuizTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }: QuizTaskViewProps) {
   const [selected, setSelected] = useState<number[]>([]);
   const [report, setReport] = useState<CheckReport | null>(null);
 
@@ -100,7 +102,10 @@ export function QuizTaskView({ task, onSubmitAttempt, hintsEnabled = true }: Qui
             </h3>
             <div className="mt-1 text-sm text-ink">
               {report.passed ? (
-                <p>{t('result.passedNote')}</p>
+                <>
+                  <p>{t('result.passedNote')}</p>
+                  {next && <NextTaskButton action={next} />}
+                </>
               ) : (
                 <>
                   <ul className="space-y-1">

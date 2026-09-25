@@ -325,7 +325,13 @@ test('a teacher adds cases to a console code task, and a hidden case blocks publ
   // why cases exist.
   await typeIntoEditor(page, 1, 'input()\ninput()\nprint(16)');
   await page.getByRole('button', { name: 'Запустити еталон' }).click();
-  await expect(page.getByText('більший прямокутник')).toBeVisible({ timeout: 15_000 });
+  // Exact: the cases textarea's own text contains the label too, and matching
+  // it returns before the run has even finished.
+  await expect(page.getByText('більший прямокутник', { exact: true })).toBeVisible({ timeout: 15_000 });
+  // Only rendered once the finished run has been judged against the checks —
+  // asserting Publish disabled before that would also pass mid-run, when it is
+  // disabled merely because nothing has finished yet.
+  await expect(page.getByText('Еталонний розв\'язок не проходить власні перевірки:')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole('button', { name: 'Опублікувати' })).toBeDisabled();
 
   await typeIntoEditor(page, 1, 'a = float(input())\nb = float(input())\nprint(2 * (a + b))');

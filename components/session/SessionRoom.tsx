@@ -25,8 +25,10 @@
  * sees every attempt actually posted to `/api/attempts`.
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { t } from '@/lib/i18n';
+import { nextOpenTaskId } from '@/lib/session/next-task';
 import type { JoinedSession } from '@/lib/session/types';
 import type { Task } from '@/lib/task/types';
 
@@ -225,6 +227,22 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   if (selectedTaskId) {
     const lockedPassed = submitted.get(selectedTaskId);
     const locked = graded && lockedPassed !== undefined;
+    // Offered only after a passed Check. Moving on never touches `submitted`,
+    // so a graded task stays locked to its first Check, and a locked one is
+    // skipped rather than reopened.
+    const nextId = nextOpenTaskId(
+      session.tasks.map((task) => task.id),
+      selectedTaskId,
+      (taskId) => passed.has(taskId) || submitted.has(taskId)
+    );
+    const next: NextTaskAction = {
+      kind: 'button',
+      label: nextId ? t('result.nextTask') : t('result.backToTaskList'),
+      onSelect: () => {
+        setSelectedTaskId(nextId);
+        window.scrollTo(0, 0);
+      }
+    };
     return (
       <div>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 pt-4">
@@ -248,6 +266,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               <p className="mt-2 text-ink">
                 {lockedPassed ? t('session.taskLockedPassedNote') : t('session.taskLockedFailedNote')}
               </p>
+              {lockedPassed && <NextTaskButton action={next} />}
             </section>
           </main>
         ) : selectedTask ? (
@@ -255,6 +274,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
             key={selectedTask.id}
             task={selectedTask}
             hintsEnabled={session.hintsEnabled}
+            next={next}
             onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
           />
         ) : (

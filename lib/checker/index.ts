@@ -22,6 +22,7 @@ export type {
 } from './types';
 export {
   evaluateAgainstOwnRun,
+  evaluateCasesAgainstOwnRuns,
   evaluatePredictionAgainstOwnRun,
   evaluatePredictionChoiceAgainstOwnRun,
   evaluateRun

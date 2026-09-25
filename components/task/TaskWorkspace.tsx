@@ -14,6 +14,7 @@ import { ParsonsTaskView } from '@/components/task-types/ParsonsTaskView';
 import { PredictTaskView } from '@/components/task-types/PredictTaskView';
 import { QuizTaskView } from '@/components/task-types/QuizTaskView';
 import type { AttemptOutcome, Task } from '@/lib/task/types';
+import type { NextTaskAction } from './NextTaskButton';
 
 export type { AttemptOutcome } from '@/lib/task/types';
 
@@ -23,23 +24,25 @@ interface TaskWorkspaceProps {
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   /** Off in a graded session with hints disabled (docs/TASKS.md, "Exam mode"); on everywhere else. */
   hintsEnabled?: boolean;
+  /** Where a passed Check leads — the lesson's next step or the session's next task. */
+  next?: NextTaskAction;
 }
 
-export function TaskWorkspace({ task, onSubmitAttempt, hintsEnabled = true }: TaskWorkspaceProps) {
+export function TaskWorkspace({ task, onSubmitAttempt, hintsEnabled = true, next }: TaskWorkspaceProps) {
   if (task.type === 'parsons') {
-    return <ParsonsTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
+    return <ParsonsTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} next={next} />;
   }
   if (task.type === 'quiz') {
-    return <QuizTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
+    return <QuizTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} next={next} />;
   }
   if (task.type === 'predict') {
-    return <PredictTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
+    return <PredictTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} next={next} />;
   }
   if (task.type === 'fix') {
-    return <FixTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
+    return <FixTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} next={next} />;
   }
   if (task.type === 'fill') {
-    return <FillTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
+    return <FillTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} next={next} />;
   }
-  return <CodeTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} />;
+  return <CodeTaskView task={task} onSubmitAttempt={onSubmitAttempt} hintsEnabled={hintsEnabled} next={next} />;
 }

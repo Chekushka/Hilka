@@ -38,7 +38,15 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
           <span className="text-ink-muted">{t('lessons.lessonFinished')}</span>
         )}
       </nav>
-      <PracticePageClient key={task.slug} task={task} />
+      <PracticePageClient
+        key={task.slug}
+        task={task}
+        next={
+          next
+            ? { kind: 'link', href: `/practice/${lesson.slug}/${next.slug}`, label: t('result.nextTask') }
+            : { kind: 'link', href: `/practice/${lesson.slug}`, label: t('result.backToLesson') }
+        }
+      />
     </div>
   );
 }
