@@ -7,13 +7,18 @@
  * it is idempotent: rows are keyed by slug, so re-running it updates rather
  * than duplicating.
  *
+ * Lessons come last: content/lessons/grade<N>.json lists them with task
+ * slugs, and each lesson's explanation is content/lessons/grade<N>/<slug>.md.
+ *
  *   DATABASE_URL=... npm run db:seed
  */
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { validateTaskChecks } from '@/lib/checker';
 import { getDb } from '@/lib/db/client';
-import { tasks, topics } from '@/lib/db/schema';
+import { lessons, tasks, topics } from '@/lib/db/schema';
+import { resolveTaskSlugs, validateLessonContent } from '@/lib/lessons/content';
+import type { LessonContent } from '@/lib/lessons/types';
 import type { Check } from '@/lib/checker';
 import type { ParamSpec } from '@/lib/seed';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
@@ -123,6 +128,43 @@ async function main() {
       .values(values)
       .onConflictDoUpdate({ target: tasks.slug, set: values });
     console.log(`task: ${task.slug} (${task.status})`);
+  }
+
+  await seedLessons(db);
+}
+
+async function seedLessons(db: ReturnType<typeof getDb>) {
+  const lessonDir = path.join(root, 'lessons');
+  const files = (await readdir(lessonDir)).filter((file) => file.endsWith('.json')).sort();
+  const lessonContent: LessonContent[] = [];
+  for (const file of files) {
+    lessonContent.push(...(await readJson<LessonContent[]>(path.join(lessonDir, file))));
+  }
+
+  // Every task in the database, not only content/seed-tasks/: a lesson may
+  // reference a task authored in the UI and exported later.
+  const taskRows = await db.select({ id: tasks.id, slug: tasks.slug }).from(tasks);
+  const idsBySlug = new Map(taskRows.map((row) => [row.slug, row.id]));
+  const errors = validateLessonContent(lessonContent, new Set(idsBySlug.keys()));
+  if (errors.length > 0) {
+    throw new Error(errors.map((error) => `lesson ${error.lesson}: ${error.message}`).join('\n'));
+  }
+
+  for (const lesson of lessonContent) {
+    const explanationMd = await readFile(path.join(lessonDir, `grade${lesson.grade}`, `${lesson.slug}.md`), 'utf8');
+    const values = {
+      slug: lesson.slug,
+      grade: lesson.grade,
+      order: lesson.order,
+      kind: lesson.kind,
+      title: lesson.title,
+      curriculumRef: lesson.curriculumRef ?? null,
+      explanationMd,
+      coreTaskIds: resolveTaskSlugs(lesson.coreTaskSlugs, idsBySlug),
+      additionalTaskIds: resolveTaskSlugs(lesson.additionalTaskSlugs, idsBySlug)
+    };
+    await db.insert(lessons).values(values).onConflictDoUpdate({ target: lessons.slug, set: values });
+    console.log(`lesson: ${lesson.slug} (${lesson.kind})`);
   }
 }
 

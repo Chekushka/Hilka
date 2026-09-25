@@ -159,6 +159,10 @@ attempts
   flags jsonb,            -- {pasted, edits, tooFast, sourceHash}; only sourceHash is written today
   created_at
 
+lessons
+  id, slug, grade, order, kind ('mandatory' | 'practice'), title, curriculum_ref,
+  explanation_md text, core_task_ids uuid[], additional_task_ids uuid[]
+
 unmatched_errors
   id, type, message,      -- a PyError no lib/errors/ rule matched
   occurred_at,             -- client's Date.now() when it happened
@@ -177,6 +181,8 @@ Non-obvious invariants:
   (`npm run db:seed`). A re-import into a fresh database must update the same rows rather than
   duplicate them, and uuids are not stable across databases. `topics.slug` is the same idea.
   It is a content key, not an identifier: foreign keys still use uuids.
+- `lessons.*_task_ids` cannot carry a foreign key. The seed validates every reference before
+  writing, and every reader skips ids that are missing or unpublished.
 - `unmatched_errors` carries no student, session or task reference on purpose — it is
   telemetry to grow `lib/errors/`'s rule base from, not an attempt record, and rule 8 rules
   out anything that could identify who hit it.
@@ -507,8 +513,15 @@ content is an ordered list of **mandatory lessons** (an explanation of a key ide
 tasks — the only material a graded session should draw from) and **practice lessons**
 (skippable, not recommended to skip), each practice lesson carrying **additional tasks**. Fast
 students work in the same topics, going deeper through those additional tasks — there is no
-separate advanced track. How this maps onto the data model (a lesson row, or a tag on
-topics/tasks) is not decided yet; `topics.theory_md` already exists for the explanation part.
+separate advanced track.
+
+**Data model: a `lessons` row**, not a tag on topics or tasks. A lesson holds its grade, its
+order (the ministry lesson number, a reference and a sort key, never a date), its kind, a
+Markdown explanation, and two ordered uuid arrays — core and additional task ids. Arrays rather
+than a join table for the same reason as `sessions.task_ids`: order is the point, and a task may
+appear in more than one lesson. Content lives in `content/lessons/` and is imported by slug like
+tasks. Explanations show static code only — nothing on the explanation screen runs Python.
+`topics.theory_md` is superseded by the lesson explanation and unused by students.
 
 ## Grading
 
@@ -648,3 +661,8 @@ contexts (`Load`/`Store`) carry no name at all and are only recognizable by iden
 line. Also, `Sk.parse` reads the language version from `Sk.configure` — before any run has
 configured the engine it parses as Python 2, so both loaders configure Python 3 at startup.
 
+**Next.js renders its own `role="alert"` on every page.** The route announcer
+(`next-route-announcer`) is an `aria-live` element with `role="alert"`, so
+`page.getByRole('alert')` in a Playwright spec always finds at least one element, even on a page
+that shows no alert. Scope the locator to the component (`page.locator('form').getByRole('alert')`
+in `tests/e2e/lessons.spec.ts`).

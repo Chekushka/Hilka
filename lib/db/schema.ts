@@ -30,6 +30,7 @@ import {
   uuid
 } from 'drizzle-orm/pg-core';
 import type { Check } from '@/lib/checker';
+import type { LessonKind } from '@/lib/lessons/types';
 import type { PracticeProgress } from '@/lib/practice/progress';
 import type { ParamSpec } from '@/lib/seed';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
@@ -72,6 +73,34 @@ export const tasks = pgTable(
     status: text('status').$type<TaskStatus>().notNull().default('draft')
   },
   (table) => [index('tasks_topic_idx').on(table.topicId, table.difficulty)]
+);
+
+/**
+ * The unit of content (docs/AI_CONTEXT.md, "Course Structure"): an
+ * explanation plus ordered tasks. `slug` is the content key, same reason as
+ * `tasks.slug`. Task ids are ordered arrays rather than a join table, like
+ * `sessions.task_ids`: order is the point, and a task may sit in more than
+ * one lesson. No foreign key can guard an array, so the seed validates every
+ * reference before writing (lib/lessons/content.ts), and readers skip ids
+ * that are not published.
+ */
+export const lessons = pgTable(
+  'lessons',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    slug: text('slug').notNull().unique(),
+    grade: smallint('grade').notNull(),
+    order: integer('order').notNull(),
+    kind: text('kind').$type<LessonKind>().notNull(),
+    title: text('title').notNull(),
+    curriculumRef: text('curriculum_ref'),
+    explanationMd: text('explanation_md').notNull().default(''),
+    coreTaskIds: uuid('core_task_ids').array().notNull().default([]),
+    additionalTaskIds: uuid('additional_task_ids').array().notNull().default([])
+  },
+  // Not unique: the seed upserts by slug, so reordering two lessons would
+  // collide mid-import. lib/lessons/content.ts rejects duplicate order instead.
+  (table) => [index('lessons_grade_order_idx').on(table.grade, table.order)]
 );
 
 export const teachers = pgTable('teachers', {

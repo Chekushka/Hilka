@@ -178,7 +178,15 @@
     "creating": "Створюю…",
     "createError": "Не вдалося створити заняття. Спробуй ще раз.",
     "created": "Заняття створено. Код для учнів:",
-    "viewSession": "Переглянути заняття"
+    "viewSession": "Переглянути заняття",
+    "lessonLabel": "Додати урок цілком",
+    "lessonPlaceholder": "Оберіть урок",
+    "lessonOption": "{grade} кл. · урок {order}: {title} ({kind})",
+    "addLesson": "Додати",
+    "gradedWarningTitle": "У заняття з оцінюванням потрапили завдання, які не варто оцінювати:",
+    "gradedWarningPractice": "з практичного уроку",
+    "gradedWarningAdditional": "додаткове",
+    "gradedWarningNote": "Оцінка має спиратися на основні завдання обов'язкових уроків. Заняття все одно можна створити."
   },
   "classForm": {
     "newClass": "Новий клас",
@@ -371,5 +379,27 @@
       "dot": "Передай лише розмір, наприклад dot(10), а колір задай перед цим через pencolor().",
       "formatSpec": "Hilka перевірила лише такі формати: :.2f, :d, :>8, :08.2f, :, і :.1%. Можна також округлити число через round(x, 2)."
     }
+  },
+  "lessons": {
+    "title": "Уроки",
+    "gradeLabel": "Клас",
+    "gradeOption": "{grade} клас",
+    "empty": "Уроків для цього класу ще немає.",
+    "kindMandatory": "Обов'язковий",
+    "kindPractice": "Практика",
+    "practiceNote": "Можна пропустити, але краще не варто.",
+    "lessonNumber": "Урок {n}",
+    "tasksDone": "{done} з {total}",
+    "allLessons": "← Усі уроки",
+    "backToLesson": "← До уроку",
+    "coreTasks": "Основні завдання",
+    "additionalTasks": "Додаткові завдання",
+    "additionalNote": "Для тих, хто впорався і хоче ще.",
+    "noTasks": "Завдання до цього уроку ще готуються.",
+    "sessionOnly": "лише на занятті з учителем",
+    "taskDone": "виконано",
+    "nextTask": "Наступне завдання →",
+    "lessonFinished": "Це останнє завдання уроку.",
+    "difficulty": "складність {n}"
   }
 }
