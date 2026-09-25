@@ -4,10 +4,9 @@ How this repository is built, checked, deployed, and how a Claude Code session
 running in the cloud picks it up. Staged in three phases, because the stack was
 not settled until `docs/SPIKE.md` was answered.
 
-Phases A and B are live: CI runs on every PR and the app deploys to Vercel
-against a Neon database. What remains of B is the `production` GitHub
-environment that gates `migrate.yml`. Phase C is content-era and waits on
-published tasks.
+Phases A and B are live: CI runs on every PR, the app deploys to Vercel
+against a Neon database, and `migrate.yml` applies `drizzle/` to production on
+merge, gated by the `production` GitHub environment. Phase C is content-era.
 
 ---
 
@@ -22,10 +21,9 @@ published tasks.
 | `.github/workflows/spike-pages.yml` | A | Publishes `spike/` to GitHub Pages |
 | `spike/index.html` | A | Placeholder harness — replace with the real one |
 | `.github/workflows/ci.yml` | B | typecheck, lint, unit tests, safe-subset confirmation (Skulpt vs the runner image's `python3`), migration drift, runner tests |
-| `.github/workflows-pending/migrate.yml` | B | `drizzle-kit migrate` on merge to `main` |
+| `.github/workflows/migrate.yml` | B | `npm run db:migrate` against production on merge to `main`, when `drizzle/` or the schema changed; also runnable by hand (`workflow_dispatch`) |
 | `.github/workflows/reference-check.yml` | C | Re-runs every reference solution against its own checks |
 
-Pending workflows are inert: GitHub only runs what is inside `.github/workflows/`.
 
 ---
 
@@ -90,14 +88,16 @@ shows. Widen the policy before relying on either.
 
 ## Manual steps — Phase B (done, except where noted)
 
-### 4. Activate the pending workflows
+### 4. Workflows
 
-`ci.yml` is live. `migrate.yml` moves across once the `production` environment
-exists (step 7):
+All workflows are live in `.github/workflows/`. `migrate.yml` was staged in
+`.github/workflows-pending/` until the `production` environment existed
+(step 7), then moved across.
 
-```sh
-git mv .github/workflows-pending/migrate.yml .github/workflows/
-```
+`migrate.yml` does **not** seed content. The database is the source of truth
+for tasks and lessons; an automatic `db:seed` on merge would overwrite edits
+made in the authoring UI. After merging new content in `content/`, run
+`DATABASE_URL=<unpooled> npm run db:seed` by hand.
 
 The workflows call these scripts, which `package.json` already defines:
 `typecheck`, `lint`, `test`, `test:browser`, `db:generate`, `db:migrate`,
@@ -239,7 +239,7 @@ verifying Neon's certificate.
 
 | Where | Name | Used by |
 |---|---|---|
-| GitHub environment `production` | `DATABASE_URL` | `migrate.yml` |
+| GitHub environment `production` | `DATABASE_URL` — Neon's **unpooled** string (no `-pooler` in the host) | `migrate.yml` |
 | Cloud environment for agents | `DATABASE_URL` (Neon **dev** branch) | remote sessions |
 | Repo secrets | *(none needed)* | Vercel and Neon are wired through their apps |
 | Vercel project settings | `AUTH_SECRET` | teacher login (`lib/auth/session-cookie.ts`) — no integration sets this one, see step 5 |
