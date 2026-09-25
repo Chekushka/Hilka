@@ -295,6 +295,8 @@ export type Task = CodeTask | ParsonsTask | QuizTask | PredictTask | FixTask | F
 /** What a task-type component reports once a Check completes. */
 export interface AttemptOutcome {
   passed: boolean;
+  /** 0..1, the share of input cases passed (lib/task/use-task-runner.ts). Absent for task types that do not run cases — `passed` says it all there. */
+  score?: number;
   hintsUsed: number;
   durationMs: number;
   /** Shape matches `Submission` — `{ code }` for `code`, `fix` and `fill`, `{ orderedLines }` for `parsons`, `{ choiceIndices }` for `quiz`, `{ text }` for `predict`. */

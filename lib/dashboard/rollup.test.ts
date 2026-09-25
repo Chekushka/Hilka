@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { buildRollup } from './rollup';
 
 const tasks = [
-  { id: 't1', slug: 'square', title: 'Квадрат' },
-  { id: 't2', slug: 'triangle', title: 'Трикутник' }
+  { id: 't1', slug: 'square', title: 'Квадрат', difficulty: 1 },
+  { id: 't2', slug: 'triangle', title: 'Трикутник', difficulty: 1 }
 ];
 
 function attempt(studentName: string, taskId: string, passed: boolean) {

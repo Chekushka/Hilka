@@ -172,6 +172,7 @@ IDLE before uploading.
 | Class + roster management | ✅ | `/classes/new` creates a class (title + roster, one name per line, reusing `parseHints`'s convention); `/classes/[id]` edits both, scoped to the owning teacher (`lib/db/classes.ts`'s `createClass`/`updateClass`, `POST`/`PATCH /api/classes`). `/sessions/new`'s empty state now links there instead of describing a gap. `scripts/db/seed-demo-session.ts` remains for seeding the e2e fixture, not the only path anymore |
 | Session builder | ✅ | `/sessions/new` (`components/authoring/SessionBuilderForm.tsx`) — picks one of the teacher's classes, filters the published task catalog by topic and grade client-side (small enough not to need a filtered query), assigns tasks in click order (`sessions.task_ids`'s order), sets time limit/hints/shuffle. `POST /api/sessions` (`lib/db/session-authoring.ts`) mints a 6-char code unique among open sessions (same bounded-retry shape as `mintProgressCode`) and silently drops any submitted task id that is not actually published. `timeLimitS`/`hintsEnabled`/`mode` are now enforced client-side in `SessionRoom` ("Exam mode", above); `shuffle` is still stored but unread |
 | Results dashboard | ✅ | `app/(teacher)/dashboard/` — classes, their sessions, and a session's attempts (student, task, pass/fail, hints, duration), each scoped to the logged-in teacher, plus a CSV export. The session detail page now polls: `components/dashboard/AutoRefresh.tsx` calls `router.refresh()` every 5 s while `session.open` (`closesAt === null`, `lib/db/sessions.ts`), re-running the server component in place — no separate client data layer, verified end to end (a second browser context submits an attempt, the first picks it up with no reload). Above the attempt log, a "Хто потребує допомоги" student × task rollup (`lib/dashboard/rollup.ts`'s pure, unit-tested `buildRollup`) marks each cell not-started / passed / stuck — stuck meaning tried and never passed, never merely "hasn't gotten there yet" — sorted so the most-stuck student is first; shape and icon carry the meaning, not colour alone |
+| Suggested grade for graded sessions | 🔶 | `lib/grading/` (pure, unit-tested): `suggestGrade` per student from the session's tasks and attempts, config in `lib/grading/config.ts` (AI_CONTEXT.md, "Grading"). Partial credit is recorded per attempt in the existing `attempts.score` column (share of input cases passed, from `use-task-runner.ts`). A graded session's rollup table gets an «Орієнтовна оцінка» column (points on hover, the cap at 9 marked), a note when no task can open the high band, and `GET /api/dashboard/sessions/[id]/grades` exports one row per student as CSV. `tests/e2e/grading.spec.ts`. **Not built**: a teacher's per-student override stored in Hilka, and per-session editing of the config — both need a schema change |
 | CSV export | ✅ | `GET /api/dashboard/sessions/[id]/export`, scoped to the owning teacher via the same `getSessionForTeacher` check the session detail page itself uses. `lib/dashboard/csv.ts`'s `attemptsToCsv` is pure and unit-tested (UTF-8 BOM for Excel's sake, proper quoting); the "Завантажити CSV" link only appears once there is at least one attempt to export |
 | JSON export/import of all tasks | ✅ | `lib/db/content-io.ts`'s `exportContent`/`importContent`, same shape as `content/topics.json` + `content/seed-tasks/*.json`. `GET /api/tasks/export` downloads every topic and task (draft included); `POST /api/tasks/import` upserts by slug, validated in full (unknown topics, `validateTaskChecks`) before anything is written, so a bad bundle never half-imports. `/tasks` (`ImportExportControls`) wraps both — a link and a file input, `router.refresh()` on success. `tests/e2e/task-import-export.spec.ts` covers auth, round-trip export→import→export, upsert-not-duplicate, and both rejection paths |
 
@@ -181,7 +182,7 @@ IDLE before uploading.
 |---|---|---|
 | XP + topic progress | ❌ | Sprint 2 |
 | Garden / growth visual | ❌ | Sprint 2. Lives between tasks, never on the workspace. |
-| Advanced branch for fast students | ❌ | Sprint 2 |
+| Additional tasks for fast students | ❌ | Sprint 2. No separate branch: fast students stay in the same topics and go deeper through each practice lesson's additional tasks (AI_CONTEXT.md, "Course Structure") |
 
 ## Content
 
@@ -193,6 +194,7 @@ IDLE before uploading.
 | First topic, ~12 tasks | ✅ | Twelve tasks across nine topics (turtle-loops has two): `grade7-code-print-python.json` (intro), `grade7-turtle-square.json` (turtle-basics), `grade7-quiz-variable-names.json` (variables), `grade7-predict-arithmetic.json` (arithmetic), `grade7-code-rectangle-perimeter.json` (linear — also the first task with `cases`, see "code" above), `grade7-code-sign-of-number.json` (conditions — `if`/`elif`/`else` with three input cases), `grade7-fix-alternating-steps.json` (turtle-conditions — a broken `if` inside a loop, geometry-checked), `grade7-code-sum-until-zero.json` (loops-while — a sentinel-controlled accumulator), `grade7-parsons-triangle.json` and `grade7-fill-pentagon.json` (turtle-loops), `grade7-predict-for-range-sum.json` (loops-for), `grade7-fix-square.json` (debugging), imported by `npm run db:seed`. Every reference solution (and, for `fix`, every broken payload) is verified against its own checks by `npm run verify:references`. |
 | Second content pass, +16 tasks | ✅ | Brings the 9 sem-2-block topics from one task each to 2–3, `code`/`predict`/`quiz` only (no new `fix`/`fill`/`parsons` this pass): intro gets `grade7-quiz-print-purpose.json` and `grade7-code-two-lines.json`; variables gets `grade7-predict-reassign.json` and `grade7-code-city-sentence.json` (its first task using an f-string); arithmetic gets `grade7-code-product-two-numbers.json` (cases, negative-number branch) and `grade7-quiz-integer-division.json`; linear gets `grade7-code-rectangle-area.json` and `grade7-code-average-three.json`; turtle-basics gets `grade7-code-turtle-rectangle.json` (asymmetric sides, `translate`-only normalize); conditions gets `grade7-code-max-of-two.json` (three cases incl. a tie) and `grade7-quiz-range-condition.json`; turtle-conditions gets `grade7-code-turtle-alternating-hexagon.json` (6-segment shape, `i % 2` alternation, geometrically verified to close); loops-while gets `grade7-code-power-of-two-while.json` (cases incl. n already a power of two and n = 1, zero-iteration case) and `grade7-predict-count-halving.json`; loops-for gets `grade7-code-multiplication-table.json` (first seed task using `numbers_equal` to check every line, not just the last) and `grade7-quiz-range-count.json`. All 16 verified via `npm run verify:references` (30/30 passing); not yet imported into any live database — `npm run db:seed` needs `DATABASE_URL`, which this session doesn't have. |
 | Third content pass, +2 tasks (turtle-conditions) | ✅ | `grade7-code-turtle-three-way-steps.json` — first turtle-conditions task using a three-way `if`/`elif`/`else` (not just `if`/`else`), a 6-segment shape with a length cycling through `i % 3`. `grade7-fix-turtle-three-way-order.json` — same target shape, broken by swapping the `elif` branch order; both the geometric closure (opposite-pair symmetry over the 6-step `i % 3` cycle) and that the broken version actually produces a different, `shape_equals`-failing hexagon were checked by hand before authoring. turtle-conditions now has 4 tasks, one more than every other topic in this block. Verified via `npm run verify:references` (32/32 passing, `checkTaskReference` confirms `payload.broken` fails as required); not yet imported into any live database. |
+| Mandatory vs practice lessons | ❌ | AI_CONTEXT.md, "Course Structure": mandatory lessons (explanation + core tasks), skippable practice lessons with additional tasks, not tied to the timetable. Data model undecided — a lesson entity, or a tag on topics/tasks |
 | Grade tagging of tasks | ✅ | Stale as of the last edit: every seed task already carries `gradeTags: [7]` (`content/seed-tasks/*.json`), the authoring forms read/write it (`task-form-utils.ts`'s `parseGradeTags`), and the session builder filters by it. What is still open is populating grades 8–9, which is content work (see "Grade 7 sem-2 block…" and the curriculum mapping), not this mechanism |
 
 ## Open Questions
@@ -212,15 +214,21 @@ IDLE before uploading.
       purpose so `tests/e2e/error-boundary.spec.ts` can exercise it deterministically, without
       taking down the shared database other specs run against. The root layout touches no
       database, so `global-error.tsx` is not needed yet.
-- [ ] Grade→score mapping to the 12-point scale — needs a teacher's decision, not a default.
+- [x] Grade→score mapping to the 12-point scale. **Decided with the teacher** — AI_CONTEXT.md,
+      "Grading": points by difficulty, partial credit per input case, 75% after a hint, bands
+      1–3 ≤ 15%, 4–6 ≤ 60%, 7–9 ≤ 75%, 10–12 above and only with a solved difficulty 4–5 task.
 - [x] Is a graded attempt final on first submit, or best-of-N? **Final on first submit** —
       exam mode locks a task to its first Check result once `session.mode === 'graded'`
       (`components/session/SessionRoom.tsx`). `'practice'` sessions keep unlimited retries.
-- [ ] Does the advanced branch share a topic with the main track or sit in a separate one?
+- [x] Does the advanced branch share a topic with the main track or sit in a separate one?
+      **Shares it.** Fast students go deeper via each practice lesson's additional tasks
+      (AI_CONTEXT.md, "Course Structure").
 - [x] Curriculum — supplied and mapped in CURRICULUM.md. Programming runs in semester 2 in all
       three grades, so the deadline is roughly January, not September.
 - [x] Practice progress — save-code system. localStorage primary, code for portability.
-- [ ] Grade 8 plan says 1.5 h/week but lists 70 lessons and is filenamed "2 ГОД". Which is it?
+- [x] Grade 8 plan says 1.5 h/week but lists 70 lessons and is filenamed "2 ГОД". Which is it?
+      **Neither matters.** Content is not scheduled to hours or dates — mandatory lessons plus
+      skippable practice lessons (docs/CURRICULUM.md).
 - [ ] Is the grid world worth building at all now that turtle is the curriculum's visual layer?
 - [x] Does interactive input need SharedArrayBuffer? **No.** Verified with
       `crossOriginIsolated=false`; no COOP/COEP headers on Vercel, embeds stay possible.
@@ -232,11 +240,9 @@ IDLE before uploading.
       (`components/canvas/PlaybackScrubber.tsx`), stepping the turtle drawing by call order
       rather than an interpreter-level stepper — no need to fall back to `predict`/`fix` tasks
       or to teach it outside the platform.
-- [ ] Which Python version is installed alongside IDLE on the classroom machines, and is it the
-      same on all of them? Affects the file-delivery safe subset directly: the corpus was
-      confirmed against CPython 3.11; re-run it there with
-      `PYTHON=<that interpreter> npm run confirm:safe-subset`, and regenerate
-      `lib/task/cpython-names.json` with `scripts/safe-subset/cpython_names.py` on it.
+- [x] Which Python version is installed alongside IDLE on the classroom machines? **CPython
+      3.10.** The safe subset is re-confirmed on 3.10.20, `lib/task/cpython-names.json` is
+      regenerated from it, and CI's `verify` job pins 3.10 (docs/SPIKE.md, check 1).
 - [ ] Multi-file projects with local imports — needed for the grade 9 projects, or is a single
       file enough for v1? See AI_CONTEXT.md's "File Delivery" v1 scope limit.
 - [ ] Should a file-delivery task be blocked in the UI until its in-browser prerequisite is

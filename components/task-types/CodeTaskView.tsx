@@ -54,6 +54,7 @@ export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true }: Cod
     if (!report) return;
     onSubmitAttemptRef.current?.({
       passed: report.passed,
+      score: report.score,
       hintsUsed: hintsUsedRef.current,
       durationMs: Date.now() - openedAtRef.current,
       submittedAnswer: { code: lastCheckedCodeRef.current }

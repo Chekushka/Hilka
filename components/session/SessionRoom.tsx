@@ -171,6 +171,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         taskVersion,
         submittedAnswer: outcome.submittedAnswer,
         passed: outcome.passed,
+        ...(outcome.score !== undefined ? { score: outcome.score } : {}),
         hintsUsed: outcome.hintsUsed,
         durationMs: outcome.durationMs
       })

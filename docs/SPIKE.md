@@ -122,6 +122,13 @@ Engine properties again, so any machine answers them — but CPython's side is w
 `python3` the script finds, so re-run it with the classroom machine's interpreter
 (`PYTHON=py npm run confirm:safe-subset`) once its version is known (TASKS.md, Open Questions).
 
+**The classroom machines run CPython 3.10.** Re-run against CPython 3.10.20: every allow-list
+entry is still confirmed, and the divergences are the same five as on 3.11 below (none of them
+on the allow-list). `lib/task/cpython-names.json` is regenerated from 3.10, which drops
+`math.cbrt`, `math.exp2`, `ExceptionGroup` and `BaseExceptionGroup` — on the classroom's IDLE
+those are a student's `NameError`/`AttributeError`, not a construct Hilka lacks. CI's `verify`
+job now pins Python 3.10 for the same reason. The table below is the original 3.11 run.
+
 Run against CPython 3.11.15:
 
 | Entry | Result | Divergence |

@@ -4,14 +4,14 @@ import { orderSessionTasks } from './session-mapping';
 describe('orderSessionTasks', () => {
   it('restores the order sessions.task_ids defines, not row order', () => {
     const rows = [
-      { id: 'b', slug: 'task-b', title: 'B' },
-      { id: 'a', slug: 'task-a', title: 'A' }
+      { id: 'b', slug: 'task-b', title: 'B', difficulty: 1 },
+      { id: 'a', slug: 'task-a', title: 'A', difficulty: 1 }
     ];
     expect(orderSessionTasks(['a', 'b'], rows).map((t) => t.id)).toEqual(['a', 'b']);
   });
 
   it('drops a task id with no matching row', () => {
-    const rows = [{ id: 'a', slug: 'task-a', title: 'A' }];
+    const rows = [{ id: 'a', slug: 'task-a', title: 'A', difficulty: 1 }];
     expect(orderSessionTasks(['a', 'deleted'], rows)).toEqual(rows);
   });
 

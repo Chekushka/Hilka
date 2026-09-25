@@ -16,13 +16,20 @@ import type { Reference, RunCase } from './types';
 
 export type EngineState = 'loading' | 'ready' | 'failed';
 
+/**
+ * A Check's report plus the share of input cases that passed — partial
+ * credit in a graded session (lib/grading/). 1 when every case passed, and
+ * a task without `cases` is a single case, so it is 1 or 0 there.
+ */
+export type CaseScoredReport = CheckReport & { score: number };
+
 export interface TaskRunnerState {
   engine: EngineState;
   busy: boolean;
   /** The last run, whether it was a plain run or a check. */
   result: RunResult | null;
   /** Set only after Check, so a plain run never judges the student. */
-  report: CheckReport | null;
+  report: CaseScoredReport | null;
   target: Segment[];
   /**
    * Set while a plain Run is inside `input()`, waiting on the student — the
@@ -130,6 +137,7 @@ export function useTaskRunner(task: RunnableTask) {
       let shownResult: RunResult | null = null;
       let erroredResult: RunResult | null = null;
       let allPassed = true;
+      let casesPassed = 0;
       const results: CheckResult[] = [];
 
       for (const [i, runCase] of cases.entries()) {
@@ -153,7 +161,8 @@ export function useTaskRunner(task: RunnableTask) {
           },
           reference: { drawing: targetRef.current }
         });
-        if (!caseReport.passed) allPassed = false;
+        if (caseReport.passed) casesPassed += 1;
+        else allPassed = false;
         const label = multipleCases ? (runCase.label ?? t('workspace.caseLabel', { n: i + 1 })) : null;
         for (const result of caseReport.results) {
           results.push(label ? { ...result, message: `${label}: ${result.message}` } : result);
@@ -165,7 +174,7 @@ export function useTaskRunner(task: RunnableTask) {
         busy: false,
         pendingInputPrompt: null,
         result: erroredResult ?? shownResult ?? EMPTY_RESULT,
-        report: erroredResult ? null : { passed: allPassed, results }
+        report: erroredResult ? null : { passed: allPassed, results, score: casesPassed / cases.length }
       }));
     },
     [task.checks, task.cases]

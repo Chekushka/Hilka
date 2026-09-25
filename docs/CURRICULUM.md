@@ -22,10 +22,23 @@ best a reference during project lessons.
 **All three grades reach programming in the second half of the year.** Nothing needs to be
 ready in the autumn term, and the peak load falls in roughly January–March.
 
-Document inconsistencies worth confirming with the teacher:
-- The grade 8 plan is titled «2 ГОД» in the filename but says «1.5 год на тиждень» in the
-  header, while listing 70 lessons — a count that implies 2 hours a week.
-- The grade 8 numbering skips 28 and has two rows numbered 62.
+**Content is not scheduled to the timetable.** Decided by the teacher: lessons get skipped for
+reasons nobody can plan around (power cuts, air-raid alerts), so the platform never assumes a
+fixed number of hours per week or a lesson-per-date mapping. That also settles the grade 8
+«2 ГОД» vs «1.5 год на тиждень» inconsistency — the platform does not depend on either number.
+Instead, each grade's content is:
+
+- **Mandatory lessons** — the ones that explain something a student cannot skip (loops,
+  conditions, variables, …): a short explanation plus core tasks. These are what a graded
+  session draws from.
+- **Practice lessons** — consolidation. Skippable when time is lost, but not recommended to
+  skip. Every practice lesson also carries **additional tasks** beyond its core set.
+- **Fast students share the same topics** — no separate advanced track. They go deeper into
+  the same topic through the additional tasks rather than ahead into a different one.
+
+The lesson numbers in the tables below stay as a reference to the ministry programme, not as a
+schedule. Remaining inconsistency, harmless now: the grade 8 numbering skips 28 and has two rows
+numbered 62.
 
 ## Grade 7 — «Графічне програмування» (lessons 25–46)
 

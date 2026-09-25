@@ -16,6 +16,8 @@ export interface TeacherSessionDetail {
   classTitle: string;
   /** `closesAt === null` — drives the dashboard's polling and the "still open" note. */
   open: boolean;
+  /** 'graded' sessions get a suggested grade per student (lib/grading/). */
+  mode: 'practice' | 'graded';
   roster: string[];
   /** The session's assigned tasks, in the order a student meets them — the "who is stuck" rollup's columns. */
   tasks: SessionTaskSummary[];
@@ -37,7 +39,7 @@ export async function getSessionForTeacher(
 
   const taskRows = row.session.taskIds.length
     ? await db
-        .select({ id: tasks.id, slug: tasks.slug, title: tasks.title })
+        .select({ id: tasks.id, slug: tasks.slug, title: tasks.title, difficulty: tasks.difficulty })
         .from(tasks)
         .where(inArray(tasks.id, row.session.taskIds))
     : [];
@@ -47,6 +49,7 @@ export async function getSessionForTeacher(
     code: row.session.code,
     classTitle: row.classTitle,
     open: row.session.closesAt === null,
+    mode: row.session.mode,
     roster: row.roster,
     tasks: orderSessionTasks(row.session.taskIds, taskRows)
   };
@@ -64,7 +67,7 @@ export async function getOpenSessionByCode(code: string): Promise<JoinedSession 
 
   const taskRows = row.session.taskIds.length
     ? await db
-        .select({ id: tasks.id, slug: tasks.slug, title: tasks.title })
+        .select({ id: tasks.id, slug: tasks.slug, title: tasks.title, difficulty: tasks.difficulty })
         .from(tasks)
         .where(inArray(tasks.id, row.session.taskIds))
     : [];
