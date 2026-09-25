@@ -512,9 +512,26 @@ topics/tasks) is not decided yet; `topics.theory_md` already exists for the expl
 
 ## Grading
 
-Session score = tasks passed / tasks assigned, adjusted by hints used, mapped to the Ukrainian
-12-point scale by a per-session lookup table the teacher can override. The mapping lives in
-config, not in code — teachers disagree about it and will want to change it.
+Decided with the teacher. Hilka **suggests** a grade; the teacher decides, and students never see
+the number in Hilka — they see which tasks they solved.
+
+- Only **graded sessions** produce a grade, and they should draw only from mandatory lessons
+  ("Course Structure"). Practice and additional tasks never lower anyone's grade.
+- **First Check only.** A graded session locks each task to its first Check
+  (`components/session/SessionRoom.tsx`); a Check whose program crashes is not an attempt.
+- **Points by difficulty**: 1–2 → 1 point, 3 → 2, 4–5 → 3.
+- **Partial credit**: a task with input cases earns the share of cases it passed
+  (`attempts.score`, reported by `lib/task/use-task-runner.ts`; a pass is always 1).
+- **Hints** stay the session's on/off switch; a task solved after opening a hint earns 75%.
+- **Share → grade**, three grades per level, the middle widened on purpose:
+  початковий 1–3 up to 15%, середній 4–6 up to 60%, достатній 7–9 up to 75%, високий 10–12
+  above, evenly spaced inside each level.
+- **10–12 needs a fully solved task of difficulty 4–5**; otherwise the grade stops at 9. A session
+  with no such task says so on the dashboard.
+- **Nothing submitted → no grade** (the teacher's «н»), never an automatic 1.
+
+The numbers live in `lib/grading/config.ts` as data, not inlined in the logic — teachers disagree
+about grading, and a per-session override is the planned next step.
 
 ## Conventions
 

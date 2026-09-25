@@ -6,6 +6,8 @@ import { listAttemptsForSession } from '@/lib/db/attempts';
 import { getSessionForTeacher } from '@/lib/db/sessions';
 import { buildRollup, type CellStatus } from '@/lib/dashboard/rollup';
 import { findSharedFiles } from '@/lib/dashboard/shared-files';
+import { formatPoints } from '@/lib/dashboard/csv';
+import { sessionAllowsHighBand, suggestGradesForRoster, type SuggestedGrade } from '@/lib/grading/grade';
 import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -34,6 +36,24 @@ function RollupCell({ status, attempts }: { status: CellStatus; attempts: number
   );
 }
 
+/** A suggestion for the teacher, never a verdict — see lib/grading/grade.ts. */
+function GradeCell({ suggestion }: { suggestion: SuggestedGrade }) {
+  if (suggestion.grade === null) {
+    return (
+      <span className="text-ink-muted" aria-label={t('dashboard.gradeNone')} title={t('dashboard.gradeNone')}>
+        —
+      </span>
+    );
+  }
+  const points = t('dashboard.gradePoints', { earned: formatPoints(suggestion.earned), possible: suggestion.possible });
+  return (
+    <span title={suggestion.capped ? `${points}. ${t('dashboard.gradeCappedHint')}` : points}>
+      <span className="font-semibold text-ink">{suggestion.grade}</span>
+      {suggestion.capped && <span className="ml-1 text-xs text-ink-muted">{t('dashboard.gradeCapped')}</span>}
+    </span>
+  );
+}
+
 export default async function SessionDetailPage({
   params
 }: {
@@ -55,6 +75,12 @@ export default async function SessionDetailPage({
   const rows = await listAttemptsForSession(session.id);
   const rollup = buildRollup(session.roster, session.tasks, rows);
   const sharedFiles = findSharedFiles(rows);
+  const graded = session.mode === 'graded';
+  const grades = graded
+    ? new Map(
+        suggestGradesForRoster(session.roster, session.tasks, rows).map((row) => [row.studentName, row.suggestion])
+      )
+    : null;
 
   return (
     <main className="mx-auto max-w-3xl p-6">
@@ -72,6 +98,11 @@ export default async function SessionDetailPage({
               {t('dashboard.downloadFiles')}
             </a>
           )}
+          {graded && rows.length > 0 && (
+            <a href={`/api/dashboard/sessions/${session.id}/grades`} className="text-sm text-accent">
+              {t('dashboard.exportGrades')}
+            </a>
+          )}
           {rows.length > 0 && (
             <a href={`/api/dashboard/sessions/${session.id}/export`} className="text-sm text-accent">
               {t('dashboard.exportCsv')}
@@ -85,6 +116,10 @@ export default async function SessionDetailPage({
         <section className="mt-6">
           <h2 className="text-lg font-semibold text-ink">{t('dashboard.rollupTitle')}</h2>
           <p className="mt-1 text-sm text-ink-muted">{t('dashboard.rollupNote')}</p>
+          {graded && <p className="mt-1 text-sm text-ink-muted">{t('dashboard.gradeNote')}</p>}
+          {graded && !sessionAllowsHighBand(session.tasks) && (
+            <p className="mt-1 text-sm text-attention">{t('dashboard.gradeNoHardTask')}</p>
+          )}
           <table className="mt-3 w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-line text-left text-ink-muted">
@@ -94,6 +129,7 @@ export default async function SessionDetailPage({
                     {task.title}
                   </th>
                 ))}
+                {grades && <th className="px-2 py-2 text-center font-normal">{t('dashboard.columnSuggestedGrade')}</th>}
               </tr>
             </thead>
             <tbody>
@@ -112,6 +148,12 @@ export default async function SessionDetailPage({
                       <RollupCell status={cell.status} attempts={cell.attempts} />
                     </td>
                   ))}
+                  {grades && (
+                    <td className="px-2 py-2 text-center">
+                      {/* Every rollup row comes from the roster, so every name has a suggestion. */}
+                      <GradeCell suggestion={grades.get(studentRow.studentName)!} />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

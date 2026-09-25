@@ -20,6 +20,8 @@ export interface SessionAttemptRow {
   passed: boolean;
   hintsUsed: number;
   durationMs: number | null;
+  /** 0..1, the share of input cases passed; null for task types without cases and for older rows. */
+  score: number | null;
   /** SHA-256 of the uploaded source; null for anything that was not a file upload. */
   sourceHash: string | null;
   createdAt: string;
@@ -45,6 +47,7 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
       passed: attempts.passed,
       hintsUsed: attempts.hintsUsed,
       durationMs: attempts.durationMs,
+      score: attempts.score,
       flags: attempts.flags,
       createdAt: attempts.createdAt
     })
@@ -52,8 +55,9 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
     .where(eq(attempts.sessionId, sessionId))
     .orderBy(asc(attempts.studentName), desc(attempts.createdAt));
-  return rows.map(({ flags, ...row }) => ({
+  return rows.map(({ flags, score, ...row }) => ({
     ...row,
+    score: score === null ? null : Number(score),
     sourceHash: typeof flags?.sourceHash === 'string' ? flags.sourceHash : null,
     createdAt: row.createdAt.toISOString()
   }));
@@ -95,6 +99,8 @@ export async function recordAttempt(
       taskVersion: input.taskVersion,
       submittedAnswer: input.submittedAnswer,
       passed: input.passed,
+      // A pass is a pass, whatever a client claims about its cases.
+      score: input.score === undefined ? null : String(input.passed ? 1 : input.score),
       hintsUsed: input.hintsUsed,
       durationMs: input.durationMs,
       flags: sourceHash === null ? null : { sourceHash }

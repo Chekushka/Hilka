@@ -11,6 +11,8 @@ export interface SessionTaskSummary {
   id: string;
   slug: string;
   title: string;
+  /** 1..5 — weighs the task in a graded session's suggested grade (lib/grading/). */
+  difficulty: number;
 }
 
 /** What a student sees after entering a valid, still-open session code. */
@@ -31,6 +33,8 @@ export interface AttemptInput {
   taskVersion: number;
   submittedAnswer: Record<string, unknown>;
   passed: boolean;
+  /** 0..1, see AttemptOutcome.score. */
+  score?: number;
   hintsUsed: number;
   durationMs: number;
 }

@@ -30,6 +30,7 @@ function isValidBody(body: unknown): body is AttemptInput {
     typeof b.submittedAnswer === 'object' &&
     b.submittedAnswer !== null &&
     typeof b.passed === 'boolean' &&
+    (b.score === undefined || (typeof b.score === 'number' && b.score >= 0 && b.score <= 1)) &&
     typeof b.hintsUsed === 'number' &&
     typeof b.durationMs === 'number'
   );
