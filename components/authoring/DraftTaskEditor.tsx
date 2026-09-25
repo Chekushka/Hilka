@@ -19,6 +19,15 @@ import { t } from '@/lib/i18n';
 import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
 import type { Check } from '@/lib/checker';
 import type { CodePayload, RunCase, Surface } from '@/lib/task/types';
+import {
+  deliveryFormFromPayload,
+  deliveryPayloadFields,
+  validateDeliveryForm,
+  type DeliveryFormState
+} from '@/lib/task/delivery-form';
+import { FileDeliveryFields } from './FileDeliveryFields';
+import { lintForFileDelivery, type LintedSource } from './file-lint-gate';
+import { FileLintReport } from './FileLintReport';
 import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
 
 export interface DraftTask {
@@ -55,6 +64,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
   const [hintsText, setHintsText] = useState(task.hints.join('\n'));
   const [difficulty, setDifficulty] = useState(task.difficulty);
   const [gradeTagsText, setGradeTagsText] = useState(task.gradeTags.join(', '));
+  const [delivery, setDelivery] = useState<DeliveryFormState>(() => deliveryFormFromPayload(task.payload));
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -70,6 +80,11 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
   const [casesError, setCasesError] = useState<string | null>(null);
   const run = caseResults?.[0] ?? null;
   const [publishState, setPublishState] = useState<PublishState>({ kind: 'idle' });
+  // The file-upload linter's verdict on this task's own programs, taken at
+  // the last reference run; `undefined` until a run happens with file
+  // delivery on (components/authoring/file-lint-gate.ts).
+  const [fileLint, setFileLint] = useState<LintedSource[] | null | undefined>(undefined);
+  const fileLintBlocks = delivery.enabled && (fileLint === undefined || fileLint === null || fileLint.length > 0);
 
   const runnerRef = useRef<PythonRunner | null>(null);
   useEffect(() => {
@@ -96,6 +111,12 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
       setSaveError(t('authoring.casesInvalidJson'));
       return { ok: false };
     }
+    const deliveryError = validateDeliveryForm(delivery);
+    if (deliveryError) {
+      setSaveState('error');
+      setSaveError(t(deliveryError === 'filename' ? 'authoring.deliveryFilenameInvalid' : 'authoring.deliveryMaxKbInvalid'));
+      return { ok: false };
+    }
     setSaveState('saving');
     setSaveError(null);
     const response = await fetch(`/api/tasks/${task.id}`, {
@@ -103,7 +124,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'code', surface, prompt, starter },
+        payload: { type: 'code', surface, prompt, starter, ...deliveryPayloadFields(delivery) },
         checks: parsedChecks.checks,
         cases: parsedCases.cases,
         hints: parseHints(hintsText),
@@ -144,13 +165,21 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
       results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin }));
     }
     setCaseResults(results);
+    setFileLint(
+      delivery.enabled
+        ? await lintForFileDelivery(runner, [
+            { source: 'reference', code: referenceCode },
+            { source: 'starter', code: starter }
+          ])
+        : undefined
+    );
     setRunning(false);
   }
 
   const casesFailed = caseResults?.some((result) => result.error !== null || result.timedOut) ?? false;
 
   async function handlePublish() {
-    if (!run || !caseResults || casesFailed) return;
+    if (!run || !caseResults || casesFailed || fileLintBlocks) return;
     setPublishState({ kind: 'publishing' });
     const saved = await save();
     if (!saved.ok) {
@@ -245,6 +274,14 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
           </label>
           <CodeEditor value={starter} onChange={setStarter} ariaLabel={t('authoring.starterLabel')} />
         </div>
+
+        <FileDeliveryFields
+          value={delivery}
+          onChange={(next) => {
+            if (next.enabled !== delivery.enabled) setFileLint(undefined);
+            setDelivery(next);
+          }}
+        />
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="checks">
@@ -375,10 +412,15 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
           </div>
         ))}
 
+        {delivery.enabled && caseResults && fileLint !== undefined && <FileLintReport result={fileLint} />}
+        {delivery.enabled && caseResults && fileLint === undefined && (
+          <p className="text-xs text-ink-muted">{t('authoring.deliveryLintNeedsRun')}</p>
+        )}
+
         <button
           type="button"
           onClick={handlePublish}
-          disabled={!run || !caseResults || casesFailed || publishState.kind === 'publishing'}
+          disabled={!run || !caseResults || casesFailed || fileLintBlocks || publishState.kind === 'publishing'}
           className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
           {publishState.kind === 'publishing' ? t('authoring.publishing') : t('authoring.publish')}

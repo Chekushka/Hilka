@@ -15,8 +15,16 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { t } from '@/lib/i18n';
+import {
+  deliveryFormFromPayload,
+  deliveryPayloadFields,
+  filenameFromSlug,
+  validateDeliveryForm,
+  type DeliveryFormState
+} from '@/lib/task/delivery-form';
 import { isFillTemplateValid } from '@/lib/task/fill';
 import type { Surface, TaskType } from '@/lib/task/types';
+import { FileDeliveryFields } from './FileDeliveryFields';
 import { formatParsonsLines, parseParsonsLines } from './parsons-form-utils';
 import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
 
@@ -72,6 +80,12 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   // fill-only
   const [template, setTemplate] = useState('');
 
+  // code/fix-only. The file name follows the slug until the teacher edits it.
+  const [delivery, setDelivery] = useState<DeliveryFormState>(() => deliveryFormFromPayload({}));
+  const [filenameEdited, setFilenameEdited] = useState(false);
+  const deliveryForm = filenameEdited ? delivery : { ...delivery, filename: filenameFromSlug(slug) };
+  const hasDelivery = taskType === 'code' || taskType === 'fix';
+
   const [checksText, setChecksText] = useState('[]');
   // code/fix-only; input-driven tasks add cases later on their own page,
   // where the reference can actually be run against each one's stdin.
@@ -124,6 +138,11 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
       setError(t('authoring.templateEmpty'));
       return;
     }
+    const deliveryError = hasDelivery ? validateDeliveryForm(deliveryForm) : null;
+    if (deliveryError) {
+      setError(t(deliveryError === 'filename' ? 'authoring.deliveryFilenameInvalid' : 'authoring.deliveryMaxKbInvalid'));
+      return;
+    }
 
     setSaving(true);
     const response = await fetch('/api/tasks', {
@@ -135,7 +154,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         title,
         payload:
           taskType === 'code'
-            ? { type: 'code', surface, prompt, starter }
+            ? { type: 'code', surface, prompt, starter, ...deliveryPayloadFields(deliveryForm) }
             : taskType === 'parsons'
               ? {
                   type: 'parsons',
@@ -151,7 +170,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                     ? { type: 'predict', prompt, code: predictCode, answerMode: 'choice', options: parsedPredictOptions }
                     : { type: 'predict', prompt, code: predictCode, answerMode: 'text' }
                   : taskType === 'fix'
-                    ? { type: 'fix', surface, prompt, broken: brokenCode }
+                    ? { type: 'fix', surface, prompt, broken: brokenCode, ...deliveryPayloadFields(deliveryForm) }
                     : { type: 'fill', prompt, template },
         checks: parsedChecks.checks,
         ...((taskType === 'code' || taskType === 'fix') && parsedCases.cases.length > 0
@@ -441,6 +460,16 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
           />
           <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
         </div>
+      )}
+
+      {hasDelivery && (
+        <FileDeliveryFields
+          value={deliveryForm}
+          onChange={(next) => {
+            if (next.filename !== deliveryForm.filename) setFilenameEdited(true);
+            setDelivery(next);
+          }}
+        />
       )}
 
       <div className="flex flex-col gap-1.5">
