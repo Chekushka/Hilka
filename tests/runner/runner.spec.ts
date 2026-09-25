@@ -93,6 +93,19 @@ test('penup leaves a gap in the segment log', async ({ page }) => {
   expect(result.drawing).toHaveLength(2);
 });
 
+test('goto works, though goto is a JavaScript reserved word', async ({ page }) => {
+  // Skulpt looks attributes named like JS reserved words up under a mangled
+  // key; unhandled, turtle.goto raised AttributeError (AI_CONTEXT.md, Gotchas).
+  const result = await run(
+    page,
+    'import turtle\nturtle.goto(30, 40)\nt = turtle.Turtle()\nt.goto(30, 0)\nturtle.setpos(0, 0)'
+  );
+  expect(result.error).toBeNull();
+  expect(result.drawing).toHaveLength(3);
+  expect(result.drawing[0]).toMatchObject({ x1: 0, y1: 0, x2: 30, y2: 40 });
+  expect(result.drawing[1]).toMatchObject({ x1: 30, y1: 40, x2: 30, y2: 0 });
+});
+
 test('right(90) and left(270) produce the same picture', async ({ page }) => {
   // The equivalence the entire turtle comparison design rests on. A student who
   // turns the other way is not wrong, and failing them is exactly the event

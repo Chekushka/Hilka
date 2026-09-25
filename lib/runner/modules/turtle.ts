@@ -120,16 +120,24 @@ var $builtinmodule = function (name) {
     });
   }
 
-  Object.keys(api).forEach(function (k) { mod[k] = wrap(k, false); });
-  Object.keys(ALIASES).forEach(function (k) { mod[k] = wrap(ALIASES[k], false); });
+  // Skulpt looks up an attribute whose name is a JS reserved word under a
+  // mangled key (name + '_$rw$'), so turtle.goto would otherwise raise
+  // AttributeError. Register every exported name under both keys.
+  function exportAs(target, name, value) {
+    target[name] = value;
+    if (Sk.builtin.str.reservedWords_[name] !== undefined) { target[name + '_$rw$'] = value; }
+  }
+
+  Object.keys(api).forEach(function (k) { exportAs(mod, k, wrap(k, false)); });
+  Object.keys(ALIASES).forEach(function (k) { exportAs(mod, k, wrap(ALIASES[k], false)); });
 
   // t = turtle.Turtle() is as common in the textbooks as the module-level form.
   // One shared pen: a second turtle would need its own state, and no lesson in
   // the curriculum uses two.
   mod.Turtle = Sk.misceval.buildClass(mod, function ($gbl, $loc) {
     $loc.__init__ = new Sk.builtin.func(function () { return Sk.builtin.none.none$; });
-    Object.keys(api).forEach(function (k) { $loc[k] = wrap(k, true); });
-    Object.keys(ALIASES).forEach(function (k) { $loc[k] = wrap(ALIASES[k], true); });
+    Object.keys(api).forEach(function (k) { exportAs($loc, k, wrap(k, true)); });
+    Object.keys(ALIASES).forEach(function (k) { exportAs($loc, k, wrap(ALIASES[k], true)); });
   }, 'Turtle', []);
 
   mod.Screen = Sk.misceval.buildClass(mod, function ($gbl, $loc) {
