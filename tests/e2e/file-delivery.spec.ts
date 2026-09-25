@@ -127,4 +127,22 @@ test('two students passing with the same file are listed for the teacher', async
   const section = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Однакові файли' }) });
   await expect(section).toBeVisible();
   await expect(section.getByRole('listitem').filter({ hasText: TASK_TITLE })).toContainText('Олена, Соломія');
+
+  // Bulk download of the submitted files. Fetched in-page for the same
+  // origin/cookie reason dashboard.spec.ts gives for the CSV export.
+  const filesUrl = await page.getByRole('link', { name: 'Завантажити файли учнів (ZIP)' }).getAttribute('href');
+  if (!filesUrl) throw new Error('files link rendered with no href');
+  const zip = await page.evaluate(async (url) => {
+    const response = await fetch(url);
+    return { status: response.status, contentType: response.headers.get('content-type'), bytes: [...new Uint8Array(await response.arrayBuffer())] };
+  }, filesUrl);
+  expect(zip.status).toBe(200);
+  expect(zip.contentType).toBe('application/zip');
+  const archive = Buffer.from(zip.bytes);
+  expect(archive.readUInt32LE(0)).toBe(0x04034b50);
+  // Stored, not compressed: names and each student's latest source sit in the archive verbatim.
+  const text = archive.toString('utf8');
+  expect(text).toContain(`${TASK_TITLE}/Олена.py`);
+  expect(text).toContain(`${TASK_TITLE}/Соломія.py`);
+  expect(text).toContain(shared.toString('utf8'));
 });

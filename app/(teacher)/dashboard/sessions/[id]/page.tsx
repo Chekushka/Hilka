@@ -66,11 +66,18 @@ export default async function SessionDetailPage({
         <h1 className="text-xl font-semibold text-ink">
           {t('dashboard.sessionDetailTitle', { code: session.code })}
         </h1>
-        {rows.length > 0 && (
-          <a href={`/api/dashboard/sessions/${session.id}/export`} className="text-sm text-accent">
-            {t('dashboard.exportCsv')}
-          </a>
-        )}
+        <div className="flex gap-4">
+          {rows.some((row) => row.sourceHash !== null) && (
+            <a href={`/api/dashboard/sessions/${session.id}/files`} className="text-sm text-accent">
+              {t('dashboard.downloadFiles')}
+            </a>
+          )}
+          {rows.length > 0 && (
+            <a href={`/api/dashboard/sessions/${session.id}/export`} className="text-sm text-accent">
+              {t('dashboard.exportCsv')}
+            </a>
+          )}
+        </div>
       </div>
       {session.open && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.liveUpdating')}</p>}
 

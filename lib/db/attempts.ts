@@ -6,7 +6,8 @@
  * attempts only (lib/dashboard/shared-files.ts).
  */
 import { createHash } from 'node:crypto';
-import { asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import type { FileSubmissionRow } from '@/lib/dashboard/submitted-files';
 import type { AttemptInput } from '@/lib/session/types';
 import { attempts, tasks } from './schema';
 import { getDb } from './client';
@@ -56,6 +57,29 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
     sourceHash: typeof flags?.sourceHash === 'string' ? flags.sourceHash : null,
     createdAt: row.createdAt.toISOString()
   }));
+}
+
+/**
+ * Every file-delivery attempt in a session, with its source — for the
+ * teacher's bulk download. A file-delivery attempt is exactly one that
+ * carries `flags.sourceHash` (`POST /api/attempts` sets it from the task).
+ */
+export async function listFileSubmissionsForSession(sessionId: string): Promise<FileSubmissionRow[]> {
+  const rows = await getDb()
+    .select({
+      studentName: attempts.studentName,
+      taskId: attempts.taskId,
+      taskTitle: tasks.title,
+      submittedAnswer: attempts.submittedAnswer,
+      createdAt: attempts.createdAt
+    })
+    .from(attempts)
+    .innerJoin(tasks, eq(attempts.taskId, tasks.id))
+    .where(and(eq(attempts.sessionId, sessionId), sql`${attempts.flags} ->> 'sourceHash' is not null`));
+  return rows.flatMap(({ submittedAnswer, createdAt, ...row }) => {
+    const code = submittedAnswer?.code;
+    return typeof code === 'string' ? [{ ...row, code, createdAt: createdAt.toISOString() }] : [];
+  });
 }
 
 export async function recordAttempt(
