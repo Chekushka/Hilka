@@ -1,0 +1,40 @@
+{
+  "slug": "g7-predict-print-sum-text",
+  "topicSlug": "intro",
+  "type": "predict",
+  "title": "Текст чи число?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "print(\"2 + 3 =\", 2 + 3)",
+    "answerMode": "choice",
+    "options": [
+      "2 + 3 = 2 + 3",
+      "2 + 3 = 5",
+      "5 = 5",
+      "2 + 3 =5"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        1
+      ],
+      "message": "У лапках — текст, він виводиться як є: «2 + 3 =». Без лапок — вираз, Python його обчислює: 5."
+    }
+  ],
+  "hints": [
+    "Те, що в лапках, виводиться як є.",
+    "Те, що без лапок, Python спершу обчислює. Між частинами print ставить пробіл."
+  ],
+  "reference": {
+    "code": "print(\"2 + 3 =\", 2 + 3)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

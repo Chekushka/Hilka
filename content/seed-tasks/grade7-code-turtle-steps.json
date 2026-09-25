@@ -1,0 +1,42 @@
+{
+  "slug": "g7-code-turtle-steps",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Сходинки",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй три сходинки: кожна — 40 угору і 40 праворуч. Потім замкни фігуру: 120 униз і 120 ліворуч до початку.\nЧерепашка на старті дивиться праворуч.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 8,
+      "message": "Має вийти замкнена фігура з восьми відрізків."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Фігура відрізняється від зразка. Перевір, у який бік черепашка повертає на кожній сходинці."
+    }
+  ],
+  "hints": [
+    "Одна сходинка: повернути ліворуч, 40 уперед, повернути праворуч, 40 уперед.",
+    "Повтори сходинку тричі.",
+    "Після трьох сходинок черепашка дивиться праворуч. Поверни праворуч — вона дивитиметься вниз."
+  ],
+  "reference": {
+    "code": "import turtle\nturtle.left(90)\nturtle.forward(40)\nturtle.right(90)\nturtle.forward(40)\nturtle.left(90)\nturtle.forward(40)\nturtle.right(90)\nturtle.forward(40)\nturtle.left(90)\nturtle.forward(40)\nturtle.right(90)\nturtle.forward(40)\nturtle.right(90)\nturtle.forward(120)\nturtle.right(90)\nturtle.forward(120)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

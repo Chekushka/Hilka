@@ -1,0 +1,60 @@
+{
+  "slug": "g7-fix-average-brackets",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Неправильне середнє",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала виводити середнє двох чисел, але для 4 і 6 виводить 7.0 замість 5.0. Знайди логічну помилку.",
+    "broken": "a = float(input())\nb = float(input())\nprint(a + b / 2)\n"
+  },
+  "cases": [
+    {
+      "label": "4 і 6",
+      "stdin": [
+        "4",
+        "6"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Середнє 4 і 6 — це 5. Спершу треба додати, а потім поділити."
+        }
+      ]
+    },
+    {
+      "label": "3 і 4",
+      "stdin": [
+        "3",
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3.5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Яка дія виконується першою: додавання чи ділення?",
+    "Ділення виконується раніше за додавання. Дужки змінюють порядок."
+  ],
+  "reference": {
+    "code": "a = float(input())\nb = float(input())\nprint((a + b) / 2)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

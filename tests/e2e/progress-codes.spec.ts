@@ -17,7 +17,7 @@ async function typeSolution(page: Page, code: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/practice');
+  await page.goto('/practice/g7-29-turtle/g7-turtle-square');
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
 });
 
@@ -66,7 +66,7 @@ test('a code saved on one browser restores on another and merges progress', asyn
   // "Machine two": a separate browser context, so localStorage starts empty.
   const otherContext = await browser.newContext();
   const other = await otherContext.newPage();
-  await other.goto('/practice');
+  await other.goto('/practice/g7-29-turtle/g7-turtle-square');
   await expect(other.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
   await expect(other.getByText('Виконано завдань: 0')).toBeVisible();
 

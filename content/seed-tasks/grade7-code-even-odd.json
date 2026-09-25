@@ -1,0 +1,84 @@
+{
+  "slug": "g7-code-even-odd",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Парне чи непарне",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число. Якщо воно парне, виведи «парне», інакше — «непарне».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "парне",
+      "stdin": [
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "парне",
+          "normalize": "loose",
+          "message": "Для парного числа програма має вивести «парне»."
+        }
+      ]
+    },
+    {
+      "label": "непарне",
+      "stdin": [
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "непарне",
+          "normalize": "loose",
+          "message": "Для непарного числа програма має вивести «непарне»."
+        }
+      ]
+    },
+    {
+      "label": "нуль",
+      "stdin": [
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "парне",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "від'ємне",
+      "stdin": [
+        "-3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "непарне",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Число парне, якщо остача від ділення на 2 дорівнює 0.",
+    "if n % 2 == 0: ... else: ..."
+  ],
+  "reference": {
+    "code": "n = int(input())\nif n % 2 == 0:\n    print(\"парне\")\nelse:\n    print(\"непарне\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

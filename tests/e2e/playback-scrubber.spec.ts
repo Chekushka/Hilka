@@ -16,7 +16,7 @@ async function typeSolution(page: Page, code: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/practice');
+  await page.goto('/practice/g7-29-turtle/g7-turtle-square');
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
 });
 

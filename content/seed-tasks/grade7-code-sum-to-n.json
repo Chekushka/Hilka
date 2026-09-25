@@ -1,0 +1,73 @@
+{
+  "slug": "g7-code-sum-to-n",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Сума від 1 до n",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n і виведи суму всіх чисел від 1 до n. Використай цикл for.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 5",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 15,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Сума 1 + 2 + 3 + 4 + 5 = 15. Перевір, чи входить n у range."
+        }
+      ]
+    },
+    {
+      "label": "n = 1",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "n = 100",
+      "stdin": [
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5050,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "range(1, n + 1) дає числа від 1 до n включно.",
+    "Заведи total = 0 і додавай до нього i на кожному кроці."
+  ],
+  "reference": {
+    "code": "n = int(input())\ntotal = 0\nfor i in range(1, n + 1):\n    total += i\nprint(total)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

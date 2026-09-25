@@ -1,0 +1,46 @@
+{
+  "slug": "g7-code-turtle-moving-square",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Квадрат, що рухається",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Зроби анімацію з 5 кадрів. У кожному кадрі очисти поле (turtle.clear()) і намалюй квадрат зі стороною 40, лівий нижній кут якого в точці (i · 30, 0), де i — номер кадру від 0 до 4.\nУ Hilka видно останній кадр — квадрат у точці (120, 0).",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 4,
+      "closed": true,
+      "message": "Після останнього кадру на полі має лишитися один квадрат."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [],
+      "message": "Останній кадр не там, де треба: квадрат зі стороною 40 має стояти в точці (120, 0)."
+    },
+    {
+      "kind": "uses",
+      "all": [
+        "clear"
+      ],
+      "message": "Анімація — це кадри: на початку кожного очищай поле turtle.clear()."
+    }
+  ],
+  "hints": [
+    "Кадр: очистити поле, перейти в нову точку з піднятим олівцем, намалювати квадрат.",
+    "turtle.goto(i * 30, 0) переносить черепашку в потрібну точку.",
+    "Після квадрата черепашка знову дивиться праворуч — наступний кадр можна малювати так само."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(5):\n    turtle.clear()\n    turtle.penup()\n    turtle.goto(i * 30, 0)\n    turtle.pendown()\n    for side in range(4):\n        turtle.forward(40)\n        turtle.left(90)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -9,10 +9,16 @@
  * The task catalog is small enough today (a handful of seed tasks) that
  * filtering happens client-side against the full published list rather than
  * a separate filtered query per topic/grade change.
+ *
+ * A whole lesson can be added at once (core, then additional tasks). In
+ * graded mode the form warns — without blocking — about any chosen task that
+ * is not a core task of a mandatory lesson (docs/AI_CONTEXT.md, "Grading").
  */
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { t } from '@/lib/i18n';
+import { addLessonToSelection, findNonGradedTasks } from '@/lib/lessons/graded-warnings';
+import type { LessonKind } from '@/lib/lessons/types';
 import type { SessionMode } from '@/lib/session/types';
 
 // Mirrors the database layer's shapes rather than importing them — the
@@ -33,15 +39,26 @@ interface TaskOption {
   difficulty: number;
 }
 
+interface LessonOption {
+  id: string;
+  grade: number;
+  order: number;
+  kind: LessonKind;
+  title: string;
+  coreTaskIds: string[];
+  additionalTaskIds: string[];
+}
+
 interface SessionBuilderFormProps {
   classes: ClassOption[];
   tasks: TaskOption[];
+  lessons: LessonOption[];
 }
 
 const ALL_TOPICS = '';
 const ALL_GRADES = '';
 
-export function SessionBuilderForm({ classes, tasks }: SessionBuilderFormProps) {
+export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFormProps) {
   const [classId, setClassId] = useState(classes[0]?.id ?? '');
   const [mode, setMode] = useState<SessionMode>('practice');
   const [topicFilter, setTopicFilter] = useState(ALL_TOPICS);
@@ -53,6 +70,7 @@ export function SessionBuilderForm({ classes, tasks }: SessionBuilderFormProps) 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ id: string; code: string } | null>(null);
+  const [lessonToAdd, setLessonToAdd] = useState('');
 
   const topicOptions = [...new Map(tasks.map((task) => [task.topicSlug, task.topicTitle])).entries()];
   const gradeOptions = [...new Set(tasks.flatMap((task) => task.gradeTags))].sort((a, b) => a - b);
@@ -68,6 +86,16 @@ export function SessionBuilderForm({ classes, tasks }: SessionBuilderFormProps) 
       previous.includes(id) ? previous.filter((existing) => existing !== id) : [...previous, id]
     );
   }
+
+  function addLesson() {
+    const lesson = lessons.find((candidate) => candidate.id === lessonToAdd);
+    if (!lesson) return;
+    const assignable = new Set(tasks.map((task) => task.id));
+    setSelectedTaskIds((previous) => addLessonToSelection(previous, lesson, assignable));
+  }
+
+  const titlesById = new Map(tasks.map((task) => [task.id, task.title]));
+  const nonGraded = mode === 'graded' ? findNonGradedTasks(selectedTaskIds, lessons) : [];
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -206,6 +234,42 @@ export function SessionBuilderForm({ classes, tasks }: SessionBuilderFormProps) 
         </div>
       </div>
 
+      {lessons.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm text-ink-muted" htmlFor="lessonToAdd">
+            {t('sessionBuilder.lessonLabel')}
+          </label>
+          <div className="flex gap-2">
+            <select
+              id="lessonToAdd"
+              value={lessonToAdd}
+              onChange={(event) => setLessonToAdd(event.target.value)}
+              className="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            >
+              <option value="">{t('sessionBuilder.lessonPlaceholder')}</option>
+              {lessons.map((lesson) => (
+                <option key={lesson.id} value={lesson.id}>
+                  {t('sessionBuilder.lessonOption', {
+                    grade: lesson.grade,
+                    order: lesson.order,
+                    title: lesson.title,
+                    kind: lesson.kind === 'mandatory' ? t('lessons.kindMandatory') : t('lessons.kindPractice')
+                  })}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={addLesson}
+              disabled={!lessonToAdd}
+              className="rounded-md border border-accent px-3 py-2 text-sm text-accent disabled:opacity-50"
+            >
+              {t('sessionBuilder.addLesson')}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-1.5">
         <p className="text-sm text-ink-muted">
           {t('sessionBuilder.tasksLabel')} ({t('sessionBuilder.selectedCount', { n: selectedTaskIds.length })})
@@ -259,6 +323,23 @@ export function SessionBuilderForm({ classes, tasks }: SessionBuilderFormProps) 
           {t('sessionBuilder.shuffleLabel')}
         </label>
       </div>
+
+      {nonGraded.length > 0 && (
+        <div role="alert" className="rounded-md border border-attention p-3 text-sm text-ink">
+          <p>{t('sessionBuilder.gradedWarningTitle')}</p>
+          <ul className="mt-2 list-disc pl-5">
+            {nonGraded.map((entry) => (
+              <li key={entry.taskId}>
+                {titlesById.get(entry.taskId) ?? entry.taskId} —{' '}
+                {entry.reason === 'additional'
+                  ? t('sessionBuilder.gradedWarningAdditional')
+                  : t('sessionBuilder.gradedWarningPractice')}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-ink-muted">{t('sessionBuilder.gradedWarningNote')}</p>
+        </div>
+      )}
 
       {error && <p className="text-sm text-attention">{error}</p>}
 

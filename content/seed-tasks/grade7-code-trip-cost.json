@@ -1,0 +1,63 @@
+{
+  "slug": "g7-code-trip-cost",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Вартість поїздки",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай три числа: відстань у кілометрах, витрату пального (літрів на 100 км) і ціну одного літра. Обчисли, скільки коштуватиме пальне на всю поїздку, і виведи це число.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "250 км",
+      "stdin": [
+        "250",
+        "8",
+        "55"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1100,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Перевір формулу: відстань * витрата / 100 — це літри, а їх треба помножити на ціну."
+        }
+      ]
+    },
+    {
+      "label": "дробові числа",
+      "stdin": [
+        "120",
+        "6.5",
+        "52.4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 408.72,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу порахуй, скільки літрів треба на всю відстань.",
+    "Літри = відстань * витрата / 100.",
+    "Вартість = літри * ціна. Числа можуть бути дробові — використай float(input())."
+  ],
+  "reference": {
+    "code": "distance = float(input())\nper100 = float(input())\nprice = float(input())\nliters = distance * per100 / 100\nprint(liters * price)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

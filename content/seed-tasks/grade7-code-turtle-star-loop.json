@@ -1,0 +1,41 @@
+{
+  "slug": "g7-code-turtle-star-loop",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "П'ятикутна зірка",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй п'ятикутну зірку зі стороною 100 за допомогою циклу. Підказка: після кожної сторони черепашка повертає на 144°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 5,
+      "message": "Зірка має складатися з п'яти відрізків і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Зірка відрізняється від зразка. Перевір довжину сторони і кут 144°."
+    }
+  ],
+  "hints": [
+    "П'ять сторін — range(5).",
+    "Кут повороту — 144°: так черепашка за п'ять кроків обійде коло двічі (5 · 144 = 720)."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(5):\n    turtle.forward(100)\n    turtle.right(144)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

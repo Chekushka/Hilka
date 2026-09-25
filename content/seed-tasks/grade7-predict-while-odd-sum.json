@@ -1,0 +1,33 @@
+{
+  "slug": "g7-predict-while-odd-sum",
+  "topicSlug": "loops-while",
+  "type": "predict",
+  "title": "Коли зупиниться цикл?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "s = 0\ni = 1\nwhile s < 20:\n    s = s + i\n    i = i + 2\nprint(s)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "25",
+      "normalize": "trim",
+      "message": "s росте так: 1, 4, 9, 16, 25. Коли s = 16, умова ще правдива, тому цикл виконується ще раз — і s стає 25."
+    }
+  ],
+  "hints": [
+    "Запиши s та i після кожного повтору.",
+    "s: 1, 4, 9, 16, … Перевір умову перед кожним повтором."
+  ],
+  "reference": {
+    "code": "s = 0\ni = 1\nwhile s < 20:\n    s = s + i\n    i = i + 2\nprint(s)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

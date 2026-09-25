@@ -1,0 +1,36 @@
+{
+  "slug": "g7-code-turtle-circle-of-squares",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Квітка з квадратів",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй 8 квадратів зі стороною 50 з однієї точки. Після кожного квадрата повертай черепашку на 45°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Квітка відрізняється від зразка. Перевір розмір квадратів і поворот на 45° між ними."
+    }
+  ],
+  "hints": [
+    "Внутрішній цикл малює квадрат, зовнішній повторює його 8 разів.",
+    "8 · 45 = 360: після восьми квадратів черепашка обійде повне коло.",
+    "Поворот на 45° — у зовнішньому циклі, після внутрішнього."
+  ],
+  "reference": {
+    "code": "import turtle\nfor k in range(8):\n    for i in range(4):\n        turtle.forward(50)\n        turtle.left(90)\n    turtle.left(45)"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

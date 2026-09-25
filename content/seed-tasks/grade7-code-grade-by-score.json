@@ -1,0 +1,97 @@
+{
+  "slug": "g7-code-grade-by-score",
+  "topicSlug": "conditions-nested",
+  "type": "code",
+  "title": "Оцінка за бали",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай кількість балів від 0 до 100. Виведи: «відмінно», якщо балів 90 і більше; «добре» — від 75; «задовільно» — від 60; інакше «незадовільно».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "95",
+      "stdin": [
+        "95"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "відмінно",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "рівно 75",
+      "stdin": [
+        "75"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "добре",
+          "normalize": "loose",
+          "message": "Рівно 75 балів — це вже «добре». Перевір знак >=."
+        }
+      ]
+    },
+    {
+      "label": "рівно 60",
+      "stdin": [
+        "60"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "задовільно",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "59",
+      "stdin": [
+        "59"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "незадовільно",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "100",
+      "stdin": [
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "відмінно",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Почни перевірку з найвищої межі.",
+    "if score >= 90: … elif score >= 75: … — порядок має значення."
+  ],
+  "reference": {
+    "code": "score = int(input())\nif score >= 90:\n    print(\"відмінно\")\nelif score >= 75:\n    print(\"добре\")\nelif score >= 60:\n    print(\"задовільно\")\nelse:\n    print(\"незадовільно\")"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

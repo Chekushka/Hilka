@@ -1,0 +1,41 @@
+{
+  "slug": "g7-code-turtle-dashed-line",
+  "topicSlug": "turtle-conditions",
+  "type": "code",
+  "title": "Пунктирна лінія",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй пунктирну лінію з 10 частин по 20 кроків: на парних кроках циклу (0, 2, 4, …) олівець опущений, на непарних — піднятий.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 5,
+      "message": "Має вийти п'ять рисочок."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Пунктир не такий, як на зразку: рисочки і проміжки мають бути по 20."
+    }
+  ],
+  "hints": [
+    "Цикл for i in range(10) і всередині — if i % 2 == 0.",
+    "На парних кроках turtle.pendown(), на непарних — turtle.penup().",
+    "А turtle.forward(20) — після if, на кожному кроці."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(10):\n    if i % 2 == 0:\n        turtle.pendown()\n    else:\n        turtle.penup()\n    turtle.forward(20)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

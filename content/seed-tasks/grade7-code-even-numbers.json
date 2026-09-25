@@ -1,0 +1,82 @@
+{
+  "slug": "g7-code-even-numbers",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Парні числа",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n і виведи всі парні числа від 2 до n включно, кожне в новому рядку.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 7",
+      "stdin": [
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2,
+            4,
+            6
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "n = 10",
+      "stdin": [
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2,
+            4,
+            6,
+            8,
+            10
+          ],
+          "tol": 0.01,
+          "message": "Число n теж треба вивести, якщо воно парне."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "n = 2",
+      "stdin": [
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "range може мати крок: range(2, n + 1, 2).",
+    "Або перебери всі числа і виводь лише ті, де i % 2 == 0."
+  ],
+  "reference": {
+    "code": "n = int(input())\nfor i in range(2, n + 1, 2):\n    print(i)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

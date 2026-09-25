@@ -159,6 +159,10 @@ attempts
   flags jsonb,            -- {pasted, edits, tooFast, sourceHash}; only sourceHash is written today
   created_at
 
+lessons
+  id, slug, grade, order, kind ('mandatory' | 'practice'), title, curriculum_ref,
+  explanation_md text, core_task_ids uuid[], additional_task_ids uuid[]
+
 unmatched_errors
   id, type, message,      -- a PyError no lib/errors/ rule matched
   occurred_at,             -- client's Date.now() when it happened
@@ -177,6 +181,8 @@ Non-obvious invariants:
   (`npm run db:seed`). A re-import into a fresh database must update the same rows rather than
   duplicate them, and uuids are not stable across databases. `topics.slug` is the same idea.
   It is a content key, not an identifier: foreign keys still use uuids.
+- `lessons.*_task_ids` cannot carry a foreign key. The seed validates every reference before
+  writing, and every reader skips ids that are missing or unpublished.
 - `unmatched_errors` carries no student, session or task reference on purpose — it is
   telemetry to grow `lib/errors/`'s rule base from, not an attempt record, and rule 8 rules
   out anything that could identify who hit it.
@@ -210,12 +216,15 @@ session that is **not** a database row: `lib/auth/session-cookie.ts` signs
 `teacherId.expiresAtMs` with `AUTH_SECRET` (HMAC-SHA256) and reads it back the same way, so
 logging in costs one insert and one update, never a session table to prune.
 
-**No email provider is wired up yet.** `POST /api/auth/request-link` logs the link
-server-side and, outside a real Vercel deployment (`process.env.VERCEL`), returns it directly
-as `devLoginUrl` — this is what lets CI and this project's own Playwright suite exercise login
-without an inbox, since both build and `next start` in production mode too, where `NODE_ENV`
-alone can't tell a real deployment from a test run. Wiring a real provider is separate,
-unbuilt work; when it lands, `devLoginUrl` must go.
+**Email goes through Resend** (`lib/auth/login-email.ts`, plain `fetch`, no SDK), configured by
+`RESEND_API_KEY` and `EMAIL_FROM` — a sender on a domain verified in Resend. The send runs in
+Next's `after()`, past the response, so timing does not reveal whether an address is a teacher's,
+and a failed send is logged, never surfaced. Outside a real Vercel deployment
+(`process.env.VERCEL`) the route also returns the link as `devLoginUrl` and logs it — this is
+what lets CI and the Playwright suite log in without an inbox, since both build and `next start`
+in production mode too, where `NODE_ENV` alone can't tell a real deployment from a test run. On
+Vercel the link is never logged: it is a bearer credential. Without the two variables on Vercel,
+nothing is sent and the route logs an error — login fails closed.
 
 Teachers are provisioned directly in the database — there is no self-signup, and
 `request-link` responds identically whether or not the email matches a teacher, so it cannot
@@ -507,8 +516,15 @@ content is an ordered list of **mandatory lessons** (an explanation of a key ide
 tasks — the only material a graded session should draw from) and **practice lessons**
 (skippable, not recommended to skip), each practice lesson carrying **additional tasks**. Fast
 students work in the same topics, going deeper through those additional tasks — there is no
-separate advanced track. How this maps onto the data model (a lesson row, or a tag on
-topics/tasks) is not decided yet; `topics.theory_md` already exists for the explanation part.
+separate advanced track.
+
+**Data model: a `lessons` row**, not a tag on topics or tasks. A lesson holds its grade, its
+order (the ministry lesson number, a reference and a sort key, never a date), its kind, a
+Markdown explanation, and two ordered uuid arrays — core and additional task ids. Arrays rather
+than a join table for the same reason as `sessions.task_ids`: order is the point, and a task may
+appear in more than one lesson. Content lives in `content/lessons/` and is imported by slug like
+tasks. Explanations show static code only — nothing on the explanation screen runs Python.
+`topics.theory_md` is superseded by the lesson explanation and unused by students.
 
 ## Grading
 
@@ -648,3 +664,16 @@ contexts (`Load`/`Store`) carry no name at all and are only recognizable by iden
 line. Also, `Sk.parse` reads the language version from `Sk.configure` — before any run has
 configured the engine it parses as Python 2, so both loaders configure Python 3 at startup.
 
+**Next.js renders its own `role="alert"` on every page.** The route announcer
+(`next-route-announcer`) is an `aria-live` element with `role="alert"`, so
+`page.getByRole('alert')` in a Playwright spec always finds at least one element, even on a page
+that shows no alert. Scope the locator to the component (`page.locator('form').getByRole('alert')`
+in `tests/e2e/lessons.spec.ts`).
+
+**`turtle.goto` raised `AttributeError` — patched.** Skulpt's `fixReserved` applies to attribute
+names too: a Python attribute whose name is a JS reserved word (`Sk.builtin.str.reservedWords_`)
+is looked up under `name + '_$rw$'`. A `$builtinmodule` that only sets `mod.goto` is therefore
+invisible to `turtle.goto(...)`. `goto` was the only turtle name affected, and no seed task used it
+until the grade 7 animation lessons did. `lib/runner/modules/turtle.ts` now registers any
+reserved name under both keys, on the module and on `Turtle`; a future JS-side module needs the
+same treatment for names like `delete`, `new` or `default`.

@@ -1,0 +1,108 @@
+{
+  "slug": "g7-code-triangle-exists",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Чи існує трикутник?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай три числа — довжини сторін. Трикутник існує, якщо кожна сторона менша за суму двох інших. Виведи «так», якщо він існує, і «ні» — якщо ні.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3, 4, 5",
+      "stdin": [
+        "3",
+        "4",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "1, 2, 3 — сторони «лягають» в одну лінію",
+      "stdin": [
+        "1",
+        "2",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ні",
+          "normalize": "loose",
+          "message": "Якщо одна сторона дорівнює сумі двох інших, трикутника немає — умова строга: менша, а не менша або рівна."
+        }
+      ]
+    },
+    {
+      "label": "одна сторона задовга",
+      "stdin": [
+        "10",
+        "2",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ні",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "довга сторона не перша",
+      "stdin": [
+        "2",
+        "10",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ні",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "рівносторонній",
+      "stdin": [
+        "5",
+        "5",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Треба перевірити три умови одночасно.",
+    "Три умови поєднуються через and.",
+    "a < b + c and b < a + c and c < a + b"
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\nif a < b + c and b < a + c and c < a + b:\n    print(\"так\")\nelse:\n    print(\"ні\")"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

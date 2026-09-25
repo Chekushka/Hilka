@@ -18,7 +18,7 @@ async function typeSolution(page: Page, code: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/practice');
+  await page.goto('/practice/g7-29-turtle/g7-turtle-square');
   // The engine takes a moment; the workspace says so rather than showing a
   // dead button, and the button becomes usable when it is ready.
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });

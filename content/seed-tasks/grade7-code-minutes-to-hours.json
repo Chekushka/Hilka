@@ -1,0 +1,80 @@
+{
+  "slug": "g7-code-minutes-to-hours",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Години і хвилини",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай кількість хвилин. Виведи, скільки це повних годин і скільки хвилин залишається — два числа через пробіл.\nНаприклад, для 135 програма виводить: 2 15",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "135 хвилин",
+      "stdin": [
+        "135"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2,
+            15
+          ],
+          "tol": 0.01,
+          "message": "Мають бути два числа: повні години і хвилини, що залишилися."
+        }
+      ]
+    },
+    {
+      "label": "менше години",
+      "stdin": [
+        "59"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            0,
+            59
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "рівно дві години",
+      "stdin": [
+        "120"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2,
+            0
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Година — це 60 хвилин.",
+    "Повні години дає ділення націло: //.",
+    "Хвилини, що залишилися, — це остача: %."
+  ],
+  "reference": {
+    "code": "total = int(input())\nprint(total // 60, total % 60)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

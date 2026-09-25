@@ -1,0 +1,36 @@
+{
+  "slug": "g7-code-turtle-nested-squares",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Квадрати з одного кута",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй три квадрати зі сторонами 30, 60 і 90, що починаються з одного кута. Використай цикл у циклі.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Квадрати відрізняються від зразка. Перевір розміри і те, що всі починаються з одного кута."
+    }
+  ],
+  "hints": [
+    "Зовнішній цикл перебирає розміри: 30, 60, 90.",
+    "Внутрішній цикл малює один квадрат заданого розміру.",
+    "Після квадрата черепашка повертається в той самий кут і дивиться туди ж, що й на початку."
+  ],
+  "reference": {
+    "code": "import turtle\nfor size in range(30, 91, 30):\n    for i in range(4):\n        turtle.forward(size)\n        turtle.left(90)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,78 @@
+{
+  "slug": "g7-code-last-digit",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Остання цифра",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле додатне число. Виведи в першому рядку його останню цифру, а в другому — число без останньої цифри.\nНаприклад, для 1234: 4 і 123.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1234",
+      "stdin": [
+        "1234"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            4,
+            123
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "двоцифрове",
+      "stdin": [
+        "70"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            0,
+            7
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одна цифра",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            5,
+            0
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Остання цифра — це остача від ділення на 10.",
+    "Число без останньої цифри — це ділення націло на 10."
+  ],
+  "reference": {
+    "code": "n = int(input())\nprint(n % 10)\nprint(n // 10)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

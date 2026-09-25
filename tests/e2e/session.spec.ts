@@ -28,7 +28,7 @@ test('join, run the assigned task, and record the attempt', async ({ page }) => 
   await page.getByRole('button', { name: 'Олена' }).click();
   await expect(page.getByRole('heading', { name: 'Завдання заняття' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Квадрат' }).click();
+  await page.getByRole('button', { name: 'Квадрат', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
 
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');

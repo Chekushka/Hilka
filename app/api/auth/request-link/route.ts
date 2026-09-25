@@ -1,17 +1,21 @@
 /**
- * Requests a magic link. No email provider is wired up yet (docs/TASKS.md,
- * "Magic-link auth"), so the link is logged server-side and, outside a real
- * Vercel deployment, handed back in the response for local/CI use — remove
- * `devLoginUrl` once real sending exists.
+ * Requests a magic link and emails it through Resend when `RESEND_API_KEY`
+ * and `EMAIL_FROM` are set (lib/auth/login-email.ts). The send runs after
+ * the response (`after`), so response time does not reveal whether the
+ * address belongs to a teacher.
  *
- * Gated on `VERCEL` rather than `NODE_ENV`: CI and this project's own
- * Playwright suite build and `next start` in production mode too, and both
- * need the link to test the login flow without an inbox.
+ * Outside a real Vercel deployment the link is also handed back as
+ * `devLoginUrl` and logged, so CI and the Playwright suite can log in without
+ * an inbox. Gated on `VERCEL` rather than `NODE_ENV`: both build and
+ * `next start` in production mode too. On Vercel the link is never logged —
+ * it is a bearer credential.
  *
  * The response is identical whether or not the email belongs to a teacher,
- * so this endpoint cannot be used to find out which emails are registered.
+ * and whether or not sending succeeds, so this endpoint cannot be used to
+ * find out which emails are registered.
  */
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
+import { loginEmailConfig, sendLoginEmail } from '@/lib/auth/login-email';
 import { issueLoginToken } from '@/lib/auth/login-tokens';
 import { getTeacherByEmail } from '@/lib/db/teachers';
 
@@ -29,16 +33,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
+  const onVercel = Boolean(process.env.VERCEL);
   const teacher = await getTeacherByEmail(body.email.trim().toLowerCase());
-  if (teacher) {
-    const token = await issueLoginToken(teacher.id);
-    const link = new URL(`/api/auth/verify?token=${token}`, request.url).toString();
-    console.log(`[auth] magic link for ${teacher.email}: ${link}`);
-    return NextResponse.json({
-      ok: true,
-      devLoginUrl: process.env.VERCEL ? undefined : link
-    });
+  if (!teacher) {
+    return NextResponse.json({ ok: true });
   }
 
-  return NextResponse.json({ ok: true });
+  const token = await issueLoginToken(teacher.id);
+  const link = new URL(`/api/auth/verify?token=${token}`, request.url).toString();
+  const config = loginEmailConfig(process.env);
+
+  if (config) {
+    after(async () => {
+      const result = await sendLoginEmail(teacher.email, link, config);
+      if (!result.ok) {
+        console.error(`[auth] login email to ${teacher.email} failed (${result.status ?? 'network'}): ${result.detail}`);
+      }
+    });
+  } else if (onVercel) {
+    console.error('[auth] RESEND_API_KEY or EMAIL_FROM is not set — no login email was sent');
+  }
+
+  if (onVercel) {
+    return NextResponse.json({ ok: true });
+  }
+  console.log(`[auth] magic link for ${teacher.email}: ${link}`);
+  return NextResponse.json({ ok: true, devLoginUrl: link });
 }

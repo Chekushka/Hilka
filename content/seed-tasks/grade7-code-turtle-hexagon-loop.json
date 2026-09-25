@@ -1,0 +1,48 @@
+{
+  "slug": "g7-code-turtle-hexagon-loop",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Шестикутник циклом",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй правильний шестикутник зі стороною 60, використавши цикл for.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 6,
+      "message": "Має вийти замкнена фігура із шести сторін."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate",
+        "rotate"
+      ],
+      "message": "Шестикутник відрізняється від зразка. Перевір довжину сторони і кут повороту."
+    },
+    {
+      "kind": "uses",
+      "all": [
+        "for"
+      ],
+      "message": "Використай цикл for, щоб не писати одне й те саме шість разів."
+    }
+  ],
+  "hints": [
+    "Шість сторін — range(6).",
+    "Кут повороту — 360 / 6 = 60°."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    turtle.forward(60)\n    turtle.left(60)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

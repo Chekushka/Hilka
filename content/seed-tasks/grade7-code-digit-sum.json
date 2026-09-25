@@ -1,0 +1,80 @@
+{
+  "slug": "g7-code-digit-sum",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Сума цифр",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле додатне число і виведи суму його цифр. Використай while, % 10 і // 10.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1234",
+      "stdin": [
+        "1234"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 10,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "одна цифра",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "з нулями",
+      "stdin": [
+        "9009"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 18,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "forbids",
+      "names": [
+        "str"
+      ],
+      "message": "Тут потрібен цикл while з % 10 і // 10, без str()."
+    }
+  ],
+  "hints": [
+    "n % 10 — остання цифра, n // 10 — число без неї.",
+    "Додавай останню цифру до суми і відкидай її, поки n не стане 0."
+  ],
+  "reference": {
+    "code": "n = int(input())\ntotal = 0\nwhile n > 0:\n    total += n % 10\n    n = n // 10\nprint(total)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

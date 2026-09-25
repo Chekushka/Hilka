@@ -78,6 +78,6 @@ one, stop and raise it instead of working around it.
 
 The spike is answered (`docs/SPIKE.md`) and Skulpt stayed. Built so far: the runner, the check
 evaluator, error humanization, the database layer, practice mode, sessions, a read-only teacher
-dashboard, task authoring, and all six task types end to end. Grade content, the meta layer, and
+dashboard, task authoring, all six task types end to end, and lessons (mandatory/practice) with grade 7 content for lessons 25–42. Grades 8–9 content, the meta layer, and
 the authoring UI's per-kind visual builder do not exist yet. `docs/TASKS.md` is the map —
 read it rather than guessing from the folder tree.

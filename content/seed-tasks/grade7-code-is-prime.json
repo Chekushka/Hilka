@@ -1,0 +1,82 @@
+{
+  "slug": "g7-code-is-prime",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Просте число",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число n (n ≥ 2). Виведи «просте», якщо в нього рівно два дільники (1 і саме n), інакше — «складене».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "7",
+      "stdin": [
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "просте",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "12",
+      "stdin": [
+        "12"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "складене",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "2",
+      "stdin": [
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "просте",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "квадрат простого",
+      "stdin": [
+        "49"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "складене",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу порахуй дільники, як у задачі про кількість дільників.",
+    "Після циклу перевір, чи їх рівно два."
+  ],
+  "reference": {
+    "code": "n = int(input())\ncount = 0\nfor d in range(1, n + 1):\n    if n % d == 0:\n        count += 1\nif count == 2:\n    print(\"просте\")\nelse:\n    print(\"складене\")"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

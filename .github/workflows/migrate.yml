@@ -2,6 +2,10 @@ name: migrate
 
 # Migrations run on merge, never at app boot: serverless instances start
 # concurrently and would race each other applying the same migration.
+#
+# Content (npm run db:seed) is deliberately not applied here: the database is
+# the source of truth for tasks, and an automatic re-import would overwrite
+# edits made in the authoring UI. Seeding stays a manual step.
 
 on:
   push:
@@ -9,6 +13,7 @@ on:
     paths:
       - 'drizzle/**'
       - 'lib/db/schema.ts'
+      - '.github/workflows/migrate.yml'
   workflow_dispatch:
 
 permissions:
@@ -22,7 +27,8 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     # DATABASE_URL lives on this environment, not in repo-wide secrets, so it
-    # cannot be read by a workflow running on a branch or a fork.
+    # cannot be read by a workflow running on a branch or a fork. It must be
+    # Neon's *unpooled* string: DDL through the transaction pooler misbehaves.
     environment: production
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +37,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx drizzle-kit migrate
+      - run: npm run db:migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

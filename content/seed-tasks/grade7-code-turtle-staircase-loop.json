@@ -1,0 +1,39 @@
+{
+  "slug": "g7-code-turtle-staircase-loop",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Сходи циклом",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй сходи з п'яти сходинок: кожна — 20 угору і 20 праворуч. Використай цикл. Черепашка на старті дивиться праворуч.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 10,
+      "message": "Сходи мають складатися з десяти відрізків."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Сходи відрізняються від зразка. Сходинки мають іти вгору і праворуч, по 20."
+    }
+  ],
+  "hints": [
+    "Одна сходинка: ліворуч, 20 уперед, праворуч, 20 уперед.",
+    "Повтори сходинку в циклі for п'ять разів."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(5):\n    turtle.left(90)\n    turtle.forward(20)\n    turtle.right(90)\n    turtle.forward(20)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,45 @@
+{
+  "slug": "g7-code-turtle-rotating-square",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Квадрат обертається",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Зроби анімацію з 6 кадрів. У кадрі номер i (від 0 до 5) очисти поле, постав черепашку в точку (0, 0), поверни її на кут i · 15° (turtle.setheading(i * 15)) і намалюй квадрат зі стороною 80.\nУ Hilka видно останній кадр — квадрат, повернутий на 75°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 4,
+      "closed": true,
+      "message": "Після останнього кадру на полі має лишитися один квадрат."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [],
+      "message": "Останній кадр не такий, як треба: квадрат зі стороною 80 з кута (0, 0), повернутий на 75°."
+    },
+    {
+      "kind": "uses",
+      "all": [
+        "clear"
+      ],
+      "message": "Анімація — це кадри: на початку кожного очищай поле turtle.clear()."
+    }
+  ],
+  "hints": [
+    "Кадр: turtle.clear(), повернутися в (0, 0) з піднятим олівцем, turtle.setheading(i * 15), намалювати квадрат.",
+    "setheading ставить напрям незалежно від попереднього — зручно для кадрів."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    turtle.clear()\n    turtle.penup()\n    turtle.goto(0, 0)\n    turtle.pendown()\n    turtle.setheading(i * 15)\n    for side in range(4):\n        turtle.forward(80)\n        turtle.left(90)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

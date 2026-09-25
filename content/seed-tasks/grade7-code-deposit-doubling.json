@@ -1,0 +1,77 @@
+{
+  "slug": "g7-code-deposit-doubling",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Коли гроші подвояться?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай суму вкладу і відсоток за рік. Щороку сума збільшується на цей відсоток. Виведи, через скільки повних років сума вперше стане щонайменше вдвічі більшою.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1000 під 10%",
+      "stdin": [
+        "1000",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 8,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Перевір умову циклу: рахувати треба, поки сума менша за подвоєну початкову."
+        }
+      ]
+    },
+    {
+      "label": "500 під 50%",
+      "stdin": [
+        "500",
+        "50"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "під 100%",
+      "stdin": [
+        "100",
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Заведи змінну для поточної суми і лічильник років.",
+    "За рік сума множиться на (1 + відсоток / 100).",
+    "Повторюй, поки сума менша за подвоєну початкову."
+  ],
+  "reference": {
+    "code": "start = float(input())\npercent = float(input())\nmoney = start\nyears = 0\nwhile money < 2 * start:\n    money = money * (1 + percent / 100)\n    years += 1\nprint(years)"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}
