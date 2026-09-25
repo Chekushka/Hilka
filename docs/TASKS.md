@@ -191,6 +191,16 @@ IDLE before uploading.
 | CSV export | ✅ | `GET /api/dashboard/sessions/[id]/export`, scoped to the owning teacher via the same `getSessionForTeacher` check the session detail page itself uses. `lib/dashboard/csv.ts`'s `attemptsToCsv` is pure and unit-tested (UTF-8 BOM for Excel's sake, proper quoting); the "Завантажити CSV" link only appears once there is at least one attempt to export |
 | JSON export/import of all tasks | ✅ | `lib/db/content-io.ts`'s `exportContent`/`importContent`, same shape as `content/topics.json` + `content/seed-tasks/*.json`. `GET /api/tasks/export` downloads every topic and task (draft included); `POST /api/tasks/import` upserts by slug, validated in full (unknown topics, `validateTaskChecks`) before anything is written, so a bad bundle never half-imports. `/tasks` (`ImportExportControls`) wraps both — a link and a file input, `router.refresh()` on success. `tests/e2e/task-import-export.spec.ts` covers auth, round-trip export→import→export, upsert-not-duplicate, and both rejection paths |
 
+## Classroom Feedback
+
+Found by the teacher on the classroom machine after the grade 7 lessons went live. Tasks
+themselves ran fine there.
+
+| Item | Status | Notes |
+|---|---|---|
+| Hide the turtle canvas when a task does not draw | ❌ | `CodeTaskView` and `FixTaskView` render `PlaybackScrubber`/`TurtleCanvas` unconditionally, so every console task shows an empty drawing field next to the output panel. Show the canvas only for `surface: 'turtle'` (or once a run actually produced segments), and let the output panel take the space otherwise. `FillTaskView` needs the same check |
+| Go straight to the next task with a button | ❌ | Today a student leaves the task for the lesson page, or uses the small «Наступне завдання →» link in the header (`app/(student)/practice/[lesson]/[task]/page.tsx`). Wanted: a prominent next-task button on the result, right after a pass, moving to the next task without a round trip through the lesson page. Same need inside a session (`SessionRoom`'s task list). `lib/lessons/view.ts`'s `stepAfter` already computes the target in practice |
+
 ## Meta Layer
 
 | Item | Status | Notes |
