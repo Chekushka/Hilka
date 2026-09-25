@@ -94,3 +94,55 @@ test('valid Python Hilka cannot run is FILE_UNSUPPORTED, named, with a replaceme
   await expect(notice).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
 });
+
+/**
+ * Identical uploaded files across students (docs/AI_CONTEXT.md, "Cheating and
+ * Trust", point 4): the hash is computed server-side, and the teacher sees a
+ * neutral list — a fact, never a verdict.
+ */
+test('two students passing with the same file are listed for the teacher', async ({ page }) => {
+  const shared = Buffer.from('# спільний файл\nprint("Привіт, IDLE!")\n', 'utf8');
+  for (const name of ['Олена', 'Соломія']) {
+    await openFileTask(page, name);
+    await page.locator('input[type="file"]').setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: shared });
+    await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+    const [attemptResponse] = await Promise.all([
+      page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
+      page.getByRole('button', { name: 'Перевірити' }).click()
+    ]);
+    expect(attemptResponse.status()).toBe(201);
+    await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
+    // The name choice is kept per session in sessionStorage; clear it so the next student can pick.
+    await page.evaluate(() => sessionStorage.clear());
+  }
+
+  await page.goto('/login');
+  await page.getByLabel('Електронна пошта').fill('demo-teacher@hilka.dev');
+  await page.getByRole('button', { name: 'Надіслати посилання' }).click();
+  const href = await page.getByRole('link', { name: /\/api\/auth\/verify\?token=/ }).getAttribute('href');
+  if (!href) throw new Error('no devLoginUrl link rendered');
+  await page.goto(href);
+  await page.getByRole('link', { name: /DEMO01/ }).click();
+
+  const section = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Однакові файли' }) });
+  await expect(section).toBeVisible();
+  await expect(section.getByRole('listitem').filter({ hasText: TASK_TITLE })).toContainText('Олена, Соломія');
+
+  // Bulk download of the submitted files. Fetched in-page for the same
+  // origin/cookie reason dashboard.spec.ts gives for the CSV export.
+  const filesUrl = await page.getByRole('link', { name: 'Завантажити файли учнів (ZIP)' }).getAttribute('href');
+  if (!filesUrl) throw new Error('files link rendered with no href');
+  const zip = await page.evaluate(async (url) => {
+    const response = await fetch(url);
+    return { status: response.status, contentType: response.headers.get('content-type'), bytes: [...new Uint8Array(await response.arrayBuffer())] };
+  }, filesUrl);
+  expect(zip.status).toBe(200);
+  expect(zip.contentType).toBe('application/zip');
+  const archive = Buffer.from(zip.bytes);
+  expect(archive.readUInt32LE(0)).toBe(0x04034b50);
+  // Stored, not compressed: names and each student's latest source sit in the archive verbatim.
+  const text = archive.toString('utf8');
+  expect(text).toContain(`${TASK_TITLE}/Олена.py`);
+  expect(text).toContain(`${TASK_TITLE}/Соломія.py`);
+  expect(text).toContain(shared.toString('utf8'));
+});

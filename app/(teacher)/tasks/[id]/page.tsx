@@ -23,6 +23,14 @@ function PublishedCodeView({ task }: { task: TaskRow }) {
         {t('authoring.notEditable')}
       </p>
       <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
+      {task.payload.delivery === 'file' && task.payload.file && (
+        <p className="text-sm text-ink-muted">
+          {t('authoring.deliverySummary', {
+            filename: task.payload.file.filename,
+            kb: Math.round(task.payload.file.maxBytes / 1024)
+          })}
+        </p>
+      )}
       <p className="text-ink">{task.payload.prompt}</p>
 
       {task.payload.surface === 'turtle' && (
@@ -167,6 +175,14 @@ function PublishedFixView({ task }: { task: TaskRow }) {
         {t('authoring.notEditable')}
       </p>
       <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
+      {task.payload.delivery === 'file' && task.payload.file && (
+        <p className="text-sm text-ink-muted">
+          {t('authoring.deliverySummary', {
+            filename: task.payload.file.filename,
+            kb: Math.round(task.payload.file.maxBytes / 1024)
+          })}
+        </p>
+      )}
       <p className="text-ink">{task.payload.prompt}</p>
 
       {task.payload.surface === 'turtle' && (

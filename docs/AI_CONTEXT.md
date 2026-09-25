@@ -156,7 +156,7 @@ attempts
   id, session_id, student_name, task_id, task_version,
   seed bigint, submitted_answer jsonb, passed bool,
   score numeric, hints_used int, duration_ms int,
-  flags jsonb,            -- {pasted, edits, tooFast}
+  flags jsonb,            -- {pasted, edits, tooFast, sourceHash}; only sourceHash is written today
   created_at
 
 unmatched_errors
