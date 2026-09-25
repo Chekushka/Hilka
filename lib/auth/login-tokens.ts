@@ -1,10 +1,7 @@
 /**
  * Magic-link tokens: single-use, short-lived, and stored hashed — a database
- * leak must not hand out a working login link. Email delivery does not exist
- * yet (docs/TASKS.md, "Magic-link auth"): the raw link is handed back to the
- * caller and logged server-side instead of going out over email, which is
- * the accepted stand-in for the ~5 accounts this serves today. Remove that
- * once a real provider is wired up — see the route that calls this.
+ * leak must not hand out a working login link. The raw token goes back to
+ * the caller once, which emails it (app/api/auth/request-link/route.ts).
  */
 import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, gt, isNull } from 'drizzle-orm';

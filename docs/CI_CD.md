@@ -243,6 +243,7 @@ verifying Neon's certificate.
 | Cloud environment for agents | `DATABASE_URL` (Neon **dev** branch) | remote sessions |
 | Repo secrets | *(none needed)* | Vercel and Neon are wired through their apps |
 | Vercel project settings | `AUTH_SECRET` | teacher login (`lib/auth/session-cookie.ts`) — no integration sets this one, see step 5 |
+| Vercel project settings | `RESEND_API_KEY`, `EMAIL_FROM` | magic-link email (`lib/auth/login-email.ts`). `EMAIL_FROM` must be on a domain verified in Resend (e.g. `Hilka <login@your-domain>`); Resend's `onboarding@resend.dev` only delivers to the Resend account owner's own address. Without both, nothing is sent on Vercel and the route logs an error |
 | `.github/workflows/ci.yml` | `AUTH_SECRET` (throwaway, hard-coded) | the `browser` job only; not a real secret, just needs to be *some* value |
 
 Create the `production` environment under Settings → Environments and add a

@@ -216,12 +216,15 @@ session that is **not** a database row: `lib/auth/session-cookie.ts` signs
 `teacherId.expiresAtMs` with `AUTH_SECRET` (HMAC-SHA256) and reads it back the same way, so
 logging in costs one insert and one update, never a session table to prune.
 
-**No email provider is wired up yet.** `POST /api/auth/request-link` logs the link
-server-side and, outside a real Vercel deployment (`process.env.VERCEL`), returns it directly
-as `devLoginUrl` — this is what lets CI and this project's own Playwright suite exercise login
-without an inbox, since both build and `next start` in production mode too, where `NODE_ENV`
-alone can't tell a real deployment from a test run. Wiring a real provider is separate,
-unbuilt work; when it lands, `devLoginUrl` must go.
+**Email goes through Resend** (`lib/auth/login-email.ts`, plain `fetch`, no SDK), configured by
+`RESEND_API_KEY` and `EMAIL_FROM` — a sender on a domain verified in Resend. The send runs in
+Next's `after()`, past the response, so timing does not reveal whether an address is a teacher's,
+and a failed send is logged, never surfaced. Outside a real Vercel deployment
+(`process.env.VERCEL`) the route also returns the link as `devLoginUrl` and logs it — this is
+what lets CI and the Playwright suite log in without an inbox, since both build and `next start`
+in production mode too, where `NODE_ENV` alone can't tell a real deployment from a test run. On
+Vercel the link is never logged: it is a bearer credential. Without the two variables on Vercel,
+nothing is sent and the route logs an error — login fails closed.
 
 Teachers are provisioned directly in the database — there is no self-signup, and
 `request-link` responds identically whether or not the email matches a teacher, so it cannot

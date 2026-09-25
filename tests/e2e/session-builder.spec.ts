@@ -27,7 +27,7 @@ test('a teacher builds a session, and a student can join it', async ({ page }) =
   // e2e specs publish their own tasks into the same shared database, so this
   // picks the seed square specifically rather than assuming it is the only
   // (or the first) item in the list.
-  await page.getByLabel('Тема').selectOption({ label: 'Черепашача графіка' });
+  await page.getByLabel('Тема', { exact: true }).selectOption({ label: 'Черепашача графіка' });
   const squareItem = page.getByRole('listitem').filter({ hasText: 'Квадрат' });
   await expect(squareItem).toBeVisible();
   await squareItem.getByRole('checkbox').check();
