@@ -29,6 +29,11 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test -- --run --passWithNoTests
+      # The classroom machines run CPython 3.10 (docs/TASKS.md, Open
+      # Questions), so the safe subset is proven against exactly that.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
       # The file-delivery allow-list (lib/task/file-lint.ts) is only as good as
       # the runs behind it: every entry must still behave identically on Skulpt
       # and real CPython. Re-proves it on every change, a Skulpt bump included.

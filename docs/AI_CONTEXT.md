@@ -499,6 +499,17 @@ For parameterized turtle and input tasks, the reference solution is executed per
 publish time only if the parameter space is small; otherwise expected artifacts are computed
 on demand and cached.
 
+## Course Structure
+
+Decided by the teacher (docs/CURRICULUM.md, "Scale of the addressable content"): content is not
+tied to the timetable, because lessons are lost to power cuts and air-raid alerts. A grade's
+content is an ordered list of **mandatory lessons** (an explanation of a key idea plus core
+tasks — the only material a graded session should draw from) and **practice lessons**
+(skippable, not recommended to skip), each practice lesson carrying **additional tasks**. Fast
+students work in the same topics, going deeper through those additional tasks — there is no
+separate advanced track. How this maps onto the data model (a lesson row, or a tag on
+topics/tasks) is not decided yet; `topics.theory_md` already exists for the explanation part.
+
 ## Grading
 
 Session score = tasks passed / tasks assigned, adjusted by hints used, mapped to the Ukrainian
