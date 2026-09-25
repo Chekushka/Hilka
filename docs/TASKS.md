@@ -106,8 +106,8 @@ change to `lib/checker/`. SPIKE.md's file-delivery checks (1's f-string rows, th
 BOM/CRLF/line-number check, and check 7) have all been run. The download → IDLE → upload → Check
 path works end to end for a single file in a session or in practice, all nine upload steps
 included. `content/seed-tasks/grade8-code-idle-hello.json` (grade 8 lesson 43) exercises it,
-proved by `tests/e2e/file-delivery.spec.ts`. What is left is teacher-facing (hash flagging, bulk
-download) and the authoring-UI control.
+proved by `tests/e2e/file-delivery.spec.ts`. Identical files across students are flagged to the
+teacher. What is left is bulk download of submitted files and the authoring-UI control.
 
 | Item | Status | Notes |
 |---|---|---|
@@ -120,7 +120,7 @@ download) and the authoring-UI control.
 | `FILE_UNSUPPORTED` error class | ✅ | `LintFinding`s rendered by `FileDelivery.tsx` from `file.unsupported`/`file.replacement` in `messages/uk.json`: names the construct and line, offers a replacement, says it is Hilka's limitation, asks the student to tell the teacher. Not an attempt. Fails closed if the parse cannot complete |
 | Runner fix: Unicode-aware `isalpha`/`isalnum`/`isupper`/`islower`/`istitle`/`title`/`swapcase` | ✅ | `lib/runner/modules/str-unicode.ts`, ports of CPython's algorithms, installed in the Worker and the Node loader. Matches CPython on every Latin/Greek/Cyrillic character (corpus sweep, in CI), unit-tested in `str-unicode.test.ts`, integration-tested in `tests/runner/runner.spec.ts`. Now on the safe subset; the linter no longer rejects them. Fixes inline string tasks on Ukrainian text as well |
 | Delivery control in the authoring UI | ❌ | `delivery`/`file` can only be set in task JSON today |
-| Duplicate-hash flagging across students in a session | ❌ | Per-attempt hash of the uploaded source; identical hashes across different students flagged to the teacher, never auto-accused (AI_CONTEXT.md, "Cheating and Trust") |
+| Duplicate-hash flagging across students in a session | ✅ | `POST /api/attempts` computes a SHA-256 of `submittedAnswer.code` server-side when the task (read from the database, not the body) has `delivery: 'file'`, stored as `attempts.flags.sourceHash` — jsonb, no migration. `lib/dashboard/shared-files.ts`'s `findSharedFiles` (pure, unit-tested) groups *passing* attempts by task + hash across two or more distinct students; failing ones are ignored so an untouched starter uploaded too early is not noise. The session dashboard shows an «Однакові файли» section only when a group exists, worded as a fact for the teacher to judge, never an accusation. `tests/e2e/file-delivery.spec.ts` drives two students uploading the same file through to the dashboard |
 | Per-session bulk download of submitted files, for the teacher | ❌ | Dashboard feature — a teacher reviewing a file-delivery task needs the actual files, not just pass/fail |
 
 ## Server-side CPython (v2)

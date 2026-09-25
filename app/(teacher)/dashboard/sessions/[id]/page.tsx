@@ -5,6 +5,7 @@ import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
 import { getSessionForTeacher } from '@/lib/db/sessions';
 import { buildRollup, type CellStatus } from '@/lib/dashboard/rollup';
+import { findSharedFiles } from '@/lib/dashboard/shared-files';
 import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -53,6 +54,7 @@ export default async function SessionDetailPage({
 
   const rows = await listAttemptsForSession(session.id);
   const rollup = buildRollup(session.roster, session.tasks, rows);
+  const sharedFiles = findSharedFiles(rows);
 
   return (
     <main className="mx-auto max-w-3xl p-6">
@@ -107,6 +109,22 @@ export default async function SessionDetailPage({
               ))}
             </tbody>
           </table>
+        </section>
+      )}
+
+      {sharedFiles.length > 0 && (
+        <section className="mt-6">
+          <h2 className="text-lg font-semibold text-ink">{t('dashboard.sharedFilesTitle')}</h2>
+          <p className="mt-1 text-sm text-ink-muted">{t('dashboard.sharedFilesNote')}</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            {sharedFiles.map((group) => (
+              <li key={`${group.taskId}:${group.studentNames.join(',')}`} className="text-ink">
+                <span className="font-medium">{group.taskTitle}</span>
+                {' — '}
+                {t('dashboard.sharedFilesStudents', { names: group.studentNames.join(', ') })}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

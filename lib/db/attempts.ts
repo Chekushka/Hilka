@@ -1,9 +1,11 @@
 /**
  * Attempts are append-only (docs/AI_CONTEXT.md) — a retry is a new row, and
- * "best attempt" is a query, not an update. Grading (score, flags,
+ * "best attempt" is a query, not an update. Grading (score, most flags,
  * parameterized seeds) is future work; this records the signal that exists
- * today.
+ * today. The one flag recorded so far is `sourceHash`, on file-delivery
+ * attempts only (lib/dashboard/shared-files.ts).
  */
+import { createHash } from 'node:crypto';
 import { asc, desc, eq } from 'drizzle-orm';
 import type { AttemptInput } from '@/lib/session/types';
 import { attempts, tasks } from './schema';
@@ -17,7 +19,18 @@ export interface SessionAttemptRow {
   passed: boolean;
   hintsUsed: number;
   durationMs: number | null;
+  /** SHA-256 of the uploaded source; null for anything that was not a file upload. */
+  sourceHash: string | null;
   createdAt: string;
+}
+
+/**
+ * Hash of a file-delivery submission. `code` is already normalized by the
+ * browser's upload validation (no BOM, LF endings), so two byte-identical
+ * files and the same file saved on Windows and elsewhere hash alike.
+ */
+export function hashSource(code: string): string {
+  return createHash('sha256').update(code, 'utf8').digest('hex');
 }
 
 /** Every attempt in a session, task title joined in — newest first per student. */
@@ -31,16 +44,24 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
       passed: attempts.passed,
       hintsUsed: attempts.hintsUsed,
       durationMs: attempts.durationMs,
+      flags: attempts.flags,
       createdAt: attempts.createdAt
     })
     .from(attempts)
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
     .where(eq(attempts.sessionId, sessionId))
     .orderBy(asc(attempts.studentName), desc(attempts.createdAt));
-  return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+  return rows.map(({ flags, ...row }) => ({
+    ...row,
+    sourceHash: typeof flags?.sourceHash === 'string' ? flags.sourceHash : null,
+    createdAt: row.createdAt.toISOString()
+  }));
 }
 
-export async function recordAttempt(input: AttemptInput): Promise<{ id: string }> {
+export async function recordAttempt(
+  input: AttemptInput,
+  sourceHash: string | null = null
+): Promise<{ id: string }> {
   const [row] = await getDb()
     .insert(attempts)
     .values({
@@ -51,7 +72,8 @@ export async function recordAttempt(input: AttemptInput): Promise<{ id: string }
       submittedAnswer: input.submittedAnswer,
       passed: input.passed,
       hintsUsed: input.hintsUsed,
-      durationMs: input.durationMs
+      durationMs: input.durationMs,
+      flags: sourceHash === null ? null : { sourceHash }
     })
     .returning({ id: attempts.id });
   return row;

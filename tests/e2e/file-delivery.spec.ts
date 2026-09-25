@@ -94,3 +94,37 @@ test('valid Python Hilka cannot run is FILE_UNSUPPORTED, named, with a replaceme
   await expect(notice).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
 });
+
+/**
+ * Identical uploaded files across students (docs/AI_CONTEXT.md, "Cheating and
+ * Trust", point 4): the hash is computed server-side, and the teacher sees a
+ * neutral list — a fact, never a verdict.
+ */
+test('two students passing with the same file are listed for the teacher', async ({ page }) => {
+  const shared = Buffer.from('# спільний файл\nprint("Привіт, IDLE!")\n', 'utf8');
+  for (const name of ['Олена', 'Соломія']) {
+    await openFileTask(page, name);
+    await page.locator('input[type="file"]').setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: shared });
+    await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+    const [attemptResponse] = await Promise.all([
+      page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
+      page.getByRole('button', { name: 'Перевірити' }).click()
+    ]);
+    expect(attemptResponse.status()).toBe(201);
+    await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
+    // The name choice is kept per session in sessionStorage; clear it so the next student can pick.
+    await page.evaluate(() => sessionStorage.clear());
+  }
+
+  await page.goto('/login');
+  await page.getByLabel('Електронна пошта').fill('demo-teacher@hilka.dev');
+  await page.getByRole('button', { name: 'Надіслати посилання' }).click();
+  const href = await page.getByRole('link', { name: /\/api\/auth\/verify\?token=/ }).getAttribute('href');
+  if (!href) throw new Error('no devLoginUrl link rendered');
+  await page.goto(href);
+  await page.getByRole('link', { name: /DEMO01/ }).click();
+
+  const section = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Однакові файли' }) });
+  await expect(section).toBeVisible();
+  await expect(section.getByRole('listitem').filter({ hasText: TASK_TITLE })).toContainText('Олена, Соломія');
+});

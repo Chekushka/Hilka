@@ -8,10 +8,15 @@
  * Trust") — the fix is a server-side re-check on final submission, not built
  * yet. What this route does enforce is that the row cannot lie about which
  * session, task and roster name it belongs to.
+ *
+ * For a file-delivery task the source hash is computed here, from the task as
+ * the database knows it — never taken from the body — so a client cannot opt
+ * its upload out of shared-file flagging (lib/dashboard/shared-files.ts).
  */
 import { NextResponse } from 'next/server';
-import { recordAttempt } from '@/lib/db/attempts';
+import { hashSource, recordAttempt } from '@/lib/db/attempts';
 import { validateAttemptContext } from '@/lib/db/sessions';
+import { getPublishedTaskById } from '@/lib/db/tasks';
 import type { AttemptInput } from '@/lib/session/types';
 
 function isValidBody(body: unknown): body is AttemptInput {
@@ -30,6 +35,14 @@ function isValidBody(body: unknown): body is AttemptInput {
   );
 }
 
+async function fileSourceHash(body: AttemptInput): Promise<string | null> {
+  const code = body.submittedAnswer.code;
+  if (typeof code !== 'string') return null;
+  const task = await getPublishedTaskById(body.taskId);
+  if (!task || (task.type !== 'code' && task.type !== 'fix')) return null;
+  return task.payload.delivery === 'file' ? hashSource(code) : null;
+}
+
 export async function POST(request: Request) {
   const body: unknown = await request.json().catch(() => null);
   if (!isValidBody(body)) {
@@ -41,6 +54,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_session' }, { status: 403 });
   }
 
-  const { id } = await recordAttempt(body);
+  const { id } = await recordAttempt(body, await fileSourceHash(body));
   return NextResponse.json({ id }, { status: 201 });
 }

@@ -11,6 +11,7 @@ function row(overrides: Partial<SessionAttemptRow> = {}): SessionAttemptRow {
     passed: true,
     hintsUsed: 0,
     durationMs: 12_345,
+    sourceHash: null,
     createdAt: '2026-01-01T12:00:00.000Z',
     ...overrides
   };
