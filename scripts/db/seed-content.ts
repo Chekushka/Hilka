@@ -172,5 +172,12 @@ main()
   .then(() => process.exit(0))
   .catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : error);
+    // Drizzle wraps the driver error: the message is only "Failed query: …",
+    // and what Postgres actually said is in `cause`.
+    const cause = error instanceof Error ? (error.cause as { message?: string; code?: string } | undefined) : undefined;
+    if (cause?.message) console.error(`cause: ${cause.message}`);
+    if (cause?.code === '42P01') {
+      console.error('A table is missing — run "npm run db:migrate" against this DATABASE_URL first.');
+    }
     process.exit(1);
   });

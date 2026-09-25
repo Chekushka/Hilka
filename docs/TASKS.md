@@ -52,7 +52,7 @@ Pages serving the spike, branch protection on `main`, and the `production` envir
 | Spike harness itself | ✅ | `spike/` — six checks, Skulpt vendored, turtle stub, interactive input |
 | Branch protection on `main` | ✅ | Ruleset at `.github/rulesets/main.json` imported into repo settings |
 | `ci.yml` — typecheck, lint, tests | ✅ | Live, with the migration-drift step. The browser job runs a Postgres service, migrates and seeds — the workspace reads its task from the database |
-| `migrate.yml` — Drizzle on merge | ✅ | The `production` GitHub environment it gates on exists |
+| `migrate.yml` — Drizzle on merge | ❌ | **Stale claim corrected**: marked ✅ before, but `.github/workflows/migrate.yml` is not in the repository. Nothing applies `drizzle/` to Neon automatically — run `npm run db:migrate` by hand before `npm run db:seed` (a seed against an unmigrated database fails with `relation "lessons" does not exist`, which the seed script now prints). The `production` GitHub environment it was meant to gate on exists |
 | `reference-check.yml` — references vs their own checks | ✅ | Live. `npm run verify:references` drives the real runner via `/runner` (no database needed) against `content/seed-tasks/*.json` |
 | Vercel Git integration + preview deploys | ✅ | Installed; PR #7 carried its check. **Deployment Protection is on**, so a logged-out classroom machine cannot open a preview until Vercel Authentication is off or a sharable link is used — CI_CD.md §5 |
 | Neon branch-per-preview | 🔶 | Integration installed. Unverified: that *"create a branch for each preview deployment"* is on and a PR preview really gets its own branch |
