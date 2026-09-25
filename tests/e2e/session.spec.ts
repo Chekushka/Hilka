@@ -41,7 +41,7 @@ test('join, run the assigned task, and record the attempt', async ({ page }) => 
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 
   // The task list remembers the pass for this visit.
-  await page.getByRole('button', { name: 'До списку завдань' }).click();
+  await page.getByRole('button', { name: '← До списку завдань', exact: true }).click();
   await expect(page.getByText('Виконано')).toBeVisible();
 
   // A reload keeps the chosen name (sessionStorage) and skips straight to the list.

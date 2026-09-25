@@ -689,3 +689,10 @@ had finished. The assertion was vacuous, and it hid a real bug — `DraftTaskEdi
 only because a warm engine sometimes finished the run before the assertion looked. Wait on
 something that only exists after the outcome (an exact locator, a result message), never on
 state that is also true before it.
+
+**The code editor's caret was black in the dark theme.** `CodeEditor` does not use CodeMirror's
+`drawSelection`, so the caret is the browser's native one, coloured by `caret-color` on
+`.cm-content` — a `.cm-cursor` rule styles nothing. CodeMirror's base theme sets that to black for
+any editor not flagged dark, and ours never is (the theme switches through CSS variables, not
+through CodeMirror), so the caret vanished on the dark code background. `caretColor: 'var(--ink)'`
+in the editor theme fixes it; `tests/e2e/editor-caret.spec.ts` checks both themes.

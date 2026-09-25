@@ -168,7 +168,7 @@ test('in a graded session, the next-task button moves on without reopening a loc
   await expect(page.getByRole('button', { name: NEXT, exact: true })).toHaveCount(0);
 
   // Going back to the square still shows it locked, not a fresh editor.
-  await page.getByRole('button', { name: /До списку завдань/ }).click();
+  await page.getByRole('button', { name: '← До списку завдань', exact: true }).click();
   await page.getByRole('button', { name: /^Квадрат/ }).click();
   await expect(page.getByRole('heading', { name: 'Завдання здано' })).toBeVisible();
   await expect(page.locator('.cm-content')).toHaveCount(0);
