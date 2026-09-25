@@ -13,9 +13,11 @@ import { CodeEditor } from '@/components/editor/CodeEditor';
 import { PlaybackScrubber } from '@/components/canvas/PlaybackScrubber';
 import { FileDelivery } from '@/components/task/FileDelivery';
 import { Hints } from '@/components/task/Hints';
+import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
 import { t } from '@/lib/i18n';
+import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
 import type { AttemptOutcome, FixTask } from '@/lib/task/types';
 
@@ -24,9 +26,10 @@ interface FixTaskViewProps {
   /** Fired once per completed Check. Absent in plain practice — only a session records attempts. */
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   hintsEnabled?: boolean;
+  next?: NextTaskAction;
 }
 
-export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true }: FixTaskViewProps) {
+export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }: FixTaskViewProps) {
   // File delivery: the code arrives by upload, not typing — nothing to run until it does.
   const fileSpec = task.payload.delivery === 'file' ? task.payload.file : undefined;
   const [code, setCode] = useState(fileSpec ? '' : task.payload.broken);
@@ -128,12 +131,14 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true }: FixT
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <figure>
-            <PlaybackScrubber drawing={result?.drawing ?? []} target={target} />
-            <figcaption className="mt-1 text-xs text-ink-muted">
-              {t('workspace.yourDrawing')} · {t('workspace.target')}
-            </figcaption>
-          </figure>
+          {showsTurtleCanvas(task, result?.drawing ?? []) && (
+            <figure>
+              <PlaybackScrubber drawing={result?.drawing ?? []} target={target} />
+              <figcaption className="mt-1 text-xs text-ink-muted">
+                {t('workspace.yourDrawing')} · {t('workspace.target')}
+              </figcaption>
+            </figure>
+          )}
 
           {task.payload.surface === 'console' || (result?.stdout ?? '').length > 0 || pendingInputPrompt !== null ? (
             <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
@@ -149,6 +154,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true }: FixT
               lastCheckedCodeRef.current = code;
               check(code);
             }}
+            next={next}
           />
         )}
       </section>

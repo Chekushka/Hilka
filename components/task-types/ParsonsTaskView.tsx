@@ -36,6 +36,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { evaluateChecks, type CheckReport } from '@/lib/checker';
 import { Hints } from '@/components/task/Hints';
+import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
 import { t } from '@/lib/i18n';
 import { parsonsPool, type ParsonsPoolItem } from '@/lib/task/parsons';
 import type { AttemptOutcome, ParsonsTask } from '@/lib/task/types';
@@ -44,6 +45,7 @@ interface ParsonsTaskViewProps {
   task: ParsonsTask;
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   hintsEnabled?: boolean;
+  next?: NextTaskAction;
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -131,7 +133,7 @@ function AnswerRow({
   );
 }
 
-export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true }: ParsonsTaskViewProps) {
+export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }: ParsonsTaskViewProps) {
   const isChosen = task.payload.indentMode === 'chosen';
   const pool = useMemo(() => parsonsPool(task.payload), [task.payload]);
   const byIndex = useMemo(() => new Map(pool.map((item) => [item.poolIndex, item])), [pool]);
@@ -274,7 +276,10 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true }: 
             </h3>
             <div className="mt-1 text-sm text-ink">
               {report.passed ? (
-                <p>{t('result.passedNote')}</p>
+                <>
+                  <p>{t('result.passedNote')}</p>
+                  {next && <NextTaskButton action={next} />}
+                </>
               ) : (
                 <>
                   <ul className="space-y-1">

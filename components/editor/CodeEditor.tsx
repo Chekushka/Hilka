@@ -43,7 +43,10 @@ const errorLineField = StateField.define<DecorationSet>({
 const theme = EditorView.theme({
   '&': { fontSize: '14px', backgroundColor: 'var(--code-bg)', color: 'var(--ink)' },
   '&.cm-focused': { outline: '2px solid var(--accent)', outlineOffset: '-2px' },
-  '.cm-content': { fontFamily: 'var(--font-code)', padding: '10px 0' },
+  // The caret is the browser's native one (no drawSelection), and CodeMirror's
+  // base theme pins it black for an editor not flagged dark — invisible on the
+  // dark code background. The ink token flips with the theme.
+  '.cm-content': { fontFamily: 'var(--font-code)', padding: '10px 0', caretColor: 'var(--ink)' },
   '.cm-gutters': {
     backgroundColor: 'var(--code-bg)',
     color: 'var(--ink-muted)',
@@ -51,7 +54,6 @@ const theme = EditorView.theme({
     fontFamily: 'var(--font-code)'
   },
   '.cm-activeLine': { backgroundColor: 'transparent' },
-  '.cm-cursor': { borderLeftColor: 'var(--ink)' },
   '.cm-attention-line': {
     // Never red: a wrong answer is not a failure, and a class of 25 contains
     // someone who cannot separate red from green anyway.

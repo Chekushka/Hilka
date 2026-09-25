@@ -14,7 +14,7 @@ import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
 import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
-import type { Check } from '@/lib/checker';
+import { evaluateCasesAgainstOwnRuns, type Check, type CheckRunOutcome } from '@/lib/checker';
 import type { FixPayload, RunCase, Surface } from '@/lib/task/types';
 import {
   deliveryFormFromPayload,
@@ -74,6 +74,11 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   const [caseResults, setCaseResults] = useState<RunResult[] | null>(null);
   const [casesRun, setCasesRun] = useState<RunCase[]>([]);
   const [casesError, setCasesError] = useState<string | null>(null);
+  const [checksError, setChecksError] = useState<string | null>(null);
+  // The reference judged against the checks and cases as they stood at the
+  // run — the same evaluation POST /api/tasks/[id]/publish repeats. Without
+  // it, Publish enabled on any clean run, however wrong its output.
+  const [referenceOutcome, setReferenceOutcome] = useState<CheckRunOutcome | null>(null);
   const run = caseResults?.[0] ?? null;
 
   const [runningBroken, setRunningBroken] = useState(false);
@@ -154,15 +159,15 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   async function handleRunReference() {
     const runner = runnerRef.current;
     if (!runner) return;
+    const parsedChecks = parseChecksJson(checksText);
+    setChecksError(parsedChecks.ok ? null : t('authoring.checksInvalidJson'));
     const parsedCases = parseCasesJson(casesText);
-    if (!parsedCases.ok) {
-      setCasesError(t('authoring.casesInvalidJson'));
-      return;
-    }
-    setCasesError(null);
+    setCasesError(parsedCases.ok ? null : t('authoring.casesInvalidJson'));
+    if (!parsedChecks.ok || !parsedCases.ok) return;
     const cases = parsedCases.cases.length > 0 ? parsedCases.cases : [{ stdin: [] as string[] }];
     setRunning(true);
     setCaseResults(null);
+    setReferenceOutcome(null);
     setCasesRun(cases);
     setPublishState({ kind: 'idle' });
     const results: RunResult[] = [];
@@ -170,6 +175,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
       results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin }));
     }
     setCaseResults(results);
+    setReferenceOutcome(evaluateCasesAgainstOwnRuns(referenceCode, parsedChecks.checks, cases, results));
     setFileLint(
       delivery.enabled
         ? await lintForFileDelivery(runner, [
@@ -182,6 +188,14 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   }
 
   const casesFailed = caseResults?.some((result) => result.error !== null || result.timedOut) ?? false;
+  const referenceFailsChecks = referenceOutcome !== null && !referenceOutcome.passed;
+  // The server's verdict once Publish was pressed, else the editor's own from the last run.
+  const checkFailures =
+    publishState.kind === 'checks_failed'
+      ? publishState.failures
+      : referenceFailsChecks && referenceOutcome.ranCleanly
+        ? referenceOutcome.failures
+        : null;
 
   async function handleRunBroken() {
     const runner = runnerRef.current;
@@ -195,7 +209,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   }
 
   async function handlePublish() {
-    if (!run || !caseResults || casesFailed || !brokenRun || fileLintBlocks) return;
+    if (!run || !caseResults || casesFailed || referenceFailsChecks || !brokenRun || fileLintBlocks) return;
     setPublishState({ kind: 'publishing' });
     const saved = await save();
     if (!saved.ok) {
@@ -316,6 +330,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
             className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
           />
           <p className="text-xs text-ink-muted">{t('authoring.checksHint')}</p>
+          {checksError && <p className="text-xs text-attention">{checksError}</p>}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -473,7 +488,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         <button
           type="button"
           onClick={handlePublish}
-          disabled={!caseResults || casesFailed || !brokenRun || fileLintBlocks || publishState.kind === 'publishing'}
+          disabled={!caseResults || casesFailed || referenceFailsChecks || !brokenRun || fileLintBlocks || publishState.kind === 'publishing'}
           className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
           {publishState.kind === 'publishing' ? t('authoring.publishing') : t('authoring.publish')}
@@ -483,11 +498,11 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         {publishState.kind === 'run_failed' && (
           <p className="text-sm text-attention">{t('authoring.publishRunFailed')}</p>
         )}
-        {publishState.kind === 'checks_failed' && (
+        {checkFailures && (
           <div className="text-sm text-attention">
             <p>{t('authoring.publishChecksFailed')}</p>
             <ul className="mt-1 list-disc pl-5">
-              {publishState.failures.map((failure, index) => (
+              {checkFailures.map((failure, index) => (
                 <li key={index}>{failure}</li>
               ))}
             </ul>

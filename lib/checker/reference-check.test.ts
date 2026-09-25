@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkTaskReference,
   evaluateAgainstOwnRun,
+  evaluateCasesAgainstOwnRuns,
   evaluatePredictionAgainstOwnRun,
   evaluatePredictionChoiceAgainstOwnRun,
   type ReferenceCheckTask,
@@ -223,6 +224,46 @@ describe('evaluateAgainstOwnRun', () => {
       [{ kind: 'last_line_equals', value: '1' }],
       result({ error: { type: 'ZeroDivisionError', message: 'division by zero', line: 1, col: 0 } })
     );
+    expect(outcome).toEqual({ ranCleanly: false, passed: false, failures: [] });
+  });
+});
+
+describe('evaluateCasesAgainstOwnRuns', () => {
+  const cases = [
+    { stdin: ['5', '3'], checks: [{ kind: 'number_close' as const, value: 16, tol: 0.01, which: 'last' as const }] },
+    { stdin: ['10', '4'], checks: [{ kind: 'number_close' as const, value: 28, tol: 0.01, which: 'last' as const }] }
+  ];
+
+  it('passes when every case satisfies the task checks plus its own', () => {
+    const outcome = evaluateCasesAgainstOwnRuns('...', [], cases, [result({ stdout: '16\n' }), result({ stdout: '28\n' })]);
+    expect(outcome).toEqual({ ranCleanly: true, passed: true, failures: [] });
+  });
+
+  // The authoring UI's hidden-case scenario: a reference hardcoded to the
+  // visible case runs cleanly on both, and only the checks catch it.
+  it('fails a reference that only solves the first case', () => {
+    const outcome = evaluateCasesAgainstOwnRuns('...', [], cases, [result({ stdout: '16\n' }), result({ stdout: '16\n' })]);
+    expect(outcome.ranCleanly).toBe(true);
+    expect(outcome.passed).toBe(false);
+    expect(outcome.failures).toHaveLength(1);
+  });
+
+  it('applies the task-level checks to every case', () => {
+    const outcome = evaluateCasesAgainstOwnRuns(
+      'print(16)',
+      [{ kind: 'forbids', names: ['print'] }],
+      [{}, {}],
+      [result({ stdout: '16\n' }), result({ stdout: '16\n' })]
+    );
+    expect(outcome.passed).toBe(false);
+    expect(outcome.failures).toHaveLength(2);
+  });
+
+  it('marks the whole outcome unclean when any case run errored', () => {
+    const outcome = evaluateCasesAgainstOwnRuns('...', [], cases, [
+      result({ stdout: '16\n' }),
+      result({ timedOut: true })
+    ]);
     expect(outcome).toEqual({ ranCleanly: false, passed: false, failures: [] });
   });
 });

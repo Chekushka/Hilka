@@ -12,6 +12,7 @@
  * an explanation and a next step, with the student's own line shown inline.
  */
 import { useEffect } from 'react';
+import { NextTaskButton, type NextTaskAction } from './NextTaskButton';
 import { humanize, humanizeTimeout, setUnmatchedReporter } from '@/lib/errors';
 import { t } from '@/lib/i18n';
 import type { CheckReport } from '@/lib/checker';
@@ -22,6 +23,8 @@ interface ResultPanelProps {
   report: CheckReport | null;
   code: string;
   onRetry: () => void;
+  /** Offered once the Check passed; absent where there is nowhere to go. */
+  next?: NextTaskAction;
 }
 
 /**
@@ -66,7 +69,7 @@ function Frame({
   );
 }
 
-export function ResultPanel({ result, report, code, onRetry }: ResultPanelProps) {
+export function ResultPanel({ result, report, code, onRetry, next }: ResultPanelProps) {
   useUnmatchedErrorReporting();
 
   if (result.timedOut || result.error) {
@@ -102,6 +105,7 @@ export function ResultPanel({ result, report, code, onRetry }: ResultPanelProps)
     return (
       <Frame tone="growth" icon="✓" title={t('result.passed')}>
         <p>{t('result.passedNote')}</p>
+        {next && <NextTaskButton action={next} />}
       </Frame>
     );
   }

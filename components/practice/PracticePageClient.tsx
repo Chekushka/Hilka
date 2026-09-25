@@ -11,6 +11,7 @@
  */
 import { useCallback } from 'react';
 import { ProgressPanel } from '@/components/practice/ProgressPanel';
+import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { markTaskCompleted } from '@/lib/practice/progress';
@@ -18,9 +19,11 @@ import type { Task } from '@/lib/task/types';
 
 interface PracticePageClientProps {
   task: Task;
+  /** The lesson's next step after a passed Check, or back to the lesson after its last one. */
+  next?: NextTaskAction;
 }
 
-export function PracticePageClient({ task }: PracticePageClientProps) {
+export function PracticePageClient({ task, next }: PracticePageClientProps) {
   const [progress, setProgress] = useLocalProgress();
 
   const handleOutcome = useCallback(
@@ -33,7 +36,7 @@ export function PracticePageClient({ task }: PracticePageClientProps) {
 
   return (
     <div>
-      <TaskWorkspace task={task} onSubmitAttempt={handleOutcome} />
+      <TaskWorkspace task={task} onSubmitAttempt={handleOutcome} next={next} />
       <ProgressPanel progress={progress} setProgress={setProgress} currentTaskSlug={task.slug} />
     </div>
   );

@@ -11,10 +11,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PlaybackScrubber } from '@/components/canvas/PlaybackScrubber';
 import { Hints } from '@/components/task/Hints';
+import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
 import { t } from '@/lib/i18n';
 import { parseFillTemplate, substituteFillTemplate } from '@/lib/task/fill';
+import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
 import type { AttemptOutcome, FillTask } from '@/lib/task/types';
 
@@ -23,9 +25,10 @@ interface FillTaskViewProps {
   /** Fired once per completed Check. Absent in plain practice — only a session records attempts. */
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   hintsEnabled?: boolean;
+  next?: NextTaskAction;
 }
 
-export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true }: FillTaskViewProps) {
+export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }: FillTaskViewProps) {
   const [values, setValues] = useState<Record<number, string>>({});
   const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(task);
 
@@ -121,12 +124,14 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true }: Fil
         </div>
 
         <div className="flex flex-wrap gap-4">
-          <figure>
-            <PlaybackScrubber drawing={result?.drawing ?? []} target={target} />
-            <figcaption className="mt-1 text-xs text-ink-muted">
-              {t('workspace.yourDrawing')} · {t('workspace.target')}
-            </figcaption>
-          </figure>
+          {showsTurtleCanvas(task, result?.drawing ?? []) && (
+            <figure>
+              <PlaybackScrubber drawing={result?.drawing ?? []} target={target} />
+              <figcaption className="mt-1 text-xs text-ink-muted">
+                {t('workspace.yourDrawing')} · {t('workspace.target')}
+              </figcaption>
+            </figure>
+          )}
 
           {(result?.stdout ?? '').length > 0 || pendingInputPrompt !== null ? (
             <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
@@ -142,6 +147,7 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true }: Fil
               lastCheckedCodeRef.current = code;
               check(code);
             }}
+            next={next}
           />
         )}
       </section>

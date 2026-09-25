@@ -677,3 +677,22 @@ invisible to `turtle.goto(...)`. `goto` was the only turtle name affected, and n
 until the grade 7 animation lessons did. `lib/runner/modules/turtle.ts` now registers any
 reserved name under both keys, on the module and on `Turtle`; a future JS-side module needs the
 same treatment for names like `delete`, `new` or `default`.
+
+**`getByText` matches a `<textarea>`'s server-rendered value, and "disabled" is also true mid-run.**
+A React `<textarea value=…>` is server-rendered with its value as a text node, so
+`page.getByText('label')` finds the textarea on first paint whenever its JSON contains that label —
+long before anything the label was meant to appear in. `tests/e2e/task-authoring-ui.spec.ts`'s
+hidden-case test waited on a case label that way, then asserted Publish disabled: that resolved
+instantly, while the reference was still running and Publish was disabled merely because no run
+had finished. The assertion was vacuous, and it hid a real bug — `DraftTaskEditor` and
+`FixDraftEditor` enabled Publish on any clean run without evaluating a single check. It "flaked"
+only because a warm engine sometimes finished the run before the assertion looked. Wait on
+something that only exists after the outcome (an exact locator, a result message), never on
+state that is also true before it.
+
+**The code editor's caret was black in the dark theme.** `CodeEditor` does not use CodeMirror's
+`drawSelection`, so the caret is the browser's native one, coloured by `caret-color` on
+`.cm-content` — a `.cm-cursor` rule styles nothing. CodeMirror's base theme sets that to black for
+any editor not flagged dark, and ours never is (the theme switches through CSS variables, not
+through CodeMirror), so the caret vanished on the dark code background. `caretColor: 'var(--ink)'`
+in the editor theme fixes it; `tests/e2e/editor-caret.spec.ts` checks both themes.
