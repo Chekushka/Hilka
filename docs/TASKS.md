@@ -196,7 +196,7 @@ IDLE before uploading.
 
 | Item | Status | Notes |
 |---|---|---|
-| XP + topic progress | ❌ | Sprint 2 |
+| XP + topic progress | ✅ | Practice mode. `lib/meta/progress.ts` (pure, unit-tested): XP is **derived, never stored** — the sum of `XP_BY_DIFFICULTY` (10 per difficulty step, 10–50) over the completed slugs that still match a practice task, so a progress-code merge (a union of slugs) needs no "max of XP" rule, and a removed task stops counting. `topicProgress` groups a grade's practice tasks (published, not parameterized, in some lesson — `lib/db/lessons.ts`'s `listPracticeTaskMeta`) by topic in curriculum order. `components/meta/ProgressSummary.tsx` sits above the lesson list on `/practice`: total XP in honey, one bar per topic in growth with «N з M» in words. The success result of a task's **first** pass shows «+N XP» beside the next-task button (`NextTaskAction.earned`, set by `PracticePageClient`); a repeat pass shows nothing. Sessions earn no XP — there the student is a roster name, and XP belongs to the practice layer. `tests/e2e/meta-progress.spec.ts` |
 | Garden / growth visual | ❌ | Sprint 2. Lives between tasks, never on the workspace. |
 | Additional tasks for fast students | 🔶 | Mechanism and grade 7 content exist — each lesson's `additional_task_ids`, shown after the core tasks ("Lessons", above), populated for every grade 7 practice lesson and most mandatory ones. Nothing in the meta layer rewards them yet |
 
@@ -306,7 +306,7 @@ IDLE before uploading.
     a turtle drawing segment by segment, driven by call order since `Segment.line` is always
     null (docs/AI_CONTEXT.md's Gotchas). Wired into `code`, `fix`, `fill`. Grid only if still
     justified afterwards.
-12. Meta layer.
+12. Meta layer — XP and topic progress done (practice mode); the garden is next.
 
 Building the authoring UI early is the standing temptation, because it feels like foundation.
 It is not — it is CRUD, it takes days, and it teaches nothing about whether the core works.

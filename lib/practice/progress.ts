@@ -2,10 +2,9 @@
  * Practice progress: which tasks a student has already passed, kept in
  * `localStorage` (lib/practice/local-progress.ts) and portable via an 8-char
  * progress code (lib/practice/code.ts, docs/AI_CONTEXT.md's "Progress
- * Codes"). Only `completedTaskSlugs` today — `xp` and `current topic` are
- * part of the unbuilt Meta Layer (docs/TASKS.md) and are not invented here;
- * `progress_codes.state` is a free-form jsonb column, so adding them later
- * needs no migration.
+ * Codes"). Only `completedTaskSlugs`: XP is derived from it by task
+ * difficulty (lib/meta/progress.ts) rather than stored beside it, so there is
+ * nothing to merge or keep in sync.
  *
  * Task slugs, not ids: the stable content key across databases
  * (docs/AI_CONTEXT.md's Gotcha on `tasks.slug`), and the only thing a

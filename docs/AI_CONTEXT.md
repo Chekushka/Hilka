@@ -103,6 +103,7 @@ lib/
   checker/               declarative checker evaluator (isomorphic: client + server)
   errors/                Python error → Ukrainian humanized message
   seed/                  deterministic PRNG + task parameterization
+  meta/                  XP and topic progress, derived from completed tasks
   db/                    Drizzle schema, migrations, queries
 components/
   task-types/            one component per task type
@@ -149,7 +150,7 @@ sessions
 
 progress_codes
   code char(8) primary key,   -- human-readable alphabet, no 0/O/1/I/l
-  state jsonb,                -- completed task ids, xp, current topic
+  state jsonb,                -- { completedTaskSlugs }; XP is derived from it, never stored
   created_at, updated_at, last_seen_at
 
 attempts
@@ -198,7 +199,8 @@ writes a `progress_codes` row; entering that code on any machine restores the st
   (`ABCD-EFGH`), accepted case-insensitively, dashes and spaces stripped on input.
 - Codes are random, never sequential, and the entry endpoint is rate-limited — an 8-character
   code is a bearer credential for someone else's progress.
-- Restoring **merges** rather than replaces: union of completed tasks, maximum of XP. A student
+- Restoring **merges** rather than replaces: union of completed tasks. XP is derived from that
+  set by task difficulty (`lib/meta/progress.ts`), so it needs no merge rule of its own. A student
   who practised on two machines must not lose one by entering a code in the wrong order.
 - `last_seen_at` exists so abandoned rows can be pruned later. Nothing prunes them yet.
 

@@ -6,10 +6,11 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { lessonSteps, resolveLessonTasks, type LessonTaskStep, type LessonTaskSummary } from '@/lib/lessons/view';
 import type { LessonKind } from '@/lib/lessons/types';
+import type { PracticeTaskMeta } from '@/lib/meta/progress';
 import type { Task } from '@/lib/task/types';
 import { getDb } from './client';
-import { lessons, tasks } from './schema';
-import { toTask } from './task-mapping';
+import { lessons, tasks, topics } from './schema';
+import { clampDifficulty, toTask } from './task-mapping';
 
 export interface LessonListItem {
   slug: string;
@@ -132,4 +133,45 @@ export async function listLessonsForPicker(): Promise<LessonPickerOption[]> {
     })
     .from(lessons)
     .orderBy(asc(lessons.grade), asc(lessons.order));
+}
+
+/**
+ * Every task a student can open in practice — published, not parameterized,
+ * listed in some lesson — with its topic and the grades of the lessons that
+ * list it. What XP and topic progress are computed from (lib/meta/progress.ts).
+ */
+export async function listPracticeTaskMeta(): Promise<PracticeTaskMeta[]> {
+  const lessonRows = await getDb()
+    .select({ grade: lessons.grade, coreTaskIds: lessons.coreTaskIds, additionalTaskIds: lessons.additionalTaskIds })
+    .from(lessons);
+  const gradesById = new Map<string, Set<number>>();
+  for (const lesson of lessonRows) {
+    for (const id of [...lesson.coreTaskIds, ...lesson.additionalTaskIds]) {
+      gradesById.set(id, (gradesById.get(id) ?? new Set()).add(lesson.grade));
+    }
+  }
+  if (gradesById.size === 0) return [];
+  const rows = await getDb()
+    .select({
+      id: tasks.id,
+      slug: tasks.slug,
+      difficulty: tasks.difficulty,
+      params: tasks.params,
+      topicSlug: topics.slug,
+      topicTitle: topics.title,
+      topicOrder: topics.order
+    })
+    .from(tasks)
+    .innerJoin(topics, eq(tasks.topicId, topics.id))
+    .where(and(inArray(tasks.id, [...gradesById.keys()]), eq(tasks.status, 'published')));
+  return rows
+    .filter((row) => row.params === null)
+    .map((row) => ({
+      slug: row.slug,
+      difficulty: clampDifficulty(row.difficulty),
+      topicSlug: row.topicSlug,
+      topicTitle: row.topicTitle,
+      topicOrder: row.topicOrder,
+      grades: [...(gradesById.get(row.id) ?? [])]
+    }));
 }

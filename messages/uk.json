@@ -155,7 +155,10 @@
     "taskLockedFailedNote": "Відповідь зафіксовано — повторна спроба недоступна в занятті з оцінюванням."
   },
   "meta": {
-    "description": "Python для 7–9 класу"
+    "title": "Твій шлях",
+    "xpTotal": "{xp} XP",
+    "xpEmpty": "Розв'яжи перше завдання — і тут з'являться перші бали.",
+    "xpEarned": "+{xp} XP"
   },
   "sessionBuilder": {
     "newSession": "Нове заняття",

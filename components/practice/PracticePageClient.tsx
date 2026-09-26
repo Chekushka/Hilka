@@ -9,12 +9,14 @@
  * client component, while the task itself is still read server-side
  * (CLAUDE.md rule 4).
  */
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ProgressPanel } from '@/components/practice/ProgressPanel';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
+import { taskXp } from '@/lib/meta/progress';
 import { useLocalProgress } from '@/lib/practice/local-progress';
-import { markTaskCompleted } from '@/lib/practice/progress';
+import { hasCompletedTask, markTaskCompleted } from '@/lib/practice/progress';
+import { t } from '@/lib/i18n';
 import type { Task } from '@/lib/task/types';
 
 interface PracticePageClientProps {
@@ -25,18 +27,29 @@ interface PracticePageClientProps {
 
 export function PracticePageClient({ task, next }: PracticePageClientProps) {
   const [progress, setProgress] = useLocalProgress();
+  // XP is earned once per task (lib/meta/progress.ts derives it from completed
+  // slugs), so only the pass that first completes it shows what it earned.
+  const [firstPass, setFirstPass] = useState(false);
 
   const handleOutcome = useCallback(
     (outcome: AttemptOutcome) => {
       if (!outcome.passed) return;
-      setProgress((previous) => markTaskCompleted(previous, task.slug));
+      setProgress((previous) => {
+        if (!hasCompletedTask(previous, task.slug)) setFirstPass(true);
+        return markTaskCompleted(previous, task.slug);
+      });
     },
     [setProgress, task.slug]
   );
 
+  const nextWithReward = useMemo(
+    () => (next && firstPass ? { ...next, earned: t('meta.xpEarned', { xp: taskXp(task.difficulty) }) } : next),
+    [next, firstPass, task.difficulty]
+  );
+
   return (
     <div>
-      <TaskWorkspace task={task} onSubmitAttempt={handleOutcome} next={next} />
+      <TaskWorkspace task={task} onSubmitAttempt={handleOutcome} next={nextWithReward} />
       <ProgressPanel progress={progress} setProgress={setProgress} currentTaskSlug={task.slug} />
     </div>
   );

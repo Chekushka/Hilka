@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { LessonList } from '@/components/lesson/LessonList';
-import { listLessonGrades, listLessons } from '@/lib/db/lessons';
+import { ProgressSummary } from '@/components/meta/ProgressSummary';
+import { listLessonGrades, listLessons, listPracticeTaskMeta } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
 
 /**
@@ -17,6 +18,8 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
   const requested = Number(gradeParam);
   const grade = grades.includes(requested) ? requested : grades[0];
   const lessons = grade === undefined ? [] : await listLessons(grade);
+  // Every grade's tasks, not just this one's: XP is the student's whole total.
+  const practiceTasks = grade === undefined ? [] : await listPracticeTaskMeta();
 
   return (
     <main className="mx-auto w-full max-w-2xl p-6">
@@ -36,6 +39,11 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
             </Link>
           ))}
         </nav>
+      )}
+      {grade !== undefined && (
+        <div className="mt-6">
+          <ProgressSummary tasks={practiceTasks} grade={grade} />
+        </div>
       )}
       <div className="mt-6">
         {lessons.length === 0 ? <p className="text-ink-muted">{t('lessons.empty')}</p> : <LessonList lessons={lessons} />}
