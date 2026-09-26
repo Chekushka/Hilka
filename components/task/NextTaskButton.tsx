@@ -9,13 +9,20 @@
  * interface").
  */
 import Link from 'next/link';
+import { Plant } from '@/components/meta/Plant';
+import type { PlantStage } from '@/lib/meta/garden';
 
 export type NextTaskAction = (
   | { kind: 'link'; href: string; label: string }
   | { kind: 'button'; onSelect: () => void; label: string }
 ) & {
-  /** What this pass earned, e.g. "+30 XP" — practice only, and only on a task's first pass. */
-  earned?: string;
+  /** What this pass earned — practice only, and only on a task's first pass. */
+  reward?: {
+    /** e.g. "+30 XP". */
+    xp: string;
+    /** Set when the pass made the topic's plant grow: its new stage, and that said in words. */
+    growth?: { stage: PlantStage; label: string };
+  };
 };
 
 const className =
@@ -32,13 +39,22 @@ export function NextTaskButton({ action }: { action: NextTaskAction }) {
         {action.label}
       </button>
     );
-  if (!action.earned) return button;
+  const { reward } = action;
+  if (!reward) return button;
   return (
-    <div className="flex flex-wrap items-baseline gap-4">
-      {button}
-      <span className="text-lg font-semibold text-honey" data-testid="xp-earned">
-        {action.earned}
-      </span>
+    <div>
+      <div className="flex flex-wrap items-center gap-4">
+        {button}
+        <span className="mt-3 text-lg font-semibold text-honey" data-testid="xp-earned">
+          {reward.xp}
+        </span>
+      </div>
+      {reward.growth && (
+        <p className="mt-1 flex items-end gap-2 text-sm text-growth" data-testid="garden-growth">
+          <Plant stage={reward.growth.stage} size={36} />
+          {reward.growth.label}
+        </p>
+      )}
     </div>
   );
 }

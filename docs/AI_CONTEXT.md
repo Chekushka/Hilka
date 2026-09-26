@@ -103,7 +103,7 @@ lib/
   checker/               declarative checker evaluator (isomorphic: client + server)
   errors/                Python error → Ukrainian humanized message
   seed/                  deterministic PRNG + task parameterization
-  meta/                  XP and topic progress, derived from completed tasks
+  meta/                  XP, topic progress and garden stages, derived from completed tasks
   db/                    Drizzle schema, migrations, queries
 components/
   task-types/            one component per task type

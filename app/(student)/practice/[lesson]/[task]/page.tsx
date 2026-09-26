@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { PracticePageClient } from '@/components/practice/PracticePageClient';
-import { getLesson, getPublishedTaskInLesson } from '@/lib/db/lessons';
+import { getLesson, getPublishedTaskInLesson, listPracticeTaskMeta } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
 import { stepAfter } from '@/lib/lessons/view';
 
@@ -23,6 +23,13 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
     notFound();
   }
   const next = stepAfter(lesson.steps, task.slug);
+  // The garden plant this task grows: its topic's practice tasks in this lesson's grade.
+  const practiceTasks = await listPracticeTaskMeta();
+  const topicSlug = practiceTasks.find((meta) => meta.slug === task.slug)?.topicSlug;
+  const topicTasks = practiceTasks.filter((meta) => meta.topicSlug === topicSlug && meta.grades.includes(lesson.grade));
+  const topic = topicSlug
+    ? { title: topicTasks[0]?.topicTitle ?? '', taskSlugs: topicTasks.map((meta) => meta.slug) }
+    : undefined;
 
   return (
     <div>
@@ -41,6 +48,7 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
       <PracticePageClient
         key={task.slug}
         task={task}
+        topic={topic}
         next={
           next
             ? { kind: 'link', href: `/practice/${lesson.slug}/${next.slug}`, label: t('result.nextTask') }

@@ -1,14 +1,17 @@
 'use client';
 
 /**
- * XP and topic progress above the lesson list — the reward layer, kept off the
+ * XP and the garden above the lesson list — one plant per topic, grown by the
+ * share of its tasks done (lib/meta/garden.ts). The reward layer, kept off the
  * workspace (docs/design-brief-python-platform.md, "The workspace is a tool.
  * The reward layer is a garden."). Client-side only because completed tasks
  * live in localStorage; the task list itself was read by the server page
  * (CLAUDE.md rule 4). Honey carries XP, growth carries progress, and every
- * bar also says its numbers in words — never color alone.
+ * plant also says its numbers and its stage in words — never picture alone.
  */
 import { useLocalProgress } from '@/lib/practice/local-progress';
+import { Plant } from '@/components/meta/Plant';
+import { plantStage } from '@/lib/meta/garden';
 import { topicProgress, totalXp, type PracticeTaskMeta } from '@/lib/meta/progress';
 import { t } from '@/lib/i18n';
 
@@ -30,30 +33,25 @@ export function ProgressSummary({ tasks, grade }: { tasks: PracticeTaskMeta[]; g
         </p>
       </div>
       {xp === 0 && <p className="mt-1 text-sm text-ink-muted">{t('meta.xpEmpty')}</p>}
-      <div className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+      <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-3 sm:grid-cols-5">
         {topics.map((topic) => {
+          const stage = plantStage(topic.done, topic.total);
           const complete = topic.done === topic.total;
           return (
-            <div key={topic.slug} className="flex flex-col gap-1">
-              <div className="flex items-baseline justify-between gap-2 text-sm">
-                <span id={`topic-${topic.slug}`} className="text-ink">
-                  {topic.title}
-                </span>
-                <span className={`shrink-0 whitespace-nowrap ${complete ? 'text-growth' : 'text-ink-muted'}`}>
-                  {complete ? '✓ ' : ''}
-                  {t('lessons.tasksDone', { done: topic.done, total: topic.total })}
-                </span>
-              </div>
-              <div
-                role="progressbar"
-                aria-labelledby={`topic-${topic.slug}`}
-                aria-valuemin={0}
-                aria-valuemax={topic.total}
-                aria-valuenow={topic.done}
-                className="h-1.5 overflow-hidden rounded-full bg-line"
-              >
-                <div className="h-full rounded-full bg-growth" style={{ width: `${(topic.done / topic.total) * 100}%` }} />
-              </div>
+            <div
+              key={topic.slug}
+              role="group"
+              aria-label={topic.title}
+              data-stage={stage}
+              className="flex flex-col items-center gap-1 text-center"
+            >
+              <Plant stage={stage} size={40} />
+              <span className="text-xs leading-tight text-ink">{topic.title}</span>
+              <span className={`text-xs ${complete ? 'text-growth' : 'text-ink-muted'}`}>
+                {complete ? '✓ ' : ''}
+                {t('lessons.tasksDone', { done: topic.done, total: topic.total })}
+                <span className="sr-only"> · {t(`garden.stage${stage}`)}</span>
+              </span>
             </div>
           );
         })}

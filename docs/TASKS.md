@@ -197,7 +197,7 @@ IDLE before uploading.
 | Item | Status | Notes |
 |---|---|---|
 | XP + topic progress | ✅ | Practice mode. `lib/meta/progress.ts` (pure, unit-tested): XP is **derived, never stored** — the sum of `XP_BY_DIFFICULTY` (10 per difficulty step, 10–50) over the completed slugs that still match a practice task, so a progress-code merge (a union of slugs) needs no "max of XP" rule, and a removed task stops counting. `topicProgress` groups a grade's practice tasks (published, not parameterized, in some lesson — `lib/db/lessons.ts`'s `listPracticeTaskMeta`) by topic in curriculum order. `components/meta/ProgressSummary.tsx` sits above the lesson list on `/practice`: total XP in honey, one bar per topic in growth with «N з M» in words. The success result of a task's **first** pass shows «+N XP» beside the next-task button (`NextTaskAction.earned`, set by `PracticePageClient`); a repeat pass shows nothing. Sessions earn no XP — there the student is a roster name, and XP belongs to the practice layer. `tests/e2e/meta-progress.spec.ts` |
-| Garden / growth visual | ❌ | Sprint 2. Lives between tasks, never on the workspace. |
+| Garden / growth visual | ✅ | One plant per topic of the grade, replacing the topic bars in `ProgressSummary` on `/practice`. `lib/meta/garden.ts` (pure, unit-tested): `plantStage(done, total)` — seed (nothing done), sprout, young plant, bud, flower; the first solved task always sprouts, only a finished topic flowers, and the stage never shrinks as more is done. Derived from the same completed slugs as XP, never stored. `components/meta/Plant.tsx` draws the five stages as flat inline SVG through tokens only (`growth`, `honey`, and a new `--soil` sand token, both themes) — no images, no animation. Each plant says its topic, «N з M» and its stage in words (screen-reader text), never the picture alone. The reward moment: when a task's first pass grows its topic's plant (`stageGainedByPass`), the success result shows the new plant beside «Тема «…» у твоєму саду: паросток» (`NextTaskAction.reward.growth`); the task page reads the topic's practice tasks in the lesson's grade server-side. Nothing on the workspace itself changed. `tests/e2e/meta-progress.spec.ts` |
 | Additional tasks for fast students | 🔶 | Mechanism and grade 7 content exist — each lesson's `additional_task_ids`, shown after the core tasks ("Lessons", above), populated for every grade 7 practice lesson and most mandatory ones. Nothing in the meta layer rewards them yet |
 
 ## Content
@@ -306,7 +306,8 @@ IDLE before uploading.
     a turtle drawing segment by segment, driven by call order since `Segment.line` is always
     null (docs/AI_CONTEXT.md's Gotchas). Wired into `code`, `fix`, `fill`. Grid only if still
     justified afterwards.
-12. Meta layer — XP and topic progress done (practice mode); the garden is next.
+12. ~~Meta layer~~ — done for practice mode: XP, topic progress as a garden, and the reward
+    moment in the success result. Sessions earn neither.
 
 Building the authoring UI early is the standing temptation, because it feels like foundation.
 It is not — it is CRUD, it takes days, and it teaches nothing about whether the core works.
