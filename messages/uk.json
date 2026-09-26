@@ -392,6 +392,7 @@
     "kindPractice": "Практика",
     "practiceNote": "Можна пропустити, але краще не варто.",
     "lessonNumber": "Урок {n}",
+    "curriculumNumber": "№ {n} за програмою",
     "tasksDone": "{done} з {total}",
     "allLessons": "← Усі уроки",
     "backToLesson": "← До уроку",
