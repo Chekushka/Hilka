@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { ImportExportControls } from '@/components/authoring/ImportExportControls';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listLessonsForAuthoring } from '@/lib/db/lesson-authoring';
 import { t } from '@/lib/i18n';
@@ -30,6 +31,8 @@ export default async function LessonsPage() {
           {t('lessonForm.newLesson')}
         </Link>
       </div>
+
+      <ImportExportControls />
 
       {lessons.length === 0 && <p className="mt-6 text-ink-muted">{t('lessonForm.listEmpty')}</p>}
       {grades.map((grade) => (

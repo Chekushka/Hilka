@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lessonTaskIds, resolveTaskSlugs, validateLessonContent } from './content';
+import { lessonTaskIds, resolveTaskSlugs, validateLessonContent, validateLessonImport } from './content';
 import type { LessonContent } from './types';
 
 const known = new Set(['a', 'b', 'c']);
@@ -78,5 +78,32 @@ describe('resolveTaskSlugs', () => {
 describe('lessonTaskIds', () => {
   it('puts core tasks before additional ones', () => {
     expect(lessonTaskIds({ coreTaskIds: ['1', '2'], additionalTaskIds: ['3'] })).toEqual(['1', '2', '3']);
+  });
+});
+
+describe('validateLessonImport', () => {
+  const existing = [
+    { slug: 'g7-25-intro', grade: 7, order: 1 },
+    { slug: 'g7-26-vars', grade: 7, order: 2 }
+  ];
+
+  it('rejects a new lesson taking a number another lesson in the database holds', () => {
+    const errors = validateLessonImport([lesson({ slug: 'g7-new', order: 2 })], existing, known);
+    expect(errors).toEqual([{ lesson: 'g7-new', message: 'order 2 in grade 7 is already used by lesson "g7-26-vars"' }]);
+  });
+
+  it('allows re-importing a lesson over itself', () => {
+    expect(validateLessonImport([lesson()], existing, known)).toEqual([]);
+  });
+
+  it('allows two imported lessons to swap numbers', () => {
+    const swapped = [lesson({ order: 2 }), lesson({ slug: 'g7-26-vars', order: 1 })];
+    expect(validateLessonImport(swapped, existing, known)).toEqual([]);
+  });
+
+  it('keeps every validateLessonContent rule', () => {
+    expect(validateLessonImport([lesson({ slug: 'g7-new', order: 9, coreTaskSlugs: ['zzz'] })], existing, known)).toEqual([
+      { lesson: 'g7-new', message: 'unknown task "zzz"' }
+    ]);
   });
 });

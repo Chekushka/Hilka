@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * Backup and handoff for the whole task catalog (docs/TASKS.md, "JSON
- * export/import of all tasks"). Export is a plain link to the route handler
+ * Backup and handoff for all content — topics, tasks and lessons in one file
+ * (docs/TASKS.md, "JSON export/import of all tasks"). Shown on both /tasks
+ * and /lessons, since either is where a teacher looks for it. Export is a plain link to the route handler
  * — the browser downloads the file, no client state needed. Import reads a
  * chosen file, posts its parsed JSON, and refreshes the list on success.
  */
@@ -35,8 +36,12 @@ export function ImportExportControls() {
         setError(t('authoring.importError'));
         return;
       }
-      const { topicsImported, tasksImported } = result as { topicsImported: number; tasksImported: number };
-      setStatus(t('authoring.importSuccess', { topics: topicsImported, tasks: tasksImported }));
+      const { topicsImported, tasksImported, lessonsImported } = result as {
+        topicsImported: number;
+        tasksImported: number;
+        lessonsImported: number;
+      };
+      setStatus(t('authoring.importSuccess', { topics: topicsImported, tasks: tasksImported, lessons: lessonsImported }));
       router.refresh();
     } catch {
       setError(t('authoring.importInvalidJson'));

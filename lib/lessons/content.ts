@@ -47,6 +47,33 @@ export function validateLessonContent(
   return errors;
 }
 
+/**
+ * validateLessonContent, plus what a partial import can break that a full one
+ * cannot: a lesson already in the database under another slug may hold the
+ * same grade and ministry number. Lessons the import itself carries are left
+ * out of that comparison — they are about to be overwritten, so two lessons
+ * swapping numbers in one import is fine.
+ */
+export function validateLessonImport(
+  incoming: readonly LessonContent[],
+  existing: readonly { slug: string; grade: number; order: number }[],
+  knownTaskSlugs: ReadonlySet<string>
+): LessonContentError[] {
+  const errors = validateLessonContent(incoming, knownTaskSlugs);
+  const incomingSlugs = new Set(incoming.map((lesson) => lesson.slug));
+  const kept = existing.filter((lesson) => !incomingSlugs.has(lesson.slug));
+  for (const lesson of incoming) {
+    const clash = kept.find((other) => other.grade === lesson.grade && other.order === lesson.order);
+    if (clash) {
+      errors.push({
+        lesson: lesson.slug,
+        message: `order ${lesson.order} in grade ${lesson.grade} is already used by lesson "${clash.slug}"`
+      });
+    }
+  }
+  return errors;
+}
+
 /** Content lists slugs, the database stores uuids. Throws on a slug the map lacks — validate first. */
 export function resolveTaskSlugs(slugs: readonly string[], idsBySlug: ReadonlyMap<string, string>): string[] {
   return slugs.map((slug) => {

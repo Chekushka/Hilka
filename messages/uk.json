@@ -212,10 +212,10 @@
   "authoring": {
     "tasksTitle": "Завдання",
     "newTask": "Нове завдання",
-    "exportAll": "Експортувати все (JSON)",
+    "exportAll": "Експортувати все: теми, завдання, уроки (JSON)",
     "importAll": "Імпортувати з JSON",
     "importing": "Імпортую…",
-    "importSuccess": "Імпортовано: тем — {topics}, завдань — {tasks}.",
+    "importSuccess": "Імпортовано: тем — {topics}, завдань — {tasks}, уроків — {lessons}.",
     "importError": "Не вдалося імпортувати. Перевір файл і повтори спробу.",
     "importInvalidJson": "Файл не є коректним JSON.",
     "backToTasks": "До списку завдань",

@@ -17,7 +17,7 @@ import path from 'node:path';
 import { validateTaskChecks } from '@/lib/checker';
 import { getDb } from '@/lib/db/client';
 import { lessons, tasks, topics } from '@/lib/db/schema';
-import { resolveTaskSlugs, validateLessonContent } from '@/lib/lessons/content';
+import { resolveTaskSlugs, validateLessonImport } from '@/lib/lessons/content';
 import type { LessonContent } from '@/lib/lessons/types';
 import type { Check } from '@/lib/checker';
 import type { ParamSpec } from '@/lib/seed';
@@ -145,7 +145,9 @@ async function seedLessons(db: ReturnType<typeof getDb>) {
   // reference a task authored in the UI and exported later.
   const taskRows = await db.select({ id: tasks.id, slug: tasks.slug }).from(tasks);
   const idsBySlug = new Map(taskRows.map((row) => [row.slug, row.id]));
-  const errors = validateLessonContent(lessonContent, new Set(idsBySlug.keys()));
+  // Against the lessons already there too: one authored at /lessons under another slug may hold the same number.
+  const existingLessons = await db.select({ slug: lessons.slug, grade: lessons.grade, order: lessons.order }).from(lessons);
+  const errors = validateLessonImport(lessonContent, existingLessons, new Set(idsBySlug.keys()));
   if (errors.length > 0) {
     throw new Error(errors.map((error) => `lesson ${error.lesson}: ${error.message}`).join('\n'));
   }

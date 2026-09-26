@@ -1,13 +1,20 @@
 /**
  * Bulk import of a JSON export — restore a backup or accept a handoff from
  * another teacher (docs/TASKS.md, "JSON export/import of all tasks").
- * Upserts every topic and task by slug; nothing is written if any part of
+ * Upserts every topic, task and lesson by slug; nothing is written if any part of
  * the bundle is invalid (lib/db/content-io.ts).
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import type { Check } from '@/lib/checker';
-import { ImportValidationError, importContent, type ContentBundle, type TaskContent, type TopicContent } from '@/lib/db/content-io';
+import {
+  ImportValidationError,
+  importContent,
+  type ContentBundle,
+  type LessonExport,
+  type TaskContent,
+  type TopicContent
+} from '@/lib/db/content-io';
 import type { RunCase } from '@/lib/task/types';
 import { isTaskPayload } from '@/lib/task/payload-guards';
 
@@ -69,6 +76,24 @@ function isTaskContentShaped(value: unknown): value is TaskContent {
   );
 }
 
+function isLessonExportShaped(value: unknown): value is LessonExport {
+  if (typeof value !== 'object' || value === null) return false;
+  const l = value as Record<string, unknown>;
+  const isSlugList = (list: unknown) => Array.isArray(list) && list.every((slug) => typeof slug === 'string');
+  // Only the types: kind, order, slugs and task references are rules, checked by validateLessonImport.
+  return (
+    typeof l.slug === 'string' &&
+    typeof l.grade === 'number' &&
+    typeof l.order === 'number' &&
+    typeof l.kind === 'string' &&
+    typeof l.title === 'string' &&
+    (l.curriculumRef === undefined || typeof l.curriculumRef === 'string') &&
+    typeof l.explanationMd === 'string' &&
+    isSlugList(l.coreTaskSlugs) &&
+    isSlugList(l.additionalTaskSlugs)
+  );
+}
+
 function isValidBundle(body: unknown): body is ContentBundle {
   if (typeof body !== 'object' || body === null) return false;
   const b = body as Record<string, unknown>;
@@ -76,7 +101,8 @@ function isValidBundle(body: unknown): body is ContentBundle {
     Array.isArray(b.topics) &&
     b.topics.every(isTopicContentShaped) &&
     Array.isArray(b.tasks) &&
-    b.tasks.every(isTaskContentShaped)
+    b.tasks.every(isTaskContentShaped) &&
+    (b.lessons === undefined || (Array.isArray(b.lessons) && b.lessons.every(isLessonExportShaped)))
   );
 }
 
