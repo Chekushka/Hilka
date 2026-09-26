@@ -34,6 +34,9 @@ export default async function DashboardPage() {
           <Link href="/tasks" className="text-sm text-accent">
             {t('authoring.tasksTitle')}
           </Link>
+          <Link href="/lessons" className="text-sm text-accent">
+            {t('lessonForm.listTitle')}
+          </Link>
           <form action="/api/auth/logout" method="post">
             <button type="submit" className="text-sm text-accent">
               {t('auth.logout')}

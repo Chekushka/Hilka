@@ -99,6 +99,15 @@ for tasks and lessons; an automatic `db:seed` on merge would overwrite edits
 made in the authoring UI. After merging new content in `content/`, run
 `DATABASE_URL=<unpooled> npm run db:seed` by hand.
 
+The other direction — edits made in the authoring UI back into git — is
+`npm run content:write`: pass it an export downloaded from `/tasks` or
+`/lessons` (`npm run content:write -- hilka-content.json`), or `--db` with a
+`DATABASE_URL` to read the database directly. It rewrites only the files whose
+content changed, never deletes one (it lists what `content/` has that the
+export lacks), and keeps only a reference's `code`. Run it, review `git diff`,
+commit — and do this **before** the next `db:seed`, which would otherwise
+overwrite the UI edits with the older files.
+
 The workflows call these scripts, which `package.json` already defines:
 `typecheck`, `lint`, `test`, `test:browser`, `db:generate`, `db:migrate`,
 `db:seed`, `verify:references`.
@@ -131,7 +140,7 @@ until a deploy runs against the old tables.
 createdb hilka
 export DATABASE_URL=postgres://localhost/hilka
 npm run db:migrate    # apply drizzle/
-npm run db:seed       # import content/topics.json and content/seed-tasks/
+npm run db:seed       # import content/topics.json, content/seed-tasks/ and content/lessons/
 npm run db:seed:demo  # one demo teacher/class/open session, for the join and dashboard flows
 ```
 

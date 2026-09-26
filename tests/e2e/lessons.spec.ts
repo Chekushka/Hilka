@@ -24,13 +24,17 @@ test('the practice page lists grade 7 lessons in order, practice lessons marked 
   await expect(page.getByRole('heading', { name: 'Уроки' })).toBeVisible();
 
   const lessons = page.getByRole('listitem');
-  await expect(lessons.first()).toContainText('Урок 25');
+  // Students count from 1; the ministry's lesson number stays alongside.
+  await expect(lessons.first()).toContainText('Урок 1');
+  await expect(lessons.first()).toContainText('№ 25 за програмою');
   await expect(lessons.first()).toContainText('Перша програма');
   await expect(lessons.first()).toContainText("Обов'язковий");
 
   const texts = await lessons.allTextContents();
   const numbers = texts.map((text) => Number(/Урок (\d+)/.exec(text)?.[1]));
-  expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+  expect(numbers).toEqual(numbers.map((_, index) => index + 1));
+  const ministryNumbers = texts.map((text) => Number(/№ (\d+) за програмою/.exec(text)?.[1]));
+  expect(ministryNumbers).toEqual([...ministryNumbers].sort((a, b) => a - b));
 
   const linear = lessons.filter({ hasText: 'Лінійний алгоритм' });
   await expect(linear).toContainText('Практика');

@@ -165,7 +165,7 @@ export function toTask(row: TaskRow): Task | null {
   );
 }
 
-function clampDifficulty(value: number): CodeTask['difficulty'] {
+export function clampDifficulty(value: number): CodeTask['difficulty'] {
   const rounded = Math.min(5, Math.max(1, Math.round(value)));
   return rounded as CodeTask['difficulty'];
 }

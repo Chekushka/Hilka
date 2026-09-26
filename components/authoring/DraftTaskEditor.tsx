@@ -28,7 +28,11 @@ import {
 import { FileDeliveryFields } from './FileDeliveryFields';
 import { lintForFileDelivery, type LintedSource } from './file-lint-gate';
 import { FileLintReport } from './FileLintReport';
-import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import { ChecksField } from './ChecksField';
+import { CasesField } from './CasesField';
+import { GradeTagsField, HintsField } from './HintsField';
+import { checkKindsFor } from '@/lib/task/check-form';
+import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints, hasCasesText } from './task-form-utils';
 
 export interface DraftTask {
   id: string;
@@ -297,50 +301,27 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
           }}
         />
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="checks">
-            {t('authoring.checksLabel')}
-          </label>
-          <textarea
-            id="checks"
-            rows={6}
-            value={checksText}
-            onChange={(event) => setChecksText(event.target.value)}
-            spellCheck={false}
-            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
-          />
-          <p className="text-xs text-ink-muted">{t('authoring.checksHint')}</p>
-          {checksError && <p className="text-xs text-attention">{checksError}</p>}
-        </div>
+        <ChecksField
+          id="checks"
+          value={checksText}
+          onChange={setChecksText}
+          kinds={checkKindsFor('code')}
+          hasCases={hasCasesText(casesText)}
+          label={t('authoring.checksLabel')}
+          jsonLabel={t('authoring.checksJsonLabel')}
+          jsonHint={t('authoring.checksHint')}
+          error={checksError}
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="cases">
-            {t('authoring.casesLabel')}
-          </label>
-          <textarea
-            id="cases"
-            rows={4}
-            value={casesText}
-            onChange={(event) => setCasesText(event.target.value)}
-            spellCheck={false}
-            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
-          />
-          <p className="text-xs text-ink-muted">{t('authoring.casesHint')}</p>
-          {casesError && <p className="text-xs text-attention">{casesError}</p>}
-        </div>
+        <CasesField
+          id="cases"
+          value={casesText}
+          onChange={setCasesText}
+          kinds={checkKindsFor('code')}
+          error={casesError}
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="hints">
-            {t('authoring.hintsLabel')}
-          </label>
-          <textarea
-            id="hints"
-            rows={3}
-            value={hintsText}
-            onChange={(event) => setHintsText(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
+        <HintsField value={hintsText} onChange={setHintsText} />
 
         <div className="flex flex-wrap gap-5">
           <div className="flex flex-col gap-1.5">
@@ -357,17 +338,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
               className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="gradeTags">
-              {t('authoring.gradeTagsLabel')}
-            </label>
-            <input
-              id="gradeTags"
-              value={gradeTagsText}
-              onChange={(event) => setGradeTagsText(event.target.value)}
-              className="w-40 rounded-md border border-line bg-surface px-3 py-2 text-ink"
-            />
-          </div>
+          <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
         </div>
 
         <div className="flex items-center gap-3">

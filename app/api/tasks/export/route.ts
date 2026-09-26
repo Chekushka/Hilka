@@ -1,5 +1,5 @@
 /**
- * Full JSON export of every topic and task — backup, git history, handoff
+ * Full JSON export of every topic, task and lesson — backup, git history, handoff
  * to another teacher (docs/TASKS.md, "JSON export/import of all tasks").
  */
 import { NextResponse } from 'next/server';
@@ -14,6 +14,6 @@ export async function GET() {
 
   const bundle = await exportContent();
   return NextResponse.json(bundle, {
-    headers: { 'Content-Disposition': 'attachment; filename="hilka-tasks.json"' }
+    headers: { 'Content-Disposition': 'attachment; filename="hilka-content.json"' }
   });
 }

@@ -23,6 +23,7 @@
   --accent-soft: #e2ebe7;
   --growth: #6e9a5f;        /* progress, garden, completion */
   --honey: #c9922f;         /* XP, rewards, unlocks */
+  --soil: #d8ccb2;          /* the garden's ground — the sand in green, sand and honey */
   --attention: #a8763c;     /* "not correct yet" — never red */
   --failure: #a3352b;       /* system failure only: connection lost, session closed */
 
@@ -76,6 +77,7 @@
     --accent-soft: #2a3b37;
     --growth: #86b575;
     --honey: #dfae4e;
+    --soil: #4d4536;
     --attention: #c79358;
     --failure: #d4645a;
 
@@ -96,6 +98,7 @@
   --color-accent-soft: var(--accent-soft);
   --color-growth: var(--growth);
   --color-honey: var(--honey);
+  --color-soil: var(--soil);
   --color-attention: var(--attention);
   --color-failure: var(--failure);
 

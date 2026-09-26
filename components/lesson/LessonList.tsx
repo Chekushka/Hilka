@@ -25,7 +25,7 @@ export function LessonList({ lessons }: { lessons: LessonListEntry[] }) {
 
   return (
     <ol className="flex flex-col gap-2">
-      {lessons.map((lesson) => {
+      {lessons.map((lesson, index) => {
         const doneCount = lesson.taskSlugs.filter((slug) => done.has(slug)).length;
         const complete = lesson.taskSlugs.length > 0 && doneCount === lesson.taskSlugs.length;
         return (
@@ -36,7 +36,14 @@ export function LessonList({ lessons }: { lessons: LessonListEntry[] }) {
                 lesson.kind === 'practice' ? 'border-dashed border-line' : 'border-line'
               }`}
             >
-              <span className="w-16 shrink-0 text-xs text-ink-muted">{t('lessons.lessonNumber', { n: lesson.order })}</span>
+              {/* Students count from 1 in list order; the ministry's lesson number stays
+                  beside it so a teacher can match it to the school plan. */}
+              <span className="flex w-36 shrink-0 flex-col">
+                <span className="text-sm font-medium text-ink">{t('lessons.lessonNumber', { n: index + 1 })}</span>
+                <span className="whitespace-nowrap text-xs text-ink-muted">
+                  {t('lessons.curriculumNumber', { n: lesson.order })}
+                </span>
+              </span>
               <span className="flex flex-1 flex-col">
                 <span className="font-medium text-ink">{lesson.title}</span>
                 <span className="text-xs text-ink-muted">

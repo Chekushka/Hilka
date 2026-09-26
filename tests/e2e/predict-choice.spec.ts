@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { useJsonMode } from './authoring-helpers';
 
 /**
  * `predict.answerMode: 'choice'` (docs/TASK_SCHEMA.md) — the student picks
@@ -64,6 +65,7 @@ test('a teacher builds a choice-mode predict task, and a student grades it by pi
   await page.getByLabel('Формат відповіді').selectOption('choice');
   await page.getByLabel(/Варіанти відповіді/).fill('20\n14\n8');
   // index 1 ("14") is the real output of a + b * 4.
+  await useJsonMode(page, 'checks');
   await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'choice_equals', indices: [1] }]));
   await page.getByLabel(/Складність/).fill('1');
 
