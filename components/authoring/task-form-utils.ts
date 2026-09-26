@@ -80,3 +80,9 @@ export function parseCasesJson(text: string): ParsedCases | InvalidCases {
   }
   return { ok: true, cases: value as RunCase[] };
 }
+
+/** Whether the cases text holds at least one case — what decides if stdout_equals is still allowed. */
+export function hasCasesText(text: string): boolean {
+  const parsed = parseCasesJson(text);
+  return parsed.ok && parsed.cases.length > 0;
+}

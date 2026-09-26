@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { useJsonMode } from './authoring-helpers';
 
 /**
  * `parsons.indentMode: 'chosen'` (docs/TASK_SCHEMA.md) — every line starts
@@ -68,6 +69,7 @@ test('a teacher builds a chosen-indent parsons task, and a student grades it by 
     .fill('0:import turtle\n0:for i in range(3):\n1:turtle.forward(100)\n1:turtle.right(120)');
 
   await page.getByLabel('Відступи').selectOption('chosen');
+  await useJsonMode(page, 'checks');
   await page
     .getByLabel('Перевірки (JSON)')
     .fill(JSON.stringify([{ kind: 'order_equals', lines: [0, 1, 2, 3], checkIndent: true, indents: [0, 0, 1, 1] }]));

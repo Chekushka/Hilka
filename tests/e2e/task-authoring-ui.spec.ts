@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { useJsonMode } from './authoring-helpers';
 
 /**
  * The authoring forms themselves (docs/TASKS.md, "Task authoring UI"), on
@@ -46,13 +47,14 @@ test('a teacher builds a turtle task from the forms and publishes it', async ({ 
   await page.getByLabel('Середовище').selectOption('turtle');
   await page.getByLabel('Умова').fill('Намалюй квадрат зі стороною 60.');
   await typeIntoEditor(page, 0, 'import turtle\n');
+  await useJsonMode(page, 'checks');
   await page.getByLabel('Перевірки (JSON)').fill(
     JSON.stringify([
       { kind: 'shape_props', closed: true, segmentCount: 4 },
       { kind: 'shape_equals', normalize: ['translate', 'rotate'] }
     ])
   );
-  await page.getByLabel(/Підказки/).fill('Спробуй цикл for i in range(4).');
+  await page.getByLabel('Підказка 1').fill('Спробуй цикл for i in range(4).');
   await page.getByLabel(/Складність/).fill('2');
 
   await Promise.all([
@@ -92,8 +94,9 @@ test('a teacher builds a parsons task from the forms and publishes it with no ru
   await page.getByLabel('Умова').fill('Розстав рядки так, щоб програма намалювала трикутник.');
   // The default lines pre-filled by NewTaskForm are already this triangle
   // (import → for → forward → right), so only the check needs writing.
+  await useJsonMode(page, 'checks');
   await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'order_equals', lines: [0, 1, 2, 3] }]));
-  await page.getByLabel(/Підказки/).fill('Цикл повторюється тричі.');
+  await page.getByLabel('Підказка 1').fill('Цикл повторюється тричі.');
   await page.getByLabel(/Складність/).fill('1');
 
   await Promise.all([
@@ -127,8 +130,9 @@ test('a teacher builds a quiz task from the forms and publishes it with no run s
   await page.getByLabel('Умова').fill('Яке з цих чисел найбільше?');
   await page.getByLabel('Варіанти відповіді (один на рядок)').fill('1\n2\n3');
   // Index 2 ("3") is the correct, largest option.
+  await useJsonMode(page, 'checks');
   await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'choice_equals', indices: [2] }]));
-  await page.getByLabel(/Підказки/).fill('Порівняй усі три числа.');
+  await page.getByLabel('Підказка 1').fill('Порівняй усі три числа.');
   await page.getByLabel(/Складність/).fill('1');
 
   await Promise.all([
@@ -161,10 +165,11 @@ test('a teacher builds a predict task from the forms, runs it, and publishes it'
   await page.getByLabel('Назва').fill('UI Predict чернетка');
   await page.getByLabel('Умова').fill('Що виведе ця програма?');
   await typeIntoEditor(page, 0, 'a = 2\nb = 3\nprint(a + b * 4)');
+  await useJsonMode(page, 'checks');
   await page
     .getByLabel('Перевірки (JSON)')
     .fill(JSON.stringify([{ kind: 'text_equals', value: '14', normalize: 'trim' }]));
-  await page.getByLabel(/Підказки/).fill('Множення виконується раніше за додавання.');
+  await page.getByLabel('Підказка 1').fill('Множення виконується раніше за додавання.');
   await page.getByLabel(/Складність/).fill('1');
 
   await Promise.all([
@@ -201,10 +206,11 @@ test('a teacher builds a fix task from the forms, runs both programs, and publis
   await page.getByLabel('Назва').fill('UI Fix чернетка');
   await page.getByLabel('Умова').fill('У цій програмі помилка. Виправ її.');
   await typeIntoEditor(page, 0, 'import turtle\nfor i in range(4):\n    turtle.forward(60)\n    turtle.right(80)');
+  await useJsonMode(page, 'checks');
   await page
     .getByLabel('Перевірки (JSON)')
     .fill(JSON.stringify([{ kind: 'shape_props', closed: true, segmentCount: 4 }]));
-  await page.getByLabel(/Підказки/).fill('Перевір кут повороту.');
+  await page.getByLabel('Підказка 1').fill('Перевір кут повороту.');
   await page.getByLabel(/Складність/).fill('2');
 
   await Promise.all([
@@ -248,10 +254,11 @@ test('a teacher builds a fill task from the forms, writes a reference, and publi
   await page
     .getByLabel('Шаблон коду з пропусками')
     .fill('import turtle\nfor i in range({{1}}):\n    turtle.forward({{2}})\n    turtle.right({{3}})');
+  await useJsonMode(page, 'checks');
   await page
     .getByLabel('Перевірки (JSON)')
     .fill(JSON.stringify([{ kind: 'shape_props', closed: true, segmentCount: 5 }]));
-  await page.getByLabel(/Підказки/).fill('Сума поворотів дорівнює 360°.');
+  await page.getByLabel('Підказка 1').fill('Сума поворотів дорівнює 360°.');
   await page.getByLabel(/Складність/).fill('3');
 
   await Promise.all([
@@ -292,7 +299,8 @@ test('a teacher adds cases to a console code task, and a hidden case blocks publ
   await page.getByLabel('Умова').fill('Прочитай довжину і ширину прямокутника, виведи периметр.');
   // Task-level checks stay empty; every case carries its own — the same
   // shape content/seed-tasks/grade7-code-rectangle-perimeter.json uses.
-  await page.getByLabel(/Тестові випадки/).fill(
+  await useJsonMode(page, 'cases');
+  await page.getByLabel('Тестові випадки (JSON, необов\'язково)').fill(
     JSON.stringify([
       {
         label: 'звичайний випадок',

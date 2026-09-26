@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { useJsonMode } from './authoring-helpers';
 
 /**
  * The file-delivery control in the authoring UI (docs/TASKS.md, "File
@@ -56,6 +57,7 @@ test('a file-delivery code task is created, lint-gated, and published', async ({
   // The name follows the slug until the teacher types one.
   await expect(page.getByLabel('Назва файлу')).toHaveValue(`${slug.replace(/-/g, '_')}.py`);
   await page.getByLabel('Назва файлу').fill('hello_file.txt');
+  await useJsonMode(page, 'checks');
   await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'stdout_equals', value: 'Привіт, файл!', trim: true }]));
 
   // A bad name is caught before anything is sent.
@@ -96,6 +98,7 @@ test('file delivery turned on in the fix draft editor survives a save', async ({
   await page.getByLabel('Середовище').selectOption('console');
   await page.getByLabel('Умова').fill('Виправ програму.');
   await typeIntoEditor(page, 0, 'print("Привіт"');
+  await useJsonMode(page, 'checks');
   await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'stdout_equals', value: 'Привіт', trim: true }]));
   await createDraft(page);
 

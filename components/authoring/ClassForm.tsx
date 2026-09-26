@@ -3,9 +3,10 @@
 /**
  * Creates or edits a class: a title and a roster (docs/TASKS.md, "Class +
  * roster management"). The roster is a plain-text field, one display name
- * per line — same convention as hints/gradeTags in task authoring
- * (task-form-utils.ts's parseHints), not a dynamic add/remove list, and it
- * stays a plain array of names (CLAUDE.md rule 8): no accounts, no per-name
+ * per line, parsed by task-form-utils.ts's parseHints — a class list is
+ * pasted in from elsewhere far more often than typed name by name, so it stays
+ * a textarea rather than the add/remove list task hints now use. It stays a
+ * plain array of names (CLAUDE.md rule 8): no accounts, no per-name
  * identifiers.
  */
 import { useRouter } from 'next/navigation';
