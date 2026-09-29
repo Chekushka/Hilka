@@ -1,40 +1,26 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
+import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
-import { getSessionForTeacher } from '@/lib/db/sessions';
-import { buildRollup, type CellStatus } from '@/lib/dashboard/rollup';
+import { getSessionForTeacher, type TeacherSessionDetail } from '@/lib/db/sessions';
+import {
+  STUCK_RULES,
+  countStates,
+  sortForClassTable,
+  summarizeStudents,
+  tallyTasks,
+  type StudentState
+} from '@/lib/dashboard/class-status';
+import type { CellStatus } from '@/lib/dashboard/rollup';
 import { findSharedFiles } from '@/lib/dashboard/shared-files';
 import { formatPoints } from '@/lib/dashboard/csv';
+import { agoFrom, formatClock } from '@/lib/dashboard/time';
 import { sessionAllowsHighBand, suggestGradesForRoster, type SuggestedGrade } from '@/lib/grading/grade';
 import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
-
-/** Shape and icon carry the meaning, not colour alone (design-brief-python-platform.md). */
-function RollupCell({ status, attempts }: { status: CellStatus; attempts: number }) {
-  if (status === 'passed') {
-    return (
-      <span className="text-growth" aria-label={t('dashboard.resultPassed')} title={t('dashboard.resultPassed')}>
-        ✓
-      </span>
-    );
-  }
-  if (status === 'stuck') {
-    const label = t('dashboard.rollupStuck', { n: attempts });
-    return (
-      <span className="text-attention" aria-label={label} title={label}>
-        ○ {attempts}
-      </span>
-    );
-  }
-  return (
-    <span className="text-ink-muted" aria-label={t('dashboard.rollupNotStarted')}>
-      —
-    </span>
-  );
-}
 
 /** A suggestion for the teacher, never a verdict — see lib/grading/grade.ts. */
 function GradeCell({ suggestion }: { suggestion: SuggestedGrade }) {
@@ -45,20 +31,63 @@ function GradeCell({ suggestion }: { suggestion: SuggestedGrade }) {
       </span>
     );
   }
-  const points = t('dashboard.gradePoints', { earned: formatPoints(suggestion.earned), possible: suggestion.possible });
+  const points = t('dashboard.gradePoints', {
+    earned: formatPoints(suggestion.earned),
+    possible: suggestion.possible
+  });
   return (
     <span title={suggestion.capped ? `${points}. ${t('dashboard.gradeCappedHint')}` : points}>
-      <span className="font-semibold text-ink">{suggestion.grade}</span>
+      <span className="text-lg font-semibold text-ink">{suggestion.grade}</span>
       {suggestion.capped && <span className="ml-1 text-xs text-ink-muted">{t('dashboard.gradeCapped')}</span>}
     </span>
   );
 }
 
-export default async function SessionDetailPage({
-  params
-}: {
-  params: Promise<{ id: string }>;
-}) {
+const CELL_WORD: Record<CellStatus, string> = {
+  passed: 'dashboard.resultPassed',
+  stuck: 'dashboard.resultNotYet',
+  not_started: 'dashboard.rollupNotStarted'
+};
+
+/**
+ * Past this many tasks a per-task strip stops being readable at a glance;
+ * the row keeps its count, and the task summary below and the student card
+ * still show every task.
+ */
+const MAX_STRIP_TASKS = 24;
+
+const TALLY_ORDER: { state: StudentState; key: string }[] = [
+  { state: 'working', key: 'dashboard.tallyWorking' },
+  { state: 'stuck', key: 'dashboard.tallyStuck' },
+  { state: 'finished', key: 'dashboard.tallyFinished' },
+  { state: 'not_started', key: 'dashboard.tallyNotStarted' }
+];
+
+/**
+ * Everything the page shows, read once per request. `now` is taken with the
+ * data, so the stuck rule and "last activity" agree with what was read.
+ */
+async function loadClassView(session: TeacherSessionDetail) {
+  const rows = await listAttemptsForSession(session.id);
+  const now = Date.now();
+  const students = sortForClassTable(
+    summarizeStudents(session.roster, session.tasks, rows, {
+      mode: session.mode,
+      open: session.open,
+      now
+    })
+  );
+  return { rows, students, now };
+}
+
+/**
+ * The class table (the mockups' class screen): who is working, who needs
+ * help, who has finished — at a glance and from the back of the room when the
+ * teacher puts it on the projector. State is a shape and a word, never a
+ * colour alone (docs/design-brief-python-platform.md). Each name opens the
+ * student card.
+ */
+export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const teacher = await getCurrentTeacher();
   if (!teacher) {
     redirect('/login');
@@ -72,8 +101,9 @@ export default async function SessionDetailPage({
     notFound();
   }
 
-  const rows = await listAttemptsForSession(session.id);
-  const rollup = buildRollup(session.roster, session.tasks, rows);
+  const { rows, students, now } = await loadClassView(session);
+  const counts = countStates(students);
+  const taskTallies = tallyTasks(students, session.tasks.length);
   const sharedFiles = findSharedFiles(rows);
   const graded = session.mode === 'graded';
   const grades = graded
@@ -81,94 +111,226 @@ export default async function SessionDetailPage({
         suggestGradesForRoster(session.roster, session.tasks, rows).map((row) => [row.studentName, row.suggestion])
       )
     : null;
+  const taskIndex = new Map(session.tasks.map((task, index) => [task.id, index]));
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
       {session.open && <AutoRefresh everyMs={5000} />}
       <Link href="/dashboard" className="text-sm text-accent">
         ← {t('dashboard.backToDashboard')}
       </Link>
-      <div className="mt-2 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink">
-          {t('dashboard.sessionDetailTitle', { code: session.code })}
-        </h1>
-        <div className="flex gap-4">
-          {rows.some((row) => row.sourceHash !== null) && (
-            <a href={`/api/dashboard/sessions/${session.id}/files`} className="text-sm text-accent">
-              {t('dashboard.downloadFiles')}
-            </a>
-          )}
-          {graded && rows.length > 0 && (
-            <a href={`/api/dashboard/sessions/${session.id}/grades`} className="text-sm text-accent">
-              {t('dashboard.exportGrades')}
-            </a>
-          )}
-          {rows.length > 0 && (
-            <a href={`/api/dashboard/sessions/${session.id}/export`} className="text-sm text-accent">
-              {t('dashboard.exportCsv')}
-            </a>
-          )}
+
+      <header className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-b border-line pb-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-ink">{t('dashboard.sessionDetailTitle', { code: session.code })}</h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            {t('dashboard.sessionSubtitle', {
+              classTitle: session.classTitle,
+              mode: t(graded ? 'sessionBuilder.modeGraded' : 'sessionBuilder.modePractice'),
+              n: session.roster.length
+            })}
+            {' · '}
+            {session.open ? t('dashboard.sessionOpen') : t('dashboard.sessionClosed')}
+          </p>
         </div>
+        <ul className="ml-auto flex flex-wrap gap-2" aria-label={t('dashboard.studentsTitle')}>
+          {TALLY_ORDER.filter(({ state }) => state !== 'stuck' || !graded).map(({ state, key }) => (
+            <li
+              key={state}
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm text-ink"
+            >
+              <StateMark state={state} size={12} />
+              {t(key, { n: counts[state] })}
+            </li>
+          ))}
+        </ul>
+      </header>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+        {session.open && <span className="text-xs text-ink-muted">{t('dashboard.liveUpdating')}</span>}
+        <span className="flex-1" />
+        {rows.some((row) => row.sourceHash !== null) && (
+          <a href={`/api/dashboard/sessions/${session.id}/files`} className="text-accent">
+            {t('dashboard.downloadFiles')}
+          </a>
+        )}
+        {graded && rows.length > 0 && (
+          <a href={`/api/dashboard/sessions/${session.id}/grades`} className="text-accent">
+            {t('dashboard.exportGrades')}
+          </a>
+        )}
+        {rows.length > 0 && (
+          <a href={`/api/dashboard/sessions/${session.id}/export`} className="text-accent">
+            {t('dashboard.exportCsv')}
+          </a>
+        )}
       </div>
-      {session.open && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.liveUpdating')}</p>}
 
       {session.tasks.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-lg font-semibold text-ink">{t('dashboard.rollupTitle')}</h2>
-          <p className="mt-1 text-sm text-ink-muted">{t('dashboard.rollupNote')}</p>
-          {graded && <p className="mt-1 text-sm text-ink-muted">{t('dashboard.gradeNote')}</p>}
+        <section aria-labelledby="class-table" className="mt-5">
+          <h2 id="class-table" className="sr-only">
+            {t('dashboard.studentsTitle')}
+          </h2>
+          <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+            <table className="w-full min-w-[56rem] border-collapse text-base">
+              <thead>
+                <tr className="border-b border-line text-left text-sm text-ink-muted">
+                  <th className="w-12 py-3 pl-5" aria-hidden="true" />
+                  <th className="py-3 pr-4 font-medium">{t('dashboard.columnStudent')}</th>
+                  <th className="py-3 pr-4 font-medium">{t('dashboard.columnState')}</th>
+                  <th className="py-3 pr-4 font-medium">{t('dashboard.columnTasks')}</th>
+                  <th className="py-3 pr-4 text-right font-medium">{t('dashboard.columnAttempts')}</th>
+                  <th className="py-3 pr-4 text-right font-medium">{t('dashboard.columnHintsShort')}</th>
+                  <th className="py-3 pr-5 font-medium">{t('dashboard.columnLastActivity')}</th>
+                  {grades && (
+                    <th className="py-3 pr-5 text-center font-medium">{t('dashboard.columnSuggestedGrade')}</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((student) => {
+                  const current = student.currentTaskId !== null ? taskIndex.get(student.currentTaskId) : undefined;
+                  return (
+                    <tr
+                      key={student.studentName}
+                      data-state={student.state}
+                      className="border-b border-line last:border-b-0 even:bg-bg/50"
+                    >
+                      <td className="py-3.5 pl-5 align-middle leading-none">
+                        <StateMark state={student.state} size={16} />
+                      </td>
+                      <td className="py-3.5 pr-4 font-medium">
+                        <Link
+                          href={`/dashboard/sessions/${session.id}/students/${encodeURIComponent(student.studentName)}`}
+                          className="text-ink underline-offset-4 hover:text-accent hover:underline"
+                          aria-label={t('dashboard.openStudentCard', {
+                            name: student.studentName
+                          })}
+                        >
+                          {student.studentName}
+                        </Link>
+                      </td>
+                      <td className={`py-3.5 pr-4 font-semibold ${STATE_TEXT_CLASS[student.state]}`}>
+                        {stateLabel(student.state)}
+                      </td>
+                      <td className="py-3.5 pr-4">
+                        <div className="flex items-center gap-3">
+                          <span className="min-w-14 shrink-0 whitespace-nowrap tabular-nums text-ink">
+                            {t('dashboard.tasksDoneValue', {
+                              done: student.tasksDone,
+                              total: student.tasksTotal
+                            })}
+                          </span>
+                          {session.tasks.length <= MAX_STRIP_TASKS && (
+                            <span className="flex max-w-[16rem] flex-wrap gap-1">
+                              {student.cells.map((cell, index) => (
+                                <CellMark
+                                  key={session.tasks[index].id}
+                                  status={cell.status}
+                                  attempts={cell.attempts}
+                                  size={13}
+                                  label={t('dashboard.taskStripItem', {
+                                    n: index + 1,
+                                    title: session.tasks[index].title,
+                                    status:
+                                      cell.status === 'stuck'
+                                        ? t('dashboard.rollupStuck', {
+                                            n: cell.attempts
+                                          })
+                                        : t(CELL_WORD[cell.status])
+                                  })}
+                                />
+                              ))}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3.5 pr-4 text-right tabular-nums text-ink">{student.attempts}</td>
+                      <td className="py-3.5 pr-4 text-right tabular-nums text-ink">{student.hints}</td>
+                      <td className="py-3.5 pr-5 text-sm">
+                        {student.lastActivityAt ? (
+                          <>
+                            <span className="block text-ink" title={formatClock(student.lastActivityAt)}>
+                              {agoText(agoFrom(student.lastActivityAt, now))}
+                            </span>
+                            {current !== undefined && (
+                              <span className="block max-w-[14rem] truncate text-xs text-ink-muted">
+                                {t('dashboard.currentTask', {
+                                  n: current + 1,
+                                  title: session.tasks[current].title
+                                })}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-ink-muted">—</span>
+                        )}
+                      </td>
+                      {grades && (
+                        <td className="py-3.5 pr-5 text-center">
+                          {/* Every row comes from the roster, so every name has a suggestion. */}
+                          <GradeCell suggestion={grades.get(student.studentName)!} />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-ink-muted">
+            {graded
+              ? t('dashboard.stuckRuleGraded')
+              : t('dashboard.stuckRule', {
+                  checks: STUCK_RULES.failedChecks,
+                  minutes: STUCK_RULES.idleMinutes
+                })}
+          </p>
+          {graded && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.gradeNote')}</p>}
           {graded && !sessionAllowsHighBand(session.tasks) && (
             <p className="mt-1 text-sm text-attention">{t('dashboard.gradeNoHardTask')}</p>
           )}
-          <table className="mt-3 w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-ink-muted">
-                <th className="py-2 pr-3">{t('dashboard.columnStudent')}</th>
-                {session.tasks.map((task) => (
-                  <th key={task.id} className="px-2 py-2 text-center font-normal" title={task.title}>
-                    {task.title}
-                  </th>
-                ))}
-                {grades && <th className="px-2 py-2 text-center font-normal">{t('dashboard.columnSuggestedGrade')}</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {rollup.map((studentRow) => (
-                <tr key={studentRow.studentName} className="border-b border-line">
-                  <td className="py-2 pr-3 text-ink">
-                    <Link
-                      href={`/dashboard/sessions/${session.id}/students/${encodeURIComponent(studentRow.studentName)}`}
-                      className="text-accent hover:underline"
-                      aria-label={t('dashboard.openStudentCard', { name: studentRow.studentName })}
-                    >
-                      {studentRow.studentName}
-                    </Link>
-                    {studentRow.stuckCount > 0 && (
-                      <span className="ml-2 text-xs text-attention">
-                        {t('dashboard.rollupAttentionCount', { n: studentRow.stuckCount })}
-                      </span>
-                    )}
-                  </td>
-                  {studentRow.cells.map((cell, index) => (
-                    <td key={session.tasks[index].id} className="px-2 py-2 text-center">
-                      <RollupCell status={cell.status} attempts={cell.attempts} />
-                    </td>
-                  ))}
-                  {grades && (
-                    <td className="px-2 py-2 text-center">
-                      {/* Every rollup row comes from the roster, so every name has a suggestion. */}
-                      <GradeCell suggestion={grades.get(studentRow.studentName)!} />
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        </section>
+      )}
+
+      {session.tasks.length > 0 && (
+        <section aria-labelledby="session-tasks" className="mt-8">
+          <h2 id="session-tasks" className="text-lg font-semibold text-ink">
+            {t('dashboard.tasksSummaryTitle')}
+          </h2>
+          <ol className="mt-3 grid gap-2 md:grid-cols-2">
+            {session.tasks.map((task, index) => {
+              const tally = taskTallies[index];
+              return (
+                <li key={task.id} className="rounded-lg border border-line bg-surface px-4 py-3">
+                  <p className="font-medium text-ink">
+                    {index + 1}. {task.title}
+                  </p>
+                  <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CellMark status="passed" attempts={0} size={12} decorative />
+                      {t('dashboard.tasksSummaryPassed', { n: tally.passed })}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <CellMark status="stuck" attempts={0} size={12} decorative />
+                      {t('dashboard.tasksSummaryTrying', { n: tally.trying })}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <CellMark status="not_started" attempts={0} size={12} decorative />
+                      {t('dashboard.tasksSummaryNotStarted', {
+                        n: tally.notStarted
+                      })}
+                    </span>
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
         </section>
       )}
 
       {sharedFiles.length > 0 && (
-        <section className="mt-6">
+        <section className="mt-8">
           <h2 className="text-lg font-semibold text-ink">{t('dashboard.sharedFilesTitle')}</h2>
           <p className="mt-1 text-sm text-ink-muted">{t('dashboard.sharedFilesNote')}</p>
           <ul className="mt-3 space-y-2 text-sm">
@@ -176,46 +338,60 @@ export default async function SessionDetailPage({
               <li key={`${group.taskId}:${group.studentNames.join(',')}`} className="text-ink">
                 <span className="font-medium">{group.taskTitle}</span>
                 {' — '}
-                {t('dashboard.sharedFilesStudents', { names: group.studentNames.join(', ') })}
+                {t('dashboard.sharedFilesStudents', {
+                  names: group.studentNames.join(', ')
+                })}
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <h2 className="mt-6 text-lg font-semibold text-ink">{t('dashboard.attemptsLogTitle')}</h2>
-      {rows.length === 0 ? (
-        <p className="mt-4 text-ink-muted">{t('dashboard.attemptsEmpty')}</p>
-      ) : (
-        <table className="mt-4 w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-line text-left text-ink-muted">
-              <th className="py-2">{t('dashboard.columnStudent')}</th>
-              <th className="py-2">{t('dashboard.columnTask')}</th>
-              <th className="py-2">{t('dashboard.columnResult')}</th>
-              <th className="py-2">{t('dashboard.columnHints')}</th>
-              <th className="py-2">{t('dashboard.columnDuration')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-b border-line">
-                <td className="py-2 text-ink">{row.studentName}</td>
-                <td className="py-2 text-ink">{row.taskTitle}</td>
-                <td className={`py-2 ${row.passed ? 'text-growth' : 'text-attention'}`}>
-                  {row.passed ? t('dashboard.resultPassed') : t('dashboard.resultNotYet')}
-                </td>
-                <td className="py-2 text-ink">{row.hintsUsed}</td>
-                <td className="py-2 text-ink">
-                  {row.durationMs !== null
-                    ? t('dashboard.durationSeconds', { n: Math.round(row.durationMs / 1000) })
-                    : t('dashboard.durationUnknown')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <section aria-labelledby="attempts-log" className="mt-8">
+        {rows.length === 0 ? (
+          <>
+            <h2 id="attempts-log" className="text-lg font-semibold text-ink">
+              {t('dashboard.attemptsLogSummary', { n: 0 })}
+            </h2>
+            <p className="mt-2 text-ink-muted">{t('dashboard.attemptsEmpty')}</p>
+          </>
+        ) : (
+          <details>
+            <summary className="cursor-pointer">
+              <h2 id="attempts-log" className="inline text-lg font-semibold text-ink">
+                {t('dashboard.attemptsLogSummary', { n: rows.length })}
+              </h2>
+            </summary>
+            <table className="mt-3 w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-line text-left text-ink-muted">
+                  <th className="py-2">{t('dashboard.columnStudent')}</th>
+                  <th className="py-2">{t('dashboard.columnTask')}</th>
+                  <th className="py-2">{t('dashboard.columnResult')}</th>
+                  <th className="py-2">{t('dashboard.columnHints')}</th>
+                  <th className="py-2">{t('dashboard.columnSubmittedAt')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id} className="border-b border-line">
+                    <td className="py-2 text-ink">{row.studentName}</td>
+                    <td className="py-2 text-ink">{row.taskTitle}</td>
+                    <td className={`py-2 ${row.passed ? 'text-growth' : 'text-attention'}`}>
+                      <span className="inline-flex items-center gap-1.5">
+                        <CellMark status={row.passed ? 'passed' : 'stuck'} attempts={1} size={11} decorative />
+                        {row.passed ? t('dashboard.resultPassed') : t('dashboard.resultNotYet')}
+                      </span>
+                    </td>
+                    <td className="py-2 tabular-nums text-ink">{row.hintsUsed}</td>
+                    <td className="py-2 tabular-nums text-ink">{formatClock(row.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
+        )}
+      </section>
     </main>
   );
 }

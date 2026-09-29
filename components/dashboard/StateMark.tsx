@@ -89,20 +89,24 @@ export function CellMark({
   status,
   attempts,
   size = 14,
+  label: ownLabel,
   decorative = false
 }: {
   status: CellStatus;
   attempts: number;
   size?: number;
+  /** Replaces the default wording, e.g. to name the task too. */
+  label?: string;
   /** When a word beside it already says the same. */
   decorative?: boolean;
 }) {
   const label =
-    status === 'passed'
+    ownLabel ??
+    (status === 'passed'
       ? t('dashboard.resultPassed')
       : status === 'stuck'
         ? t('dashboard.rollupStuck', { n: attempts })
-        : t('dashboard.rollupNotStarted');
+        : t('dashboard.rollupNotStarted'));
   const kind = status === 'passed' ? 'tick' : status === 'stuck' ? 'hollow-diamond' : 'ring';
   if (decorative) {
     return (

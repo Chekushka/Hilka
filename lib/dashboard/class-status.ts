@@ -166,3 +166,23 @@ export function countStates(rows: StudentSummary[]): Record<StudentState, number
 export function taskTotalsFor(attempts: StudentAttempt[], taskId: string): { hints: number; timeMs: number } {
   return taskTotals(attempts.filter((a) => a.taskId === taskId));
 }
+
+export interface TaskTally {
+  passed: number;
+  /** Tried and not passed yet — the rollup's 'stuck' cell. */
+  trying: number;
+  notStarted: number;
+}
+
+/** Per task, how the class stands on it — spots the task that stops everyone. Same order as the session's tasks. */
+export function tallyTasks(rows: StudentSummary[], taskCount: number): TaskTally[] {
+  const tallies = Array.from({ length: taskCount }, (): TaskTally => ({ passed: 0, trying: 0, notStarted: 0 }));
+  for (const row of rows) {
+    row.cells.forEach((cell, index) => {
+      if (cell.status === 'passed') tallies[index].passed += 1;
+      else if (cell.status === 'stuck') tallies[index].trying += 1;
+      else tallies[index].notStarted += 1;
+    });
+  }
+  return tallies;
+}

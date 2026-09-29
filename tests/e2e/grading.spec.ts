@@ -59,7 +59,7 @@ test('partial credit in a graded session becomes a suggested grade', async ({ pa
   await page.getByRole('link', { name: new RegExp(code) }).click();
   await expect(page.getByRole('heading', { name: `Заняття ${code}` })).toBeVisible();
 
-  const rollup = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Хто потребує допомоги' }) });
+  const rollup = page.getByRole('region', { name: 'Учні заняття' });
   await expect(rollup.getByRole('columnheader', { name: 'Орієнтовна оцінка' })).toBeVisible();
   // 2/3 of the task's one point is 67% — достатній, grade 8.
   await expect(rollup.locator('tr').filter({ hasText: 'Олена' }).getByTitle('0.7 з 1')).toHaveText('8');

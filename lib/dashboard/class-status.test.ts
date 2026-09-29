@@ -3,6 +3,7 @@ import {
   STUCK_RULES,
   countStates,
   sortForClassTable,
+  tallyTasks,
   summarizeStudents,
   taskTotalsFor,
   type SessionContext,
@@ -153,5 +154,20 @@ describe('sortForClassTable and countStates', () => {
       ['Віра', 'finished']
     ]);
     expect(countStates(rows)).toEqual({ stuck: 2, working: 1, not_started: 1, finished: 1 });
+  });
+});
+
+describe('tallyTasks', () => {
+  it('counts passed, trying and not started per task', () => {
+    const rows = summarizeStudents(
+      ['Анна', 'Богдан', 'Віра'],
+      tasks,
+      [attempt('Анна', 't1', true, 1), attempt('Богдан', 't1', false, 1), attempt('Богдан', 't2', true, 1)],
+      practice
+    );
+    expect(tallyTasks(rows, tasks.length)).toEqual([
+      { passed: 1, trying: 1, notStarted: 1 },
+      { passed: 1, trying: 0, notStarted: 2 }
+    ]);
   });
 });

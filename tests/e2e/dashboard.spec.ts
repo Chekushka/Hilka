@@ -30,14 +30,28 @@ async function requestLoginLink(page: Page, email: string): Promise<string> {
 }
 
 /**
- * Scoped to the "Хто потребує допомоги" <section> specifically (docs/TASKS.md,
- * "Results dashboard") — with more than one assigned task, a student's row
- * in the plain attempts log below can otherwise share every filter text a
- * rollup-row lookup might use, since each log row only names one task.
+ * The class table's row for a student (docs/TASKS.md, "Class table") — its
+ * rows carry `data-state`, which the attempts log's rows do not.
  */
-function rollupRowFor(page: Page, studentName: string) {
-  const section = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Хто потребує допомоги' }) });
-  return section.locator('tr').filter({ hasText: studentName });
+function classRowFor(page: Page, studentName: string) {
+  return page.getByRole('region', { name: 'Учні заняття' }).locator('tr[data-state]').filter({ hasText: studentName });
+}
+
+/** The attempts log, collapsed under its summary — toContainText reads it without opening. */
+function attemptsLog(page: Page) {
+  return page.getByRole('region', { name: /Усі спроби/ });
+}
+
+/**
+ * A task's line in the per-task summary. The demo session assigns every
+ * published task, too many for the class table's per-task strip, so the
+ * summary is where a single task's result shows.
+ */
+function taskSummaryFor(page: Page, title: string) {
+  return page
+    .getByRole('region', { name: 'Завдання заняття' })
+    .getByRole('listitem')
+    .filter({ has: page.getByText(new RegExp(`^\\d+\\. ${title}$`)) });
 }
 
 test('a teacher logs in and sees a student\'s attempt on the dashboard', async ({ page }) => {
@@ -63,18 +77,15 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
 
   await page.getByRole('link', { name: /DEMO01/ }).click();
   await expect(page.getByRole('heading', { name: 'Заняття DEMO01' })).toBeVisible();
-  // The rollup table above also has a row naming the student, without the
-  // task title (docs/TASKS.md, "Results dashboard") — filtering on both
-  // texts finds the attempts-log row specifically, regardless of DOM order.
   // Attempts are append-only (docs/AI_CONTEXT.md) — a retried test run adds a
   // row rather than replacing one, so this matches whichever comes first
   // rather than assuming there is exactly one.
-  const row = page.locator('tr').filter({ hasText: STUDENT_NAME }).filter({ hasText: 'Квадрат' }).first();
+  const row = attemptsLog(page).locator('tr').filter({ hasText: STUDENT_NAME }).filter({ hasText: 'Квадрат' }).first();
   await expect(row).toContainText('Зараховано');
 
-  // The rollup marks the same result too, just without the task's own name
-  // in the row — it is a checkmark in that task's column instead.
-  await expect(rollupRowFor(page, STUDENT_NAME).getByLabel('Зараховано').first()).toBeVisible();
+  // The class table has the student working or done, and the task summary counts the pass.
+  await expect(classRowFor(page, STUDENT_NAME)).toHaveAttribute('data-state', /working|stuck|finished/);
+  await expect(taskSummaryFor(page, 'Квадрат')).toContainText(/Зараховано: [1-9]/);
 
   // CSV export (docs/TASKS.md, "CSV export"): fetched from inside the page,
   // not via page.request — a relative URL there resolves against
@@ -98,7 +109,7 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
   expect(result.body).toContain('Зараховано');
 });
 
-test('the rollup shows a student who has tried a task but never passed it', async ({ page }) => {
+test('the class table shows a student who has tried a task but never passed it', async ({ page }) => {
   const STUCK_STUDENT = 'Соломія';
 
   await page.goto(`/s/${DEMO_CODE}`);
@@ -123,9 +134,11 @@ test('the rollup shows a student who has tried a task but never passed it', asyn
   await page.getByRole('link', { name: /DEMO01/ }).click();
   await expect(page.getByRole('heading', { name: 'Заняття DEMO01' })).toBeVisible();
 
-  const rollupRow = rollupRowFor(page, STUCK_STUDENT);
-  await expect(rollupRow).toContainText('Потребує уваги: 1');
-  await expect(rollupRow.getByLabel(/Не зараховано, спроб: \d+/)).toBeVisible();
+  // One failed Check is "working", not yet "needs help" — but the shared
+  // demo session keeps this student's failures from earlier runs, so either.
+  const classRow = classRowFor(page, STUCK_STUDENT);
+  await expect(classRow).toHaveAttribute('data-state', /working|stuck/);
+  await expect(taskSummaryFor(page, 'Квадрат')).toContainText(/Не виходить: [1-9]/);
 });
 
 test('an unknown login token bounces back to login with a calm message', async ({ page }) => {
