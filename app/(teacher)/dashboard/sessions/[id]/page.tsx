@@ -136,7 +136,13 @@ export default async function SessionDetailPage({
               {rollup.map((studentRow) => (
                 <tr key={studentRow.studentName} className="border-b border-line">
                   <td className="py-2 pr-3 text-ink">
-                    {studentRow.studentName}
+                    <Link
+                      href={`/dashboard/sessions/${session.id}/students/${encodeURIComponent(studentRow.studentName)}`}
+                      className="text-accent hover:underline"
+                      aria-label={t('dashboard.openStudentCard', { name: studentRow.studentName })}
+                    >
+                      {studentRow.studentName}
+                    </Link>
                     {studentRow.stuckCount > 0 && (
                       <span className="ml-2 text-xs text-attention">
                         {t('dashboard.rollupAttentionCount', { n: studentRow.stuckCount })}
