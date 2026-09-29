@@ -22,11 +22,11 @@ export default async function NewSessionPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-[88rem] px-4 py-6 sm:px-6">
       <Link href="/dashboard" className="text-sm text-accent">
         {t('dashboard.backToDashboard')}
       </Link>
-      <h1 className="mt-2 text-xl font-semibold text-ink">{t('sessionBuilder.title')}</h1>
+      <h1 className="mt-2 text-2xl font-bold text-ink">{t('sessionBuilder.title')}</h1>
       <SessionBuilderForm classes={classes} tasks={tasks} lessons={lessons} />
     </main>
   );

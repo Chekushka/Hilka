@@ -264,7 +264,22 @@
     "gradedWarningAdditional": "додаткове",
     "gradedWarningNote": "Оцінка має спиратися на основні завдання обов'язкових уроків. Заняття все одно можна створити.",
     "fileUnsequencedTitle": "Завдання в IDLE без підготовки в браузері:",
-    "fileUnsequencedNote": "Додай перед ним завдання на ту саму тему, де учень пише код у браузері, — або залиш так, якщо учні вже його розв'язали."
+    "fileUnsequencedNote": "Додай перед ним завдання на ту саму тему, де учень пише код у браузері, — або залиш так, якщо учні вже його розв'язали.",
+    "settingsTitle": "Налаштування",
+    "filtersTitle": "Банк завдань",
+    "searchLabel": "Пошук",
+    "searchPlaceholder": "Назва завдання",
+    "bankShown": "Показано {shown} з {total}",
+    "taskMeta": "{grades} кл. · {topic} · складність {difficulty}",
+    "fileTask": "в IDLE",
+    "chosenTitle": "У занятті",
+    "chosenEmpty": "Познач завдання в банку — тут вони стануть у тому порядку, в якому їх побачать учні.",
+    "moveUp": "Вище: {title}",
+    "moveDown": "Нижче: {title}",
+    "remove": "Прибрати: {title}",
+    "timePresetMinutes": "{n} хв",
+    "timePresetNone": "без межі",
+    "createdHint": "Покажи код на проєкторі: учні вводять його на головній сторінці Hilka."
   },
   "classForm": {
     "newClass": "Новий клас",

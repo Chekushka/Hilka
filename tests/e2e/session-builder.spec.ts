@@ -69,3 +69,30 @@ test('the session builder link requires a logged-in teacher', async ({ page }) =
   await page.goto('/sessions/new');
   await expect(page.getByRole('heading', { name: 'Вхід для вчителя' })).toBeVisible();
 });
+
+test('search narrows the bank, and the chosen order is the order students meet', async ({ page }) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Нове заняття' }).click();
+  await page.locator('#class').selectOption({ label: 'Демонстраційний клас' });
+
+  await page.getByLabel('Пошук').fill('трикутник');
+  await expect(page.getByRole('listitem').filter({ has: page.getByText('Квадрат', { exact: true }) })).toHaveCount(0);
+  await page.getByRole('listitem').filter({ has: page.getByText('Трикутник', { exact: true }) }).getByRole('checkbox').check();
+  await page.getByLabel('Пошук').fill('квадрат');
+  await page.getByRole('listitem').filter({ has: page.getByText('Квадрат', { exact: true }) }).getByRole('checkbox').check();
+
+  // Chosen in the order Трикутник, Квадрат; moved up, Квадрат goes first.
+  await page.getByRole('button', { name: 'Вище: Квадрат' }).click();
+  await page.getByRole('button', { name: '15 хв' }).click();
+  await expect(page.getByLabel('Обмеження часу (хв)')).toHaveValue('15');
+
+  await page.getByRole('button', { name: 'Створити заняття' }).click();
+  await expect(page.getByText('Заняття створено. Код для учнів:')).toBeVisible({ timeout: 10_000 });
+  const code = ((await page.locator('p.font-mono.text-2xl').textContent()) ?? '').trim();
+
+  await page.goto(`/s/${code.toLowerCase()}`);
+  await page.getByRole('button', { name: 'Олена' }).click();
+  const square = await page.getByRole('button', { name: 'Квадрат', exact: true }).boundingBox();
+  const triangle = await page.getByRole('button', { name: 'Трикутник', exact: true }).boundingBox();
+  expect(square && triangle && square.y < triangle.y).toBe(true);
+});
