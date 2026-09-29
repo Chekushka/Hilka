@@ -1,0 +1,72 @@
+{
+  "slug": "g8-code-compare-two",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Яке більше?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два числа. Виведи перше більше, друге більше або рівні.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "7 і 3",
+      "stdin": [
+        "7",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "перше більше",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "2 і 9",
+      "stdin": [
+        "2",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "друге більше",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "5 і 5",
+      "stdin": [
+        "5",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "рівні",
+          "normalize": "loose",
+          "message": "Числа однакові — треба вивести рівні."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Тут три варіанти — знадобиться elif.",
+    "Числа можуть бути дробовими — читай через float()."
+  ],
+  "reference": {
+    "code": "a = float(input())\nb = float(input())\nif a > b:\n    print(\"перше більше\")\nelif b > a:\n    print(\"друге більше\")\nelse:\n    print(\"рівні\")\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

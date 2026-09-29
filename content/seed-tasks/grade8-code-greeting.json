@@ -1,0 +1,61 @@
+{
+  "slug": "g8-code-greeting",
+  "topicSlug": "io",
+  "type": "code",
+  "title": "Привітання",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ім'я і привітай людину: для імені Оля програма має вивести Привіт, Оля!",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Оля",
+      "stdin": [
+        "Оля"
+      ],
+      "checks": [
+        {
+          "kind": "stdout_contains",
+          "value": "Привіт",
+          "ignoreCase": true,
+          "message": "Не забудь саме слово «Привіт»."
+        },
+        {
+          "kind": "stdout_contains",
+          "value": "Оля",
+          "message": "У привітанні має бути ім'я, яке ввели."
+        }
+      ]
+    },
+    {
+      "label": "Тарас",
+      "stdin": [
+        "Тарас"
+      ],
+      "checks": [
+        {
+          "kind": "stdout_contains",
+          "value": "Тарас",
+          "message": "Ім'я має братися з введення, а не бути написаним у програмі."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "name = input() — прочитає ім'я.",
+    "print(\"Привіт,\", name + \"!\")"
+  ],
+  "reference": {
+    "code": "name = input(\"Як тебе звати? \")\nprint(\"Привіт,\", name + \"!\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

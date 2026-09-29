@@ -1,0 +1,58 @@
+{
+  "slug": "g8-fix-input-plus-one",
+  "topicSlug": "io",
+  "type": "fix",
+  "title": "Наступного року",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала вивести, скільки років буде людині наступного року, але падає з помилкою. Виправ її.",
+    "broken": "age = input(\"Скільки тобі років? \")\nprint(\"Наступного року тобі буде\", age + 1)\n"
+  },
+  "cases": [
+    {
+      "label": "13",
+      "stdin": [
+        "13"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 14,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 13 має вийти 14."
+        }
+      ]
+    },
+    {
+      "label": "9",
+      "stdin": [
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 10,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Що повертає input() — число чи текст?",
+    "Оберни введення в int(): age = int(input(...))."
+  ],
+  "reference": {
+    "code": "age = int(input(\"Скільки тобі років? \"))\nprint(\"Наступного року тобі буде\", age + 1)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

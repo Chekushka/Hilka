@@ -1,0 +1,34 @@
+{
+  "slug": "g8-fill-range-sum",
+  "topicSlug": "loops-for",
+  "type": "fill",
+  "title": "Заповни пропуски: сума від 1 до 10",
+  "payload": {
+    "type": "fill",
+    "prompt": "Заповни пропуски так, щоб програма вивела суму всіх чисел від 1 до 10 включно (55).",
+    "template": "total = 0\nfor i in range({{1}}, {{2}}):\n    total = total + {{3}}\nprint(total)\n"
+  },
+  "checks": [
+    {
+      "kind": "number_close",
+      "value": 55,
+      "tol": 0.01,
+      "which": "last",
+      "message": "Сума чисел від 1 до 10 — 55. Перевір межі range."
+    }
+  ],
+  "hints": [
+    "Перше число в range — початок, він входить.",
+    "Друге число в range не входить — тож щоб дійти до 10, треба написати 11.",
+    "Додавати треба змінну циклу."
+  ],
+  "reference": {
+    "code": "total = 0\nfor i in range(1, 11):\n    total = total + i\nprint(total)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

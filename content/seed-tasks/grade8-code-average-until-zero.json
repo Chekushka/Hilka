@@ -1,0 +1,80 @@
+{
+  "slug": "g8-code-average-until-zero",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Середнє до нуля",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Програма читає додатні числа, доки не введуть 0. Виведи середнє арифметичне введених чисел (без нуля), округлене до двох знаків. Хоча б одне число перед нулем буде завжди.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "4, 6, 0",
+      "stdin": [
+        "4",
+        "6",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 4 і 6 середнє — 5. Нуль у середнє не входить."
+        }
+      ]
+    },
+    {
+      "label": "одне число",
+      "stdin": [
+        "5",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "1, 2, 2, 0",
+      "stdin": [
+        "1",
+        "2",
+        "2",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1.67,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Потрібні дві змінні: сума і кількість.",
+    "Прочитай число до циклу, а всередині циклу — додай його і прочитай наступне.",
+    "В кінці: round(total / count, 2)."
+  ],
+  "reference": {
+    "code": "x = float(input())\ntotal = 0\ncount = 0\nwhile x != 0:\n    total = total + x\n    count = count + 1\n    x = float(input())\nprint(round(total / count, 2))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

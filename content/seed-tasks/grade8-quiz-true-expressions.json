@@ -1,0 +1,37 @@
+{
+  "slug": "g8-quiz-true-expressions",
+  "topicSlug": "booleans",
+  "type": "quiz",
+  "title": "Що з цього True?",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Які з цих виразів мають значення True? Обери всі правильні.",
+    "options": [
+      "5 > 3",
+      "10 != 10",
+      "3 >= 3",
+      "7 < 2"
+    ],
+    "multiple": true
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0,
+        2
+      ],
+      "message": "5 > 3 — так. 3 >= 3 — так, бо «більше або дорівнює». 10 != 10 — ні: 10 дорівнює 10."
+    }
+  ],
+  "hints": [
+    "!= означає «не дорівнює».",
+    ">= правдиве і тоді, коли числа рівні."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

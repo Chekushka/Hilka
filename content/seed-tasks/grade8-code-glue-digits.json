@@ -1,0 +1,82 @@
+{
+  "slug": "g8-code-glue-digits",
+  "topicSlug": "types",
+  "type": "code",
+  "title": "Склей цифри",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай дві цифри (кожну окремим рядком). Склей їх у двоцифрове число і виведи два рядки: саме число і це число, помножене на 2. Наприклад, для 4 і 7: 47 і 94.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "4 і 7",
+      "stdin": [
+        "4",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            47,
+            94
+          ],
+          "tol": 0.01,
+          "message": "Для 4 і 7 треба вивести 47, а потім 94."
+        }
+      ]
+    },
+    {
+      "label": "1 і 0",
+      "stdin": [
+        "1",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            10,
+            20
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "9 і 9",
+      "stdin": [
+        "9",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            99,
+            198
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Склеювати вміють рядки: \"4\" + \"7\" дає \"47\".",
+    "Склей рядки, потім перетвори результат на число: int(a + b)."
+  ],
+  "reference": {
+    "code": "a = input()\nb = input()\nnumber = int(a + b)\nprint(number)\nprint(number * 2)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

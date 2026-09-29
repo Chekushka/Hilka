@@ -1,0 +1,74 @@
+{
+  "slug": "g8-parsons-count-positive",
+  "topicSlug": "loops-for",
+  "type": "parsons",
+  "title": "Скільки додатних? (склади програму)",
+  "payload": {
+    "type": "parsons",
+    "prompt": "Програма читає 5 чисел і виводить, скільки з них додатних. Розстав рядки і задай кожному правильний відступ.",
+    "lines": [
+      {
+        "text": "count = 0",
+        "indent": 0
+      },
+      {
+        "text": "for i in range(5):",
+        "indent": 0
+      },
+      {
+        "text": "x = int(input())",
+        "indent": 1
+      },
+      {
+        "text": "if x > 0:",
+        "indent": 1
+      },
+      {
+        "text": "count = count + 1",
+        "indent": 2
+      },
+      {
+        "text": "print(count)",
+        "indent": 0
+      }
+    ],
+    "distractors": [
+      "if x < 0:"
+    ],
+    "indentMode": "chosen"
+  },
+  "checks": [
+    {
+      "kind": "order_equals",
+      "lines": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "checkIndent": true,
+      "indents": [
+        0,
+        0,
+        1,
+        1,
+        2,
+        0
+      ],
+      "message": "Ще не так. Що має повторюватися 5 разів, а що — виконатися лише раз, до або після циклу?"
+    }
+  ],
+  "hints": [
+    "Лічильник обнуляємо один раз — до циклу.",
+    "Читання числа і перевірка — всередині циклу; додавання до лічильника — всередині if.",
+    "Результат виводимо один раз — після циклу, без відступу."
+  ],
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

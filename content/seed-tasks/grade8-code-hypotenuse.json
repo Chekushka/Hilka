@@ -1,0 +1,76 @@
+{
+  "slug": "g8-code-hypotenuse",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Гіпотенуза",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай довжини двох катетів прямокутного трикутника і виведи довжину гіпотенузи. За теоремою Піфагора c = √(a² + b²).",
+    "starter": "import math\n"
+  },
+  "cases": [
+    {
+      "label": "3 і 4",
+      "stdin": [
+        "3",
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для катетів 3 і 4 гіпотенуза дорівнює 5."
+        }
+      ]
+    },
+    {
+      "label": "6 і 8",
+      "stdin": [
+        "6",
+        "8"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 10,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "1 і 1",
+      "stdin": [
+        "1",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1.41,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Катети читай через float().",
+    "math.sqrt(a * a + b * b)"
+  ],
+  "reference": {
+    "code": "import math\na = float(input())\nb = float(input())\nprint(math.sqrt(a * a + b * b))\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

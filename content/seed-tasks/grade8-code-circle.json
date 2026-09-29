@@ -1,0 +1,80 @@
+{
+  "slug": "g8-code-circle",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Коло",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай радіус кола. Виведи два рядки: довжину кола (2πr), а потім площу круга (πr²), обидва числа округли до двох знаків. Число π візьми з модуля math: math.pi.",
+    "starter": "import math\n"
+  },
+  "cases": [
+    {
+      "label": "r = 1",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            6.28,
+            3.14
+          ],
+          "tol": 0.01,
+          "message": "Для r = 1: довжина 6.28, площа 3.14 — саме в такому порядку."
+        }
+      ]
+    },
+    {
+      "label": "r = 2.5",
+      "stdin": [
+        "2.5"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            15.71,
+            19.63
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "r = 10",
+      "stdin": [
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            62.83,
+            314.16
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Радіус може бути дробовим — читай через float().",
+    "r² можна записати як r ** 2.",
+    "round(2 * math.pi * r, 2)"
+  ],
+  "reference": {
+    "code": "import math\nr = float(input())\nprint(round(2 * math.pi * r, 2))\nprint(round(math.pi * r ** 2, 2))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

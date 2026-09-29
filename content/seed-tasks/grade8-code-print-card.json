@@ -1,0 +1,33 @@
+{
+  "slug": "g8-code-print-card",
+  "topicSlug": "intro",
+  "type": "code",
+  "title": "Візитівка програми",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Напиши програму, яка виводить рівно два рядки:\nМене звати Python\nЯ виконую команди по черзі",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Мене звати Python\nЯ виконую команди по черзі",
+      "trim": true,
+      "message": "Потрібні рівно два рядки, саме з таким текстом. Кожен рядок — окремий print()."
+    }
+  ],
+  "hints": [
+    "Кожен print() виводить окремий рядок.",
+    "Текст пишеться в лапках: print(\"Мене звати Python\")."
+  ],
+  "reference": {
+    "code": "print(\"Мене звати Python\")\nprint(\"Я виконую команди по черзі\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

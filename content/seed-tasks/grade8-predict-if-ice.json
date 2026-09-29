@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-if-ice",
+  "topicSlug": "conditions",
+  "type": "predict",
+  "title": "Лід чи вода?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "t = -3\nif t < 0:\n    print(\"лід\")\nelse:\n    print(\"вода\")",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "лід",
+      "normalize": "trim",
+      "message": "-3 < 0 — правда, тому виконується гілка if, а else пропускається."
+    }
+  ],
+  "hints": [
+    "Чи правда, що -3 < 0?",
+    "Виконується лише одна з двох гілок."
+  ],
+  "reference": {
+    "code": "t = -3\nif t < 0:\n    print(\"лід\")\nelse:\n    print(\"вода\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

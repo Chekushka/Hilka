@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-while-triple",
+  "topicSlug": "loops-while",
+  "type": "predict",
+  "title": "Множимо на 3",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 1\nwhile x < 50:\n    x = x * 3\nprint(x)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "81",
+      "normalize": "trim",
+      "message": "x стає 3, 9, 27, 81. Після 27 умова ще правдива, тому x стає 81 — і лише тоді цикл зупиняється."
+    }
+  ],
+  "hints": [
+    "Випиши на папері значення x після кожного кроку.",
+    "Умова перевіряється перед кожним кроком, а не після."
+  ],
+  "reference": {
+    "code": "x = 1\nwhile x < 50:\n    x = x * 3\nprint(x)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

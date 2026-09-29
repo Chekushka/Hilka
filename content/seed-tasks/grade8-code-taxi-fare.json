@@ -1,0 +1,93 @@
+{
+  "slug": "g8-code-taxi-fare",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Таксі",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Поїздка на таксі коштує 50 грн, і перші 3 км уже входять у ціну. Кожен наступний кілометр — 15 грн. Уночі вся ціна множиться на 1.5. Прочитай кількість кілометрів (ціле число) і слово так або ні — чи зараз ніч. Виведи вартість поїздки.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "2 км, день",
+      "stdin": [
+        "2",
+        "ні"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 50,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 2 км удень — лише посадка, 50 грн."
+        }
+      ]
+    },
+    {
+      "label": "10 км, день",
+      "stdin": [
+        "10",
+        "ні"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 155,
+          "tol": 0.01,
+          "which": "last",
+          "message": "10 км удень: 50 + 7 · 15 = 155."
+        }
+      ]
+    },
+    {
+      "label": "10 км, ніч",
+      "stdin": [
+        "10",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 232.5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "3 км, ніч",
+      "stdin": [
+        "3",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 75,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу порахуй денну ціну, а нічну надбавку — окремим if.",
+    "Платних кілометрів km - 3, але тільки якщо km більше за 3.",
+    "Порівнюй слово з рядком: if night == \"так\":"
+  ],
+  "reference": {
+    "code": "km = int(input())\nnight = input()\nprice = 50\nif km > 3:\n    price = price + (km - 3) * 15\nif night == \"так\":\n    price = price * 1.5\nprint(price)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

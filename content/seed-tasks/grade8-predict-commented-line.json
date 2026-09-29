@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-commented-line",
+  "topicSlug": "comments",
+  "type": "predict",
+  "title": "Що Python пропустить?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 5\n# x = x + 10\nx = x * 2  # подвоюємо\nprint(x)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "10",
+      "normalize": "trim",
+      "message": "Другий рядок — коментар, він не виконується. У третьому виконується x * 2, а все після # пропускається: 5 · 2 = 10."
+    }
+  ],
+  "hints": [
+    "Усе, що після #, Python пропускає.",
+    "Коментар може стояти й після команди в тому ж рядку."
+  ],
+  "reference": {
+    "code": "x = 5\n# x = x + 10\nx = x * 2  # подвоюємо\nprint(x)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

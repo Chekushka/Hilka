@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-variable-copy",
+  "topicSlug": "variables",
+  "type": "predict",
+  "title": "Змінна запам'ятовує значення",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = 3\nb = a\na = 10\nprint(a, b)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "10 3",
+      "normalize": "trim",
+      "message": "b = a копіює значення, яке було в a в ту мить (3). Нове значення a на b вже не впливає."
+    }
+  ],
+  "hints": [
+    "Виконуй рядки по черзі й записуй на папері, що лежить у кожній змінній.",
+    "Після b = a змінна b зберігає 3 — і не стежить за a."
+  ],
+  "reference": {
+    "code": "a = 3\nb = a\na = 10\nprint(a, b)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

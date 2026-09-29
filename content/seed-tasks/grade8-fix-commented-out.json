@@ -1,0 +1,60 @@
+{
+  "slug": "g8-fix-commented-out",
+  "topicSlug": "comments",
+  "type": "fix",
+  "title": "Закоментований рядок",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала рахувати вартість покупки: ціна одного товару помножити на кількість. Але вона падає з помилкою. Знайди, у чому справа.",
+    "broken": "# ціна одного товару\nprice = float(input())\n# кількість\ncount = int(input())\n# total = price * count\nprint(total)\n"
+  },
+  "cases": [
+    {
+      "label": "12.5 грн, 4 шт.",
+      "stdin": [
+        "12.5",
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 50,
+          "tol": 0.01,
+          "which": "last",
+          "message": "12.5 · 4 = 50."
+        }
+      ]
+    },
+    {
+      "label": "3 грн, 3 шт.",
+      "stdin": [
+        "3",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Python каже, що не знає змінної total. Де вона мала з'явитися?",
+    "Рядок із # не виконується — навіть якщо в ньому правильний код."
+  ],
+  "reference": {
+    "code": "# ціна одного товару\nprice = float(input())\n# кількість\ncount = int(input())\ntotal = price * count\nprint(total)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

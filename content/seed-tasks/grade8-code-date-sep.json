@@ -1,0 +1,60 @@
+{
+  "slug": "g8-code-date-sep",
+  "topicSlug": "io",
+  "type": "code",
+  "title": "Дата через крапку",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай день, місяць і рік — кожен окремим рядком — і виведи дату в одному рядку через крапку, без пробілів. Для 29, 09, 2026: 29.09.2026",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "29, 09, 2026",
+      "stdin": [
+        "29",
+        "09",
+        "2026"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "29.09.2026",
+          "normalize": "trim",
+          "message": "Останній рядок має бути 29.09.2026 — без пробілів навколо крапок."
+        }
+      ]
+    },
+    {
+      "label": "1, 12, 2025",
+      "stdin": [
+        "1",
+        "12",
+        "2025"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "1.12.2025",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Звичайний print ставить між частинами пробіл.",
+    "Параметр sep змінює роздільник: print(day, month, year, sep=\".\")"
+  ],
+  "reference": {
+    "code": "day = input()\nmonth = input()\nyear = input()\nprint(day, month, year, sep=\".\")\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-int-float",
+  "topicSlug": "types",
+  "type": "predict",
+  "title": "Перетворення типів",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "print(int(7.9) + float(\"2\"))",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "9.0",
+      "normalize": "trim",
+      "message": "int(7.9) відкидає дробову частину — 7 (не округлює!). float(\"2\") — це 2.0. 7 + 2.0 = 9.0."
+    }
+  ],
+  "hints": [
+    "int() не округлює, а відкидає все після крапки.",
+    "Якщо в сумі є хоч одне float, результат теж float."
+  ],
+  "reference": {
+    "code": "print(int(7.9) + float(\"2\"))"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

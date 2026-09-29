@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-string-plus",
+  "topicSlug": "types",
+  "type": "predict",
+  "title": "Рядки теж додаються",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = \"5\"\nb = \"3\"\nprint(a + b)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "53",
+      "normalize": "trim",
+      "message": "a і b — рядки (у лапках). Для рядків + означає «склеїти», тож виходить 53, а не 8."
+    }
+  ],
+  "hints": [
+    "Подивись на лапки: які типи в a і b?",
+    "Рядки + не додає, а склеює."
+  ],
+  "reference": {
+    "code": "a = \"5\"\nb = \"3\"\nprint(a + b)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

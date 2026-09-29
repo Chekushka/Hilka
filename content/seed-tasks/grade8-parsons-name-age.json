@@ -1,0 +1,54 @@
+{
+  "slug": "g8-parsons-name-age",
+  "topicSlug": "io",
+  "type": "parsons",
+  "title": "Ім'я і вік (склади програму)",
+  "payload": {
+    "type": "parsons",
+    "prompt": "Розстав рядки так, щоб програма спочатку запитала ім'я, потім вік, а тоді вивела ім'я і вік наступного року.",
+    "lines": [
+      {
+        "text": "name = input(\"Як тебе звати? \")",
+        "indent": 0
+      },
+      {
+        "text": "age = int(input(\"Скільки тобі років? \"))",
+        "indent": 0
+      },
+      {
+        "text": "next_age = age + 1",
+        "indent": 0
+      },
+      {
+        "text": "print(name, next_age)",
+        "indent": 0
+      }
+    ],
+    "distractors": [
+      "next_age = input() + 1"
+    ],
+    "indentMode": "given"
+  },
+  "checks": [
+    {
+      "kind": "order_equals",
+      "lines": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "message": "Порядок ще не той. Не можна рахувати з віком, поки його не прочитали."
+    }
+  ],
+  "hints": [
+    "Спочатку — введення, потім обчислення, в кінці — виведення.",
+    "input() дає текст; додати до нього 1 не вийде."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,74 @@
+{
+  "slug": "g8-code-three-digit-sum",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Цифри тризначного числа",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай тризначне число і виведи суму його цифр. Для 123 це 6. Використай // і %.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "123",
+      "stdin": [
+        "123"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 6,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 123 сума цифр — 6."
+        }
+      ]
+    },
+    {
+      "label": "905",
+      "stdin": [
+        "905"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 14,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "100",
+      "stdin": [
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Остання цифра — n % 10.",
+    "Перша цифра — n // 100.",
+    "Середня: (n // 10) % 10."
+  ],
+  "reference": {
+    "code": "n = int(input())\nprint(n // 100 + n // 10 % 10 + n % 10)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

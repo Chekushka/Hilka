@@ -1,0 +1,36 @@
+{
+  "slug": "g8-quiz-math-sqrt",
+  "topicSlug": "arithmetic",
+  "type": "quiz",
+  "title": "Квадратний корінь",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Як у Python правильно обчислити квадратний корінь з 25?",
+    "options": [
+      "import math, а потім math.sqrt(25)",
+      "sqrt(25) — без жодного import",
+      "25 ** 2",
+      "math.root(25)"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Функція sqrt живе в модулі math: спочатку import math, потім math.sqrt(25). А 25 ** 2 — це квадрат, 625."
+    }
+  ],
+  "hints": [
+    "Математичні функції зібрані в модулі math.",
+    "Модуль треба підключити командою import."
+  ],
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

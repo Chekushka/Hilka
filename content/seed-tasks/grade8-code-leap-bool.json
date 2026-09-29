@@ -1,0 +1,86 @@
+{
+  "slug": "g8-code-leap-bool",
+  "topicSlug": "booleans",
+  "type": "code",
+  "title": "Високосний рік одним виразом",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Рік високосний, якщо ділиться на 4, але не на 100, — або якщо ділиться на 400. Прочитай рік і виведи True або False одним логічним виразом.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "2024",
+      "stdin": [
+        "2024"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim",
+          "message": "2024 ділиться на 4 і не ділиться на 100 — високосний."
+        }
+      ]
+    },
+    {
+      "label": "1900",
+      "stdin": [
+        "1900"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "False",
+          "normalize": "trim",
+          "message": "1900 ділиться на 100, але не на 400 — не високосний."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "2000",
+      "stdin": [
+        "2000"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "2023",
+      "stdin": [
+        "2023"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "False",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "«Ділиться на 4» — це year % 4 == 0.",
+    "Дві умови з «але не» поєднуй через and, а «або» — через or.",
+    "Візьми першу частину в дужки: (… and …) or …."
+  ],
+  "reference": {
+    "code": "year = int(input())\nprint((year % 4 == 0 and year % 100 != 0) or year % 400 == 0)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

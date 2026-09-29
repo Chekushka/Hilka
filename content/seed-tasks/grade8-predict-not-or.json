@@ -1,0 +1,40 @@
+{
+  "slug": "g8-predict-not-or",
+  "topicSlug": "booleans",
+  "type": "predict",
+  "title": "not і or",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = True\nb = False\nprint(not a or b)",
+    "answerMode": "choice",
+    "options": [
+      "True",
+      "False",
+      "None",
+      "Помилка"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        1
+      ],
+      "message": "Спочатку not a — це False. Потім False or False — теж False."
+    }
+  ],
+  "hints": [
+    "not виконується раніше за or.",
+    "or правдиве, коли правдива хоча б одна частина."
+  ],
+  "reference": {
+    "code": "a = True\nb = False\nprint(not a or b)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

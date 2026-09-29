@@ -1,0 +1,73 @@
+{
+  "slug": "g8-code-free-delivery",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Безкоштовна доставка",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Інтернет-магазин: якщо сума замовлення 500 грн або більше, доставка безкоштовна, інакше вона коштує 60 грн. Прочитай суму замовлення і виведи, скільки треба заплатити разом із доставкою.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "600 грн",
+      "stdin": [
+        "600"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 600,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 600 грн доставка безкоштовна: разом 600."
+        }
+      ]
+    },
+    {
+      "label": "499 грн",
+      "stdin": [
+        "499"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 559,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 499 грн додається доставка 60: разом 559."
+        }
+      ]
+    },
+    {
+      "label": "рівно 500",
+      "stdin": [
+        "500"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 500,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порівняй суму з 500.",
+    "Доставку додавай лише в гілці, де сума менша за 500."
+  ],
+  "reference": {
+    "code": "total = int(input())\nif total < 500:\n    total = total + 60\nprint(total)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}
