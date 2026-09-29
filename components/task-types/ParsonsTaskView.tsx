@@ -35,8 +35,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { evaluateChecks, type CheckReport } from '@/lib/checker';
-import { Hints } from '@/components/task/Hints';
-import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
+import { CheckReportPanel } from '@/components/task/CheckReportPanel';
+import type { NextTaskAction } from '@/components/task/NextTaskButton';
+import { CheckAction, DockIdle, WorkspaceDock } from '@/components/task/WorkspaceDock';
+import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
 import { parsonsPool, type ParsonsPoolItem } from '@/lib/task/parsons';
 import type { AttemptOutcome, ParsonsTask } from '@/lib/task/types';
@@ -46,6 +48,7 @@ interface ParsonsTaskViewProps {
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   hintsEnabled?: boolean;
   next?: NextTaskAction;
+  chrome?: WorkspaceChrome;
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -57,11 +60,28 @@ function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 
+/** One step of indentation, drawn as a guide line — the shape of the block, not a count of spaces. */
+function IndentGuides({ level }: { level: number }) {
+  return (
+    <>
+      {Array.from({ length: level }, (_, i) => (
+        <span key={i} aria-hidden="true" className="w-6 flex-none self-stretch border-l-2 border-dashed border-line" />
+      ))}
+    </>
+  );
+}
+
+const lineClass = 'whitespace-pre font-mono text-base text-ink';
+
 function BankRow({ item, onAdd }: { item: ParsonsPoolItem; onAdd: () => void }) {
   return (
-    <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink">
-      <span>{item.text}</span>
-      <button type="button" onClick={onAdd} className="shrink-0 text-xs text-accent">
+    <li className="flex items-center justify-between gap-3 rounded-lg border-[1.5px] border-line bg-surface px-4 py-2.5 hover:border-accent">
+      <span className={lineClass}>{item.text}</span>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="flex-none rounded-md px-2 py-1 text-sm font-medium text-accent hover:bg-accent-soft"
+      >
         {t('parsons.add')}
       </button>
     </li>
@@ -85,29 +105,31 @@ function AnswerRow({
   });
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    paddingLeft: `${1 + indent * 1.5}rem`
+    transition
   };
+  // Lifted while dragged: the one raised shadow, so the block feels picked up.
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface py-2 pr-3 font-mono text-sm text-ink"
+      className={`relative flex items-stretch gap-2 rounded-lg border-[1.5px] bg-surface py-2 pl-2 pr-3 ${
+        isDragging ? 'z-10 border-accent shadow-[var(--shadow-raised)]' : 'border-line hover:border-accent'
+      }`}
     >
-      <span className="flex items-center gap-2">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          aria-label={t('parsons.dragHandle')}
-          className="cursor-grab text-ink-muted"
-        >
-          ⠿
-        </button>
-        {item.text}
-      </span>
-      <span className="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label={t('parsons.dragHandle')}
+        className={`flex-none rounded-md px-1.5 text-lg leading-none text-ink-muted hover:bg-accent-soft ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+      >
+        ⠿
+      </button>
+      <IndentGuides level={indent} />
+      <span className={`flex-1 self-center ${lineClass}`}>{item.text}</span>
+      <span className="flex flex-none items-center gap-2">
         {onIndentChange && (
           <span className="flex items-center gap-1 text-xs text-ink-muted">
             <button
@@ -115,17 +137,28 @@ function AnswerRow({
               onClick={() => onIndentChange(-1)}
               disabled={indent === 0}
               aria-label={t('parsons.indentOut')}
-              className="disabled:opacity-30"
+              className="rounded-md border border-line px-2 py-1 text-sm text-ink hover:border-accent disabled:opacity-30"
             >
               ←
             </button>
-            <span aria-live="polite">{t('parsons.indentLabel', { level: indent })}</span>
-            <button type="button" onClick={() => onIndentChange(1)} aria-label={t('parsons.indentIn')}>
+            <span aria-live="polite" className="min-w-[6.5rem] text-center">
+              {t('parsons.indentLabel', { level: indent })}
+            </span>
+            <button
+              type="button"
+              onClick={() => onIndentChange(1)}
+              aria-label={t('parsons.indentIn')}
+              className="rounded-md border border-line px-2 py-1 text-sm text-ink hover:border-accent"
+            >
               →
             </button>
           </span>
         )}
-        <button type="button" onClick={onRemove} className="text-xs text-accent">
+        <button
+          type="button"
+          onClick={onRemove}
+          className="rounded-md px-2 py-1 text-sm font-medium text-accent hover:bg-accent-soft"
+        >
           {t('parsons.remove')}
         </button>
       </span>
@@ -133,7 +166,7 @@ function AnswerRow({
   );
 }
 
-export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }: ParsonsTaskViewProps) {
+export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: ParsonsTaskViewProps) {
   const isChosen = task.payload.indentMode === 'chosen';
   const pool = useMemo(() => parsonsPool(task.payload), [task.payload]);
   const byIndex = useMemo(() => new Map(pool.map((item) => [item.poolIndex, item])), [pool]);
@@ -211,32 +244,43 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-[minmax(280px,1fr)_minmax(420px,1.4fr)]">
-      <section>
-        <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
-        <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
-        <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={hintsEnabled ? task.hints : []} onReveal={() => (hintsUsedRef.current += 1)} />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-ink-muted">{t('parsons.bankTitle')}</p>
-          <ul className="mt-2 flex flex-col gap-1.5">
+    <WorkspaceFrame
+      task={task}
+      chrome={chrome}
+      hints={hintsEnabled ? task.hints : []}
+      onRevealHint={() => (hintsUsedRef.current += 1)}
+      dock={
+        <WorkspaceDock actions={<CheckAction disabled={answer.length === 0} onCheck={check} />}>
+          {report ? <CheckReportPanel report={report} next={next} /> : <DockIdle>{t('workspace.checkIdle')}</DockIdle>}
+        </WorkspaceDock>
+      }
+    >
+      <div className="flex flex-col gap-6 px-6 py-6 lg:px-8">
+        <section aria-labelledby="parsons-bank-title">
+          <h2 id="parsons-bank-title" className="text-sm font-semibold text-ink-muted">
+            {t('parsons.bankTitle')}
+          </h2>
+          <ul className="mt-2 flex flex-col gap-2">
             {bank.length === 0 && <li className="text-sm text-ink-muted">{t('parsons.bankEmpty')}</li>}
             {bank.map((poolIndex) => {
               const item = byIndex.get(poolIndex);
               return item ? <BankRow key={poolIndex} item={item} onAdd={() => addToAnswer(poolIndex)} /> : null;
             })}
           </ul>
-        </div>
+        </section>
 
-        <div>
-          <p className="text-xs uppercase tracking-wide text-ink-muted">{t('parsons.answerTitle')}</p>
+        <section aria-labelledby="parsons-answer-title">
+          <h2 id="parsons-answer-title" className="text-sm font-semibold text-ink-muted">
+            {t('parsons.answerTitle')}
+          </h2>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={answer} strategy={verticalListSortingStrategy}>
-              <ul className="mt-2 flex min-h-[3rem] flex-col gap-1.5 rounded-md border border-dashed border-line p-2">
-                {answer.length === 0 && <li className="px-2 text-sm text-ink-muted">{t('parsons.answerEmpty')}</li>}
+              <ul className="mt-2 flex min-h-[4.5rem] flex-col gap-2 rounded-xl border-2 border-dashed border-line bg-code-bg p-2.5">
+                {answer.length === 0 && (
+                  <li className="flex flex-1 items-center justify-center px-2 py-3 text-sm text-ink-muted">
+                    {t('parsons.answerEmpty')}
+                  </li>
+                )}
                 {answer.map((poolIndex) => {
                   const item = byIndex.get(poolIndex);
                   return item ? (
@@ -252,50 +296,8 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
               </ul>
             </SortableContext>
           </DndContext>
-        </div>
-
-        <button
-          type="button"
-          onClick={check}
-          disabled={answer.length === 0}
-          className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
-        >
-          {t('workspace.check')}
-        </button>
-
-        {report && (
-          <section
-            className={`rounded-md border-l-4 ${report.passed ? 'border-growth' : 'border-attention'} bg-surface p-4`}
-            aria-live="polite"
-          >
-            <h3
-              className={`flex items-center gap-2 font-semibold ${report.passed ? 'text-growth' : 'text-attention'}`}
-            >
-              <span aria-hidden="true">{report.passed ? '✓' : '○'}</span>
-              {report.passed ? t('result.passed') : t('result.notYet')}
-            </h3>
-            <div className="mt-1 text-sm text-ink">
-              {report.passed ? (
-                <>
-                  <p>{t('result.passedNote')}</p>
-                  {next && <NextTaskButton action={next} />}
-                </>
-              ) : (
-                <>
-                  <ul className="space-y-1">
-                    {report.results
-                      .filter((r) => !r.passed)
-                      .map((r, index) => (
-                        <li key={`${r.check.kind}-${index}`}>{r.message}</li>
-                      ))}
-                  </ul>
-                  <p className="mt-2 text-ink-muted">{t('result.notYetNote')}</p>
-                </>
-              )}
-            </div>
-          </section>
-        )}
-      </section>
-    </main>
+        </section>
+      </div>
+    </WorkspaceFrame>
   );
 }

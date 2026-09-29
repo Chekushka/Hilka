@@ -255,18 +255,22 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         window.scrollTo(0, 0);
       }
     };
-    return (
-      <div>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 pt-4">
-          <button type="button" onClick={() => setSelectedTaskId(null)} className="text-sm text-accent">
-            ← {t('session.backToList')}
-          </button>
-          {timerBadge}
-        </div>
-        {locked ? (
-          <main className="mx-auto max-w-2xl p-6">
+    const position = session.tasks.findIndex((task) => task.id === selectedTaskId) + 1;
+    const backToList = (
+      <button type="button" onClick={() => setSelectedTaskId(null)} className="text-accent">
+        ← {t('session.backToList')}
+      </button>
+    );
+    if (locked || !selectedTask) {
+      return (
+        <main className="mx-auto w-full max-w-2xl p-6">
+          <div className="flex items-center justify-between text-sm">
+            {backToList}
+            {timerBadge}
+          </div>
+          {locked ? (
             <section
-              className={`rounded-md border-l-4 ${lockedPassed ? 'border-growth' : 'border-attention'} bg-surface p-4`}
+              className={`mt-4 rounded-lg border-l-4 ${lockedPassed ? 'border-growth' : 'border-attention'} bg-surface p-4`}
               aria-live="polite"
             >
               <h1
@@ -280,35 +284,46 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               </p>
               {lockedPassed && <NextTaskButton action={next} />}
             </section>
-          </main>
-        ) : selectedTask ? (
-          <>
-            {showPrerequisite && (
-              <PrerequisiteNote
-                action={{
-                  kind: 'button',
-                  title: prerequisite.title,
-                  onSelect: () => {
-                    setSelectedTaskId(prerequisite.id);
-                    window.scrollTo(0, 0);
-                  }
-                }}
-              />
-            )}
-            <TaskWorkspace
-              key={selectedTask.id}
-              task={selectedTask}
-              hintsEnabled={session.hintsEnabled}
-              next={next}
-              onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
+          ) : (
+            <p className="mt-4 text-sm text-ink-muted">
+              {taskLoadFailed === selectedTaskId ? t('session.closedNote') : t('session.loadingTask')}
+            </p>
+          )}
+        </main>
+      );
+    }
+    return (
+      <TaskWorkspace
+        key={selectedTask.id}
+        task={selectedTask}
+        hintsEnabled={session.hintsEnabled}
+        next={next}
+        onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
+        chrome={{
+          context: (
+            <>
+              {backToList}
+              <span className="flex-1" />
+              {position > 0 && (
+                <span className="text-ink-muted">{t('task.position', { n: position, total: session.tasks.length })}</span>
+              )}
+              {timerBadge}
+            </>
+          ),
+          notice: showPrerequisite && (
+            <PrerequisiteNote
+              action={{
+                kind: 'button',
+                title: prerequisite.title,
+                onSelect: () => {
+                  setSelectedTaskId(prerequisite.id);
+                  window.scrollTo(0, 0);
+                }
+              }}
             />
-          </>
-        ) : (
-          <p className="p-6 text-sm text-ink-muted">
-            {taskLoadFailed === selectedTaskId ? t('session.closedNote') : t('session.loadingTask')}
-          </p>
-        )}
-      </div>
+          )
+        }}
+      />
     );
   }
 

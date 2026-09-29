@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Explanation } from '@/components/lesson/Explanation';
 import { PracticePageClient } from '@/components/practice/PracticePageClient';
 import { getLesson, getPublishedTaskInLesson, listPracticeTaskMeta } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
@@ -40,35 +41,43 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
     ? { title: topicTasks[0]?.topicTitle ?? '', taskSlugs: topicTasks.map((meta) => meta.slug) }
     : undefined;
 
+  const position = lesson.steps.findIndex((step) => step.slug === task.slug) + 1;
+
   return (
-    <div>
-      <nav className="flex items-center justify-between gap-4 px-6 pt-4 text-sm">
-        <Link href={`/practice/${lesson.slug}`} className="text-accent">
-          {t('lessons.backToLesson')} · {lesson.title}
-        </Link>
-        {next ? (
-          <Link href={`/practice/${lesson.slug}/${next.slug}`} className="text-accent">
-            {t('lessons.nextTask')}
+    <PracticePageClient
+      key={task.slug}
+      task={task}
+      topic={topic}
+      prerequisite={
+        prerequisite
+          ? { slug: prerequisite.slug, title: prerequisite.title, href: `/practice/${lesson.slug}/${prerequisite.slug}` }
+          : undefined
+      }
+      next={
+        next
+          ? { kind: 'link', href: `/practice/${lesson.slug}/${next.slug}`, label: t('result.nextTask') }
+          : { kind: 'link', href: `/practice/${lesson.slug}`, label: t('result.backToLesson') }
+      }
+      context={
+        <>
+          <Link href={`/practice/${lesson.slug}`} className="min-w-0 truncate text-accent">
+            {t('lessons.backToLesson')} · {lesson.title}
           </Link>
-        ) : (
-          <span className="text-ink-muted">{t('lessons.lessonFinished')}</span>
-        )}
-      </nav>
-      <PracticePageClient
-        key={task.slug}
-        task={task}
-        topic={topic}
-        prerequisite={
-          prerequisite
-            ? { slug: prerequisite.slug, title: prerequisite.title, href: `/practice/${lesson.slug}/${prerequisite.slug}` }
-            : undefined
-        }
-        next={
-          next
-            ? { kind: 'link', href: `/practice/${lesson.slug}/${next.slug}`, label: t('result.nextTask') }
-            : { kind: 'link', href: `/practice/${lesson.slug}`, label: t('result.backToLesson') }
-        }
-      />
-    </div>
+          <span className="flex-1" />
+          {position > 0 && (
+            <span className="text-ink-muted">{t('task.position', { n: position, total: lesson.steps.length })}</span>
+          )}
+          {next ? (
+            <Link href={`/practice/${lesson.slug}/${next.slug}`} className="text-accent">
+              {t('lessons.nextTask')}
+            </Link>
+          ) : (
+            <span className="text-ink-muted">{t('lessons.lessonFinished')}</span>
+          )}
+        </>
+      }
+      // The lesson's own explanation, one click away without leaving the task.
+      theory={lesson.explanationMd.trim() ? <Explanation markdown={lesson.explanationMd} /> : undefined}
+    />
   );
 }

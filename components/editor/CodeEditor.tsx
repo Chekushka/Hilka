@@ -7,6 +7,11 @@
  * an IDE arguing with them while they type.
  *
  * The failing line is marked with a calm background, never a red squiggle.
+ *
+ * `fill` is the student workspace's variant (components/task/CodePane.tsx): it
+ * takes the whole code pane, no box of its own, and sets code larger — the
+ * teacher projects this screen and the back row has to read it. `boxed`
+ * stays the authoring forms' compact editor.
  */
 import { useEffect, useRef } from 'react';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
@@ -42,6 +47,8 @@ const errorLineField = StateField.define<DecorationSet>({
 
 const theme = EditorView.theme({
   '&': { fontSize: '14px', backgroundColor: 'var(--code-bg)', color: 'var(--ink)' },
+  '&.cm-fill': { fontSize: '16px', height: '100%' },
+  '&.cm-fill .cm-scroller': { lineHeight: '1.7' },
   '&.cm-focused': { outline: '2px solid var(--accent)', outlineOffset: '-2px' },
   // The caret is the browser's native one (no drawSelection), and CodeMirror's
   // base theme pins it black for an editor not flagged dark — invisible on the
@@ -68,9 +75,17 @@ interface CodeEditorProps {
   errorLine?: number | null;
   readOnly?: boolean;
   ariaLabel: string;
+  variant?: 'boxed' | 'fill';
 }
 
-export function CodeEditor({ value, onChange, errorLine = null, readOnly = false, ariaLabel }: CodeEditorProps) {
+export function CodeEditor({
+  value,
+  onChange,
+  errorLine = null,
+  readOnly = false,
+  ariaLabel,
+  variant = 'boxed'
+}: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -96,6 +111,7 @@ export function CodeEditor({ value, onChange, errorLine = null, readOnly = false
         EditorView.lineWrapping,
         EditorState.readOnly.of(readOnly),
         EditorView.contentAttributes.of({ 'aria-label': ariaLabel }),
+        EditorView.editorAttributes.of({ class: variant === 'fill' ? 'cm-fill' : '' }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onChangeRef.current(update.state.doc.toString());
@@ -118,5 +134,10 @@ export function CodeEditor({ value, onChange, errorLine = null, readOnly = false
     view.current?.dispatch({ effects: setErrorLine.of(errorLine) });
   }, [errorLine]);
 
-  return <div ref={host} className="overflow-hidden rounded-md border border-line" />;
+  return (
+    <div
+      ref={host}
+      className={variant === 'fill' ? 'min-h-0 flex-1 overflow-hidden' : 'overflow-hidden rounded-md border border-line'}
+    />
+  );
 }

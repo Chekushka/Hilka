@@ -12,8 +12,10 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { evaluateChecks, type CheckReport } from '@/lib/checker';
-import { Hints } from '@/components/task/Hints';
-import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
+import { CheckReportPanel } from '@/components/task/CheckReportPanel';
+import type { NextTaskAction } from '@/components/task/NextTaskButton';
+import { CheckAction, DockIdle, WorkspaceDock } from '@/components/task/WorkspaceDock';
+import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
 import type { AttemptOutcome, PredictTask } from '@/lib/task/types';
 
@@ -22,9 +24,10 @@ interface PredictTaskViewProps {
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   hintsEnabled?: boolean;
   next?: NextTaskAction;
+  chrome?: WorkspaceChrome;
 }
 
-export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }: PredictTaskViewProps) {
+export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: PredictTaskViewProps) {
   const isChoice = task.payload.answerMode === 'choice';
   const [text, setText] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
@@ -48,27 +51,35 @@ export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
     });
   }
 
+  const ready = isChoice ? selected !== null : text.trim().length > 0;
+
   return (
-    <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-[minmax(280px,1fr)_minmax(420px,1.4fr)]">
-      <section>
-        <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
-        <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
-        <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={hintsEnabled ? task.hints : []} onReveal={() => (hintsUsedRef.current += 1)} />
-      </section>
+    <WorkspaceFrame
+      task={task}
+      chrome={chrome}
+      hints={hintsEnabled ? task.hints : []}
+      onRevealHint={() => (hintsUsedRef.current += 1)}
+      dock={
+        <WorkspaceDock actions={<CheckAction disabled={!ready} onCheck={check} />}>
+          {report ? <CheckReportPanel report={report} next={next} /> : <DockIdle>{t('workspace.checkIdle')}</DockIdle>}
+        </WorkspaceDock>
+      }
+    >
+      <div className="flex-none border-b border-line bg-code-bg px-5 py-4">
+        <p className="mb-2 text-xs font-medium text-ink-muted">{t('workspace.readOnlyCode')}</p>
+        <pre className="overflow-x-auto font-mono text-base leading-[1.7] text-ink">{task.payload.code}</pre>
+      </div>
 
-      <section className="flex flex-col gap-4">
-        <pre className="whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
-          {task.payload.code}
-        </pre>
-
+      <div className="px-6 py-6 lg:px-8">
         {isChoice ? (
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm text-ink-muted">{t('predict.answerLabel')}</legend>
+          <fieldset className="flex flex-col gap-3">
+            <legend className="mb-3 text-base font-semibold text-ink">{t('predict.answerLabel')}</legend>
             {(task.payload.options ?? []).map((option, index) => (
               <label
                 key={index}
-                className="flex items-center gap-3 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+                className={`flex cursor-pointer items-center gap-4 rounded-xl border-[1.5px] px-4 py-3 text-ink ${
+                  selected === index ? 'border-accent bg-accent-soft' : 'border-line bg-surface hover:border-accent'
+                }`}
               >
                 <input
                   type="radio"
@@ -78,70 +89,38 @@ export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
                     setReport(null);
                     setSelected(index);
                   }}
+                  className="h-5 w-5 flex-none accent-accent"
                 />
-                {option}
+                {/* Output is what the program printed — the code face, same as the output panel. */}
+                <span className="whitespace-pre-wrap font-mono text-base">{option}</span>
               </label>
             ))}
           </fieldset>
         ) : (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="predict-answer">
+          <div className="flex flex-col gap-2">
+            <label className="text-base font-semibold text-ink" htmlFor="predict-answer">
               {t('predict.answerLabel')}
             </label>
-            <input
-              id="predict-answer"
-              value={text}
-              onChange={(event) => {
-                setReport(null);
-                setText(event.target.value);
-              }}
-              className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
-            />
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                id="predict-answer"
+                value={text}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(event) => {
+                  setReport(null);
+                  setText(event.target.value);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && ready) check();
+                }}
+                className="w-full max-w-md rounded-lg border-[1.5px] border-line bg-surface px-4 py-3 font-mono text-base text-ink focus:border-accent focus:outline-none"
+              />
+              <span className="text-sm text-ink-muted">{t('workspace.predictEnter')}</span>
+            </div>
           </div>
         )}
-
-        <button
-          type="button"
-          onClick={check}
-          disabled={isChoice ? selected === null : text.trim().length === 0}
-          className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
-        >
-          {t('workspace.check')}
-        </button>
-
-        {report && (
-          <section
-            className={`rounded-md border-l-4 ${report.passed ? 'border-growth' : 'border-attention'} bg-surface p-4`}
-            aria-live="polite"
-          >
-            <h3
-              className={`flex items-center gap-2 font-semibold ${report.passed ? 'text-growth' : 'text-attention'}`}
-            >
-              <span aria-hidden="true">{report.passed ? '✓' : '○'}</span>
-              {report.passed ? t('result.passed') : t('result.notYet')}
-            </h3>
-            <div className="mt-1 text-sm text-ink">
-              {report.passed ? (
-                <>
-                  <p>{t('result.passedNote')}</p>
-                  {next && <NextTaskButton action={next} />}
-                </>
-              ) : (
-                <>
-                  <ul className="space-y-1">
-                    {report.results
-                      .filter((r) => !r.passed)
-                      .map((r, index) => (
-                        <li key={`${r.check.kind}-${index}`}>{r.message}</li>
-                      ))}
-                  </ul>
-                  <p className="mt-2 text-ink-muted">{t('result.notYetNote')}</p>
-                </>
-              )}
-            </div>
-          </section>
-        )}
-      </section>
-    </main>
+      </div>
+    </WorkspaceFrame>
   );
 }

@@ -43,7 +43,17 @@
     "playbackPrev": "Попередній крок",
     "playbackNext": "Наступний крок",
     "playbackScrubber": "Перемотка малювання",
-    "playbackStep": "Крок {step} з {total}"
+    "playbackStep": "Крок {step} з {total}",
+    "result": "Результат",
+    "editorEngine": "Python у браузері",
+    "readOnlyCode": "Код лише для читання",
+    "theory": "Як це працює",
+    "theoryShow": "Показати",
+    "theoryHide": "Сховати",
+    "checkIdle": "Коли будеш готовий — натисни «Перевірити».",
+    "predictEnter": "Enter — перевірити",
+    "quizSingle": "Один правильний варіант.",
+    "quizMultiple": "Може бути кілька правильних варіантів."
   },
   "predict": {
     "answerLabel": "Що виведе ця програма?"
@@ -81,7 +91,16 @@
   },
   "task": {
     "statement": "Завдання",
-    "difficulty": "Складність"
+    "difficulty": "Складність",
+    "types": {
+      "code": "Написати код",
+      "fix": "Знайти помилку",
+      "quiz": "Питання",
+      "predict": "Передбачити вивід",
+      "fill": "Заповнити пропуски",
+      "parsons": "Скласти програму"
+    },
+    "position": "Завдання {n} з {total}"
   },
   "practice": {
     "emptyTitle": "Тут поки що порожньо",

@@ -9,7 +9,7 @@
  * client component, while the task itself is still read server-side
  * (CLAUDE.md rule 4).
  */
-import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { ProgressPanel } from '@/components/practice/ProgressPanel';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
@@ -29,11 +29,15 @@ interface PracticePageClientProps {
   topic?: { title: string; taskSlugs: string[] };
   /** For a file-delivery task: the in-browser task in this lesson it rests on (lib/task/prerequisite.ts). */
   prerequisite?: { slug: string; title: string; href: string };
+  /** Top of the task panel: back to the lesson, position, the next step. */
+  context?: ReactNode;
+  /** The lesson's explanation, collapsed in the task panel. */
+  theory?: ReactNode;
 }
 
 const noSubscription = () => () => {};
 
-export function PracticePageClient({ task, next, topic, prerequisite }: PracticePageClientProps) {
+export function PracticePageClient({ task, next, topic, prerequisite, context, theory }: PracticePageClientProps) {
   const [progress, setProgress] = useLocalProgress();
   // The server renders with empty progress; waiting for the browser's own
   // keeps the note from flashing at a student who already passed the prerequisite.
@@ -68,10 +72,19 @@ export function PracticePageClient({ task, next, topic, prerequisite }: Practice
 
   return (
     <div>
-      {prerequisite && hydrated && !hasCompletedTask(progress, prerequisite.slug) && (
-        <PrerequisiteNote action={{ kind: 'link', title: prerequisite.title, href: prerequisite.href }} />
-      )}
-      <TaskWorkspace task={task} onSubmitAttempt={handleOutcome} next={nextWithReward} />
+      <TaskWorkspace
+        task={task}
+        onSubmitAttempt={handleOutcome}
+        next={nextWithReward}
+        chrome={{
+          context,
+          theory,
+          notice: prerequisite && hydrated && !hasCompletedTask(progress, prerequisite.slug) && (
+            <PrerequisiteNote action={{ kind: 'link', title: prerequisite.title, href: prerequisite.href }} />
+          )
+        }}
+      />
+      {/* Below the fold on purpose: saving progress is between tasks, not part of one. */}
       <ProgressPanel progress={progress} setProgress={setProgress} currentTaskSlug={task.slug} />
     </div>
   );
