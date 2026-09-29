@@ -77,7 +77,7 @@ const lineClass = 'whitespace-pre font-mono text-base text-ink';
 function BankRow({ item, onAdd }: { item: ParsonsPoolItem; onAdd: () => void }) {
   return (
     <li className="flex items-center justify-between gap-3 rounded-lg border-[1.5px] border-line bg-surface px-4 py-2.5 hover:border-accent">
-      <span className={lineClass}>{item.text}</span>
+      <span className={`min-w-0 overflow-x-auto ${lineClass}`}>{item.text}</span>
       <button
         type="button"
         onClick={onAdd}
@@ -113,7 +113,7 @@ function AnswerRow({
     <li
       ref={setNodeRef}
       style={style}
-      className={`relative flex items-stretch gap-2 rounded-lg border-[1.5px] bg-surface py-2 pl-2 pr-3 ${
+      className={`relative flex flex-wrap items-stretch gap-2 rounded-lg border-[1.5px] bg-surface py-2 pl-2 pr-3 ${
         isDragging ? 'z-10 border-accent shadow-[var(--shadow-raised)]' : 'border-line hover:border-accent'
       }`}
     >
@@ -122,15 +122,16 @@ function AnswerRow({
         {...attributes}
         {...listeners}
         aria-label={t('parsons.dragHandle')}
-        className={`flex-none rounded-md px-1.5 text-lg leading-none text-ink-muted hover:bg-accent-soft ${
+        // touch-none: on a touch screen the finger drags the line instead of scrolling the page.
+        className={`flex-none touch-none rounded-md px-2 text-xl leading-none text-ink-muted hover:bg-accent-soft ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
         }`}
       >
         ⠿
       </button>
       <IndentGuides level={indent} />
-      <span className={`flex-1 self-center ${lineClass}`}>{item.text}</span>
-      <span className="flex flex-none items-center gap-2">
+      <span className={`min-w-0 flex-1 self-center overflow-x-auto ${lineClass}`}>{item.text}</span>
+      <span className="ml-auto flex flex-none items-center gap-2">
         {onIndentChange && (
           <span className="flex items-center gap-1 text-xs text-ink-muted">
             <button

@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { LessonList } from '@/components/lesson/LessonList';
+import { PracticeNav } from '@/components/lesson/PracticeNav';
 import { ProgressSummary } from '@/components/meta/ProgressSummary';
 import { listLessonGrades, listLessons, listPracticeTaskMeta } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
@@ -24,22 +24,7 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
   return (
     <main className="mx-auto w-full max-w-5xl p-6">
       <h1 className="text-2xl font-semibold text-ink">{t('lessons.title')}</h1>
-      {grades.length > 1 && (
-        <nav aria-label={t('lessons.gradeLabel')} className="mt-3 flex gap-2">
-          {grades.map((option) => (
-            <Link
-              key={option}
-              href={`/practice?grade=${option}`}
-              aria-current={option === grade ? 'page' : undefined}
-              className={`rounded-full border px-3 py-1 text-sm ${
-                option === grade ? 'border-accent bg-accent-soft text-ink' : 'border-line text-ink-muted'
-              }`}
-            >
-              {t('lessons.gradeOption', { grade: option })}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <PracticeNav view="lessons" grade={grade} grades={grades} />
       {/* At 1366×768 the lessons stay above the fold: the garden sits beside them,
           not on top. Narrow screens stack it first, as before. */}
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">

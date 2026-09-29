@@ -12,12 +12,16 @@ import { t } from '@/lib/i18n';
 import type { EngineState } from '@/lib/task/use-task-runner';
 
 export function WorkspaceDock({ actions, children }: { actions: ReactNode; children: ReactNode }) {
+  // Below lg the section dissolves (display: contents) so its bar becomes a
+  // child of the work column and can stick to the bottom of the screen: on a
+  // phone, Run and Check stay under the thumb while the student scrolls
+  // through the code, instead of waiting below the whole editor.
   return (
     <section
       aria-labelledby="workspace-dock-title"
-      className="flex flex-none flex-col border-t border-line bg-surface lg:max-h-[52%]"
+      className="max-lg:contents lg:flex lg:max-h-[52%] lg:flex-none lg:flex-col lg:border-t lg:border-line lg:bg-surface"
     >
-      <div className="flex flex-none flex-wrap items-center gap-3 border-b border-line px-5 py-2.5">
+      <div className="sticky bottom-0 z-10 flex flex-none flex-wrap items-center gap-3 border-y border-line bg-surface px-5 py-2.5 lg:static lg:border-t-0">
         <h2 id="workspace-dock-title" className="text-sm font-semibold text-ink">
           {t('workspace.result')}
         </h2>
@@ -44,9 +48,9 @@ function Spinner() {
 }
 
 const secondary =
-  'rounded-lg border border-line bg-shell px-4 py-2 text-sm font-medium text-ink hover:border-accent disabled:opacity-50 disabled:hover:border-line';
+  'rounded-lg border border-line bg-shell px-4 py-2.5 text-sm font-medium text-ink hover:border-accent disabled:opacity-50 disabled:hover:border-line';
 const primary =
-  'inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-5 py-2 text-sm font-semibold text-surface disabled:opacity-50';
+  'inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-surface disabled:opacity-50';
 
 /**
  * Run and Check for the task types that execute Python. Run is the primary

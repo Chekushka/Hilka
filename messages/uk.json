@@ -627,5 +627,28 @@
     },
     "fileUnsequencedTitle": "Завдання в IDLE стоїть завчасно:",
     "fileUnsequencedNote": "Перед завданням із файлом має бути завдання на ту саму тему, де учень пише код у браузері: там Hilka пояснює помилки, а IDLE — ні. Зберегти урок можна й так."
+  },
+  "topicMap": {
+    "title": "Карта тем",
+    "summary": "{grade} клас · завершено тем: {done} з {total}",
+    "legendLabel": "Позначки на карті",
+    "legendDone": "завершено",
+    "legendCurrent": "продовжуй тут",
+    "legendAhead": "ще попереду",
+    "continue": "Продовжити",
+    "stateDone": "тему завершено",
+    "stateCurrent": "продовжуй тут",
+    "stateStarted": "тему почато",
+    "stateAhead": "ще не почато",
+    "empty": "Для цього класу ще немає тем із завданнями.",
+    "viewLabel": "Вигляд",
+    "viewLessons": "Уроки",
+    "viewMap": "Карта тем"
+  },
+  "editor": {
+    "keyBar": "Символи, яких бракує на клавіатурі телефона",
+    "indent": "Відступ вправо",
+    "outdent": "Відступ вліво",
+    "insert": "Вставити {symbol}"
   }
 }

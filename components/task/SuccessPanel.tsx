@@ -23,14 +23,22 @@ export function SuccessPanel({ next }: { next?: NextTaskAction }) {
   const reward = next?.reward;
   const nextRef = useRef<HTMLDivElement>(null);
 
+  const panelRef = useRef<HTMLElement>(null);
+
   // The way on is the obvious next thing, so it takes the keyboard focus —
-  // Enter moves on without hunting for the button.
+  // Enter moves on without hunting for the button. On a phone the panel sits
+  // at the top of the page while the student is down at Check, so it is
+  // brought into view; from lg it is always on screen.
   useEffect(() => {
     nextRef.current?.querySelector<HTMLElement>('a, button')?.focus({ preventScroll: true });
+    if (!window.matchMedia('(min-width: 64rem)').matches) {
+      panelRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
   }, []);
 
   return (
     <section
+      ref={panelRef}
       aria-labelledby="success-title"
       aria-live="polite"
       className="success-open border-b border-line bg-surface px-5 pb-6 pt-7"

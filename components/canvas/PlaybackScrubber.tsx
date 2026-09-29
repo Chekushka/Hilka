@@ -66,7 +66,7 @@ export function PlaybackScrubber({ drawing, target = [], width, height }: Playba
   }
 
   return (
-    <div>
+    <div className="w-full" style={{ maxWidth: width ?? 360 }}>
       <TurtleCanvas
         drawing={drawing.slice(0, step)}
         target={target}
