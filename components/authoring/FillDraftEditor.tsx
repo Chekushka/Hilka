@@ -21,6 +21,7 @@ import { ChecksField } from './ChecksField';
 import { GradeTagsField, HintsField } from './HintsField';
 import { checkKindsFor } from '@/lib/task/check-form';
 import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import { FormSection } from './FormSection';
 
 export interface DraftFillTask {
   id: string;
@@ -137,9 +138,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ referenceCode, run })
     });
-    const body: { error?: string; failures?: string[]; version?: number } = await response
-      .json()
-      .catch(() => ({}));
+    const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
       return;
@@ -160,7 +159,9 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
   if (publishState.kind === 'success') {
     return (
       <section className="mt-6 rounded-md border-l-4 border-growth bg-surface p-4">
-        <h2 className="font-semibold text-growth">{t('authoring.publishSuccess', { version: publishState.version })}</h2>
+        <h2 className="font-semibold text-growth">
+          {t('authoring.publishSuccess', { version: publishState.version })}
+        </h2>
       </section>
     );
   }
@@ -168,78 +169,86 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
   return (
     <div className="mt-6 flex flex-col gap-8">
       <form onSubmit={handleSave} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="title">
-            {t('authoring.titleLabel')}
-          </label>
-          <input
-            id="title"
-            required
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="prompt">
-            {t('authoring.promptLabel')}
-          </label>
-          <textarea
-            id="prompt"
-            required
-            rows={3}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="template">
-            {t('authoring.templateLabel')}
-          </label>
-          <textarea
-            id="template"
-            rows={6}
-            value={template}
-            onChange={(event) => setTemplate(event.target.value)}
-            spellCheck={false}
-            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
-          />
-          <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
-        </div>
-
-        <ChecksField
-          id="checks"
-          value={checksText}
-          onChange={setChecksText}
-          kinds={checkKindsFor('fill')}
-          hasCases={false}
-          label={t('authoring.checksLabel')}
-          jsonLabel={t('authoring.checksJsonLabel')}
-          jsonHint={t('authoring.checksHint')}
-        />
-
-        <HintsField value={hintsText} onChange={setHintsText} />
-
-        <div className="flex flex-wrap gap-5">
+        <FormSection title={t('authoring.sectionAbout')}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="difficulty">
-              {t('authoring.difficultyLabel')}
+            <label className="text-sm text-ink-muted" htmlFor="title">
+              {t('authoring.titleLabel')}
             </label>
             <input
-              id="difficulty"
-              type="number"
-              min={1}
-              max={5}
-              value={difficulty}
-              onChange={(event) => setDifficulty(Number(event.target.value))}
-              className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              id="title"
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
           </div>
-          <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
-        </div>
+
+          <div className="flex flex-wrap gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-ink-muted" htmlFor="difficulty">
+                {t('authoring.difficultyLabel')}
+              </label>
+              <input
+                id="difficulty"
+                type="number"
+                min={1}
+                max={5}
+                value={difficulty}
+                onChange={(event) => setDifficulty(Number(event.target.value))}
+                className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              />
+            </div>
+            <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
+          </div>
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionStudent')}>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="prompt">
+              {t('authoring.promptLabel')}
+            </label>
+            <textarea
+              id="prompt"
+              required
+              rows={3}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="template">
+              {t('authoring.templateLabel')}
+            </label>
+            <textarea
+              id="template"
+              rows={6}
+              value={template}
+              onChange={(event) => setTemplate(event.target.value)}
+              spellCheck={false}
+              className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+            />
+            <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
+          </div>
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionChecking')}>
+          <ChecksField
+            id="checks"
+            value={checksText}
+            onChange={setChecksText}
+            kinds={checkKindsFor('fill')}
+            hasCases={false}
+            label={t('authoring.checksLabel')}
+            jsonLabel={t('authoring.checksJsonLabel')}
+            jsonHint={t('authoring.checksHint')}
+          />
+        </FormSection>
+
+        <FormSection>
+          <HintsField value={hintsText} onChange={setHintsText} />
+        </FormSection>
 
         <div className="flex items-center gap-3">
           <button
@@ -254,7 +263,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
         </div>
       </form>
 
-      <section className="flex flex-col gap-4 border-t border-line pt-6">
+      <section className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5">
         <div>
           <h2 className="text-lg font-semibold text-ink">{t('authoring.referenceTitle')}</h2>
           <p className="mt-1 text-sm text-ink-muted">{t('authoring.referenceNote')}</p>

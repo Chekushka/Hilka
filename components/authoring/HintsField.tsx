@@ -27,17 +27,28 @@ export function HintsField({ value, onChange }: { value: string; onChange: (text
       {hints.length === 0 && <p className="text-sm text-ink-muted">{t('builder.hintsEmpty')}</p>}
       {hints.map((hint, index) => (
         <div key={index} className="flex items-center gap-2">
-          <label htmlFor={`hint-${index}`} className="w-24 shrink-0 text-xs text-ink-muted">
-            {t('builder.hintNumber', { n: index + 1 })}
+          {/* The number in a honey badge, as the mockups draw it; the label text stays for screen readers. */}
+          <label htmlFor={`hint-${index}`} className="shrink-0">
+            <span
+              aria-hidden="true"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-honey text-xs font-bold text-surface"
+            >
+              {index + 1}
+            </span>
+            <span className="sr-only">{t('builder.hintNumber', { n: index + 1 })}</span>
           </label>
           <input
             id={`hint-${index}`}
             value={hint}
             onChange={(event) => update(hints.map((existing, at) => (at === index ? event.target.value : existing)))}
-            className="flex-1 rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-ink"
+            className="flex-1 rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink"
           />
           <span className="flex gap-1 text-xs">
-            <RowButton label={t('builder.moveUp')} disabled={index === 0} onClick={() => update(moveItem(hints, index, index - 1))}>
+            <RowButton
+              label={t('builder.moveUp')}
+              disabled={index === 0}
+              onClick={() => update(moveItem(hints, index, index - 1))}
+            >
               ↑
             </RowButton>
             <RowButton
@@ -80,11 +91,19 @@ export function GradeTagsField({ value, onChange }: { value: string; onChange: (
   return (
     <fieldset className="flex flex-col gap-1.5">
       <legend className="mb-1.5 text-sm text-ink-muted">{t('authoring.gradeTagsLabel')}</legend>
-      <div className="flex gap-4">
+      <div className="flex gap-2">
         {grades.map((grade) => (
-          <label key={grade} className="flex items-center gap-1.5 text-sm text-ink">
+          <label
+            key={grade}
+            className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm ${
+              selected.has(grade)
+                ? 'border-accent bg-accent-soft text-accent'
+                : 'border-line text-ink-muted hover:text-ink'
+            }`}
+          >
             <input
               type="checkbox"
+              className="accent-[var(--accent)]"
               checked={selected.has(grade)}
               onChange={(event) => {
                 const next = new Set(selected);

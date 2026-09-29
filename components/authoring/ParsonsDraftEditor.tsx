@@ -12,6 +12,7 @@ import type { Check } from '@/lib/checker';
 import type { ParsonsPayload } from '@/lib/task/types';
 import { formatParsonsLines, parseParsonsLines } from './parsons-form-utils';
 import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import { FormSection } from './FormSection';
 
 export interface DraftParsonsTask {
   id: string;
@@ -105,9 +106,7 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
       return;
     }
     const response = await fetch(`/api/tasks/${task.id}/publish`, { method: 'POST' });
-    const body: { error?: string; failures?: string[]; version?: number } = await response
-      .json()
-      .catch(() => ({}));
+    const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
       return;
@@ -136,140 +135,150 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
   return (
     <div className="mt-6 flex flex-col gap-8">
       <form onSubmit={handleSave} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="title">
-            {t('authoring.titleLabel')}
-          </label>
-          <input
-            id="title"
-            required
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="prompt">
-            {t('authoring.promptLabel')}
-          </label>
-          <textarea
-            id="prompt"
-            required
-            rows={3}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="parsonsLines">
-            {t('authoring.parsonsLinesLabel')}
-          </label>
-          <textarea
-            id="parsonsLines"
-            rows={6}
-            value={linesText}
-            onChange={(event) => setLinesText(event.target.value)}
-            spellCheck={false}
-            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
-          />
-          <p className="text-xs text-ink-muted">{t('authoring.parsonsLinesHint')}</p>
-          <ul className="mt-1 text-xs text-ink-muted">
-            {parsedLines.map((line, index) => (
-              <li key={index}>
-                {index}: {' '.repeat(line.indent * 2)}
-                {line.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="distractors">
-            {t('authoring.parsonsDistractorsLabel')}
-          </label>
-          <textarea
-            id="distractors"
-            rows={2}
-            value={distractorsText}
-            onChange={(event) => setDistractorsText(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="parsonsIndentMode">
-            {t('authoring.parsonsIndentModeLabel')}
-          </label>
-          <select
-            id="parsonsIndentMode"
-            value={indentMode}
-            onChange={(event) => setIndentMode(event.target.value as 'given' | 'chosen')}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          >
-            <option value="given">{t('authoring.parsonsIndentModeGiven')}</option>
-            <option value="chosen">{t('authoring.parsonsIndentModeChosen')}</option>
-          </select>
-          {indentMode === 'chosen' && <p className="text-xs text-ink-muted">{t('authoring.parsonsIndentModeChosenHint')}</p>}
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="checks">
-            {t('authoring.checksLabel')}
-          </label>
-          <textarea
-            id="checks"
-            rows={6}
-            value={checksText}
-            onChange={(event) => setChecksText(event.target.value)}
-            spellCheck={false}
-            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
-          />
-          <p className="text-xs text-ink-muted">{t('authoring.checksHint')}</p>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="hints">
-            {t('authoring.hintsLabel')}
-          </label>
-          <textarea
-            id="hints"
-            rows={3}
-            value={hintsText}
-            onChange={(event) => setHintsText(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-5">
+        <FormSection title={t('authoring.sectionAbout')}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="difficulty">
-              {t('authoring.difficultyLabel')}
+            <label className="text-sm text-ink-muted" htmlFor="title">
+              {t('authoring.titleLabel')}
             </label>
             <input
-              id="difficulty"
-              type="number"
-              min={1}
-              max={5}
-              value={difficulty}
-              onChange={(event) => setDifficulty(Number(event.target.value))}
-              className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              id="title"
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
           </div>
+
+          <div className="flex flex-wrap gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-ink-muted" htmlFor="difficulty">
+                {t('authoring.difficultyLabel')}
+              </label>
+              <input
+                id="difficulty"
+                type="number"
+                min={1}
+                max={5}
+                value={difficulty}
+                onChange={(event) => setDifficulty(Number(event.target.value))}
+                className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-ink-muted" htmlFor="gradeTags">
+                {t('authoring.gradeTagsLabel')}
+              </label>
+              <input
+                id="gradeTags"
+                value={gradeTagsText}
+                onChange={(event) => setGradeTagsText(event.target.value)}
+                className="w-40 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              />
+            </div>
+          </div>
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionStudent')}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="gradeTags">
-              {t('authoring.gradeTagsLabel')}
+            <label className="text-sm text-ink-muted" htmlFor="prompt">
+              {t('authoring.promptLabel')}
             </label>
-            <input
-              id="gradeTags"
-              value={gradeTagsText}
-              onChange={(event) => setGradeTagsText(event.target.value)}
-              className="w-40 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            <textarea
+              id="prompt"
+              required
+              rows={3}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
           </div>
-        </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="parsonsLines">
+              {t('authoring.parsonsLinesLabel')}
+            </label>
+            <textarea
+              id="parsonsLines"
+              rows={6}
+              value={linesText}
+              onChange={(event) => setLinesText(event.target.value)}
+              spellCheck={false}
+              className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+            />
+            <p className="text-xs text-ink-muted">{t('authoring.parsonsLinesHint')}</p>
+            <ul className="mt-1 text-xs text-ink-muted">
+              {parsedLines.map((line, index) => (
+                <li key={index}>
+                  {index}: {' '.repeat(line.indent * 2)}
+                  {line.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="distractors">
+              {t('authoring.parsonsDistractorsLabel')}
+            </label>
+            <textarea
+              id="distractors"
+              rows={2}
+              value={distractorsText}
+              onChange={(event) => setDistractorsText(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-ink"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="parsonsIndentMode">
+              {t('authoring.parsonsIndentModeLabel')}
+            </label>
+            <select
+              id="parsonsIndentMode"
+              value={indentMode}
+              onChange={(event) => setIndentMode(event.target.value as 'given' | 'chosen')}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            >
+              <option value="given">{t('authoring.parsonsIndentModeGiven')}</option>
+              <option value="chosen">{t('authoring.parsonsIndentModeChosen')}</option>
+            </select>
+            {indentMode === 'chosen' && (
+              <p className="text-xs text-ink-muted">{t('authoring.parsonsIndentModeChosenHint')}</p>
+            )}
+          </div>
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionChecking')}>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="checks">
+              {t('authoring.checksLabel')}
+            </label>
+            <textarea
+              id="checks"
+              rows={6}
+              value={checksText}
+              onChange={(event) => setChecksText(event.target.value)}
+              spellCheck={false}
+              className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+            />
+            <p className="text-xs text-ink-muted">{t('authoring.checksHint')}</p>
+          </div>
+        </FormSection>
+
+        <FormSection>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="hints">
+              {t('authoring.hintsLabel')}
+            </label>
+            <textarea
+              id="hints"
+              rows={3}
+              value={hintsText}
+              onChange={(event) => setHintsText(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            />
+          </div>
+        </FormSection>
 
         <div className="flex items-center gap-3">
           <button
@@ -284,7 +293,7 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
         </div>
       </form>
 
-      <section className="flex flex-col gap-3 border-t border-line pt-6">
+      <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5">
         <button
           type="button"
           onClick={handlePublish}
