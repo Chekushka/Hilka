@@ -28,3 +28,17 @@ test('a predict answer is checked with Enter', async ({ page }) => {
   await answer.press('Enter');
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
 });
+
+test('a pass opens the success panel in the task panel, with the way on focused', async ({ page }) => {
+  await page.goto('/practice/g7-25-intro/g7-quiz-print-purpose');
+  await page.getByLabel('Виводить текст або значення на екран').check();
+  await page.getByRole('button', { name: 'Перевірити' }).click();
+
+  // The word appears once — in the panel — and the dock only notes the pass.
+  await expect(page.getByRole('heading', { name: 'Готово!' })).toHaveCount(1);
+  await expect(page.getByText('Перевірку пройдено.')).toBeVisible();
+  // Enter moves on: the next step already has the focus.
+  await expect(page.getByRole('link', { name: 'Перейти до наступного завдання', exact: true })).toBeFocused();
+  // The task stays readable under it.
+  await expect(page.getByRole('heading', { name: 'Навіщо потрібна функція print()', level: 1 })).toBeVisible();
+});

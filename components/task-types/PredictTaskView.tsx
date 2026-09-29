@@ -15,6 +15,7 @@ import { evaluateChecks, type CheckReport } from '@/lib/checker';
 import { CheckReportPanel } from '@/components/task/CheckReportPanel';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { CheckAction, DockIdle, WorkspaceDock } from '@/components/task/WorkspaceDock';
+import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
 import type { AttemptOutcome, PredictTask } from '@/lib/task/types';
@@ -59,9 +60,10 @@ export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
       chrome={chrome}
       hints={hintsEnabled ? task.hints : []}
       onRevealHint={() => (hintsUsedRef.current += 1)}
+      success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock actions={<CheckAction disabled={!ready} onCheck={check} />}>
-          {report ? <CheckReportPanel report={report} next={next} /> : <DockIdle>{t('workspace.checkIdle')}</DockIdle>}
+          {report ? <CheckReportPanel report={report} /> : <DockIdle>{t('workspace.checkIdle')}</DockIdle>}
         </WorkspaceDock>
       }
     >

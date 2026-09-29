@@ -13,6 +13,7 @@ import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
 import { RunCheckActions, RunDockIdle, WorkspaceDock } from '@/components/task/WorkspaceDock';
+import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
 import { showsTurtleCanvas } from '@/lib/task/surface';
@@ -76,6 +77,7 @@ export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
       chrome={chrome}
       hints={hintsEnabled ? task.hints : []}
       onRevealHint={() => (hintsUsedRef.current += 1)}
+      success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock
           actions={<RunCheckActions busy={busy} disabled={disabled} onRun={() => run(code)} onCheck={retry} />}
@@ -85,7 +87,7 @@ export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
           ) : (
             !result && <RunDockIdle engine={engine} />
           )}
-          {result && <ResultPanel result={result} report={report} code={code} onRetry={retry} next={next} />}
+          {result && <ResultPanel result={result} report={report} code={code} onRetry={retry} />}
         </WorkspaceDock>
       }
     >

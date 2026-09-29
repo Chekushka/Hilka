@@ -48,6 +48,8 @@ interface WorkspaceFrameProps {
   /** Already empty when a graded session turns hints off. */
   hints: string[];
   onRevealHint: () => void;
+  /** SuccessPanel once a Check passed: opens at the top of the task panel, above the statement. */
+  success?: ReactNode;
   /** The result dock (WorkspaceDock). */
   dock: ReactNode;
   /** The work area. */
@@ -81,7 +83,7 @@ function Theory({ children }: { children: ReactNode }) {
   );
 }
 
-export function WorkspaceFrame({ task, chrome, hints, onRevealHint, dock, children }: WorkspaceFrameProps) {
+export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, dock, children }: WorkspaceFrameProps) {
   return (
     <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:min-h-[36rem] lg:flex-row">
       <aside className="flex flex-col border-b border-line bg-surface lg:w-[23rem] lg:flex-none lg:overflow-y-auto lg:border-b-0 lg:border-r xl:w-[24.5rem]">
@@ -90,6 +92,7 @@ export function WorkspaceFrame({ task, chrome, hints, onRevealHint, dock, childr
             {chrome.context}
           </div>
         )}
+        {success}
         {chrome?.notice}
         <section className="px-5 pb-5 pt-5">
           <p className="text-sm font-semibold text-accent">{t(`task.types.${task.type}`)}</p>
