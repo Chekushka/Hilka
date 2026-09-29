@@ -1,0 +1,36 @@
+{
+  "slug": "g8-quiz-quadratic-coefficients",
+  "topicSlug": "project-quadratic",
+  "type": "quiz",
+  "title": "Коефіцієнти рівняння",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Квадратне рівняння записують як ax² + bx + c = 0. Чому дорівнюють a, b і c у рівнянні 2x² − 3x + 1 = 0?",
+    "options": [
+      "a = 2, b = −3, c = 1",
+      "a = 2, b = 3, c = 1",
+      "a = 1, b = −3, c = 2",
+      "a = 2, b = −3, c = 0"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "a стоїть біля x², b — біля x (разом зі знаком!), c — вільне число: a = 2, b = −3, c = 1."
+    }
+  ],
+  "hints": [
+    "a — число перед x².",
+    "Знак мінус належить до коефіцієнта: −3x означає b = −3."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

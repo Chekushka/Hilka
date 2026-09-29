@@ -1,0 +1,87 @@
+{
+  "slug": "g8-code-two-roots",
+  "topicSlug": "project-quadratic",
+  "type": "code",
+  "title": "Два корені",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай a, b, c. Відомо, що a > 0 і D > 0, тож коренів два: x = (−b ± √D) / (2a). Виведи спочатку менший корінь, потім більший. Виведи тільки корені, кожен окремим рядком, — без інших чисел (навіть дискримінанта) і без підписів на кшталт x1, бо в них теж є цифра.",
+    "starter": "import math\n"
+  },
+  "cases": [
+    {
+      "label": "1, −3, 2",
+      "stdin": [
+        "1",
+        "-3",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1,
+            2
+          ],
+          "tol": 0.01,
+          "message": "Для 1, −3, 2 корені 1 і 2 — саме в такому порядку і без інших чисел."
+        }
+      ]
+    },
+    {
+      "label": "1, 0, −4",
+      "stdin": [
+        "1",
+        "0",
+        "-4"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -2,
+            2
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "2, −1, −1",
+      "stdin": [
+        "2",
+        "-1",
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -0.5,
+            1
+          ],
+          "tol": 0.01,
+          "message": "Для a = 2 корені −0.5 і 1. Чи весь знаменник 2 · a стоїть у дужках?"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Корінь з D: math.sqrt(d).",
+    "Менший корінь — з мінусом: (-b - math.sqrt(d)) / (2 * a).",
+    "Знаменник бери в дужки: / (2 * a), а не / 2 * a."
+  ],
+  "reference": {
+    "code": "import math\na = int(input())\nb = int(input())\nc = int(input())\nd = b * b - 4 * a * c\nprint((-b - math.sqrt(d)) / (2 * a))\nprint((-b + math.sqrt(d)) / (2 * a))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

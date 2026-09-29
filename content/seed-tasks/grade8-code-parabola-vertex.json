@@ -1,0 +1,85 @@
+{
+  "slug": "g8-code-parabola-vertex",
+  "topicSlug": "project-quadratic",
+  "type": "code",
+  "title": "Вершина параболи",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Графік y = ax² + bx + c — парабола. Її вершина має координату x₀ = −b / (2a), а y₀ — це значення ax₀² + bx₀ + c. Прочитай a, b, c (a ≠ 0) і виведи два числа: x₀, потім y₀.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1, −2, 3",
+      "stdin": [
+        "1",
+        "-2",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1,
+            2
+          ],
+          "tol": 0.01,
+          "message": "Для 1, −2, 3 вершина — (1; 2)."
+        }
+      ]
+    },
+    {
+      "label": "1, 4, 0",
+      "stdin": [
+        "1",
+        "4",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -2,
+            -4
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "2, 0, −8",
+      "stdin": [
+        "2",
+        "0",
+        "-8"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            0,
+            -8
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спочатку знайди x0 = -b / (2 * a).",
+    "Потім підстав x0: y0 = a * x0 * x0 + b * x0 + c."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\nx0 = -b / (2 * a)\ny0 = a * x0 * x0 + b * x0 + c\nprint(x0)\nprint(y0)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

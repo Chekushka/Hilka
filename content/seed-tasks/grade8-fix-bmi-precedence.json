@@ -1,0 +1,60 @@
+{
+  "slug": "g8-fix-bmi-precedence",
+  "topicSlug": "project-bmi",
+  "type": "fix",
+  "title": "Дивний ІМТ",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала рахувати ІМТ, але для 70 кг і 1.75 м видає 70.0 — просто масу. Знайди помилку.",
+    "broken": "weight = float(input())\nheight = float(input())\nbmi = weight / height * height\nprint(round(bmi, 1))\n"
+  },
+  "cases": [
+    {
+      "label": "70 кг, 1.75 м",
+      "stdin": [
+        "70",
+        "1.75"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 22.9,
+          "tol": 0.05,
+          "which": "last",
+          "message": "Для 70 кг і 1.75 м ІМТ приблизно 22.9."
+        }
+      ]
+    },
+    {
+      "label": "50 кг, 1.60 м",
+      "stdin": [
+        "50",
+        "1.60"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 19.5,
+          "tol": 0.05,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Python виконує / і * зліва направо: спершу ділить на зріст, потім множить на нього ж.",
+    "Візьми добуток у дужки або використай height ** 2."
+  ],
+  "reference": {
+    "code": "weight = float(input())\nheight = float(input())\nbmi = weight / (height * height)\nprint(round(bmi, 1))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

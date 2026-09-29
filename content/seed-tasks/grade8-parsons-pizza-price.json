@@ -1,0 +1,75 @@
+{
+  "slug": "g8-parsons-pizza-price",
+  "topicSlug": "project-pizza",
+  "type": "parsons",
+  "title": "Ціна піци (склади програму)",
+  "payload": {
+    "type": "parsons",
+    "prompt": "Меню PyPizza: 1 — Маргарита, 150 грн; 2 — Пепероні, 180 грн; 3 — Гавайська, 170 грн. Розстав рядки так, щоб програма прочитала номер піци і вивела її ціну.",
+    "lines": [
+      {
+        "text": "choice = int(input())",
+        "indent": 0
+      },
+      {
+        "text": "if choice == 1:",
+        "indent": 0
+      },
+      {
+        "text": "price = 150",
+        "indent": 1
+      },
+      {
+        "text": "elif choice == 2:",
+        "indent": 0
+      },
+      {
+        "text": "price = 180",
+        "indent": 1
+      },
+      {
+        "text": "else:",
+        "indent": 0
+      },
+      {
+        "text": "price = 170",
+        "indent": 1
+      },
+      {
+        "text": "print(price)",
+        "indent": 0
+      }
+    ],
+    "distractors": [
+      "if choice = 1:"
+    ],
+    "indentMode": "given"
+  },
+  "checks": [
+    {
+      "kind": "order_equals",
+      "lines": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "message": "Ще не так. Кожна ціна має стояти одразу під своєю умовою."
+    }
+  ],
+  "hints": [
+    "Спершу — прочитати номер.",
+    "Після кожної умови — ціна тієї піци, яку вона перевіряє.",
+    "Порівняння пишеться ==, а не =."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

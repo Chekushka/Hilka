@@ -1,0 +1,79 @@
+{
+  "slug": "g8-code-healthy-weight-range",
+  "topicSlug": "project-bmi",
+  "type": "code",
+  "title": "Діапазон норми",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Для дорослого зросту h (у метрах) ІМТ у нормі, коли маса від 18.5 · h² до 25 · h² кг. Прочитай зріст і виведи два числа, округлені до одного знака: найменшу і найбільшу масу цього діапазону.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1.75 м",
+      "stdin": [
+        "1.75"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            56.7,
+            76.6
+          ],
+          "tol": 0.06,
+          "message": "Для 1.75 м: від 56.7 до 76.6 кг — спочатку менше."
+        }
+      ]
+    },
+    {
+      "label": "1.60 м",
+      "stdin": [
+        "1.60"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            47.4,
+            64
+          ],
+          "tol": 0.06
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "1.68 м",
+      "stdin": [
+        "1.68"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            52.2,
+            70.6
+          ],
+          "tol": 0.06
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Це та сама формула ІМТ, тільки розв'язана відносно маси: маса = ІМТ · h².",
+    "print(round(18.5 * h ** 2, 1))"
+  ],
+  "reference": {
+    "code": "h = float(input())\nprint(round(18.5 * h ** 2, 1))\nprint(round(25 * h ** 2, 1))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

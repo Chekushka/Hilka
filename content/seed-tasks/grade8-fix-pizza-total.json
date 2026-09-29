@@ -1,0 +1,63 @@
+{
+  "slug": "g8-fix-pizza-total",
+  "topicSlug": "project-pizza",
+  "type": "fix",
+  "title": "Рахує лише останню піцу",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Меню PyPizza: 1 — Маргарита, 150 грн; 2 — Пепероні, 180 грн; 3 — Гавайська, 170 грн. Програма мала рахувати суму замовлення (номери піц до 0, доставка 50 грн, якщо сума менша за 500), але за 1 і 2 просить 230 замість 380. Знайди помилку.",
+    "broken": "total = 0\nchoice = int(input())\nwhile choice != 0:\n    if choice == 1:\n        price = 150\n    elif choice == 2:\n        price = 180\n    else:\n        price = 170\n    total = price\n    choice = int(input())\nif total < 500:\n    total = total + 50\nprint(total)\n"
+  },
+  "cases": [
+    {
+      "label": "1, 2, потім 0",
+      "stdin": [
+        "1",
+        "2",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 380,
+          "tol": 0.01,
+          "which": "last",
+          "message": "150 + 180 = 330, плюс доставка — 380."
+        }
+      ]
+    },
+    {
+      "label": "2, 2, 3, потім 0",
+      "stdin": [
+        "2",
+        "2",
+        "3",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 530,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Подивись, що відбувається з total на кожному кроці циклу.",
+    "total = price замінює суму, а не додає до неї."
+  ],
+  "reference": {
+    "code": "total = 0\nchoice = int(input())\nwhile choice != 0:\n    if choice == 1:\n        price = 150\n    elif choice == 2:\n        price = 180\n    else:\n        price = 170\n    total = total + price\n    choice = int(input())\nif total < 500:\n    total = total + 50\nprint(total)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

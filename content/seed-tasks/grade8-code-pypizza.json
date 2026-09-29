@@ -1,0 +1,108 @@
+{
+  "slug": "g8-code-pypizza",
+  "topicSlug": "project-pizza",
+  "type": "code",
+  "title": "PyPizza повністю",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Меню PyPizza: 1 — Маргарита, 150 грн; 2 — Пепероні, 180 грн; 3 — Гавайська, 170 грн. Збери весь застосунок. Програма читає номер піци, доки не введуть 0; після кожного номера (крім 0) читає розмір — мала або велика (велика в 1.5 раза дорожча). Після 0 читає промокод: PYTHON дає знижку 15% на піци, будь-яке інше слово — ні. Якщо сума після знижки менша за 500 грн, додається доставка 50 грн. Виведи, скільки треба заплатити, округливши до двох знаків.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "мала Маргарита і велика Пепероні, PYTHON",
+      "stdin": [
+        "1",
+        "мала",
+        "2",
+        "велика",
+        "0",
+        "PYTHON"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 407,
+          "tol": 0.01,
+          "which": "last",
+          "message": "150 + 270 = 420, зі знижкою — 357, плюс доставка: 407."
+        }
+      ]
+    },
+    {
+      "label": "дві великі Гавайські, без коду",
+      "stdin": [
+        "3",
+        "велика",
+        "3",
+        "велика",
+        "0",
+        "НЕМАЄ"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 510,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "мала Пепероні, PYTHON",
+      "stdin": [
+        "2",
+        "мала",
+        "0",
+        "PYTHON"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 203,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "три великі Маргарити, PYTHON",
+      "stdin": [
+        "1",
+        "велика",
+        "1",
+        "велика",
+        "1",
+        "велика",
+        "0",
+        "PYTHON"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 573.75,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Візьми за основу програму «Замовлення кількох піц» і додай розмір усередину циклу.",
+    "Промокод читай уже після циклу, а тоді — знижка і доставка, як у задачі «Промокод».",
+    "print(round(total, 2))"
+  ],
+  "reference": {
+    "code": "total = 0\nchoice = int(input())\nwhile choice != 0:\n    size = input()\n    if choice == 1:\n        price = 150\n    elif choice == 2:\n        price = 180\n    else:\n        price = 170\n    if size == \"велика\":\n        price = price * 1.5\n    total = total + price\n    choice = int(input())\ncode = input()\nif code == \"PYTHON\":\n    total = total * 0.85\nif total < 500:\n    total = total + 50\nprint(round(total, 2))\n"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

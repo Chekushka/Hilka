@@ -1,0 +1,77 @@
+{
+  "slug": "g8-code-bmi",
+  "topicSlug": "project-bmi",
+  "type": "code",
+  "title": "Калькулятор ІМТ",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай масу дорослої людини в кілограмах і зріст у метрах (дробові числа). Виведи ІМТ, округлений до одного знака після крапки.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "70 кг, 1.75 м",
+      "stdin": [
+        "70",
+        "1.75"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 22.9,
+          "tol": 0.05,
+          "which": "last",
+          "message": "Для 70 кг і 1.75 м ІМТ приблизно 22.9."
+        }
+      ]
+    },
+    {
+      "label": "50 кг, 1.60 м",
+      "stdin": [
+        "50",
+        "1.60"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 19.5,
+          "tol": 0.05,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "90 кг, 1.80 м",
+      "stdin": [
+        "90",
+        "1.80"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 27.8,
+          "tol": 0.05,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Обидва числа дробові — float(input()).",
+    "bmi = weight / height ** 2",
+    "round(bmi, 1)"
+  ],
+  "reference": {
+    "code": "weight = float(input())\nheight = float(input())\nprint(round(weight / height ** 2, 1))\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

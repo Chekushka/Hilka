@@ -1,0 +1,113 @@
+{
+  "slug": "g8-code-site-full",
+  "topicSlug": "project-site-cost",
+  "type": "code",
+  "title": "Калькулятор вартості сайту",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прайс веб-студії: база — 5000 грн, кожна сторінка — 800 грн, власний дизайн — ще 3000 грн (шаблон — безкоштовно). Терміново — уся сума × 1.3. Якщо підсумок більший за 20000 грн, діє знижка 10%. Прочитай кількість сторінок, дизайн (шаблон або власний) і терміновість (так або ні). Виведи підсумкову вартість, округлену до цілого числа гривень.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "5, шаблон, не терміново",
+      "stdin": [
+        "5",
+        "шаблон",
+        "ні"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9000,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "10, власний, терміново",
+      "stdin": [
+        "10",
+        "власний",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 18720,
+          "tol": 0.01,
+          "which": "last",
+          "message": "16000 · 1.3 = 20800 — більше за 20000, тож знижка 10%: 18720."
+        }
+      ]
+    },
+    {
+      "label": "20, власний, не терміново",
+      "stdin": [
+        "20",
+        "власний",
+        "ні"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 21600,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "15, шаблон, терміново",
+      "stdin": [
+        "15",
+        "шаблон",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 19890,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "12, шаблон, терміново",
+      "stdin": [
+        "12",
+        "шаблон",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 18980,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Рахуй крок за кроком: база і сторінки, потім дизайн, потім терміновість.",
+    "Знижку перевіряй в самому кінці — уже після терміновості.",
+    "print(round(price))"
+  ],
+  "reference": {
+    "code": "pages = int(input())\ndesign = input()\nurgent = input()\nprice = 5000 + pages * 800\nif design == \"власний\":\n    price = price + 3000\nif urgent == \"так\":\n    price = price * 1.3\nif price > 20000:\n    price = price * 0.9\nprint(round(price))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

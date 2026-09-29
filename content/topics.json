@@ -15,5 +15,9 @@
   { "slug": "conditions-nested", "title": "Вкладені умови", "order": 14, "gradeTags": [7], "curriculumRef": "7:39" },
   { "slug": "debugging", "title": "Тестування та налагодження", "order": 15, "gradeTags": [7], "curriculumRef": "7:40" },
   { "slug": "turtle-animation", "title": "Динамічна графіка", "order": 16, "gradeTags": [7], "curriculumRef": "7:41-42" },
-  { "slug": "comments", "title": "Коментарі в коді", "order": 17, "gradeTags": [8, 9], "curriculumRef": "8:52" }
+  { "slug": "comments", "title": "Коментарі в коді", "order": 17, "gradeTags": [8, 9], "curriculumRef": "8:52" },
+  { "slug": "project-quadratic", "title": "Проєкт: квадратні рівняння", "order": 18, "gradeTags": [8], "curriculumRef": "8:53-55" },
+  { "slug": "project-bmi", "title": "Проєкт: індекс маси тіла", "order": 19, "gradeTags": [8], "curriculumRef": "8:56-57" },
+  { "slug": "project-site-cost", "title": "Проєкт: вартість сайту", "order": 20, "gradeTags": [8], "curriculumRef": "8:58-59" },
+  { "slug": "project-pizza", "title": "Проєкт: PyPizza", "order": 21, "gradeTags": [8], "curriculumRef": "8:60-61" }
 ]

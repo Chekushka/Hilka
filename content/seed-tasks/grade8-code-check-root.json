@@ -1,0 +1,96 @@
+{
+  "slug": "g8-code-check-root",
+  "topicSlug": "project-quadratic",
+  "type": "code",
+  "title": "Чи це корінь?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай цілі a, b, c і ціле число x. Виведи True, якщо x — корінь рівняння ax² + bx + c = 0 (тобто ax² + bx + c дорівнює 0), і False — якщо ні.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1, −3, 2 і x = 1",
+      "stdin": [
+        "1",
+        "-3",
+        "2",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim",
+          "message": "1 − 3 + 2 = 0, тож 1 — корінь."
+        }
+      ]
+    },
+    {
+      "label": "1, −3, 2 і x = 3",
+      "stdin": [
+        "1",
+        "-3",
+        "2",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "False",
+          "normalize": "trim",
+          "message": "9 − 9 + 2 = 2, не 0 — це не корінь."
+        }
+      ]
+    },
+    {
+      "label": "1, 0, −4 і x = −2",
+      "stdin": [
+        "1",
+        "0",
+        "-4",
+        "-2"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "2, −1, −1 і x = 1",
+      "stdin": [
+        "2",
+        "-1",
+        "-1",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Підстав x у ліву частину рівняння.",
+    "print(a * x * x + b * x + c == 0)"
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\nx = int(input())\nprint(a * x * x + b * x + c == 0)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

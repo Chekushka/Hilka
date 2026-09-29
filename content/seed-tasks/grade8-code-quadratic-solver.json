@@ -1,0 +1,136 @@
+{
+  "slug": "g8-code-quadratic-solver",
+  "topicSlug": "project-quadratic",
+  "type": "code",
+  "title": "Розв'язувач рівнянь",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай a, b, c (a > 0) і розв'яжи рівняння ax² + bx + c = 0. Якщо D < 0, виведи коренів немає. Якщо D = 0 — один корінь −b / (2a). Якщо D > 0 — два корені, спочатку менший. Виведи тільки корені, кожен окремим рядком, — без інших чисел (навіть дискримінанта) і без підписів на кшталт x1, бо в них теж є цифра.",
+    "starter": "import math\n"
+  },
+  "cases": [
+    {
+      "label": "два корені: 1, −3, 2",
+      "stdin": [
+        "1",
+        "-3",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1,
+            2
+          ],
+          "tol": 0.01,
+          "message": "Для 1, −3, 2 корені 1 і 2 — спочатку менший, і жодних інших чисел."
+        }
+      ]
+    },
+    {
+      "label": "один корінь: 1, 2, 1",
+      "stdin": [
+        "1",
+        "2",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -1,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 1, 2, 1 дискримінант 0, корінь один: −1."
+        }
+      ]
+    },
+    {
+      "label": "коренів немає: 2, 1, 5",
+      "stdin": [
+        "2",
+        "1",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "коренів немає",
+          "normalize": "loose",
+          "message": "Для 2, 1, 5 дискримінант від'ємний — виведи: коренів немає."
+        }
+      ]
+    },
+    {
+      "label": "1, 0, −4",
+      "stdin": [
+        "1",
+        "0",
+        "-4"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -2,
+            2
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "1, −6, 9",
+      "stdin": [
+        "1",
+        "-6",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "2, −1, −1",
+      "stdin": [
+        "2",
+        "-1",
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -0.5,
+            1
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порахуй D, а далі — три гілки: if, elif, else.",
+    "math.sqrt не можна брати з від'ємного числа — тому корінь рахуй лише в гілці, де D > 0.",
+    "Знаменник — у дужках: / (2 * a)."
+  ],
+  "reference": {
+    "code": "import math\na = int(input())\nb = int(input())\nc = int(input())\nd = b * b - 4 * a * c\nif d < 0:\n    print(\"коренів немає\")\nelif d == 0:\n    print(-b / (2 * a))\nelse:\n    print((-b - math.sqrt(d)) / (2 * a))\n    print((-b + math.sqrt(d)) / (2 * a))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

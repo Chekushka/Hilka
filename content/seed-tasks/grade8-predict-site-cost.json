@@ -1,0 +1,32 @@
+{
+  "slug": "g8-predict-site-cost",
+  "topicSlug": "project-site-cost",
+  "type": "predict",
+  "title": "Скільки коштує сайт?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "pages = 4\nprice = 5000 + pages * 800\nprint(price)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "8200",
+      "normalize": "trim",
+      "message": "Спершу множення: 4 · 800 = 3200, потім додавання: 5000 + 3200 = 8200."
+    }
+  ],
+  "hints": [
+    "Множення виконується раніше за додавання."
+  ],
+  "reference": {
+    "code": "pages = 4\nprice = 5000 + pages * 800\nprint(price)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,89 @@
+{
+  "slug": "g8-code-site-budget",
+  "topicSlug": "project-site-cost",
+  "type": "code",
+  "title": "Скільки сторінок за бюджет?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Клієнт має певний бюджет і хоче шаблонний сайт без терміновості: 5000 грн база і по 800 грн за сторінку. Прочитай бюджет і виведи, скільки найбільше сторінок можна замовити. Якщо не вистачає навіть на одну сторінку, виведи 0.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "13000 грн",
+      "stdin": [
+        "13000"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 10,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "9500 грн",
+      "stdin": [
+        "9500"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last",
+          "message": "На сторінки лишається 4500 грн — це 5 повних сторінок."
+        }
+      ]
+    },
+    {
+      "label": "рівно на базу",
+      "stdin": [
+        "5000"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "менше за базу",
+      "stdin": [
+        "3000"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Бюджет менший за базову ціну — виходить 0, а не від'ємне число."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Скільки грошей лишається на сторінки після бази?",
+    "Ціла частина від ділення — //.",
+    "Якщо бюджет менший за 5000, окремо виведи 0."
+  ],
+  "reference": {
+    "code": "budget = int(input())\nif budget < 5000:\n    print(0)\nelse:\n    print((budget - 5000) // 800)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}
