@@ -13,7 +13,7 @@
 import type { Check, ShapeNormalization } from '@/lib/checker';
 import type { RunCase, TaskType } from './types';
 
-export type CheckKind = Exclude<Check['kind'], 'grid_goal'>;
+export type CheckKind = Check['kind'];
 
 export type FieldType =
   /** One-line string. */
@@ -106,7 +106,9 @@ export const CHECK_FIELDS: Record<CheckKind, readonly FieldSpec[]> = {
     { key: 'all', type: 'stringList' },
     { key: 'any', type: 'stringList' }
   ],
-  forbids: [{ key: 'names', type: 'stringList', required: true }]
+  forbids: [{ key: 'names', type: 'stringList', required: true }],
+  // Nothing to fill in: the world is the task's own (payload.grid).
+  grid_goal: []
 };
 
 export const CHECK_KINDS = Object.keys(CHECK_FIELDS) as CheckKind[];
@@ -123,7 +125,8 @@ const RUN_KINDS: readonly CheckKind[] = [
   'var_equals',
   'expr',
   'uses',
-  'forbids'
+  'forbids',
+  'grid_goal'
 ];
 
 /** The kinds that mean something for a task type, most useful first. */
@@ -174,6 +177,8 @@ export function defaultCheck(kind: CheckKind): Check {
       return { kind, all: [] };
     case 'forbids':
       return { kind, names: [] };
+    case 'grid_goal':
+      return { kind };
   }
 }
 
@@ -185,7 +190,6 @@ export function changeKind(check: Check, kind: CheckKind): Check {
 
 /** Keys the builder has no field for. Non-empty means: edit this check as raw JSON. */
 export function unsupportedKeys(check: Check): string[] {
-  if (check.kind === 'grid_goal') return ['kind'];
   const known = new Set(['kind', 'message', ...CHECK_FIELDS[check.kind].map((field) => field.key)]);
   return Object.keys(check).filter((key) => !known.has(key));
 }

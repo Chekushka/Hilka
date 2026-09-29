@@ -6,12 +6,19 @@
  * driven by hand and by the integration tests before any UI exists.
  */
 import { useEffect, useRef, useState } from 'react';
-import { createRunner, type ParseResult, type PythonRunner, type RunResult } from '@/lib/runner';
+import { createRunner, type GridWorld, type ParseResult, type PythonRunner, type RunResult } from '@/lib/runner';
 
 interface TestHooks {
   run(
     code: string,
-    options: { mode: 'headless'; stdin?: string[]; timeoutMs?: number; randomSeed?: number; exprs?: string[] }
+    options: {
+      mode: 'headless';
+      stdin?: string[];
+      timeoutMs?: number;
+      randomSeed?: number;
+      exprs?: string[];
+      grid?: GridWorld;
+    }
   ): Promise<RunResult>;
   runInteractive(code: string, answers: string[], delayMs: number): Promise<RunResult>;
   parse(code: string): Promise<ParseResult>;

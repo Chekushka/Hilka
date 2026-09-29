@@ -1,5 +1,5 @@
 /** Messages between the adapter on the main thread and the worker. */
-import type { Dot, ParseResult, PyError, PyValue, Segment } from './types';
+import type { Dot, GridRun, GridWorld, ParseResult, PyError, PyValue, Segment } from './types';
 
 export interface RunRequest {
   type: 'run';
@@ -10,6 +10,7 @@ export interface RunRequest {
   timeoutMs: number;
   randomSeed: number | null;
   exprs: string[];
+  grid: GridWorld | null;
 }
 
 export interface InputResponse {
@@ -49,6 +50,7 @@ export interface DoneMessage {
   error: PyError | null;
   drawing: Segment[];
   dots: Dot[];
+  grid: GridRun | null;
   timedOut: boolean;
   inputsConsumed: number;
   elapsedMs: number;

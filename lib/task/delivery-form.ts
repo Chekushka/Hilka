@@ -7,7 +7,8 @@
  * The size cap is edited in KB because that is what a teacher can reason
  * about; the payload keeps bytes.
  */
-import type { Delivery, FileSpec } from './types';
+import type { GridWorld } from '@/lib/runner';
+import type { Delivery, FileSpec, Surface } from './types';
 
 export interface DeliveryFormState {
   enabled: boolean;
@@ -57,6 +58,19 @@ export function deliveryPayloadFields(state: DeliveryFormState): { delivery?: 'f
     delivery: 'file',
     file: { filename: state.filename.trim(), headerComment: state.headerComment, maxBytes: state.maxKb * 1024 }
   };
+}
+
+/**
+ * The surface-dependent payload fields: a grid task carries its world and is
+ * always inline (IDLE has no `robot` module); anything else carries its
+ * delivery as before.
+ */
+export function surfacePayloadFields(
+  surface: Surface,
+  grid: GridWorld,
+  delivery: DeliveryFormState
+): { delivery?: 'file'; file?: FileSpec; grid?: GridWorld } {
+  return surface === 'grid' ? { grid } : deliveryPayloadFields(delivery);
 }
 
 /** A starting file name from the task slug: `bmi-calc` → `bmi_calc.py`. */

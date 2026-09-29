@@ -10,19 +10,22 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
+import { GridView } from '@/components/canvas/GridView';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
-import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
+import { createRunner, type GridWorld, type PythonRunner, type RunResult } from '@/lib/runner';
+import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
 import { evaluateCasesAgainstOwnRuns, type Check, type CheckRunOutcome } from '@/lib/checker';
 import type { FixPayload, RunCase, Surface } from '@/lib/task/types';
 import {
   deliveryFormFromPayload,
-  deliveryPayloadFields,
+  surfacePayloadFields,
   validateDeliveryForm,
   type DeliveryFormState
 } from '@/lib/task/delivery-form';
 import { FileDeliveryFields } from './FileDeliveryFields';
+import { GridWorldField } from './GridWorldField';
 import { lintForFileDelivery, type LintedSource } from './file-lint-gate';
 import { FileLintReport } from './FileLintReport';
 import { ChecksField } from './ChecksField';
@@ -59,6 +62,8 @@ type PublishState =
 export function FixDraftEditor({ task }: FixDraftEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [surface, setSurface] = useState<Surface>(task.payload.surface);
+  const [grid, setGrid] = useState<GridWorld>(task.payload.grid ?? DEFAULT_GRID_WORLD);
+  const runGrid = surface === 'grid' ? grid : undefined;
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [broken, setBroken] = useState(task.payload.broken);
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
@@ -138,7 +143,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'fix', surface, prompt, broken, ...deliveryPayloadFields(delivery) },
+        payload: { type: 'fix', surface, prompt, broken, ...surfacePayloadFields(surface, grid, delivery) },
         checks: parsedChecks.checks,
         cases: parsedCases.cases,
         hints: parseHints(hintsText),
@@ -176,7 +181,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
     setPublishState({ kind: 'idle' });
     const results: RunResult[] = [];
     for (const runCase of cases) {
-      results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin }));
+      results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin, grid: runGrid }));
     }
     setCaseResults(results);
     setReferenceOutcome(evaluateCasesAgainstOwnRuns(referenceCode, parsedChecks.checks, cases, results));
@@ -207,7 +212,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
     setRunningBroken(true);
     setBrokenRun(null);
     setPublishState({ kind: 'idle' });
-    const result = await runner.run(broken, { mode: 'headless' });
+    const result = await runner.run(broken, { mode: 'headless', grid: runGrid });
     setBrokenRun(result);
     setRunningBroken(false);
   }
@@ -288,8 +293,11 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
           >
             <option value="turtle">{t('authoring.surfaceTurtle')}</option>
             <option value="console">{t('authoring.surfaceConsole')}</option>
+            <option value="grid">{t('authoring.surfaceGrid')}</option>
           </select>
         </div>
+
+        {surface === 'grid' && <GridWorldField value={grid} onChange={setGrid} />}
 
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-ink-muted" htmlFor="prompt">
@@ -313,13 +321,17 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
           <p className="text-xs text-ink-muted">{t('authoring.brokenCodeHint')}</p>
         </div>
 
-        <FileDeliveryFields
-          value={delivery}
-          onChange={(next) => {
-            if (next.enabled !== delivery.enabled) setFileLint(undefined);
-            setDelivery(next);
-          }}
-        />
+        {surface === 'grid' ? (
+          <p className="text-sm text-ink-muted">{t('authoring.gridNoFile')}</p>
+        ) : (
+          <FileDeliveryFields
+            value={delivery}
+            onChange={(next) => {
+              if (next.enabled !== delivery.enabled) setFileLint(undefined);
+              setDelivery(next);
+            }}
+          />
+        )}
 
         <ChecksField
           id="checks"
@@ -405,6 +417,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
             )}
             <div className="flex flex-wrap gap-4">
               {surface === 'turtle' && <TurtleCanvas drawing={result.drawing} label={t('workspace.yourDrawing')} />}
+              {surface === 'grid' && <GridView world={grid} steps={result.grid?.steps ?? []} />}
               {surface === 'console' && (
                 <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
                   {result.stdout || t('workspace.outputEmpty')}
@@ -437,6 +450,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         {brokenRun && (
           <div className="flex flex-wrap gap-4">
             {surface === 'turtle' && <TurtleCanvas drawing={brokenRun.drawing} label={t('workspace.yourDrawing')} />}
+              {surface === 'grid' && <GridView world={grid} steps={brokenRun.grid?.steps ?? []} />}
             {surface === 'console' && (
               <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
                 {brokenRun.stdout || t('workspace.outputEmpty')}

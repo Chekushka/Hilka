@@ -8,9 +8,10 @@
  * (docs/AI_CONTEXT.md, "Every task type implements one shared component
  * interface").
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
-import { CodePane } from '@/components/task/CodePane';
+import { GridRunNote } from '@/components/canvas/GridView';
+import { CodePane, CodeVisual } from '@/components/task/CodePane';
 import { FileDelivery } from '@/components/task/FileDelivery';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
@@ -19,6 +20,7 @@ import { RunCheckActions, RunDockIdle, WorkspaceDock } from '@/components/task/W
 import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
+import { gridWorldOf } from '@/lib/task/grid';
 import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
 import type { AttemptOutcome, FixTask } from '@/lib/task/types';
@@ -36,7 +38,9 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
   // File delivery: the code arrives by upload, not typing — nothing to run until it does.
   const fileSpec = task.payload.delivery === 'file' ? task.payload.file : undefined;
   const [code, setCode] = useState(fileSpec ? '' : task.payload.broken);
-  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput, parse } = useTaskRunner(task);
+  const world = gridWorldOf(task);
+  const runnable = useMemo(() => ({ ...task, grid: world }), [task, world]);
+  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput, parse } = useTaskRunner(runnable);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -90,6 +94,9 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
           ) : (
             !result && <RunDockIdle engine={engine} />
           )}
+          {world && result && !result.error && !result.timedOut && !report?.passed && (
+            <GridRunNote run={result.grid} />
+          )}
           {result && <ResultPanel result={result} report={report} code={code} onRetry={retry} />}
         </WorkspaceDock>
       }
@@ -109,7 +116,11 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
             />
           )
         }
-        canvas={showsTurtleCanvas(task, result?.drawing ?? []) ? { drawing: result?.drawing ?? [], target } : undefined}
+        visual={
+          world || showsTurtleCanvas(task, result?.drawing ?? []) ? (
+            <CodeVisual world={world} grid={result?.grid ?? null} drawing={result?.drawing ?? []} target={target} />
+          ) : undefined
+        }
       >
         {(!fileSpec || code.length > 0) && (
           // Read-only in file mode: what gets checked must be exactly the file

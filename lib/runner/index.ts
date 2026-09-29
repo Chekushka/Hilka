@@ -11,6 +11,11 @@ export function createRunner(): PythonRunner {
 
 export type {
   Dot,
+  GridCell,
+  GridDir,
+  GridRun,
+  GridStep,
+  GridWorld,
   ParseResult,
   PyAstNode,
   PyAstValue,

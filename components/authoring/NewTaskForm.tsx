@@ -17,14 +17,17 @@ import { CodeEditor } from '@/components/editor/CodeEditor';
 import { t } from '@/lib/i18n';
 import {
   deliveryFormFromPayload,
-  deliveryPayloadFields,
+  surfacePayloadFields,
   filenameFromSlug,
   validateDeliveryForm,
   type DeliveryFormState
 } from '@/lib/task/delivery-form';
 import { isFillTemplateValid } from '@/lib/task/fill';
+import type { GridWorld } from '@/lib/runner';
+import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
 import type { Surface, TaskType } from '@/lib/task/types';
 import { FileDeliveryFields } from './FileDeliveryFields';
+import { GridWorldField } from './GridWorldField';
 import { formatParsonsLines, parseParsonsLines } from './parsons-form-utils';
 import { ChecksField } from './ChecksField';
 import { CasesField } from './CasesField';
@@ -62,6 +65,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
 
   // code-only
   const [surface, setSurface] = useState<Surface>('turtle');
+  const [grid, setGrid] = useState<GridWorld>(DEFAULT_GRID_WORLD);
   const [starter, setStarter] = useState('');
 
   // parsons-only
@@ -158,7 +162,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         title,
         payload:
           taskType === 'code'
-            ? { type: 'code', surface, prompt, starter, ...deliveryPayloadFields(deliveryForm) }
+            ? { type: 'code', surface, prompt, starter, ...surfacePayloadFields(surface, grid, deliveryForm) }
             : taskType === 'parsons'
               ? {
                   type: 'parsons',
@@ -174,7 +178,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                     ? { type: 'predict', prompt, code: predictCode, answerMode: 'choice', options: parsedPredictOptions }
                     : { type: 'predict', prompt, code: predictCode, answerMode: 'text' }
                   : taskType === 'fix'
-                    ? { type: 'fix', surface, prompt, broken: brokenCode, ...deliveryPayloadFields(deliveryForm) }
+                    ? { type: 'fix', surface, prompt, broken: brokenCode, ...surfacePayloadFields(surface, grid, deliveryForm) }
                     : { type: 'fill', prompt, template },
         checks: parsedChecks.checks,
         ...((taskType === 'code' || taskType === 'fix') && parsedCases.cases.length > 0
@@ -272,20 +276,25 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
       </div>
 
       {taskType === 'code' || taskType === 'fix' ? (
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="surface">
-            {t('authoring.surfaceLabel')}
-          </label>
-          <select
-            id="surface"
-            value={surface}
-            onChange={(event) => setSurface(event.target.value as Surface)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          >
-            <option value="turtle">{t('authoring.surfaceTurtle')}</option>
-            <option value="console">{t('authoring.surfaceConsole')}</option>
-          </select>
-        </div>
+        <>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="surface">
+              {t('authoring.surfaceLabel')}
+            </label>
+            <select
+              id="surface"
+              value={surface}
+              onChange={(event) => setSurface(event.target.value as Surface)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            >
+              <option value="turtle">{t('authoring.surfaceTurtle')}</option>
+              <option value="console">{t('authoring.surfaceConsole')}</option>
+              <option value="grid">{t('authoring.surfaceGrid')}</option>
+            </select>
+          </div>
+
+          {surface === 'grid' && <GridWorldField value={grid} onChange={setGrid} />}
+        </>
       ) : null}
 
       <div className="flex flex-col gap-1.5">
@@ -466,7 +475,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         </div>
       )}
 
-      {hasDelivery && (
+      {hasDelivery && surface !== 'grid' && (
         <FileDeliveryFields
           value={deliveryForm}
           onChange={(next) => {

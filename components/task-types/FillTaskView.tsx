@@ -9,7 +9,7 @@
  * assembly — the run, the checker, the result panel — is identical to them.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CodePane } from '@/components/task/CodePane';
+import { CodePane, CodeVisual } from '@/components/task/CodePane';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
@@ -18,6 +18,7 @@ import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
 import { parseFillTemplate, substituteFillTemplate } from '@/lib/task/fill';
+import { gridWorldOf } from '@/lib/task/grid';
 import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
 import type { AttemptOutcome, FillTask } from '@/lib/task/types';
@@ -33,7 +34,9 @@ interface FillTaskViewProps {
 
 export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: FillTaskViewProps) {
   const [values, setValues] = useState<Record<number, string>>({});
-  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(task);
+  const world = gridWorldOf(task);
+  const runnable = useMemo(() => ({ ...task, grid: world }), [task, world]);
+  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(runnable);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -93,7 +96,11 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
       }
     >
       <CodePane
-        canvas={showsTurtleCanvas(task, result?.drawing ?? []) ? { drawing: result?.drawing ?? [], target } : undefined}
+        visual={
+          world || showsTurtleCanvas(task, result?.drawing ?? []) ? (
+            <CodeVisual world={world} grid={result?.grid ?? null} drawing={result?.drawing ?? []} target={target} />
+          ) : undefined
+        }
       >
         {/* Same size and face as the editor, so a gap reads as part of the program. */}
         <div className="flex-1 overflow-auto whitespace-pre-wrap px-5 py-4 font-mono text-base leading-[2.1] text-ink">

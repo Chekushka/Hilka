@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { evaluateChecks, type Check, type CheckReport, type CheckResult } from '@/lib/checker';
 import { t } from '@/lib/i18n';
-import { createRunner, type ParseResult, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
+import { createRunner, type GridWorld, type ParseResult, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
 import type { Reference, RunCase } from './types';
 
 export type EngineState = 'loading' | 'ready' | 'failed';
@@ -46,6 +46,7 @@ const EMPTY_RESULT: RunResult = {
   error: null,
   drawing: [],
   dots: [],
+  grid: null,
   timedOut: false,
   inputsConsumed: 0,
   elapsedMs: 0,
@@ -64,6 +65,8 @@ export interface RunnableTask {
   /** Input-driven only. Absent (or empty) means a single implicit case with no stdin. */
   cases?: RunCase[];
   reference: Reference;
+  /** The grid world every run of this task takes (lib/task/grid.ts's `gridWorldOf`); absent off the grid. */
+  grid?: GridWorld;
 }
 
 export function useTaskRunner(task: RunnableTask) {
@@ -94,7 +97,9 @@ export function useTaskRunner(task: RunnableTask) {
       // The first case's stdin, if there is one — a console-surface
       // reference that calls input() needs it to run at all. Turtle
       // references never have cases, so this is `[]` for them, unchanged.
-      .then(() => runner.run(task.reference.code, { mode: 'headless', stdin: task.cases?.[0]?.stdin ?? [] }))
+      .then(() =>
+        runner.run(task.reference.code, { mode: 'headless', stdin: task.cases?.[0]?.stdin ?? [], grid: task.grid })
+      )
       .then((reference) => {
         if (cancelled) return;
         targetRef.current = reference.drawing;
@@ -115,7 +120,7 @@ export function useTaskRunner(task: RunnableTask) {
       runner.dispose();
       runnerRef.current = null;
     };
-  }, [task.reference.code, task.cases]);
+  }, [task.reference.code, task.cases, task.grid]);
 
   /**
    * Check: one headless run per case (docs/TASK_SCHEMA.md, "Run cases"), a
@@ -143,7 +148,7 @@ export function useTaskRunner(task: RunnableTask) {
       for (const [i, runCase] of cases.entries()) {
         const caseChecks = [...task.checks, ...(runCase.checks ?? [])];
         const exprs = caseChecks.filter((c): c is Check & { kind: 'expr' } => c.kind === 'expr').map((c) => c.python);
-        const caseResult = await runner.run(code, { mode: 'headless', stdin: runCase.stdin, exprs });
+        const caseResult = await runner.run(code, { mode: 'headless', stdin: runCase.stdin, exprs, grid: task.grid });
         shownResult ??= caseResult;
         if (caseResult.error || caseResult.timedOut) {
           erroredResult = caseResult;
@@ -157,7 +162,8 @@ export function useTaskRunner(task: RunnableTask) {
             error: caseResult.error,
             timedOut: caseResult.timedOut,
             vars: caseResult.vars,
-            exprResults: caseResult.exprResults
+            exprResults: caseResult.exprResults,
+            grid: caseResult.grid
           },
           reference: { drawing: targetRef.current }
         });
@@ -177,7 +183,7 @@ export function useTaskRunner(task: RunnableTask) {
         report: erroredResult ? null : { passed: allPassed, results, score: casesPassed / cases.length }
       }));
     },
-    [task.checks, task.cases]
+    [task.checks, task.cases, task.grid]
   );
 
   /**
@@ -187,11 +193,13 @@ export function useTaskRunner(task: RunnableTask) {
    * judged, and never paged through `cases` — the student is exploring
    * their own program, not being graded against the author's scenarios.
    */
+  const grid = task.grid;
   const runInteractive = useCallback(async (code: string) => {
     const runner = runnerRef.current;
     if (!runner) return;
     const result = await runner.run(code, {
       mode: 'interactive',
+      grid,
       onStdout: (chunk) =>
         setState((previous) => ({
           ...previous,
@@ -205,7 +213,7 @@ export function useTaskRunner(task: RunnableTask) {
     });
     inputResolveRef.current = null;
     setState((previous) => ({ ...previous, busy: false, pendingInputPrompt: null, result, report: null }));
-  }, []);
+  }, [grid]);
 
   const execute = useCallback(
     async (code: string, judge: boolean) => {

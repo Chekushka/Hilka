@@ -6,7 +6,7 @@
  *
  * The kinds mirror docs/TASK_SCHEMA.md exactly.
  */
-import type { Segment } from '@/lib/runner';
+import type { GridRun, Segment } from '@/lib/runner';
 
 export type Check = { message?: string } & (
   // --- no execution ---------------------------------------------------------
@@ -41,7 +41,7 @@ export type Check = { message?: string } & (
   | { kind: 'uses'; any?: string[]; all?: string[] }
   | { kind: 'forbids'; names: string[] }
 
-  // --- grid (optional, build later) ----------------------------------------
+  // --- grid ---------------------------------------------------------------
   | { kind: 'grid_goal' }
 );
 
@@ -77,6 +77,8 @@ export interface Evidence {
     vars?: Record<string, unknown>;
     /** `check.python` → whether it evaluated truthy. Powers `expr`. */
     exprResults?: Record<string, boolean>;
+    /** What the grid robot did. Powers `grid_goal`. */
+    grid?: GridRun | null;
   } | null;
   reference?: ReferenceArtifacts | null;
 }

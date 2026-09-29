@@ -86,12 +86,12 @@ test('in practice, a passed Check leads to the lesson\'s next task, and the last
   await page.getByRole('link', { name: NEXT, exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Трикутник', exact: true })).toBeVisible();
 
-  // Вартість поїздки is the last step of its lesson.
-  await page.goto('/practice/g7-28-linear/g7-code-trip-cost');
+  // The grid robot's walk around the rocks is the last step of its lesson.
+  await page.goto('/practice/g7-28-linear/g7-grid-around-rock');
   await waitForEngine(page);
   await typeSolution(
     page,
-    'distance = float(input())\nper100 = float(input())\nprice = float(input())\nprint(distance * per100 / 100 * price)'
+    'import robot\nrobot.forward(2)\nrobot.left()\nrobot.forward()\nrobot.right()\nrobot.forward(3)\nrobot.right()\nrobot.forward()\nrobot.left()\nrobot.forward(2)'
   );
   await checkAndPass(page);
   await expect(page.getByRole('link', { name: NEXT, exact: true })).toHaveCount(0);

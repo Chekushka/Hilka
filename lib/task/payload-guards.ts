@@ -6,6 +6,7 @@
  * adversarial one.
  */
 import { isFillTemplateValid } from './fill';
+import { isValidGridWorld } from './grid';
 import type { CodePayload, FillPayload, FixPayload, ParsonsPayload, PredictPayload, QuizPayload, TaskPayload } from './types';
 
 function isFileSpec(value: unknown): boolean {
@@ -19,6 +20,15 @@ function isFileSpec(value: unknown): boolean {
     Number.isInteger(f.maxBytes) &&
     f.maxBytes > 0
   );
+}
+
+/**
+ * A grid task needs its world, and can only be solved in the browser: IDLE
+ * has no `robot` module (lib/runner/modules/robot.ts), so no file delivery.
+ */
+function isSurfaceValid(p: Record<string, unknown>): boolean {
+  if (p.surface !== 'grid') return p.grid === undefined;
+  return isValidGridWorld(p.grid) && (p.delivery === undefined || p.delivery === 'inline');
 }
 
 /** `delivery` absent or `'inline'` needs nothing more; `'file'` needs a well-formed `file`. */
@@ -35,7 +45,8 @@ export function isCodePayload(value: unknown): value is CodePayload {
     typeof p.surface === 'string' &&
     typeof p.prompt === 'string' &&
     typeof p.starter === 'string' &&
-    isDeliveryValid(p)
+    isDeliveryValid(p) &&
+    isSurfaceValid(p)
   );
 }
 
@@ -101,7 +112,8 @@ export function isFixPayload(value: unknown): value is FixPayload {
     typeof p.prompt === 'string' &&
     typeof p.broken === 'string' &&
     p.broken.length > 0 &&
-    isDeliveryValid(p)
+    isDeliveryValid(p) &&
+    isSurfaceValid(p)
   );
 }
 

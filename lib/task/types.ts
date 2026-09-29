@@ -4,6 +4,7 @@
  * built, rather than being declared in full and left half-implemented.
  */
 import type { Check, ReferenceArtifacts } from '@/lib/checker';
+import type { GridWorld } from '@/lib/runner';
 import type { ParamSpec } from '@/lib/seed';
 
 export type TaskType = 'quiz' | 'predict' | 'parsons' | 'fill' | 'code' | 'fix';
@@ -35,6 +36,8 @@ export interface CodePayload {
   delivery?: Delivery;
   /** Required when `delivery` is `'file'`. */
   file?: FileSpec;
+  /** Required when `surface` is `'grid'` (lib/task/grid.ts). */
+  grid?: GridWorld;
 }
 
 export interface ParsonsLine {
@@ -102,6 +105,8 @@ export interface FixPayload {
   delivery?: Delivery;
   /** Required when `delivery` is `'file'`. */
   file?: FileSpec;
+  /** Required when `surface` is `'grid'` (lib/task/grid.ts). */
+  grid?: GridWorld;
 }
 
 /**

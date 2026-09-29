@@ -7,6 +7,7 @@
  */
 import { buildExprEpilogue, createExprRecorder, EXPR_MODULE_PATH, EXPR_MODULE_SOURCE } from './modules/expr-recorder';
 import { RANDOM_MODULE_PATH, RANDOM_MODULE_SOURCE } from './modules/random';
+import { createRobotRecorder, ROBOT_MODULE_PATH, ROBOT_MODULE_SOURCE, robotRun } from './modules/robot';
 import { patchStrUnicode } from './modules/str-unicode';
 import { createRecorder, TURTLE_MODULE_PATH, TURTLE_MODULE_SOURCE } from './modules/turtle';
 import { skulptToAst } from './ast';
@@ -21,6 +22,7 @@ declare const Sk: SkulptGlobal;
 const scope = self as unknown as {
   importScripts: (...urls: string[]) => void;
   __turtle__: ReturnType<typeof createRecorder>;
+  __robot__: ReturnType<typeof createRobotRecorder>;
   __randomSeed__: number;
   __exprRecorder__: ReturnType<typeof createExprRecorder>;
 };
@@ -30,6 +32,9 @@ scope.importScripts('/runner/skulpt.min.js', '/runner/skulpt-stdlib.js');
 let recorder = createRecorder();
 scope.__turtle__ = recorder;
 
+let robotRecorder = createRobotRecorder();
+scope.__robot__ = robotRecorder;
+
 let exprRecorder = createExprRecorder();
 scope.__exprRecorder__ = exprRecorder;
 
@@ -38,6 +43,7 @@ scope.__exprRecorder__ = exprRecorder;
 Sk.builtinFiles.files[TURTLE_MODULE_PATH] = TURTLE_MODULE_SOURCE;
 Sk.builtinFiles.files[RANDOM_MODULE_PATH] = RANDOM_MODULE_SOURCE;
 Sk.builtinFiles.files[EXPR_MODULE_PATH] = EXPR_MODULE_SOURCE;
+Sk.builtinFiles.files[ROBOT_MODULE_PATH] = ROBOT_MODULE_SOURCE;
 
 // Skulpt's letter and case predicates are ASCII-only; Ukrainian text needs
 // CPython's Unicode behaviour (modules/str-unicode.ts).
@@ -68,6 +74,9 @@ function isTimeout(error: unknown): boolean {
 async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<void> {
   recorder = createRecorder();
   scope.__turtle__ = recorder;
+
+  robotRecorder = createRobotRecorder(request.grid ?? undefined);
+  scope.__robot__ = robotRecorder;
 
   exprRecorder = createExprRecorder();
   scope.__exprRecorder__ = exprRecorder;
@@ -152,6 +161,7 @@ async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<v
     error,
     drawing: recorder.segments,
     dots: recorder.dots,
+    grid: robotRun(robotRecorder),
     timedOut,
     inputsConsumed,
     elapsedMs: Date.now() - started - inputWaitMs,

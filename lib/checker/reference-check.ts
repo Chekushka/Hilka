@@ -12,13 +12,14 @@
 import { evaluateChecks } from './evaluate';
 import { normalizeText } from './text';
 import type { Check, Evidence, Submission } from './types';
-import type { RunOptions, RunResult } from '@/lib/runner';
+import type { GridWorld, RunOptions, RunResult } from '@/lib/runner';
 import { enumerateParamCombinations, substituteParams, type ParamSpec } from '@/lib/seed';
 
 export type RunPython = (code: string, options: RunOptions) => Promise<RunResult>;
 
 /** What a caller already has after running some code — no worker, no Skulpt. */
-export type RunOutcome = Pick<RunResult, 'stdout' | 'drawing' | 'error' | 'timedOut' | 'vars' | 'exprResults'>;
+export type RunOutcome = Pick<RunResult, 'stdout' | 'drawing' | 'error' | 'timedOut' | 'vars' | 'exprResults'> &
+  Partial<Pick<RunResult, 'grid'>>;
 
 export interface CheckRunOutcome {
   /** False when `run` itself errored or timed out — no check was even judged. */
@@ -52,7 +53,8 @@ export function evaluateRun(
       error: run.error,
       timedOut: run.timedOut,
       vars: run.vars,
-      exprResults: run.exprResults
+      exprResults: run.exprResults,
+      grid: run.grid ?? null
     },
     reference
   };
@@ -158,7 +160,7 @@ export interface ReferenceCheckTask {
   checks: Check[];
   cases?: { stdin: string[]; checks?: Check[]; label?: string }[] | null;
   reference?: { code: string } | null;
-  payload?: { broken?: string; answerMode?: 'text' | 'choice'; options?: string[] };
+  payload?: { broken?: string; answerMode?: 'text' | 'choice'; options?: string[]; surface?: string; grid?: GridWorld };
   /** `code` only (docs/TASK_SCHEMA.md, "Parameterization") — every combination is checked, not just one seed. */
   params?: ParamSpec | null;
 }
@@ -199,6 +201,8 @@ export async function checkTaskReference(
   const hasCases = (task.cases?.length ?? 0) > 0;
   const cases = hasCases ? task.cases! : [{ stdin: [], checks: [] as Check[] }];
   const combinations = task.params ? enumerateParamCombinations(task.params) : [{}];
+  // Every run of a grid task, the broken one included, happens in the task's own world.
+  const grid = task.payload?.surface === 'grid' ? task.payload.grid : undefined;
 
   // The target for a broken payload's shape_equals etc. below: the correct
   // reference's own drawing/stdout from its first case (first combination,
@@ -216,7 +220,8 @@ export async function checkTaskReference(
       const result = await runPython(comboCode, {
         mode: 'headless',
         stdin,
-        exprs: exprsOf(checks)
+        exprs: exprsOf(checks),
+        grid
       });
       // `predict` has no code of its own to submit — a perfect prediction IS
       // the reference's real stdout (lib/task/types.ts). Choice mode compares
@@ -245,7 +250,7 @@ export async function checkTaskReference(
 
   if (task.type === 'fix' && task.payload?.broken) {
     const broken = task.payload.broken;
-    const result = await runPython(broken, { mode: 'headless', exprs: exprsOf(task.checks) });
+    const result = await runPython(broken, { mode: 'headless', exprs: exprsOf(task.checks), grid });
     // A broken program that raises or times out has correctly failed; only a
     // clean run that satisfies every check is the bug TASK_SCHEMA.md warns
     // about.

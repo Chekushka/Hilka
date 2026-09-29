@@ -1,0 +1,44 @@
+{
+  "slug": "g7-grid-straight",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Робот: прямо до мети",
+  "payload": {
+    "type": "code",
+    "surface": "grid",
+    "prompt": "Робот стоїть ліворуч і дивиться праворуч. Доведи його до акумулятора. Команда robot.forward(n) веде робота на n клітинок уперед.",
+    "starter": "import robot\n\n",
+    "grid": {
+      "start": {
+        "x": 0,
+        "y": 4,
+        "dir": "E"
+      },
+      "goal": {
+        "x": 6,
+        "y": 4
+      },
+      "rocks": []
+    }
+  },
+  "checks": [
+    {
+      "kind": "grid_goal",
+      "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись."
+    }
+  ],
+  "hints": [
+    "Порахуй клітинки між роботом і акумулятором.",
+    "Одна команда може провести кілька клітинок: robot.forward(3).",
+    "robot.forward(6)"
+  ],
+  "reference": {
+    "code": "import robot\nrobot.forward(6)\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}
