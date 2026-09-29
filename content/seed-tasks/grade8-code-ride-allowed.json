@@ -1,0 +1,88 @@
+{
+  "slug": "g8-code-ride-allowed",
+  "topicSlug": "booleans",
+  "type": "code",
+  "title": "Атракціон",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "На атракціон пускають, якщо зріст не менше 130 см і вік не менше 8 років. Прочитай зріст і вік і виведи True, якщо можна кататися, і False — якщо ні.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "140 см, 10 років",
+      "stdin": [
+        "140",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "125 см, 10 років",
+      "stdin": [
+        "125",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "False",
+          "normalize": "trim",
+          "message": "Зріст 125 см — замало, навіть якщо вік підходить."
+        }
+      ]
+    },
+    {
+      "label": "130 см, 8 років",
+      "stdin": [
+        "130",
+        "8"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim",
+          "message": "Рівно 130 см і рівно 8 років — уже можна."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "150 см, 7 років",
+      "stdin": [
+        "150",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "False",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "«Не менше» — це >=.",
+    "Мають виконатися обидві умови — and."
+  ],
+  "reference": {
+    "code": "height = int(input())\nage = int(input())\nprint(height >= 130 and age >= 8)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

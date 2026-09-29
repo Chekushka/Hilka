@@ -1,0 +1,76 @@
+{
+  "slug": "g8-code-total-minutes",
+  "topicSlug": "io",
+  "type": "code",
+  "title": "Скільки хвилин?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два цілих числа: години і хвилини (наприклад 2 і 15). Виведи, скільки це хвилин загалом (135).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "2 год 15 хв",
+      "stdin": [
+        "2",
+        "15"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 135,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 2 год 15 хв має вийти 135 хвилин."
+        }
+      ]
+    },
+    {
+      "label": "0 год 45 хв",
+      "stdin": [
+        "0",
+        "45"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 45,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "10 год 0 хв",
+      "stdin": [
+        "10",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 600,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "В одній годині 60 хвилин.",
+    "hours * 60 + minutes — не забудь перетворити обидва введення на int."
+  ],
+  "reference": {
+    "code": "hours = int(input())\nminutes = int(input())\nprint(hours * 60 + minutes)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

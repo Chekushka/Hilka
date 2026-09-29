@@ -1,0 +1,83 @@
+{
+  "slug": "g8-code-buses",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Автобуси на екскурсію",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "На екскурсію їдуть n учнів, в автобусі m місць. Прочитай n і m. Виведи два рядки: скільки потрібно автобусів і скільки місць залишаться вільними.",
+    "starter": "import math\n"
+  },
+  "cases": [
+    {
+      "label": "100 учнів, 40 місць",
+      "stdin": [
+        "100",
+        "40"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            3,
+            20
+          ],
+          "tol": 0.01,
+          "message": "Для 100 учнів і 40 місць: 3 автобуси і 20 вільних місць."
+        }
+      ]
+    },
+    {
+      "label": "рівно заповнені",
+      "stdin": [
+        "80",
+        "40"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2,
+            0
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "один учень",
+      "stdin": [
+        "1",
+        "50"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1,
+            49
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "100 / 40 = 2.5, але пів автобуса не буває — треба округлити вгору.",
+    "math.ceil() округлює вгору.",
+    "Вільні місця: усі місця в автобусах мінус учні."
+  ],
+  "reference": {
+    "code": "import math\nn = int(input())\nm = int(input())\nbuses = math.ceil(n / m)\nprint(buses)\nprint(buses * m - n)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

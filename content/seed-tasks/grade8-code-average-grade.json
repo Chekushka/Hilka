@@ -1,0 +1,81 @@
+{
+  "slug": "g8-code-average-grade",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Середній бал",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Спочатку прочитай n — кількість оцінок, потім самі n оцінок, кожну окремим рядком. Виведи середній бал, округлений до двох знаків.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3 оцінки: 10, 8, 9",
+      "stdin": [
+        "3",
+        "10",
+        "8",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 10, 8, 9 середній бал — 9."
+        }
+      ]
+    },
+    {
+      "label": "одна оцінка",
+      "stdin": [
+        "1",
+        "12"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 12,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "4 оцінки: 7, 8, 9, 10",
+      "stdin": [
+        "4",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 8.5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "for i in range(n): — повторить читання n разів.",
+    "Кожну оцінку додавай до суми, а в кінці поділи на n."
+  ],
+  "reference": {
+    "code": "n = int(input())\ntotal = 0\nfor i in range(n):\n    total = total + int(input())\nprint(round(total / n, 2))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

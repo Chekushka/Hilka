@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-div-mod",
+  "topicSlug": "arithmetic",
+  "type": "predict",
+  "title": "Ціла частина і остача",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "print(17 // 5, 17 % 5)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "3 2",
+      "normalize": "trim",
+      "message": "17 = 5 · 3 + 2. // дає цілу частину (3), % — остачу (2)."
+    }
+  ],
+  "hints": [
+    "Скільки разів 5 поміщається в 17?",
+    "% — це те, що залишилось після ділення."
+  ],
+  "reference": {
+    "code": "print(17 // 5, 17 % 5)"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,40 @@
+{
+  "slug": "g8-predict-for-total",
+  "topicSlug": "loops-for",
+  "type": "predict",
+  "title": "Сума в циклі",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "total = 0\nfor i in range(4):\n    total = total + i\nprint(total)",
+    "answerMode": "choice",
+    "options": [
+      "6",
+      "10",
+      "4",
+      "3"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "range(4) — це 0, 1, 2, 3. Їхня сума: 0 + 1 + 2 + 3 = 6."
+    }
+  ],
+  "hints": [
+    "range(4) починається з 0.",
+    "Число 4 до range(4) не входить."
+  ],
+  "reference": {
+    "code": "total = 0\nfor i in range(4):\n    total = total + i\nprint(total)"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

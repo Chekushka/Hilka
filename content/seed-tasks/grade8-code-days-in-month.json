@@ -1,0 +1,101 @@
+{
+  "slug": "g8-code-days-in-month",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Днів у місяці",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай номер місяця (від 1 до 12) і виведи, скільки в ньому днів. Рік — не високосний: у лютому 28 днів. У квітні, червні, вересні й листопаді — 30, в інших — 31.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "лютий",
+      "stdin": [
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 28,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "квітень",
+      "stdin": [
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 30,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "січень",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 31,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "вересень",
+      "stdin": [
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 30,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "грудень",
+      "stdin": [
+        "12"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 31,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Лютий — окремий випадок.",
+    "Чотири місяці по 30 днів можна перевірити через or: month == 4 or month == 6 or …"
+  ],
+  "reference": {
+    "code": "month = int(input())\nif month == 2:\n    print(28)\nelif month == 4 or month == 6 or month == 9 or month == 11:\n    print(30)\nelse:\n    print(31)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

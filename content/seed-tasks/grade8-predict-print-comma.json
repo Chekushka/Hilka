@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-print-comma",
+  "topicSlug": "intro",
+  "type": "predict",
+  "title": "Кома в print",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "print(10, \"яблук\")",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "10 яблук",
+      "normalize": "trim",
+      "message": "Частини, розділені комою, print виводить в один рядок і ставить між ними пробіл."
+    }
+  ],
+  "hints": [
+    "Лапки на екран не виводяться.",
+    "Між частинами, розділеними комою, print ставить один пробіл."
+  ],
+  "reference": {
+    "code": "print(10, \"яблук\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

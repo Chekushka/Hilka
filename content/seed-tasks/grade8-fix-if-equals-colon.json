@@ -1,0 +1,55 @@
+{
+  "slug": "g8-fix-if-equals-colon",
+  "topicSlug": "conditions",
+  "type": "fix",
+  "title": "Нуль чи не нуль",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала виводити нуль, якщо ввели 0, і не нуль — для будь-якого іншого числа. У ній дві помилки. Виправ їх.",
+    "broken": "n = int(input())\nif n = 0\n    print(\"нуль\")\nelse:\n    print(\"не нуль\")\n"
+  },
+  "cases": [
+    {
+      "label": "0",
+      "stdin": [
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "нуль",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "5",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "не нуль",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порівняння «дорівнює» пишеться двома знаками: ==.",
+    "Після умови в if потрібна двокрапка."
+  ],
+  "reference": {
+    "code": "n = int(input())\nif n == 0:\n    print(\"нуль\")\nelse:\n    print(\"не нуль\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

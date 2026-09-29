@@ -1,0 +1,79 @@
+{
+  "slug": "g8-code-double-text",
+  "topicSlug": "types",
+  "type": "code",
+  "title": "Число чи текст?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок з числом (наприклад 12). Виведи два рядки: спочатку це число, помножене на 2 (24), потім той самий рядок, повторений двічі (1212).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "12",
+      "stdin": [
+        "12"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            24,
+            1212
+          ],
+          "tol": 0.01,
+          "message": "Для 12 треба вивести 24, а потім 1212. Множення рядка на 2 повторює його, множення числа — подвоює."
+        }
+      ]
+    },
+    {
+      "label": "7",
+      "stdin": [
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            14,
+            77
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "40",
+      "stdin": [
+        "40"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            80,
+            4040
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "input() повертає текст. \"12\" * 2 дає \"1212\".",
+    "Щоб подвоїти саме число, перетвори текст на число: int(text) * 2."
+  ],
+  "reference": {
+    "code": "text = input()\nprint(int(text) * 2)\nprint(text * 2)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

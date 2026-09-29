@@ -1,0 +1,108 @@
+{
+  "slug": "g8-code-max-of-n",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Найбільше з n чисел",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, а потім n цілих чисел. Виведи найбільше з них. Функцію max() не використовуй.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3 числа: 4, 9, 2",
+      "stdin": [
+        "3",
+        "4",
+        "9",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "усі від'ємні",
+      "stdin": [
+        "3",
+        "-5",
+        "-2",
+        "-9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -2,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Усі числа від'ємні — найбільше тут -2. Чи не починаєш ти з 0?"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одне число",
+      "stdin": [
+        "1",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 7,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "найбільше двічі",
+      "stdin": [
+        "5",
+        "3",
+        "9",
+        "9",
+        "1",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "forbids",
+      "names": [
+        "max"
+      ],
+      "message": "Тут треба обійтися без max — ні як функції, ні як імені змінної. Порівнюй числа через if."
+    }
+  ],
+  "hints": [
+    "Найбільшим спочатку вважай перше прочитане число, а не 0.",
+    "Решту n - 1 чисел читай у циклі й порівнюй із найбільшим."
+  ],
+  "reference": {
+    "code": "n = int(input())\nbiggest = int(input())\nfor i in range(n - 1):\n    x = int(input())\n    if x > biggest:\n        biggest = x\nprint(biggest)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

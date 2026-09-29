@@ -1,0 +1,98 @@
+{
+  "slug": "g8-code-two-digit",
+  "topicSlug": "booleans",
+  "type": "code",
+  "title": "Двоцифрове?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число і виведи True, якщо воно двоцифрове додатне (від 10 до 99), і False — якщо ні. Обійдися без if: виведи саме значення логічного виразу.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "42",
+      "stdin": [
+        "42"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim",
+          "message": "42 — двоцифрове, має бути True."
+        }
+      ]
+    },
+    {
+      "label": "9",
+      "stdin": [
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "False",
+          "normalize": "trim",
+          "message": "9 — одноцифрове, має бути False."
+        }
+      ]
+    },
+    {
+      "label": "100",
+      "stdin": [
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "False",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "10",
+      "stdin": [
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "99",
+      "stdin": [
+        "99"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "True",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "print(n > 5) виведе True або False.",
+    "Дві умови поєднує and: n >= 10 and n <= 99."
+  ],
+  "reference": {
+    "code": "n = int(input())\nprint(n >= 10 and n <= 99)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

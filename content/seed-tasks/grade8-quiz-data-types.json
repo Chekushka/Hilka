@@ -1,0 +1,36 @@
+{
+  "slug": "g8-quiz-data-types",
+  "topicSlug": "types",
+  "type": "quiz",
+  "title": "Дробове число",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яке з цих значень у Python має тип float (дробове число)?",
+    "options": [
+      "3.5",
+      "35",
+      "\"3.5\"",
+      "True"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Дробове число записується з крапкою: 3.5. У лапках — це вже текст (str), навіть якщо схоже на число."
+    }
+  ],
+  "hints": [
+    "Дробову частину в Python відділяє крапка, а не кома.",
+    "Усе, що в лапках, — рядок (str)."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

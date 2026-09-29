@@ -1,0 +1,88 @@
+{
+  "slug": "g8-code-phone-tariff",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Мобільний тариф",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Тариф коштує 150 грн на місяць і включає 300 хвилин. Кожна хвилина понад 300 — 1.5 грн. Але більше ніж 400 грн за місяць оператор не бере. Прочитай кількість хвилин і виведи суму до оплати.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "100 хвилин",
+      "stdin": [
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 150,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "400 хвилин",
+      "stdin": [
+        "400"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 300,
+          "tol": 0.01,
+          "which": "last",
+          "message": "400 хвилин: 150 + 100 · 1.5 = 300."
+        }
+      ]
+    },
+    {
+      "label": "рівно 300",
+      "stdin": [
+        "300"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 150,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "1000 хвилин",
+      "stdin": [
+        "1000"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 400,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Сума вийшла б більшою за 400, але оператор бере не більше 400."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спочатку порахуй суму без обмеження.",
+    "Потім окремим if перевір, чи не більша вона за 400."
+  ],
+  "reference": {
+    "code": "minutes = int(input())\ncost = 150\nif minutes > 300:\n    cost = cost + (minutes - 300) * 1.5\nif cost > 400:\n    cost = 400\nprint(cost)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,71 @@
+{
+  "slug": "g8-code-pass-fail",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Склав чи ні?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай кількість балів за тест (від 0 до 100). Якщо балів 60 або більше, виведи склав, інакше — не склав.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "75 балів",
+      "stdin": [
+        "75"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "склав",
+          "normalize": "loose",
+          "message": "Для 75 балів — склав."
+        }
+      ]
+    },
+    {
+      "label": "59 балів",
+      "stdin": [
+        "59"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "не склав",
+          "normalize": "loose",
+          "message": "Для 59 балів — не склав."
+        }
+      ]
+    },
+    {
+      "label": "рівно 60",
+      "stdin": [
+        "60"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "склав",
+          "normalize": "loose",
+          "message": "60 — це вже «60 або більше»."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "«60 або більше» — це >= 60.",
+    "if score >= 60: … else: …"
+  ],
+  "reference": {
+    "code": "score = int(input())\nif score >= 60:\n    print(\"склав\")\nelse:\n    print(\"не склав\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,40 @@
+{
+  "slug": "g8-predict-type-choice",
+  "topicSlug": "types",
+  "type": "predict",
+  "title": "Який тип після ділення?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 8 / 2\nprint(type(x))",
+    "answerMode": "choice",
+    "options": [
+      "<class 'int'>",
+      "<class 'float'>",
+      "<class 'str'>",
+      "4"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        1
+      ],
+      "message": "Ділення / завжди дає дробове число: 8 / 2 — це 4.0, тип float. Ціле дає //."
+    }
+  ],
+  "hints": [
+    "type() показує тип значення, а не саме значення.",
+    "Що дає 8 / 2 — 4 чи 4.0?"
+  ],
+  "reference": {
+    "code": "x = 8 / 2\nprint(type(x))"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

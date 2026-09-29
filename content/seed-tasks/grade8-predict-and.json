@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-and",
+  "topicSlug": "booleans",
+  "type": "predict",
+  "title": "І те, і те",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 15\nprint(x > 10 and x < 20)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "True",
+      "normalize": "trim",
+      "message": "15 > 10 — True, 15 < 20 — True. and дає True, коли обидві частини правдиві."
+    }
+  ],
+  "hints": [
+    "Обчисли кожне порівняння окремо.",
+    "and правдиве лише тоді, коли правдиві обидві частини."
+  ],
+  "reference": {
+    "code": "x = 15\nprint(x > 10 and x < 20)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

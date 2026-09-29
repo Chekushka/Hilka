@@ -1,0 +1,80 @@
+{
+  "slug": "g8-code-savings-goal",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Накопичення",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Ти кладеш гроші на депозит. Щомісяця сума збільшується на p відсотків. Прочитай початкову суму, p і суму, яку хочеш накопичити. Виведи, через скільки місяців на депозиті вперше буде не менше потрібного.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1000 грн, 10%, мета 1500",
+      "stdin": [
+        "1000",
+        "10",
+        "1500"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last",
+          "message": "1000 → 1100 → 1210 → 1331 → 1464.1 → 1610.51: п'ять місяців."
+        }
+      ]
+    },
+    {
+      "label": "мета вже досягнута",
+      "stdin": [
+        "1000",
+        "5",
+        "1000"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Якщо грошей уже досить, чекати не треба: 0 місяців."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "500 грн, 20%, мета 1000",
+      "stdin": [
+        "500",
+        "20",
+        "1000"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Цикл while крутиться, доки суми не вистачає.",
+    "Щомісяця: money = money + money * p / 100, і лічильник місяців + 1."
+  ],
+  "reference": {
+    "code": "money = float(input())\np = float(input())\ngoal = float(input())\nmonths = 0\nwhile money < goal:\n    money = money + money * p / 100\n    months = months + 1\nprint(months)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

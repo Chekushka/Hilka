@@ -1,0 +1,84 @@
+{
+  "slug": "g8-code-cinema-tickets",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Квитки в кіно",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай кількість квитків n, а потім вік кожного глядача. Дитячий квиток (до 12 років) коштує 60 грн, дорослий — 100 грн. Якщо квитків 5 або більше, на всю покупку діє знижка 10%. Виведи суму до оплати.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3 глядачі: 10, 30, 40",
+      "stdin": [
+        "3",
+        "10",
+        "30",
+        "40"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 260,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Один дитячий і два дорослі: 60 + 100 + 100 = 260."
+        }
+      ]
+    },
+    {
+      "label": "5 дітей",
+      "stdin": [
+        "5",
+        "5",
+        "5",
+        "5",
+        "5",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 270,
+          "tol": 0.01,
+          "which": "last",
+          "message": "5 дитячих — 300, і ще знижка 10%: 270."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "рівно 12 років",
+      "stdin": [
+        "1",
+        "12"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 100,
+          "tol": 0.01,
+          "which": "last",
+          "message": "12 років — уже не «до 12», квиток дорослий."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Цикл for читає вік кожного глядача й додає ціну його квитка.",
+    "Знижку застосовуй один раз — після циклу."
+  ],
+  "reference": {
+    "code": "n = int(input())\ntotal = 0\nfor i in range(n):\n    age = int(input())\n    if age < 12:\n        total = total + 60\n    else:\n        total = total + 100\nif n >= 5:\n    total = total * 0.9\nprint(total)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

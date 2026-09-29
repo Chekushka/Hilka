@@ -1,0 +1,80 @@
+{
+  "slug": "g8-code-split-bill",
+  "topicSlug": "io",
+  "type": "code",
+  "title": "Рахунок у кафе",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Друзі розраховуються в кафе. Прочитай суму рахунку (може бути дробовою), кількість друзів і чайові у відсотках. Виведи, скільки має заплатити кожен, округливши до двох знаків після крапки. Наприклад: 300, 3 друзі, 10% — кожен платить 110.0.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "300 грн, 3 друзі, 10%",
+      "stdin": [
+        "300",
+        "3",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 110,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 300 грн, трьох друзів і 10% чайових кожен платить 110."
+        }
+      ]
+    },
+    {
+      "label": "без чайових",
+      "stdin": [
+        "250",
+        "4",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 62.5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "дробова сума",
+      "stdin": [
+        "99.9",
+        "2",
+        "15"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 57.44,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Суму читай через float(), кількість друзів — через int().",
+    "Спочатку додай чайові: total = bill + bill * tip / 100.",
+    "Поділи на кількість друзів і округли: round(..., 2)."
+  ],
+  "reference": {
+    "code": "bill = float(input())\nfriends = int(input())\ntip = int(input())\ntotal = bill + bill * tip / 100\nprint(round(total / friends, 2))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

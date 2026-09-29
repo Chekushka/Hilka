@@ -1,0 +1,84 @@
+{
+  "slug": "g8-code-water-state",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Стан води",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай температуру води (ціле число). Виведи лід, якщо вона 0 або нижче, пара — якщо 100 або вище, і вода — у решті випадків.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "-5",
+      "stdin": [
+        "-5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "лід",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "25",
+      "stdin": [
+        "25"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "вода",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "0",
+      "stdin": [
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "лід",
+          "normalize": "loose",
+          "message": "При 0 градусів вода замерзає — лід."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "100",
+      "stdin": [
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "пара",
+          "normalize": "loose",
+          "message": "При 100 градусів вода кипить — пара."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Три варіанти — if, elif, else.",
+    "if t <= 0: … elif t >= 100: … else: …"
+  ],
+  "reference": {
+    "code": "t = int(input())\nif t <= 0:\n    print(\"лід\")\nelif t >= 100:\n    print(\"пара\")\nelse:\n    print(\"вода\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

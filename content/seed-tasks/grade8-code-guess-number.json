@@ -1,0 +1,92 @@
+{
+  "slug": "g8-code-guess-number",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Вгадай число",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Гра на двох. Спочатку програма читає загадане число. Потім читає спроби, доки число не вгадають: якщо спроба менша за загадане, виводить більше, якщо більша — менше. Коли вгадали, програма виводить кількість спроб.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "42: 50, 30, 42",
+      "stdin": [
+        "42",
+        "50",
+        "30",
+        "42"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Вгадали з третьої спроби — останнім має бути число 3."
+        },
+        {
+          "kind": "stdout_contains",
+          "value": "менше",
+          "message": "Після 50 треба підказати: менше."
+        },
+        {
+          "kind": "stdout_contains",
+          "value": "більше",
+          "message": "Після 30 треба підказати: більше."
+        }
+      ]
+    },
+    {
+      "label": "вгадали одразу",
+      "stdin": [
+        "7",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "7: 1, 2, 3, 7",
+      "stdin": [
+        "7",
+        "1",
+        "2",
+        "3",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Прочитай загадане число і першу спробу до циклу.",
+    "while guess != secret: — всередині підкажи «більше» чи «менше», прочитай нову спробу, додай 1 до лічильника.",
+    "Кількість спроб виведи вже після циклу."
+  ],
+  "reference": {
+    "code": "secret = int(input())\nguess = int(input())\ntries = 1\nwhile guess != secret:\n    if guess < secret:\n        print(\"більше\")\n    else:\n        print(\"менше\")\n    guess = int(input())\n    tries = tries + 1\nprint(tries)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}
