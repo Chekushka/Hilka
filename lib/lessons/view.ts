@@ -17,6 +17,9 @@ export interface LessonTaskSummary {
    * listed, but only openable in a session.
    */
   sessionOnly: boolean;
+  /** With `fileDelivery`, what the file-delivery sequencing rule reads (lib/task/prerequisite.ts). */
+  topicId: string;
+  fileDelivery: boolean;
 }
 
 /** `ids` in order, keeping only the ones that resolve — unpublished tasks are invisible to students. */

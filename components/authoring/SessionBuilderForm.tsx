@@ -18,8 +18,10 @@ import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { t } from '@/lib/i18n';
 import { addLessonToSelection, findNonGradedTasks } from '@/lib/lessons/graded-warnings';
+import { unsequencedFileTasks } from '@/lib/task/prerequisite';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { SessionMode } from '@/lib/session/types';
+import type { TaskType } from '@/lib/task/types';
 
 // Mirrors the database layer's shapes rather than importing them — the
 // database is off-limits to a client component, even for a type (CLAUDE.md
@@ -37,6 +39,8 @@ interface TaskOption {
   topicTitle: string;
   gradeTags: number[];
   difficulty: number;
+  type: TaskType;
+  fileDelivery: boolean;
 }
 
 interface LessonOption {
@@ -96,6 +100,14 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
 
   const titlesById = new Map(tasks.map((task) => [task.id, task.title]));
   const nonGraded = mode === 'graded' ? findNonGradedTasks(selectedTaskIds, lessons) : [];
+  const tasksById = new Map(tasks.map((task) => [task.id, task]));
+  // The sequencing rule for file tasks (lib/task/prerequisite.ts), in the order students meet them. A warning only.
+  const unsequenced = unsequencedFileTasks(
+    selectedTaskIds
+      .map((id) => tasksById.get(id))
+      .filter((task): task is TaskOption => task !== undefined)
+      .map((task) => ({ ...task, topicKey: task.topicSlug }))
+  );
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -338,6 +350,18 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
             ))}
           </ul>
           <p className="mt-2 text-ink-muted">{t('sessionBuilder.gradedWarningNote')}</p>
+        </div>
+      )}
+
+      {unsequenced.length > 0 && (
+        <div role="status" data-testid="file-unsequenced" className="rounded-md border border-attention p-3 text-sm text-ink">
+          <p>{t('sessionBuilder.fileUnsequencedTitle')}</p>
+          <ul className="mt-2 list-disc pl-5">
+            {unsequenced.map((task) => (
+              <li key={task.id}>{task.title}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-ink-muted">{t('sessionBuilder.fileUnsequencedNote')}</p>
         </div>
       )}
 

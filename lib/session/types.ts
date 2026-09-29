@@ -5,6 +5,8 @@
  * builder UI will eventually produce.
  */
 
+import type { TaskType } from '@/lib/task/types';
+
 export type SessionMode = 'practice' | 'graded';
 
 export interface SessionTaskSummary {
@@ -15,12 +17,19 @@ export interface SessionTaskSummary {
   difficulty: number;
 }
 
+/** A session task as the student's room sees it: enough to apply the file-delivery sequencing rule (lib/task/prerequisite.ts). */
+export interface JoinedSessionTask extends SessionTaskSummary {
+  type: TaskType;
+  topicId: string;
+  fileDelivery: boolean;
+}
+
 /** What a student sees after entering a valid, still-open session code. */
 export interface JoinedSession {
   id: string;
   mode: SessionMode;
   roster: string[];
-  tasks: SessionTaskSummary[];
+  tasks: JoinedSessionTask[];
   hintsEnabled: boolean;
   timeLimitS: number | null;
 }

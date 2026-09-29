@@ -7,6 +7,7 @@ import { and, asc, eq, inArray } from 'drizzle-orm';
 import { lessonSteps, resolveLessonTasks, type LessonTaskStep, type LessonTaskSummary } from '@/lib/lessons/view';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { PracticeTaskMeta } from '@/lib/meta/progress';
+import { isFileDelivery } from '@/lib/task/prerequisite';
 import type { Task } from '@/lib/task/types';
 import { getDb } from './client';
 import { lessons, tasks, topics } from './schema';
@@ -41,7 +42,9 @@ async function publishedSummaries(ids: string[]): Promise<Map<string, LessonTask
       title: tasks.title,
       type: tasks.type,
       difficulty: tasks.difficulty,
-      params: tasks.params
+      params: tasks.params,
+      topicId: tasks.topicId,
+      payload: tasks.payload
     })
     .from(tasks)
     .where(and(inArray(tasks.id, ids), eq(tasks.status, 'published')));
@@ -54,7 +57,9 @@ async function publishedSummaries(ids: string[]): Promise<Map<string, LessonTask
         title: row.title,
         type: row.type,
         difficulty: row.difficulty,
-        sessionOnly: row.params !== null
+        sessionOnly: row.params !== null,
+        topicId: row.topicId,
+        fileDelivery: isFileDelivery(row.payload)
       }
     ])
   );

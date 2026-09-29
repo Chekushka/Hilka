@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { lessonSteps, resolveLessonTasks, stepAfter, type LessonTaskSummary } from './view';
 
 function summary(slug: string, sessionOnly = false): LessonTaskSummary {
-  return { id: `id-${slug}`, slug, title: slug, type: 'code', difficulty: 1, sessionOnly };
+  return { id: `id-${slug}`, slug, title: slug, type: 'code', difficulty: 1, sessionOnly, topicId: 'topic', fileDelivery: false };
 }
 
 describe('resolveLessonTasks', () => {

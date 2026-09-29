@@ -393,6 +393,15 @@ concept for the first time inside a file task has no safety net if it goes wrong
 task is what teaches the concept; the file task is what teaches working with it outside the
 sandbox. The two are not interchangeable and the second must not substitute for the first.
 
+The rule is **enforced where tasks are ordered, never as a lock** — decided with the project owner.
+A hard lock would rest on practice progress, which lives in one browser's `localStorage`, and would
+shut out a student who did the in-browser task on another machine; a teacher who assigns a file task
+on its own does so on purpose. So the lesson form and the session builder warn about a file task
+with no prerequisite before it (without refusing the save), a unit test holds `content/` to the rule,
+and a student who opens a file task before passing its prerequisite sees a note pointing at it while
+the task stays usable. "The same concept" is approximated as the same topic, and "passed in-browser"
+as a task where the student writes code (`code`, `fix`, `fill`): `lib/task/prerequisite.ts`.
+
 **Engine divergence.** There is no "Skulpt format" — Skulpt executes ordinary `.py` files, the
 same bytes IDLE would run. The problem is coverage: Skulpt implements a subset of Python, so code
 that runs correctly in IDLE (real CPython) can fail in Hilka, and the reverse is just as bad — a

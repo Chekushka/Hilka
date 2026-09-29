@@ -7,6 +7,8 @@
 import { randomInt } from 'node:crypto';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { SessionMode } from '@/lib/session/types';
+import { isFileDelivery } from '@/lib/task/prerequisite';
+import type { TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { sessions, tasks, topics } from './schema';
 
@@ -31,6 +33,9 @@ export interface TaskPickerOption {
   topicTitle: string;
   gradeTags: number[];
   difficulty: number;
+  /** With `fileDelivery`, what the builder's sequencing warning reads (lib/task/prerequisite.ts). */
+  type: TaskType;
+  fileDelivery: boolean;
 }
 
 /** Every published task, for the builder's own client-side topic/grade filtering — the catalog is small enough not to need a filtered query. */
@@ -43,13 +48,15 @@ export async function listPublishedTasksForPicker(): Promise<TaskPickerOption[]>
       topicSlug: topics.slug,
       topicTitle: topics.title,
       gradeTags: tasks.gradeTags,
-      difficulty: tasks.difficulty
+      difficulty: tasks.difficulty,
+      type: tasks.type,
+      payload: tasks.payload
     })
     .from(tasks)
     .innerJoin(topics, eq(tasks.topicId, topics.id))
     .where(eq(tasks.status, 'published'))
     .orderBy(asc(topics.order), asc(tasks.slug));
-  return rows;
+  return rows.map(({ payload, ...row }) => ({ ...row, fileDelivery: isFileDelivery(payload) }));
 }
 
 /** Narrows a teacher-submitted task id list down to ones that are actually published, in the order given. */

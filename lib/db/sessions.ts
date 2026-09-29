@@ -6,6 +6,7 @@
  */
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import type { JoinedSession, SessionTaskSummary } from '@/lib/session/types';
+import { isFileDelivery } from '@/lib/task/prerequisite';
 import { getDb } from './client';
 import { classes, sessions, tasks } from './schema';
 import { orderSessionTasks } from './session-mapping';
@@ -67,7 +68,15 @@ export async function getOpenSessionByCode(code: string): Promise<JoinedSession 
 
   const taskRows = row.session.taskIds.length
     ? await db
-        .select({ id: tasks.id, slug: tasks.slug, title: tasks.title, difficulty: tasks.difficulty })
+        .select({
+          id: tasks.id,
+          slug: tasks.slug,
+          title: tasks.title,
+          difficulty: tasks.difficulty,
+          type: tasks.type,
+          topicId: tasks.topicId,
+          payload: tasks.payload
+        })
         .from(tasks)
         .where(inArray(tasks.id, row.session.taskIds))
     : [];
@@ -76,7 +85,10 @@ export async function getOpenSessionByCode(code: string): Promise<JoinedSession 
     id: row.session.id,
     mode: row.session.mode,
     roster: row.roster,
-    tasks: orderSessionTasks(row.session.taskIds, taskRows),
+    tasks: orderSessionTasks(
+      row.session.taskIds,
+      taskRows.map(({ payload, ...task }) => ({ ...task, fileDelivery: isFileDelivery(payload) }))
+    ),
     hintsEnabled: row.session.hintsEnabled,
     timeLimitS: row.session.timeLimitS
   };

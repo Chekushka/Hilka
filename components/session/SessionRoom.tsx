@@ -26,9 +26,11 @@
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
+import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { t } from '@/lib/i18n';
 import { nextOpenTaskId } from '@/lib/session/next-task';
+import { filePrerequisite } from '@/lib/task/prerequisite';
 import type { JoinedSession } from '@/lib/session/types';
 import type { Task } from '@/lib/task/types';
 
@@ -235,6 +237,13 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       selectedTaskId,
       (taskId) => passed.has(taskId) || submitted.has(taskId)
     );
+    // A file task's in-browser prerequisite in the teacher's order (lib/task/prerequisite.ts):
+    // advice while this visit has not seen it passed, never a lock.
+    const prerequisite = filePrerequisite(
+      session.tasks.map((task) => ({ ...task, topicKey: task.topicId })),
+      selectedTaskId
+    );
+    const showPrerequisite = prerequisite !== null && !passed.has(prerequisite.id) && !submitted.has(prerequisite.id);
     const next: NextTaskAction = {
       kind: 'button',
       label: nextId ? t('result.nextTask') : t('result.backToTaskList'),
@@ -270,13 +279,27 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
             </section>
           </main>
         ) : selectedTask ? (
-          <TaskWorkspace
-            key={selectedTask.id}
-            task={selectedTask}
-            hintsEnabled={session.hintsEnabled}
-            next={next}
-            onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
-          />
+          <>
+            {showPrerequisite && (
+              <PrerequisiteNote
+                action={{
+                  kind: 'button',
+                  title: prerequisite.title,
+                  onSelect: () => {
+                    setSelectedTaskId(prerequisite.id);
+                    window.scrollTo(0, 0);
+                  }
+                }}
+              />
+            )}
+            <TaskWorkspace
+              key={selectedTask.id}
+              task={selectedTask}
+              hintsEnabled={session.hintsEnabled}
+              next={next}
+              onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
+            />
+          </>
         ) : (
           <p className="p-6 text-sm text-ink-muted">
             {taskLoadFailed === selectedTaskId ? t('session.closedNote') : t('session.loadingTask')}
