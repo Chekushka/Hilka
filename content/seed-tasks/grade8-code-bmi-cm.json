@@ -1,0 +1,76 @@
+{
+  "slug": "g8-code-bmi-cm",
+  "topicSlug": "project-bmi",
+  "type": "code",
+  "title": "Зріст у сантиметрах",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Людям зручніше вводити зріст у сантиметрах. Прочитай масу в кілограмах і зріст у сантиметрах (наприклад 175) і виведи ІМТ, округлений до одного знака.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "70 кг, 175 см",
+      "stdin": [
+        "70",
+        "175"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 22.9,
+          "tol": 0.05,
+          "which": "last",
+          "message": "Для 70 кг і 175 см ІМТ приблизно 22.9. Чи переведено сантиметри в метри?"
+        }
+      ]
+    },
+    {
+      "label": "50 кг, 160 см",
+      "stdin": [
+        "50",
+        "160"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 19.5,
+          "tol": 0.05,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "81 кг, 180 см",
+      "stdin": [
+        "81",
+        "180"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 25,
+          "tol": 0.05,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "У метрі 100 сантиметрів.",
+    "height = float(input()) / 100"
+  ],
+  "reference": {
+    "code": "weight = float(input())\nheight = float(input()) / 100\nprint(round(weight / height ** 2, 1))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

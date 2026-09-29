@@ -1,0 +1,103 @@
+{
+  "slug": "g8-code-bmi-category",
+  "topicSlug": "project-bmi",
+  "type": "code",
+  "title": "ІМТ і категорія",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Для дорослих ІМТ ділять на категорії: менше 18.5 — нижче норми; від 18.5 до 25 (не включно) — норма; від 25 до 30 (не включно) — вище норми; 30 і більше — значно вище норми. (Для підлітків шкала інша, тож тут лише дорослі.) Прочитай масу в кг і зріст у метрах, виведи ІМТ, а в останньому рядку — категорію.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "70 кг, 1.75 м",
+      "stdin": [
+        "70",
+        "1.75"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "норма",
+          "normalize": "loose",
+          "message": "ІМТ 22.9 — це норма. Категорія має стояти в останньому рядку."
+        }
+      ]
+    },
+    {
+      "label": "50 кг, 1.80 м",
+      "stdin": [
+        "50",
+        "1.80"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "нижче норми",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "85 кг, 1.75 м",
+      "stdin": [
+        "85",
+        "1.75"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "вище норми",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "110 кг, 1.75 м",
+      "stdin": [
+        "110",
+        "1.75"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "значно вище норми",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "рівно 25",
+      "stdin": [
+        "100",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "вище норми",
+          "normalize": "loose",
+          "message": "ІМТ рівно 25 — це вже не норма: норма — до 25 не включно."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порівнюй ІМТ з межами по черзі, від меншої: if … elif … elif … else.",
+    "Для порівняння бери неокруглений ІМТ."
+  ],
+  "reference": {
+    "code": "weight = float(input())\nheight = float(input())\nbmi = weight / height ** 2\nprint(round(bmi, 1))\nif bmi < 18.5:\n    print(\"нижче норми\")\nelif bmi < 25:\n    print(\"норма\")\nelif bmi < 30:\n    print(\"вище норми\")\nelse:\n    print(\"значно вище норми\")\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

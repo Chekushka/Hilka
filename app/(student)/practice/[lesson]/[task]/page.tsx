@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation';
 import { PracticePageClient } from '@/components/practice/PracticePageClient';
 import { getLesson, getPublishedTaskInLesson, listPracticeTaskMeta } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
+import type { Task } from '@/lib/task/types';
 import { stepAfter } from '@/lib/lessons/view';
+import { filePrerequisite } from '@/lib/task/prerequisite';
 
 /**
  * One task inside a lesson. The task must belong to the lesson and be
@@ -23,6 +25,13 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
     notFound();
   }
   const next = stepAfter(lesson.steps, task.slug);
+  // A file task's in-browser prerequisite in this lesson (lib/task/prerequisite.ts), if it has one.
+  const prerequisite = filePrerequisite(
+    [...lesson.core, ...lesson.additional]
+      .filter((summary) => !summary.sessionOnly)
+      .map((summary) => ({ ...summary, id: summary.slug, topicKey: summary.topicId, type: summary.type as Task['type'] })),
+    task.slug
+  );
   // The garden plant this task grows: its topic's practice tasks in this lesson's grade.
   const practiceTasks = await listPracticeTaskMeta();
   const topicSlug = practiceTasks.find((meta) => meta.slug === task.slug)?.topicSlug;
@@ -49,6 +58,11 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
         key={task.slug}
         task={task}
         topic={topic}
+        prerequisite={
+          prerequisite
+            ? { slug: prerequisite.slug, title: prerequisite.title, href: `/practice/${lesson.slug}/${prerequisite.slug}` }
+            : undefined
+        }
         next={
           next
             ? { kind: 'link', href: `/practice/${lesson.slug}/${next.slug}`, label: t('result.nextTask') }

@@ -1,0 +1,71 @@
+{
+  "slug": "g8-code-pizza-price",
+  "topicSlug": "project-pizza",
+  "type": "code",
+  "title": "Ціна за номером",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Меню PyPizza: 1 — Маргарита, 150 грн; 2 — Пепероні, 180 грн; 3 — Гавайська, 170 грн. Прочитай номер піци (від 1 до 3) і виведи її ціну.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Маргарита",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 150,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "Пепероні",
+      "stdin": [
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 180,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "Гавайська",
+      "stdin": [
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 170,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Три варіанти — if, elif, else."
+  ],
+  "reference": {
+    "code": "choice = int(input())\nif choice == 1:\n    print(150)\nelif choice == 2:\n    print(180)\nelse:\n    print(170)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

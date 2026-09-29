@@ -1,0 +1,113 @@
+{
+  "slug": "g8-code-quadratic-linear-case",
+  "topicSlug": "project-quadratic",
+  "type": "code",
+  "title": "А якщо a = 0?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Удоскональ розв'язувач: тепер a може дорівнювати нулю. Тоді рівняння стає лінійним bx + c = 0 з одним коренем x = −c / b (b у такому разі не нуль). Для a ≠ 0 усе як раніше: коренів немає, один корінь або два — спочатку менший. Виведи тільки корені, кожен окремим рядком, — без інших чисел (навіть дискримінанта) і без підписів на кшталт x1, бо в них теж є цифра.",
+    "starter": "import math\n"
+  },
+  "cases": [
+    {
+      "label": "лінійне: 0, 2, −4",
+      "stdin": [
+        "0",
+        "2",
+        "-4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для a = 0 рівняння 2x − 4 = 0 має корінь 2."
+        }
+      ]
+    },
+    {
+      "label": "лінійне: 0, 5, 10",
+      "stdin": [
+        "0",
+        "5",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "два корені: 1, −3, 2",
+      "stdin": [
+        "1",
+        "-3",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1,
+            2
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "один корінь: 1, 2, 1",
+      "stdin": [
+        "1",
+        "2",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "коренів немає: 1, 0, 1",
+      "stdin": [
+        "1",
+        "0",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "коренів немає",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Випадок a = 0 перевір першим — інакше буде ділення на нуль.",
+    "if a == 0: … else: і всередині else — твій попередній розв'язувач."
+  ],
+  "reference": {
+    "code": "import math\na = int(input())\nb = int(input())\nc = int(input())\nif a == 0:\n    print(-c / b)\nelse:\n    d = b * b - 4 * a * c\n    if d < 0:\n        print(\"коренів немає\")\n    elif d == 0:\n        print(-b / (2 * a))\n    else:\n        print((-b - math.sqrt(d)) / (2 * a))\n        print((-b + math.sqrt(d)) / (2 * a))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

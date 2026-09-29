@@ -1,0 +1,93 @@
+{
+  "slug": "g8-code-pizza-promo",
+  "topicSlug": "project-pizza",
+  "type": "code",
+  "title": "Промокод",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "У PyPizza є промокод PYTHON — знижка 15% на піци. Доставка (50 грн) додається, якщо сума за піци після знижки менша за 500 грн. Прочитай суму за піци (ціле число) і промокод — будь-яке слово — і виведи, скільки треба заплатити.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "400 грн, PYTHON",
+      "stdin": [
+        "400",
+        "PYTHON"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 390,
+          "tol": 0.01,
+          "which": "last",
+          "message": "400 − 15% = 340, це менше за 500 — плюс доставка: 390."
+        }
+      ]
+    },
+    {
+      "label": "600 грн, без коду",
+      "stdin": [
+        "600",
+        "НЕМАЄ"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 600,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "600 грн, PYTHON",
+      "stdin": [
+        "600",
+        "PYTHON"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 510,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "560 грн, PYTHON",
+      "stdin": [
+        "560",
+        "PYTHON"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 526,
+          "tol": 0.01,
+          "which": "last",
+          "message": "560 − 15% = 476 — уже менше за 500, тож доставка платна: 526."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу знижка, потім перевірка доставки.",
+    "Порівнюй код з рядком: if code == \"PYTHON\":",
+    "Знижка 15% — це множення на 0.85."
+  ],
+  "reference": {
+    "code": "total = int(input())\ncode = input()\nif code == \"PYTHON\":\n    total = total * 0.85\nif total < 500:\n    total = total + 50\nprint(total)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

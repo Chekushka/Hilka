@@ -1,0 +1,116 @@
+{
+  "slug": "g8-code-pizza-order",
+  "topicSlug": "project-pizza",
+  "type": "code",
+  "title": "Замовлення кількох піц",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Меню PyPizza: 1 — Маргарита, 150 грн; 2 — Пепероні, 180 грн; 3 — Гавайська, 170 грн. Усі піци малі. Програма читає номери піц, доки не введуть 0, і рахує суму. Якщо сума менша за 500 грн, додається доставка 50 грн. Виведи, скільки треба заплатити. Хоча б одну піцу замовлять завжди.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1, 2, потім 0",
+      "stdin": [
+        "1",
+        "2",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 380,
+          "tol": 0.01,
+          "which": "last",
+          "message": "150 + 180 = 330 — менше за 500, тож + 50 доставки: 380."
+        }
+      ]
+    },
+    {
+      "label": "2, 2, 3, потім 0",
+      "stdin": [
+        "2",
+        "2",
+        "3",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 530,
+          "tol": 0.01,
+          "which": "last",
+          "message": "180 + 180 + 170 = 530 — доставка безкоштовна."
+        }
+      ]
+    },
+    {
+      "label": "рівно 500",
+      "stdin": [
+        "1",
+        "2",
+        "3",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 500,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одна піца",
+      "stdin": [
+        "3",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 220,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "чотири Маргарити",
+      "stdin": [
+        "1",
+        "1",
+        "1",
+        "1",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 600,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Прочитай перший номер до циклу; while choice != 0: — усередині додай ціну і прочитай наступний номер.",
+    "Доставку перевіряй один раз — після циклу."
+  ],
+  "reference": {
+    "code": "total = 0\nchoice = int(input())\nwhile choice != 0:\n    if choice == 1:\n        total = total + 150\n    elif choice == 2:\n        total = total + 180\n    else:\n        total = total + 170\n    choice = int(input())\nif total < 500:\n    total = total + 50\nprint(total)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

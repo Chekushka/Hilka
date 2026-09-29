@@ -1,0 +1,80 @@
+{
+  "slug": "g8-code-pizza-size",
+  "topicSlug": "project-pizza",
+  "type": "code",
+  "title": "Розмір і кількість",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Меню PyPizza: 1 — Маргарита, 150 грн; 2 — Пепероні, 180 грн; 3 — Гавайська, 170 грн. Велика піца коштує в 1.5 раза дорожче за малу. Прочитай номер піци, розмір (мала або велика) і кількість. Виведи вартість замовлення.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3 великі Пепероні",
+      "stdin": [
+        "2",
+        "велика",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 810,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Велика Пепероні — 180 · 1.5 = 270, три такі — 810."
+        }
+      ]
+    },
+    {
+      "label": "2 малі Маргарити",
+      "stdin": [
+        "1",
+        "мала",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 300,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "1 велика Гавайська",
+      "stdin": [
+        "3",
+        "велика",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 255,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу знайди ціну піци за номером.",
+    "Якщо розмір \"велика\", помнож ціну на 1.5.",
+    "Наприкінці помнож на кількість."
+  ],
+  "reference": {
+    "code": "choice = int(input())\nsize = input()\ncount = int(input())\nif choice == 1:\n    price = 150\nelif choice == 2:\n    price = 180\nelse:\n    price = 170\nif size == \"велика\":\n    price = price * 1.5\nprint(price * count)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,78 @@
+{
+  "slug": "g8-code-site-deadline",
+  "topicSlug": "project-site-cost",
+  "type": "code",
+  "title": "Термін виконання",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Студія робить 1 сторінку за 2 дні, а власний дизайн займає ще 5 днів. Терміновий проєкт роблять удвічі швидше, округлюючи вгору до цілого дня. Прочитай кількість сторінок, дизайн (шаблон або власний) і терміновість (так або ні) і виведи кількість днів.",
+    "starter": "import math\n"
+  },
+  "cases": [
+    {
+      "label": "5, шаблон, не терміново",
+      "stdin": [
+        "5",
+        "шаблон",
+        "ні"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 10,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "5, власний, терміново",
+      "stdin": [
+        "5",
+        "власний",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 8,
+          "tol": 0.01,
+          "which": "last",
+          "message": "10 + 5 = 15 днів, удвічі швидше — 7.5, округлюємо вгору: 8."
+        }
+      ]
+    },
+    {
+      "label": "1, шаблон, терміново",
+      "stdin": [
+        "1",
+        "шаблон",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу порахуй звичайний термін.",
+    "math.ceil(days / 2) округлює вгору."
+  ],
+  "reference": {
+    "code": "import math\npages = int(input())\ndesign = input()\nurgent = input()\ndays = pages * 2\nif design == \"власний\":\n    days = days + 5\nif urgent == \"так\":\n    days = math.ceil(days / 2)\nprint(days)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

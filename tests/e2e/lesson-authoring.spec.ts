@@ -108,3 +108,24 @@ test('a ministry number already used in the grade is refused', async ({ page }) 
   await page.getByRole('button', { name: 'Створити урок' }).click();
   await expect(page.getByRole('main').getByRole('alert')).toHaveText('У цьому класі вже є урок з таким номером.');
 });
+
+test('the lesson form warns about a file task placed before its in-browser prerequisite', async ({ page }) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Уроки' }).click();
+  await page.getByRole('link', { name: 'Новий урок' }).click();
+  await expect(page.getByRole('heading', { name: 'Новий урок' })).toBeVisible();
+  const warning = page.getByTestId('file-unsequenced');
+  // The task picker shows the lesson's grade.
+  await page.getByLabel('Клас', { exact: true }).fill('8');
+
+  // The IDLE task first: warned about (the save is not refused — this spec never saves).
+  await addTask(page, 'Основні завдання', 'Перша програма в IDLE');
+  await addTask(page, 'Основні завдання', 'Візитівка програми');
+  await expect(warning).toContainText('Перша програма в IDLE');
+
+  // Its in-browser prerequisite moved in front of it: the warning goes away.
+  const core = page.getByRole('region', { name: 'Основні завдання' }).getByRole('listitem');
+  await core.nth(1).getByRole('button', { name: 'Вище' }).click();
+  await expect(core.first()).toContainText('Візитівка програми');
+  await expect(warning).toHaveCount(0);
+});

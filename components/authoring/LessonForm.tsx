@@ -15,6 +15,7 @@ import { Explanation } from '@/components/lesson/Explanation';
 import type { LessonDraft, LessonDraftError } from '@/lib/lessons/authoring';
 import type { LessonKind } from '@/lib/lessons/types';
 import { moveItem } from '@/lib/task/check-form';
+import { unsequencedFileTasks } from '@/lib/task/prerequisite';
 import type { TaskType } from '@/lib/task/types';
 import { t } from '@/lib/i18n';
 
@@ -29,6 +30,8 @@ export interface LessonTaskOptionView {
   gradeTags: number[];
   topicTitle: string;
   sessionOnly: boolean;
+  topicId: string;
+  fileDelivery: boolean;
 }
 
 interface LessonFormProps {
@@ -56,6 +59,13 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
   const [state, setState] = useState<SaveState>({ kind: 'idle' });
   const byId = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
   const chosen = new Set([...draft.coreTaskIds, ...draft.additionalTaskIds]);
+  // The sequencing rule for file tasks (lib/task/prerequisite.ts): a warning, never a reason to refuse the save.
+  const unsequenced = unsequencedFileTasks(
+    [...draft.coreTaskIds, ...draft.additionalTaskIds]
+      .map((id) => byId.get(id))
+      .filter((task): task is LessonTaskOptionView => task !== undefined)
+      .map((task) => ({ ...task, topicKey: task.topicId }))
+  );
 
   function set<K extends keyof LessonDraft>(key: K, value: LessonDraft[K]) {
     setDraft((previous) => ({ ...previous, [key]: value }));
@@ -243,6 +253,18 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
         onMoveAcross={(id) => moveBetween(id, 'additionalTaskIds')}
         moveAcrossLabel={t('lessonForm.toCore')}
       />
+
+      {unsequenced.length > 0 && (
+        <div role="status" data-testid="file-unsequenced" className="rounded-md border border-attention p-3 text-sm text-ink">
+          <p>{t('lessonForm.fileUnsequencedTitle')}</p>
+          <ul className="mt-2 list-disc pl-5">
+            {unsequenced.map((task) => (
+              <li key={task.id}>{task.title}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-ink-muted">{t('lessonForm.fileUnsequencedNote')}</p>
+        </div>
+      )}
 
       {state.kind === 'error' && (
         <ul role="alert" className="list-disc pl-5 text-sm text-attention">

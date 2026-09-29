@@ -1,0 +1,75 @@
+{
+  "slug": "g8-code-site-design",
+  "topicSlug": "project-site-cost",
+  "type": "code",
+  "title": "Шаблон чи власний дизайн",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прайс веб-студії: база — 5000 грн, кожна сторінка — 800 грн, власний дизайн — ще 3000 грн (шаблон — безкоштовно). Терміново — уся сума × 1.3. Якщо підсумок більший за 20000 грн, діє знижка 10%. Додамо дизайн. Прочитай кількість сторінок і слово шаблон або власний і виведи вартість (без терміновості та знижки).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "5 сторінок, шаблон",
+      "stdin": [
+        "5",
+        "шаблон"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9000,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "5 сторінок, власний",
+      "stdin": [
+        "5",
+        "власний"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 12000,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Власний дизайн додає 3000: 9000 + 3000 = 12000."
+        }
+      ]
+    },
+    {
+      "label": "1 сторінка, власний",
+      "stdin": [
+        "1",
+        "власний"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 8800,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порівнюй слово з рядком: if design == \"власний\":",
+    "Додавай 3000 лише в цій гілці."
+  ],
+  "reference": {
+    "code": "pages = int(input())\ndesign = input()\nprice = 5000 + pages * 800\nif design == \"власний\":\n    price = price + 3000\nprint(price)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

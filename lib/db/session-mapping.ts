@@ -12,12 +12,7 @@ import type { SessionTaskSummary } from '@/lib/session/types';
  * since the session was built) is dropped rather than surfacing a broken
  * entry in the list.
  */
-export function orderSessionTasks(
-  taskIds: string[],
-  rows: SessionTaskSummary[]
-): SessionTaskSummary[] {
+export function orderSessionTasks<T extends SessionTaskSummary>(taskIds: string[], rows: T[]): T[] {
   const byId = new Map(rows.map((row) => [row.id, row]));
-  return taskIds
-    .map((id) => byId.get(id))
-    .filter((row): row is SessionTaskSummary => row !== undefined);
+  return taskIds.map((id) => byId.get(id)).filter((row): row is T => row !== undefined);
 }

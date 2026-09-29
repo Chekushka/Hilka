@@ -1,0 +1,62 @@
+{
+  "slug": "g8-fix-site-discount-order",
+  "topicSlug": "project-site-cost",
+  "type": "fix",
+  "title": "Знижка не спрацювала",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Прайс веб-студії: база — 5000 грн, кожна сторінка — 800 грн, власний дизайн — ще 3000 грн (шаблон — безкоштовно). Терміново — уся сума × 1.3. Якщо підсумок більший за 20000 грн, діє знижка 10%. Клієнт замовив 15 сторінок, шаблон, терміново: 17000 · 1.3 = 22100 — більше за 20000, тож мала бути знижка. А програма її не дала. Виправ.",
+    "broken": "pages = int(input())\ndesign = input()\nurgent = input()\nprice = 5000 + pages * 800\nif design == \"власний\":\n    price = price + 3000\nif price > 20000:\n    price = price * 0.9\nif urgent == \"так\":\n    price = price * 1.3\nprint(round(price))\n"
+  },
+  "cases": [
+    {
+      "label": "15, шаблон, терміново",
+      "stdin": [
+        "15",
+        "шаблон",
+        "так"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 19890,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 15 сторінок терміново: 22100 зі знижкою 10% — 19890."
+        }
+      ]
+    },
+    {
+      "label": "20, власний, не терміново",
+      "stdin": [
+        "20",
+        "власний",
+        "ні"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 21600,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порядок перевірок має значення: коли програма вирішує про знижку, чи вже врахована терміновість?",
+    "Переставь два if місцями."
+  ],
+  "reference": {
+    "code": "pages = int(input())\ndesign = input()\nurgent = input()\nprice = 5000 + pages * 800\nif design == \"власний\":\n    price = price + 3000\nif urgent == \"так\":\n    price = price * 1.3\nif price > 20000:\n    price = price * 0.9\nprint(round(price))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

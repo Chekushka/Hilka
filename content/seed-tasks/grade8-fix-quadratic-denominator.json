@@ -1,0 +1,85 @@
+{
+  "slug": "g8-fix-quadratic-denominator",
+  "topicSlug": "project-quadratic",
+  "type": "fix",
+  "title": "Знаменник без дужок",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма знаходить два корені рівняння (a > 0, D > 0). Для a = 1 вона працює, а для інших a — ні. Знайди помилку.",
+    "broken": "import math\na = int(input())\nb = int(input())\nc = int(input())\nd = b * b - 4 * a * c\nprint((-b - math.sqrt(d)) / 2 * a)\nprint((-b + math.sqrt(d)) / 2 * a)\n"
+  },
+  "cases": [
+    {
+      "label": "2, −1, −1",
+      "stdin": [
+        "2",
+        "-1",
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -0.5,
+            1
+          ],
+          "tol": 0.01,
+          "message": "Для 2, −1, −1 корені −0.5 і 1."
+        }
+      ]
+    },
+    {
+      "label": "1, −3, 2",
+      "stdin": [
+        "1",
+        "-3",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1,
+            2
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "4, 0, −1",
+      "stdin": [
+        "4",
+        "0",
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -0.5,
+            0.5
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Порахуй вручну для a = 2: що Python ділить, а що множить?",
+    "x / 2 * a — це (x / 2) · a, а не x / (2a)."
+  ],
+  "reference": {
+    "code": "import math\na = int(input())\nb = int(input())\nc = int(input())\nd = b * b - 4 * a * c\nprint((-b - math.sqrt(d)) / (2 * a))\nprint((-b + math.sqrt(d)) / (2 * a))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

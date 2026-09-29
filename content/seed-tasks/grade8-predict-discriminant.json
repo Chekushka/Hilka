@@ -1,0 +1,33 @@
+{
+  "slug": "g8-predict-discriminant",
+  "topicSlug": "project-quadratic",
+  "type": "predict",
+  "title": "Обчисли дискримінант",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = 1\nb = -3\nc = 2\nd = b * b - 4 * a * c\nprint(d)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "1",
+      "normalize": "trim",
+      "message": "(−3) · (−3) = 9, а 4 · 1 · 2 = 8. 9 − 8 = 1."
+    }
+  ],
+  "hints": [
+    "Мінус на мінус дає плюс: (−3) · (−3) = 9.",
+    "D = b² − 4ac."
+  ],
+  "reference": {
+    "code": "a = 1\nb = -3\nc = 2\nd = b * b - 4 * a * c\nprint(d)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

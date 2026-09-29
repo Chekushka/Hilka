@@ -1,0 +1,40 @@
+{
+  "slug": "g8-predict-quadratic-branch",
+  "topicSlug": "project-quadratic",
+  "type": "predict",
+  "title": "Яка гілка?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = 1\nb = 1\nc = 2\nd = b * b - 4 * a * c\nif d > 0:\n    print(\"два корені\")\nelif d == 0:\n    print(\"один корінь\")\nelse:\n    print(\"коренів немає\")",
+    "answerMode": "choice",
+    "options": [
+      "два корені",
+      "один корінь",
+      "коренів немає",
+      "-7"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        2
+      ],
+      "message": "D = 1 − 8 = −7. Він менший за нуль, тож спрацьовує else: коренів немає."
+    }
+  ],
+  "hints": [
+    "Спочатку порахуй D.",
+    "Число D програма не виводить — лише одне з трьох повідомлень."
+  ],
+  "reference": {
+    "code": "a = 1\nb = 1\nc = 2\nd = b * b - 4 * a * c\nif d > 0:\n    print(\"два корені\")\nelif d == 0:\n    print(\"один корінь\")\nelse:\n    print(\"коренів немає\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -9,9 +9,10 @@
  * client component, while the task itself is still read server-side
  * (CLAUDE.md rule 4).
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 import { ProgressPanel } from '@/components/practice/ProgressPanel';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
+import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { stageGainedByPass, type PlantStage } from '@/lib/meta/garden';
 import { taskXp } from '@/lib/meta/progress';
@@ -26,10 +27,17 @@ interface PracticePageClientProps {
   next?: NextTaskAction;
   /** The task's topic in this grade — whose garden plant a first pass may grow. */
   topic?: { title: string; taskSlugs: string[] };
+  /** For a file-delivery task: the in-browser task in this lesson it rests on (lib/task/prerequisite.ts). */
+  prerequisite?: { slug: string; title: string; href: string };
 }
 
-export function PracticePageClient({ task, next, topic }: PracticePageClientProps) {
+const noSubscription = () => () => {};
+
+export function PracticePageClient({ task, next, topic, prerequisite }: PracticePageClientProps) {
   const [progress, setProgress] = useLocalProgress();
+  // The server renders with empty progress; waiting for the browser's own
+  // keeps the note from flashing at a student who already passed the prerequisite.
+  const hydrated = useSyncExternalStore(noSubscription, () => true, () => false);
   // XP is earned once per task (lib/meta/progress.ts derives it from completed
   // slugs), so only the pass that first completes it shows what it earned.
   const [firstPass, setFirstPass] = useState(false);
@@ -60,6 +68,9 @@ export function PracticePageClient({ task, next, topic }: PracticePageClientProp
 
   return (
     <div>
+      {prerequisite && hydrated && !hasCompletedTask(progress, prerequisite.slug) && (
+        <PrerequisiteNote action={{ kind: 'link', title: prerequisite.title, href: prerequisite.href }} />
+      )}
       <TaskWorkspace task={task} onSubmitAttempt={handleOutcome} next={nextWithReward} />
       <ProgressPanel progress={progress} setProgress={setProgress} currentTaskSlug={task.slug} />
     </div>

@@ -8,6 +8,7 @@
 import { asc, eq } from 'drizzle-orm';
 import type { ExistingLesson, LessonDraft } from '@/lib/lessons/authoring';
 import type { LessonKind } from '@/lib/lessons/types';
+import { isFileDelivery } from '@/lib/task/prerequisite';
 import type { TaskStatus, TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { lessons, tasks, topics } from './schema';
@@ -70,6 +71,9 @@ export interface LessonTaskOption {
   topicTitle: string;
   /** Parameterized: listed in a lesson, but only openable in a session. */
   sessionOnly: boolean;
+  /** With `fileDelivery`, what the lesson form's sequencing warning reads (lib/task/prerequisite.ts). */
+  topicId: string;
+  fileDelivery: boolean;
 }
 
 /** Every task except archived ones, in curriculum order — the lesson form's picker. */
@@ -84,6 +88,8 @@ export async function listLessonTaskOptions(): Promise<LessonTaskOption[]> {
       difficulty: tasks.difficulty,
       gradeTags: tasks.gradeTags,
       params: tasks.params,
+      payload: tasks.payload,
+      topicId: tasks.topicId,
       topicTitle: topics.title
     })
     .from(tasks)
@@ -91,7 +97,7 @@ export async function listLessonTaskOptions(): Promise<LessonTaskOption[]> {
     .orderBy(asc(topics.order), asc(tasks.difficulty), asc(tasks.title));
   return rows
     .filter((row) => row.status !== 'archived')
-    .map(({ params, ...row }) => ({ ...row, sessionOnly: params !== null }));
+    .map(({ params, payload, ...row }) => ({ ...row, sessionOnly: params !== null, fileDelivery: isFileDelivery(payload) }));
 }
 
 export async function listTaskIds(): Promise<Set<string>> {
