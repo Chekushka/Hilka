@@ -184,21 +184,24 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
 
   if (!studentName) {
     return (
-      <main className="mx-auto max-w-2xl p-6">
-        <h1 className="text-xl font-semibold text-ink">{t('session.pickName')}</h1>
-        <ul className="mt-4 flex flex-wrap gap-2">
+      <main className="mx-auto w-full max-w-3xl p-6">
+        <p className="text-sm text-ink-muted">{t('session.sessionCode', { code })}</p>
+        <h1 className="mt-1 text-2xl font-semibold text-ink">{t('session.pickName')}</h1>
+        {/* Big targets in a grid: a class of 25 finds a name by scanning, not by reading a line. */}
+        <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {session.roster.map((name) => (
             <li key={name}>
               <button
                 type="button"
                 onClick={() => pickName(name)}
-                className="rounded-md border border-accent px-4 py-2 text-sm text-accent"
+                className="w-full rounded-lg border border-line bg-surface px-4 py-3 text-left text-lg text-ink hover:border-accent focus-visible:border-accent"
               >
                 {name}
               </button>
             </li>
           ))}
         </ul>
+        <p className="mt-6 text-sm text-ink-muted">{t('session.pickNameNote')}</p>
       </main>
     );
   }
@@ -310,7 +313,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-2xl p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{t('session.taskListTitle')}</h1>
         {timerBadge}
@@ -322,7 +325,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               type="button"
               data-task-id={task.id}
               onClick={() => setSelectedTaskId(task.id)}
-              className="flex w-full items-center justify-between rounded-md border border-line px-4 py-3 text-left text-ink"
+              className="flex w-full items-center justify-between rounded-lg border border-line bg-surface px-4 py-3 text-left text-ink hover:border-accent"
             >
               <span>{task.title}</span>
               {passed.has(task.id) ? (

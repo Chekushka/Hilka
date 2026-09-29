@@ -22,27 +22,12 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-3xl p-6">
+      {/* Sessions, tasks and lessons are in the app bar (app/(teacher)/layout.tsx). */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{t('dashboard.title')}</h1>
-        <div className="flex items-center gap-4">
-          <Link href="/classes/new" className="text-sm text-accent">
-            {t('classForm.newClass')}
-          </Link>
-          <Link href="/sessions/new" className="text-sm text-accent">
-            {t('sessionBuilder.newSession')}
-          </Link>
-          <Link href="/tasks" className="text-sm text-accent">
-            {t('authoring.tasksTitle')}
-          </Link>
-          <Link href="/lessons" className="text-sm text-accent">
-            {t('lessonForm.listTitle')}
-          </Link>
-          <form action="/api/auth/logout" method="post">
-            <button type="submit" className="text-sm text-accent">
-              {t('auth.logout')}
-            </button>
-          </form>
-        </div>
+        <Link href="/classes/new" className="rounded-md border border-accent px-3 py-1.5 text-sm text-accent">
+          {t('classForm.newClass')}
+        </Link>
       </div>
 
       {classes.length === 0 ? (
@@ -50,8 +35,8 @@ export default async function DashboardPage() {
       ) : (
         <ul className="mt-6 space-y-6">
           {classes.map((klass) => (
-            <li key={klass.id} className="rounded-md border border-line p-4">
-              <div className="flex items-center justify-between">
+            <li key={klass.id} className="rounded-lg border border-line bg-surface p-4">
+              <div className="flex items-center justify-between gap-4">
                 <h2 className="text-lg font-semibold text-ink">{klass.title}</h2>
                 <Link href={`/classes/${klass.id}`} className="text-sm text-accent">
                   {t('classForm.edit')}

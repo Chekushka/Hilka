@@ -5,12 +5,14 @@
  * from the database stops working immediately, not after 30 days.
  */
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import { getTeacherById, type Teacher } from '@/lib/db/teachers';
 import { readTeacherId, TEACHER_COOKIE_NAME } from './session-cookie';
 
-export async function getCurrentTeacher(): Promise<Teacher | null> {
+// Memoized per request: the teacher layout and the page below it both ask.
+export const getCurrentTeacher = cache(async (): Promise<Teacher | null> => {
   const store = await cookies();
   const teacherId = readTeacherId(store.get(TEACHER_COOKIE_NAME)?.value);
   if (!teacherId) return null;
   return getTeacherById(teacherId);
-}
+});

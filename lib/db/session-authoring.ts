@@ -6,15 +6,13 @@
  */
 import { randomInt } from 'node:crypto';
 import { and, asc, eq, inArray } from 'drizzle-orm';
+import { SESSION_CODE_ALPHABET, SESSION_CODE_LENGTH } from '@/lib/session/code';
 import type { SessionMode } from '@/lib/session/types';
 import { isFileDelivery } from '@/lib/task/prerequisite';
 import type { TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { sessions, tasks, topics } from './schema';
 
-const SESSION_CODE_LENGTH = 6;
-/** Same rationale as the practice progress code's alphabet (lib/practice/code.ts): legible from the back row. */
-const SESSION_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const MAX_MINT_ATTEMPTS = 5;
 
 function generateSessionCode(): string {

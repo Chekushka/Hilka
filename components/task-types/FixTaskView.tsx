@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { PlaybackScrubber } from '@/components/canvas/PlaybackScrubber';
+import { EngineLoading } from '@/components/task/EngineLoading';
 import { FileDelivery } from '@/components/task/FileDelivery';
 import { Hints } from '@/components/task/Hints';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
@@ -120,14 +121,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }
           >
             {busy ? t('workspace.checking') : t('workspace.check')}
           </button>
-          {loading && (
-            // Several seconds on a classroom machine. Without this the student
-            // sees a dead button and presses F5.
-            <span className="text-sm text-ink-muted">
-              {t('workspace.loadingEngine')}{' '}
-              <span className="text-xs">{t('workspace.loadingHint')}</span>
-            </span>
-          )}
+          {loading && <EngineLoading />}
         </div>
 
         <div className="flex flex-wrap gap-4">

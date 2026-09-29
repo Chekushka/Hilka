@@ -33,7 +33,8 @@ export function ProgressSummary({ tasks, grade }: { tasks: PracticeTaskMeta[]; g
         </p>
       </div>
       {xp === 0 && <p className="mt-1 text-sm text-ink-muted">{t('meta.xpEmpty')}</p>}
-      <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-3 sm:grid-cols-5">
+      {/* Five across when it spans the page; three in /practice's side column on a wide screen. */}
+      <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-3 sm:grid-cols-5 lg:grid-cols-3">
         {topics.map((topic) => {
           const stage = plantStage(topic.done, topic.total);
           const complete = topic.done === topic.total;

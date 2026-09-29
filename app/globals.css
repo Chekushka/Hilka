@@ -58,7 +58,7 @@
   /* Restraint: one shadow level, used rarely. No shadow on every card. */
   --shadow-raised: 0 1px 2px rgb(38 44 39 / 0.06), 0 2px 8px rgb(38 44 39 / 0.06);
 
-  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-ui: "Onest", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-code: "JetBrains Mono", ui-monospace, "Fira Code", monospace;
 }
 
@@ -114,4 +114,27 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-ui);
+}
+
+/*
+ * The loading mark (components/brand/BrandMark.tsx): its two forks light up in
+ * turn while the Python engine loads. Opacity only — nothing moves, nothing
+ * reflows — and gone entirely for anyone who asked for less motion.
+ */
+@keyframes brand-fork-a {
+  0%, 100% { opacity: 0.22; }
+  40% { opacity: 1; }
+}
+@keyframes brand-fork-b {
+  0%, 100% { opacity: 0.22; }
+  72% { opacity: 1; }
+}
+.brand-fork-a { animation: brand-fork-a 1.5s ease-in-out infinite; }
+.brand-fork-b { animation: brand-fork-b 1.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-fork-a,
+  .brand-fork-b {
+    animation: none;
+  }
 }

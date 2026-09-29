@@ -22,7 +22,7 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
   const practiceTasks = grade === undefined ? [] : await listPracticeTaskMeta();
 
   return (
-    <main className="mx-auto w-full max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-5xl p-6">
       <h1 className="text-2xl font-semibold text-ink">{t('lessons.title')}</h1>
       {grades.length > 1 && (
         <nav aria-label={t('lessons.gradeLabel')} className="mt-3 flex gap-2">
@@ -40,13 +40,17 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
           ))}
         </nav>
       )}
-      {grade !== undefined && (
-        <div className="mt-6">
-          <ProgressSummary tasks={practiceTasks} grade={grade} />
+      {/* At 1366×768 the lessons stay above the fold: the garden sits beside them,
+          not on top. Narrow screens stack it first, as before. */}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        {grade !== undefined && (
+          <aside className="lg:order-2">
+            <ProgressSummary tasks={practiceTasks} grade={grade} />
+          </aside>
+        )}
+        <div>
+          {lessons.length === 0 ? <p className="text-ink-muted">{t('lessons.empty')}</p> : <LessonList lessons={lessons} />}
         </div>
-      )}
-      <div className="mt-6">
-        {lessons.length === 0 ? <p className="text-ink-muted">{t('lessons.empty')}</p> : <LessonList lessons={lessons} />}
       </div>
     </main>
   );
