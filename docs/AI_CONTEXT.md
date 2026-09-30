@@ -134,7 +134,7 @@ tasks
   status text             -- 'draft' | 'published' | 'archived'
 
 teachers
-  id, email, role ('teacher' | 'admin'), created_at
+  id, email, role ('teacher' | 'admin'), status ('pending' | 'active' | 'disabled'), created_at
 
 teacher_login_tokens
   id, teacher_id, token_hash, expires_at, used_at, created_at
@@ -227,9 +227,34 @@ in production mode too, where `NODE_ENV` alone can't tell a real deployment from
 Vercel the link is never logged: it is a bearer credential. Without the two variables on Vercel,
 nothing is sent and the route logs an error — login fails closed.
 
-Teachers are provisioned directly in the database — there is no self-signup, and
-`request-link` responds identically whether or not the email matches a teacher, so it cannot
-be used to enumerate accounts.
+**Sign-up with approval** — decided with the project owner, replacing "teachers are provisioned
+directly in the database". A teacher asks for access at `/signup`, which stores the address as a
+`pending` row; the superuser approves it (`active`), rejects it (the row is deleted, so the
+address may ask again), or later disables it (`disabled` — classes and sessions kept, login
+refused). Only `active` teachers get a login link, and `getCurrentTeacher` treats any other status
+as logged out, so disabling takes effect on the teacher's next request, not when their 30-day
+cookie runs out. `request-link` and `signup` both answer identically whatever the address's state,
+so neither can be used to find out who has an account; `signup` is rate-limited, since each new
+address writes a row. Addresses are stored trimmed and lowercase (`lib/auth/email.ts`).
+
+**The superuser** manages that, at `/admin`. It is deliberately not a teacher row and not a magic
+link: a login and a scrypt password hash in the environment (`SUPERUSER_LOGIN`,
+`SUPERUSER_PASSWORD_HASH`, made by `npm run superuser:hash`, `lib/auth/superuser.ts`), so it works
+on an empty database and when email delivery does not. This is the one password in the system.
+Its session is its own signed cookie (`hilka_admin`, `lib/auth/admin-cookie.ts`): 8 hours,
+`SameSite=Strict`, and signed over the current password hash as well as `AUTH_SECRET`, so changing
+the password ends every superuser session at once. Five failed logins per 15 minutes per address,
+then nothing is checked until the window passes (successful logins do not count). Unset or
+malformed variables mean there is no superuser: the login refuses everything — fail closed. The
+unused `role: 'admin'` column predates this and does not grant anything.
+
+**Access notifications** go through Resend like the magic link (`lib/auth/access-email.ts`, sent
+after the response by `lib/auth/deliver-email.ts`). A new request is announced to
+`SUPERUSER_EMAIL` — optional, and only an address to write to, never a login — with a link to
+`/admin`; only a request that actually created a row is announced, so repeating one sends
+nothing. A teacher who gains access (approved, re-enabled, or added directly) gets a link to
+`/login`, never a login link itself, since that expires in 15 minutes. Rejecting and disabling
+send nothing. Outside Vercel with no Resend settings the email is logged instead.
 
 ## Python Runner
 

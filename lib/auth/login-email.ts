@@ -1,7 +1,8 @@
 /**
  * Sends the magic link by email through Resend's HTTP API
  * (docs/AI_CONTEXT.md, "Teacher Auth"). No SDK: one POST, and `fetch` is
- * injected so the request shape is unit-tested without a network.
+ * injected so the request shape is unit-tested without a network. The
+ * access notifications (lib/auth/access-email.ts) go out the same way.
  *
  * Configured by two environment variables, both required:
  * `RESEND_API_KEY`, and `EMAIL_FROM` — a sender on a domain verified in
@@ -22,7 +23,7 @@ export function loginEmailConfig(env: Record<string, string | undefined>): Login
   return apiKey && from ? { apiKey, from } : null;
 }
 
-function escapeHtml(text: string): string {
+export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 }
 
@@ -49,13 +50,13 @@ export function buildLoginEmail(link: string): LoginEmail {
 
 export type SendResult = { ok: true } | { ok: false; status: number | null; detail: string };
 
-export async function sendLoginEmail(
+/** One email through Resend. Never throws: a failure comes back as a result for the caller to log. */
+export async function sendEmail(
   to: string,
-  link: string,
+  email: LoginEmail,
   config: LoginEmailConfig,
   fetchImpl: typeof fetch = fetch
 ): Promise<SendResult> {
-  const email = buildLoginEmail(link);
   try {
     const response = await fetchImpl(RESEND_ENDPOINT, {
       method: 'POST',
@@ -67,4 +68,13 @@ export async function sendLoginEmail(
   } catch (error) {
     return { ok: false, status: null, detail: error instanceof Error ? error.message : String(error) };
   }
+}
+
+export async function sendLoginEmail(
+  to: string,
+  link: string,
+  config: LoginEmailConfig,
+  fetchImpl: typeof fetch = fetch
+): Promise<SendResult> {
+  return sendEmail(to, buildLoginEmail(link), config, fetchImpl);
 }

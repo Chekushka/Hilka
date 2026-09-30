@@ -16,6 +16,7 @@
  */
 import { after, NextResponse } from 'next/server';
 import { loginEmailConfig, sendLoginEmail } from '@/lib/auth/login-email';
+import { normalizeEmail } from '@/lib/auth/email';
 import { issueLoginToken } from '@/lib/auth/login-tokens';
 import { getTeacherByEmail } from '@/lib/db/teachers';
 
@@ -34,8 +35,9 @@ export async function POST(request: Request) {
   }
 
   const onVercel = Boolean(process.env.VERCEL);
-  const teacher = await getTeacherByEmail(body.email.trim().toLowerCase());
-  if (!teacher) {
+  const teacher = await getTeacherByEmail(normalizeEmail(body.email));
+  // A pending or disabled teacher is answered exactly like an unknown address.
+  if (!teacher || teacher.status !== 'active') {
     return NextResponse.json({ ok: true });
   }
 

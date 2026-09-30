@@ -107,8 +107,19 @@ export const teachers = pgTable('teachers', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   role: text('role').$type<'teacher' | 'admin'>().notNull().default('teacher'),
+  /**
+   * `pending` — asked for access at /signup, cannot log in yet; `active` —
+   * approved (or added) by the superuser; `disabled` — access withdrawn,
+   * classes and sessions kept. Only `active` gets a login link, and a
+   * logged-in teacher who stops being active is logged out on the next
+   * request (lib/auth/current-teacher.ts). Rows that existed before sign-up
+   * are `active`.
+   */
+  status: text('status').$type<TeacherStatus>().notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
+
+export type TeacherStatus = 'pending' | 'active' | 'disabled';
 
 /**
  * Magic-link login tokens (docs/AI_CONTEXT.md, "Teacher Auth"). Stored

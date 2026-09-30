@@ -6,12 +6,15 @@
 import { NextResponse } from 'next/server';
 import { consumeLoginToken } from '@/lib/auth/login-tokens';
 import { createTeacherCookie } from '@/lib/auth/session-cookie';
+import { getTeacherById } from '@/lib/db/teachers';
 
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get('token');
   const teacherId = token ? await consumeLoginToken(token) : null;
+  // A link issued before the superuser disabled the teacher logs nobody in.
+  const teacher = teacherId ? await getTeacherById(teacherId) : null;
 
-  if (!teacherId) {
+  if (!teacherId || teacher?.status !== 'active') {
     return NextResponse.redirect(new URL('/login?error=invalid', request.url));
   }
 

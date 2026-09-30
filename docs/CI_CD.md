@@ -252,8 +252,11 @@ verifying Neon's certificate.
 | Cloud environment for agents | `DATABASE_URL` (Neon **dev** branch) | remote sessions |
 | Repo secrets | *(none needed)* | Vercel and Neon are wired through their apps |
 | Vercel project settings | `AUTH_SECRET` | teacher login (`lib/auth/session-cookie.ts`) — no integration sets this one, see step 5 |
+| Vercel project settings | `SUPERUSER_LOGIN`, `SUPERUSER_PASSWORD_HASH` | the superuser at `/admin`, who approves teacher sign-ups (`lib/auth/superuser.ts`). The hash comes from `npm run superuser:hash` (reads the password without echoing it; 12 characters at least) and has no `$` in it, so it pastes as is. Changing it logs the superuser out everywhere. Without both, `/admin/login` refuses every attempt and logs why — nobody can approve new teachers, but existing ones keep working |
+| Vercel project settings | `SUPERUSER_EMAIL` (optional) | where a new teacher's access request is announced (`lib/auth/access-email.ts`), through the same `RESEND_API_KEY`/`EMAIL_FROM`. Unset, requests still arrive at `/admin`, just without an email. Teachers are emailed when they gain access regardless of this one |
 | Vercel project settings | `RESEND_API_KEY`, `EMAIL_FROM` | magic-link email (`lib/auth/login-email.ts`). `EMAIL_FROM` must be on a domain verified in Resend (e.g. `Hilka <login@your-domain>`); Resend's `onboarding@resend.dev` only delivers to the Resend account owner's own address. Without both, nothing is sent on Vercel and the route logs an error |
 | `.github/workflows/ci.yml` | `AUTH_SECRET` (throwaway, hard-coded) | the `browser` job only; not a real secret, just needs to be *some* value |
+| `.github/workflows/ci.yml` | `SUPERUSER_LOGIN`, `SUPERUSER_PASSWORD_HASH` (throwaway, hard-coded) | the `browser` job only, for `tests/e2e/teacher-access.spec.ts`; the hash of `ci-superuser-password`. Locally, export the same two to run that spec |
 
 Create the `production` environment under Settings → Environments and add a
 required reviewer. Then a migration against the real database is a button you

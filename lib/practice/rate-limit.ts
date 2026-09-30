@@ -14,6 +14,8 @@
 export interface RateLimiter {
   /** Records one attempt for `key`; returns false once the window's limit is spent. */
   attempt(key: string, now?: number): boolean;
+  /** Whether `key` has spent the window's limit, without recording anything — for counting only failures. */
+  isBlocked(key: string, now?: number): boolean;
 }
 
 export function createFixedWindowLimiter(maxAttempts: number, windowMs: number): RateLimiter {
@@ -29,6 +31,10 @@ export function createFixedWindowLimiter(maxAttempts: number, windowMs: number):
       if (entry.count >= maxAttempts) return false;
       entry.count += 1;
       return true;
+    },
+    isBlocked(key: string, now: number = Date.now()): boolean {
+      const entry = windows.get(key);
+      return entry !== undefined && now - entry.windowStart < windowMs && entry.count >= maxAttempts;
     }
   };
 }

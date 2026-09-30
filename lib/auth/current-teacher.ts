@@ -2,7 +2,8 @@
  * The logged-in teacher, for a server component or route handler to check.
  * Reads the signed cookie (lib/auth/session-cookie.ts) and re-fetches the row
  * rather than trusting stale data baked into the cookie — a teacher removed
- * from the database stops working immediately, not after 30 days.
+ * from the database, or no longer `active` (disabled by the superuser), stops
+ * working on the next request, not after 30 days.
  */
 import { cookies } from 'next/headers';
 import { cache } from 'react';
@@ -14,5 +15,6 @@ export const getCurrentTeacher = cache(async (): Promise<Teacher | null> => {
   const store = await cookies();
   const teacherId = readTeacherId(store.get(TEACHER_COOKIE_NAME)?.value);
   if (!teacherId) return null;
-  return getTeacherById(teacherId);
+  const teacher = await getTeacherById(teacherId);
+  return teacher?.status === 'active' ? teacher : null;
 });
