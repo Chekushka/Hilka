@@ -7,13 +7,24 @@
  * an IDE arguing with them while they type.
  *
  * The failing line is marked with a calm background, never a red squiggle.
+ *
+ * `fill` is the student workspace's variant (components/task/CodePane.tsx): it
+ * takes the whole code pane, no box of its own, and sets code larger — the
+ * teacher projects this screen and the back row has to read it. `boxed`
+ * stays the authoring forms' compact editor.
+ *
+ * On a touch screen the `fill` variant adds a key bar above the code: a phone
+ * keyboard has no Tab, and Python cannot be written without indentation, and
+ * the brackets, colon and quotes sit two layers deep in its symbol pages.
+ * The keys never take the focus, so the on-screen keyboard stays open.
  */
-import { useEffect, useRef } from 'react';
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { useEffect, useRef, type PointerEvent, type RefObject } from 'react';
+import { defaultKeymap, history, historyKeymap, indentLess, indentMore, indentWithTab } from '@codemirror/commands';
 import { python } from '@codemirror/lang-python';
 import { indentUnit } from '@codemirror/language';
 import { EditorState, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, EditorView, keymap, lineNumbers, type DecorationSet } from '@codemirror/view';
+import { t } from '@/lib/i18n';
 
 const setErrorLine = StateEffect.define<number | null>();
 
@@ -42,6 +53,8 @@ const errorLineField = StateField.define<DecorationSet>({
 
 const theme = EditorView.theme({
   '&': { fontSize: '14px', backgroundColor: 'var(--code-bg)', color: 'var(--ink)' },
+  '&.cm-fill': { fontSize: '16px', height: '100%' },
+  '&.cm-fill .cm-scroller': { lineHeight: '1.7' },
   '&.cm-focused': { outline: '2px solid var(--accent)', outlineOffset: '-2px' },
   // The caret is the browser's native one (no drawSelection), and CodeMirror's
   // base theme pins it black for an editor not flagged dark — invisible on the
@@ -68,9 +81,17 @@ interface CodeEditorProps {
   errorLine?: number | null;
   readOnly?: boolean;
   ariaLabel: string;
+  variant?: 'boxed' | 'fill';
 }
 
-export function CodeEditor({ value, onChange, errorLine = null, readOnly = false, ariaLabel }: CodeEditorProps) {
+export function CodeEditor({
+  value,
+  onChange,
+  errorLine = null,
+  readOnly = false,
+  ariaLabel,
+  variant = 'boxed'
+}: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -96,6 +117,7 @@ export function CodeEditor({ value, onChange, errorLine = null, readOnly = false
         EditorView.lineWrapping,
         EditorState.readOnly.of(readOnly),
         EditorView.contentAttributes.of({ 'aria-label': ariaLabel }),
+        EditorView.editorAttributes.of({ class: variant === 'fill' ? 'cm-fill' : '' }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onChangeRef.current(update.state.doc.toString());
@@ -118,5 +140,56 @@ export function CodeEditor({ value, onChange, errorLine = null, readOnly = false
     view.current?.dispatch({ effects: setErrorLine.of(errorLine) });
   }, [errorLine]);
 
-  return <div ref={host} className="overflow-hidden rounded-md border border-line" />;
+  if (variant === 'boxed') {
+    return <div ref={host} className="overflow-hidden rounded-md border border-line" />;
+  }
+  return (
+    <>
+      {!readOnly && <KeyBar view={view} />}
+      <div ref={host} className="min-h-0 flex-1 overflow-hidden" />
+    </>
+  );
+}
+
+const SYMBOLS = [':', '(', ')', '"', "'", '=', '[', ']', ',', '_', '+', '-', '*', '/', '<', '>', '#'];
+
+const keyClass =
+  'flex h-10 min-w-10 flex-none items-center justify-center rounded-md border border-line bg-surface px-2.5 font-mono text-base text-ink active:bg-accent-soft';
+
+/** Touch screens only (`pointer: coarse`): indent, outdent, and the symbols a phone hides. */
+function KeyBar({ view }: { view: RefObject<EditorView | null> }) {
+  function press(action: (editor: EditorView) => void) {
+    const editor = view.current;
+    if (!editor) return;
+    action(editor);
+    editor.focus();
+  }
+  // Keeping the focus in the editor keeps the phone's keyboard open.
+  const keepFocus = (event: PointerEvent) => event.preventDefault();
+  return (
+    <div
+      role="toolbar"
+      aria-label={t('editor.keyBar')}
+      className="hidden flex-none gap-1.5 overflow-x-auto border-b border-line bg-bg px-3 py-2 pointer-coarse:flex"
+    >
+      <button type="button" onPointerDown={keepFocus} onClick={() => press(indentMore)} aria-label={t('editor.indent')} className={keyClass}>
+        ⇥
+      </button>
+      <button type="button" onPointerDown={keepFocus} onClick={() => press(indentLess)} aria-label={t('editor.outdent')} className={keyClass}>
+        ⇤
+      </button>
+      {SYMBOLS.map((symbol) => (
+        <button
+          key={symbol}
+          type="button"
+          onPointerDown={keepFocus}
+          onClick={() => press((editor) => editor.dispatch(editor.state.replaceSelection(symbol)))}
+          aria-label={t('editor.insert', { symbol })}
+          className={keyClass}
+        >
+          {symbol}
+        </button>
+      ))}
+    </div>
+  );
 }

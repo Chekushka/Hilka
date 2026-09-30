@@ -13,19 +13,22 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
+import { GridView } from '@/components/canvas/GridView';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
-import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
+import { createRunner, type GridWorld, type PythonRunner, type RunResult } from '@/lib/runner';
+import { DEFAULT_GRID_WORLD, isValidGridWorld } from '@/lib/task/grid';
 import { evaluateCasesAgainstOwnRuns, type Check, type CheckRunOutcome } from '@/lib/checker';
 import type { CodePayload, RunCase, Surface } from '@/lib/task/types';
 import {
   deliveryFormFromPayload,
-  deliveryPayloadFields,
+  surfacePayloadFields,
   validateDeliveryForm,
   type DeliveryFormState
 } from '@/lib/task/delivery-form';
 import { FileDeliveryFields } from './FileDeliveryFields';
+import { GridWorldField } from './GridWorldField';
 import { lintForFileDelivery, type LintedSource } from './file-lint-gate';
 import { FileLintReport } from './FileLintReport';
 import { ChecksField } from './ChecksField';
@@ -33,6 +36,7 @@ import { CasesField } from './CasesField';
 import { GradeTagsField, HintsField } from './HintsField';
 import { checkKindsFor } from '@/lib/task/check-form';
 import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints, hasCasesText } from './task-form-utils';
+import { FormSection } from './FormSection';
 
 export interface DraftTask {
   id: string;
@@ -61,6 +65,13 @@ type PublishState =
 export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [surface, setSurface] = useState<Surface>(task.payload.surface);
+  // A world with parameter placeholders is hand-authored JSON with no editor
+  // here (docs/TASK_SCHEMA.md, "Parameterization"): kept as it is on save,
+  // never swapped for the default world.
+  const storedGrid = task.payload.grid;
+  const gridTemplate = storedGrid && !isValidGridWorld(storedGrid) ? storedGrid : null;
+  const [grid, setGrid] = useState<GridWorld>(isValidGridWorld(storedGrid) ? storedGrid : DEFAULT_GRID_WORLD);
+  const runGrid = surface === 'grid' ? grid : undefined;
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [starter, setStarter] = useState(task.payload.starter);
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
@@ -123,7 +134,9 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
     const deliveryError = validateDeliveryForm(delivery);
     if (deliveryError) {
       setSaveState('error');
-      setSaveError(t(deliveryError === 'filename' ? 'authoring.deliveryFilenameInvalid' : 'authoring.deliveryMaxKbInvalid'));
+      setSaveError(
+        t(deliveryError === 'filename' ? 'authoring.deliveryFilenameInvalid' : 'authoring.deliveryMaxKbInvalid')
+      );
       return { ok: false };
     }
     setSaveState('saving');
@@ -133,7 +146,14 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'code', surface, prompt, starter, ...deliveryPayloadFields(delivery) },
+        payload: {
+          type: 'code',
+          surface,
+          prompt,
+          starter,
+          ...surfacePayloadFields(surface, grid, delivery),
+          ...(surface === 'grid' && gridTemplate ? { grid: gridTemplate } : {})
+        },
         checks: parsedChecks.checks,
         cases: parsedCases.cases,
         hints: parseHints(hintsText),
@@ -171,7 +191,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
     setPublishState({ kind: 'idle' });
     const results: RunResult[] = [];
     for (const runCase of cases) {
-      results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin }));
+      results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin, grid: runGrid }));
     }
     setCaseResults(results);
     setReferenceOutcome(evaluateCasesAgainstOwnRuns(referenceCode, parsedChecks.checks, cases, results));
@@ -213,9 +233,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
         ...(saved.cases.length > 0 ? { caseRuns: caseResults } : {})
       })
     });
-    const body: { error?: string; failures?: string[]; version?: number } = await response
-      .json()
-      .catch(() => ({}));
+    const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
       return;
@@ -236,7 +254,9 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
   if (publishState.kind === 'success') {
     return (
       <section className="mt-6 rounded-md border-l-4 border-growth bg-surface p-4">
-        <h2 className="font-semibold text-growth">{t('authoring.publishSuccess', { version: publishState.version })}</h2>
+        <h2 className="font-semibold text-growth">
+          {t('authoring.publishSuccess', { version: publishState.version })}
+        </h2>
       </section>
     );
   }
@@ -244,102 +264,122 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
   return (
     <div className="mt-6 flex flex-col gap-8">
       <form onSubmit={handleSave} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="title">
-            {t('authoring.titleLabel')}
-          </label>
-          <input
-            id="title"
-            required
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="surface">
-            {t('authoring.surfaceLabel')}
-          </label>
-          <select
-            id="surface"
-            value={surface}
-            onChange={(event) => setSurface(event.target.value as Surface)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          >
-            <option value="turtle">{t('authoring.surfaceTurtle')}</option>
-            <option value="console">{t('authoring.surfaceConsole')}</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="prompt">
-            {t('authoring.promptLabel')}
-          </label>
-          <textarea
-            id="prompt"
-            required
-            rows={3}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="starter">
-            {t('authoring.starterLabel')}
-          </label>
-          <CodeEditor value={starter} onChange={setStarter} ariaLabel={t('authoring.starterLabel')} />
-        </div>
-
-        <FileDeliveryFields
-          value={delivery}
-          onChange={(next) => {
-            if (next.enabled !== delivery.enabled) setFileLint(undefined);
-            setDelivery(next);
-          }}
-        />
-
-        <ChecksField
-          id="checks"
-          value={checksText}
-          onChange={setChecksText}
-          kinds={checkKindsFor('code')}
-          hasCases={hasCasesText(casesText)}
-          label={t('authoring.checksLabel')}
-          jsonLabel={t('authoring.checksJsonLabel')}
-          jsonHint={t('authoring.checksHint')}
-          error={checksError}
-        />
-
-        <CasesField
-          id="cases"
-          value={casesText}
-          onChange={setCasesText}
-          kinds={checkKindsFor('code')}
-          error={casesError}
-        />
-
-        <HintsField value={hintsText} onChange={setHintsText} />
-
-        <div className="flex flex-wrap gap-5">
+        <FormSection title={t('authoring.sectionAbout')}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="difficulty">
-              {t('authoring.difficultyLabel')}
+            <label className="text-sm text-ink-muted" htmlFor="title">
+              {t('authoring.titleLabel')}
             </label>
             <input
-              id="difficulty"
-              type="number"
-              min={1}
-              max={5}
-              value={difficulty}
-              onChange={(event) => setDifficulty(Number(event.target.value))}
-              className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              id="title"
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
           </div>
-          <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
-        </div>
+
+          <div className="flex flex-wrap gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-ink-muted" htmlFor="difficulty">
+                {t('authoring.difficultyLabel')}
+              </label>
+              <input
+                id="difficulty"
+                type="number"
+                min={1}
+                max={5}
+                value={difficulty}
+                onChange={(event) => setDifficulty(Number(event.target.value))}
+                className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              />
+            </div>
+            <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
+          </div>
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionStudent')}>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="surface">
+              {t('authoring.surfaceLabel')}
+            </label>
+            <select
+              id="surface"
+              value={surface}
+              onChange={(event) => setSurface(event.target.value as Surface)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            >
+              <option value="turtle">{t('authoring.surfaceTurtle')}</option>
+              <option value="console">{t('authoring.surfaceConsole')}</option>
+              <option value="grid">{t('authoring.surfaceGrid')}</option>
+            </select>
+          </div>
+
+          {surface === 'grid' &&
+            (gridTemplate ? (
+              <p className="text-sm text-ink-muted">{t('authoring.gridParameterized')}</p>
+            ) : (
+              <GridWorldField value={grid} onChange={setGrid} />
+            ))}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="prompt">
+              {t('authoring.promptLabel')}
+            </label>
+            <textarea
+              id="prompt"
+              required
+              rows={3}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="starter">
+              {t('authoring.starterLabel')}
+            </label>
+            <CodeEditor value={starter} onChange={setStarter} ariaLabel={t('authoring.starterLabel')} />
+          </div>
+
+          {surface === 'grid' ? (
+            <p className="text-sm text-ink-muted">{t('authoring.gridNoFile')}</p>
+          ) : (
+            <FileDeliveryFields
+              value={delivery}
+              onChange={(next) => {
+                if (next.enabled !== delivery.enabled) setFileLint(undefined);
+                setDelivery(next);
+              }}
+            />
+          )}
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionChecking')}>
+          <ChecksField
+            id="checks"
+            value={checksText}
+            onChange={setChecksText}
+            kinds={checkKindsFor('code')}
+            hasCases={hasCasesText(casesText)}
+            label={t('authoring.checksLabel')}
+            jsonLabel={t('authoring.checksJsonLabel')}
+            jsonHint={t('authoring.checksHint')}
+            error={checksError}
+          />
+
+          <CasesField
+            id="cases"
+            value={casesText}
+            onChange={setCasesText}
+            kinds={checkKindsFor('code')}
+            error={casesError}
+          />
+        </FormSection>
+
+        <FormSection>
+          <HintsField value={hintsText} onChange={setHintsText} />
+        </FormSection>
 
         <div className="flex items-center gap-3">
           <button
@@ -354,7 +394,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
         </div>
       </form>
 
-      <section className="flex flex-col gap-4 border-t border-line pt-6">
+      <section className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5">
         <div>
           <h2 className="text-lg font-semibold text-ink">{t('authoring.referenceTitle')}</h2>
           <p className="mt-1 text-sm text-ink-muted">{t('authoring.referenceNote')}</p>
@@ -385,6 +425,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
             )}
             <div className="flex flex-wrap gap-4">
               {surface === 'turtle' && <TurtleCanvas drawing={result.drawing} label={t('workspace.yourDrawing')} />}
+              {surface === 'grid' && <GridView world={grid} steps={result.grid?.steps ?? []} />}
               {surface === 'console' && (
                 <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
                   {result.stdout || t('workspace.outputEmpty')}
@@ -406,7 +447,14 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
         <button
           type="button"
           onClick={handlePublish}
-          disabled={!run || !caseResults || casesFailed || referenceFailsChecks || fileLintBlocks || publishState.kind === 'publishing'}
+          disabled={
+            !run ||
+            !caseResults ||
+            casesFailed ||
+            referenceFailsChecks ||
+            fileLintBlocks ||
+            publishState.kind === 'publishing'
+          }
           className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
           {publishState.kind === 'publishing' ? t('authoring.publishing') : t('authoring.publish')}

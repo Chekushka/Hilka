@@ -58,7 +58,12 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
     'Периметр прямокутника',
     'Площа прямокутника',
     'Середнє трьох чисел',
-    'Вартість поїздки'
+    'Вартість поїздки',
+    'Робот: прямо до мети',
+    'Робот: поворот за ріг',
+    'Робот: обійти каміння',
+    // Parameterized: listed with its session-only note, and skipped by the next-task walk below.
+    expect.stringMatching(/^Робот: свій акумулятор.*лише на занятті з учителем/)
   ]);
 
   // The next-task link walks core into additional.
@@ -67,6 +72,10 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
   await expect(page.getByRole('heading', { name: 'Середнє трьох чисел' })).toBeVisible();
   await page.getByRole('link', { name: 'Наступне завдання →' }).click();
   await expect(page.getByRole('heading', { name: 'Вартість поїздки' })).toBeVisible();
+  for (const title of ['Робот: прямо до мети', 'Робот: поворот за ріг', 'Робот: обійти каміння']) {
+    await page.getByRole('link', { name: 'Наступне завдання →' }).click();
+    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+  }
   await expect(page.getByText('Це останнє завдання уроку.')).toBeVisible();
 });
 
@@ -115,7 +124,7 @@ test('the session builder adds a whole lesson and warns in graded mode', async (
   // A practice lesson with an additional task: both kinds of warning.
   await page.getByLabel('Додати урок цілком').selectOption({ label: '7 кл. · урок 28: Лінійний алгоритм (Практика)' });
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 7')).toBeVisible();
+  await expect(page.getByText('обрано: 11')).toBeVisible();
   const warning = page.locator('form').getByRole('alert');
   await expect(warning).toContainText('Периметр прямокутника — з практичного уроку');
   await expect(warning).toContainText('Площа прямокутника — з практичного уроку');
@@ -125,7 +134,7 @@ test('the session builder adds a whole lesson and warns in graded mode', async (
 
   // Adding the same lesson again changes nothing.
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 7')).toBeVisible();
+  await expect(page.getByText('обрано: 11')).toBeVisible();
 
   // Practice mode never warns.
   await page.getByLabel('Режим').selectOption('practice');

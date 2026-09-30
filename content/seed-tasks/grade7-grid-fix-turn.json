@@ -1,0 +1,53 @@
+{
+  "slug": "g7-grid-fix-turn",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Робот повернув не туди",
+  "payload": {
+    "type": "fix",
+    "surface": "grid",
+    "prompt": "Робот мав дійти за ріг до акумулятора, але впирається в край поля. Знайди помилку.",
+    "broken": "import robot\nrobot.forward(4)\nrobot.right()\nrobot.forward(4)\n",
+    "grid": {
+      "start": {
+        "x": 1,
+        "y": 6,
+        "dir": "E"
+      },
+      "goal": {
+        "x": 5,
+        "y": 2
+      },
+      "rocks": [
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 6,
+          "y": 6
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "kind": "grid_goal",
+      "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись."
+    }
+  ],
+  "hints": [
+    "Запусти програму й подивись, куди повернув робот.",
+    "Робот дивиться праворуч, а акумулятор — угорі.",
+    "Щоб подивитися вгору, треба повернути ліворуч: robot.left()."
+  ],
+  "reference": {
+    "code": "import robot\nrobot.forward(4)\nrobot.left()\nrobot.forward(4)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

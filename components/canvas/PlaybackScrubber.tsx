@@ -66,7 +66,7 @@ export function PlaybackScrubber({ drawing, target = [], width, height }: Playba
   }
 
   return (
-    <div>
+    <div className="w-full" style={{ maxWidth: width ?? 360 }}>
       <TurtleCanvas
         drawing={drawing.slice(0, step)}
         target={target}
@@ -76,43 +76,48 @@ export function PlaybackScrubber({ drawing, target = [], width, height }: Playba
         highlightLast={step > 0 && step < total}
       />
       {total > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={togglePlay}
-            aria-label={playing ? t('workspace.playbackPause') : t('workspace.playbackPlay')}
-            className="rounded-md border border-line px-2 py-1 text-sm text-ink"
-          >
-            {playing ? t('workspace.playbackPause') : t('workspace.playbackPlay')}
-          </button>
-          <button
-            type="button"
-            onClick={() => goTo(step - 1)}
-            disabled={step === 0}
-            aria-label={t('workspace.playbackPrev')}
-            className="rounded-md border border-line px-2 py-1 text-sm text-ink disabled:opacity-40"
-          >
-            ‹
-          </button>
-          <input
-            type="range"
-            min={0}
-            max={total}
-            value={step}
-            onChange={(e) => goTo(Number(e.target.value))}
-            aria-label={t('workspace.playbackScrubber')}
-            className="flex-1"
-          />
-          <button
-            type="button"
-            onClick={() => goTo(step + 1)}
-            disabled={step === total}
-            aria-label={t('workspace.playbackNext')}
-            className="rounded-md border border-line px-2 py-1 text-sm text-ink disabled:opacity-40"
-          >
-            ›
-          </button>
-          <span className="text-xs text-ink-muted">{t('workspace.playbackStep', { step, total })}</span>
+        // Two rows so the controls fit the canvas's own width beside the editor.
+        <div className="mt-2 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={togglePlay}
+              aria-label={playing ? t('workspace.playbackPause') : t('workspace.playbackPlay')}
+              className="rounded-md border border-line px-2 py-1 text-sm text-ink"
+            >
+              {playing ? t('workspace.playbackPause') : t('workspace.playbackPlay')}
+            </button>
+            <span className="text-xs text-ink-muted">{t('workspace.playbackStep', { step, total })}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => goTo(step - 1)}
+              disabled={step === 0}
+              aria-label={t('workspace.playbackPrev')}
+              className="rounded-md border border-line px-2 py-1 text-sm text-ink disabled:opacity-40"
+            >
+              ‹
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={total}
+              value={step}
+              onChange={(e) => goTo(Number(e.target.value))}
+              aria-label={t('workspace.playbackScrubber')}
+              className="min-w-0 flex-1 accent-accent"
+            />
+            <button
+              type="button"
+              onClick={() => goTo(step + 1)}
+              disabled={step === total}
+              aria-label={t('workspace.playbackNext')}
+              className="rounded-md border border-line px-2 py-1 text-sm text-ink disabled:opacity-40"
+            >
+              ›
+            </button>
+          </div>
         </div>
       )}
     </div>

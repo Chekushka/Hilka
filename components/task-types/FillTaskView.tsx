@@ -9,13 +9,17 @@
  * assembly — the run, the checker, the result panel — is identical to them.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PlaybackScrubber } from '@/components/canvas/PlaybackScrubber';
-import { Hints } from '@/components/task/Hints';
+import { GridRunNote } from '@/components/canvas/GridView';
+import { CodePane, CodeVisual } from '@/components/task/CodePane';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
+import { RunCheckActions, RunDockIdle, WorkspaceDock } from '@/components/task/WorkspaceDock';
+import { SuccessPanel } from '@/components/task/SuccessPanel';
+import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
 import { parseFillTemplate, substituteFillTemplate } from '@/lib/task/fill';
+import { gridWorldOf } from '@/lib/task/grid';
 import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
 import type { AttemptOutcome, FillTask } from '@/lib/task/types';
@@ -26,11 +30,14 @@ interface FillTaskViewProps {
   onSubmitAttempt?: (outcome: AttemptOutcome) => void;
   hintsEnabled?: boolean;
   next?: NextTaskAction;
+  chrome?: WorkspaceChrome;
 }
 
-export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next }: FillTaskViewProps) {
+export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: FillTaskViewProps) {
   const [values, setValues] = useState<Record<number, string>>({});
-  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(task);
+  const world = gridWorldOf(task);
+  const runnable = useMemo(() => ({ ...task, grid: world }), [task, world]);
+  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(runnable);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -63,17 +70,44 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next 
   const loading = engine === 'loading';
   const disabled = loading || busy;
 
-  return (
-    <main className="mx-auto grid max-w-6xl gap-6 p-6 lg:grid-cols-[minmax(280px,1fr)_minmax(420px,1.4fr)]">
-      <section>
-        <p className="text-xs uppercase tracking-wide text-ink-muted">{t('task.statement')}</p>
-        <h1 className="mt-1 text-xl font-semibold text-ink">{task.title}</h1>
-        <p className="mt-2 text-ink">{task.payload.prompt}</p>
-        <Hints hints={hintsEnabled ? task.hints : []} onReveal={() => (hintsUsedRef.current += 1)} />
-      </section>
+  const retry = () => {
+    lastCheckedCodeRef.current = code;
+    check(code);
+  };
+  const showsOutput = (result?.stdout ?? '').length > 0 || pendingInputPrompt !== null;
 
-      <section className="flex flex-col gap-4">
-        <div className="whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm leading-relaxed text-ink">
+  return (
+    <WorkspaceFrame
+      task={task}
+      chrome={chrome}
+      hints={hintsEnabled ? task.hints : []}
+      onRevealHint={() => (hintsUsedRef.current += 1)}
+      success={report?.passed ? <SuccessPanel next={next} /> : undefined}
+      dock={
+        <WorkspaceDock
+          actions={<RunCheckActions busy={busy} disabled={disabled} onRun={() => run(code)} onCheck={retry} />}
+        >
+          {showsOutput ? (
+            <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
+          ) : (
+            !result && <RunDockIdle engine={engine} />
+          )}
+          {world && result && !result.error && !result.timedOut && !report?.passed && (
+            <GridRunNote run={result.grid} />
+          )}
+          {result && <ResultPanel result={result} report={report} code={code} onRetry={retry} />}
+        </WorkspaceDock>
+      }
+    >
+      <CodePane
+        visual={
+          world || showsTurtleCanvas(task, result?.drawing ?? []) ? (
+            <CodeVisual world={world} grid={result?.grid ?? null} drawing={result?.drawing ?? []} target={target} />
+          ) : undefined
+        }
+      >
+        {/* Same size and face as the editor, so a gap reads as part of the program. */}
+        <div className="flex-1 overflow-auto whitespace-pre-wrap px-5 py-4 font-mono text-base leading-[2.1] text-ink">
           {parts.map((part, index) =>
             part.kind === 'text' ? (
               <span key={index}>{part.value}</span>
@@ -86,71 +120,13 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next 
                   setValues((previous) => ({ ...previous, [part.index]: event.target.value }));
                 }}
                 aria-label={t('fill.gapLabel', { n: part.index })}
-                size={Math.max(2, (values[part.index] ?? '').length || 2)}
-                className="mx-0.5 inline-block rounded border border-accent bg-surface px-1 text-center font-mono text-sm text-ink"
+                size={Math.max(3, (values[part.index] ?? '').length || 3)}
+                className="mx-0.5 inline-block rounded-md border-[1.5px] border-dashed border-accent bg-accent-soft px-1.5 py-0.5 text-center font-mono text-base text-ink focus:border-solid focus:outline-none"
               />
             )
           )}
         </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => run(code)}
-            disabled={disabled}
-            className="rounded-md border border-accent px-4 py-2 text-sm text-accent disabled:opacity-50"
-          >
-            {busy ? t('workspace.running') : t('workspace.run')}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              lastCheckedCodeRef.current = code;
-              check(code);
-            }}
-            disabled={disabled}
-            className="rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
-          >
-            {busy ? t('workspace.checking') : t('workspace.check')}
-          </button>
-          {loading && (
-            // Several seconds on a classroom machine. Without this the student
-            // sees a dead button and presses F5.
-            <span className="text-sm text-ink-muted">
-              {t('workspace.loadingEngine')}{' '}
-              <span className="text-xs">{t('workspace.loadingHint')}</span>
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-4">
-          {showsTurtleCanvas(task, result?.drawing ?? []) && (
-            <figure>
-              <PlaybackScrubber drawing={result?.drawing ?? []} target={target} />
-              <figcaption className="mt-1 text-xs text-ink-muted">
-                {t('workspace.yourDrawing')} · {t('workspace.target')}
-              </figcaption>
-            </figure>
-          )}
-
-          {(result?.stdout ?? '').length > 0 || pendingInputPrompt !== null ? (
-            <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
-          ) : null}
-        </div>
-
-        {result && (
-          <ResultPanel
-            result={result}
-            report={report}
-            code={code}
-            onRetry={() => {
-              lastCheckedCodeRef.current = code;
-              check(code);
-            }}
-            next={next}
-          />
-        )}
-      </section>
-    </main>
+      </CodePane>
+    </WorkspaceFrame>
   );
 }

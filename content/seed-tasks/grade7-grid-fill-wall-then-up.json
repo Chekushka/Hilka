@@ -1,0 +1,56 @@
+{
+  "slug": "g7-grid-fill-wall-then-up",
+  "topicSlug": "loops-while",
+  "type": "fill",
+  "title": "Заповни пропуски: до стіни й угору",
+  "payload": {
+    "type": "fill",
+    "prompt": "Робот іде праворуч, доки перед ним вільно, тоді повертає ліворуч і йде вгору, доки не стане на акумулятор. Заповни пропуски.",
+    "template": "import robot\nwhile robot.{{1}}():\n    robot.forward()\nrobot.{{2}}()\nwhile not robot.{{3}}():\n    robot.forward()\n",
+    "grid": {
+      "start": {
+        "x": 1,
+        "y": 6,
+        "dir": "E"
+      },
+      "goal": {
+        "x": 5,
+        "y": 1
+      },
+      "rocks": [
+        {
+          "x": 6,
+          "y": 6
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "kind": "grid_goal",
+      "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись."
+    },
+    {
+      "kind": "uses",
+      "all": [
+        "robot.can_move",
+        "robot.at_goal"
+      ],
+      "message": "Обидва цикли мають питати робота: перший — чи вільно попереду, другий — чи він уже на акумуляторі."
+    }
+  ],
+  "hints": [
+    "Перший цикл триває, поки попереду немає каменя. Яка функція робота це перевіряє?",
+    "Угору від каменя — це поворот ліворуч.",
+    "Другий цикл закінчується на акумуляторі: robot.at_goal()."
+  ],
+  "reference": {
+    "code": "import robot\nwhile robot.can_move():\n    robot.forward()\nrobot.left()\nwhile not robot.at_goal():\n    robot.forward()\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

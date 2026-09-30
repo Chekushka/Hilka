@@ -1,0 +1,76 @@
+{
+  "slug": "g7-grid-for-stairs",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Робот: сходи",
+  "payload": {
+    "type": "code",
+    "surface": "grid",
+    "prompt": "Робот піднімається сходами до акумулятора. Кожна сходинка — однакові команди. Напиши їх один раз у циклі for.",
+    "starter": "import robot\n\n",
+    "grid": {
+      "start": {
+        "x": 0,
+        "y": 7,
+        "dir": "E"
+      },
+      "goal": {
+        "x": 4,
+        "y": 3
+      },
+      "rocks": [
+        {
+          "x": 2,
+          "y": 7
+        },
+        {
+          "x": 3,
+          "y": 7
+        },
+        {
+          "x": 4,
+          "y": 7
+        },
+        {
+          "x": 3,
+          "y": 6
+        },
+        {
+          "x": 4,
+          "y": 6
+        },
+        {
+          "x": 4,
+          "y": 5
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "kind": "grid_goal",
+      "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись."
+    },
+    {
+      "kind": "uses",
+      "all": [
+        "for"
+      ],
+      "message": "Сходинки однакові — повтори їх циклом for."
+    }
+  ],
+  "hints": [
+    "Пройди першу сходинку вручну й запиши, які команди знадобилися.",
+    "Одна сходинка: вперед, ліворуч, вперед, праворуч.",
+    "for i in range(4): — і чотири команди сходинки з відступом."
+  ],
+  "reference": {
+    "code": "import robot\nfor i in range(4):\n    robot.forward()\n    robot.left()\n    robot.forward()\n    robot.right()\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

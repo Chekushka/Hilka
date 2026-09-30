@@ -1,0 +1,53 @@
+{
+  "slug": "g7-grid-corner",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Робот: поворот за ріг",
+  "payload": {
+    "type": "code",
+    "surface": "grid",
+    "prompt": "Акумулятор за рогом. robot.left() і robot.right() повертають робота на місці на чверть оберту — ліворуч або праворуч від того, куди він дивиться.",
+    "starter": "import robot\n\n",
+    "grid": {
+      "start": {
+        "x": 1,
+        "y": 6,
+        "dir": "E"
+      },
+      "goal": {
+        "x": 5,
+        "y": 2
+      },
+      "rocks": [
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 6,
+          "y": 6
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "kind": "grid_goal",
+      "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись."
+    }
+  ],
+  "hints": [
+    "Спершу дійди до стовпця, де стоїть акумулятор.",
+    "Робот дивиться праворуч. Щоб дивитися вгору, треба повернути ліворуч.",
+    "robot.forward(4), потім robot.left(), потім знову вперед."
+  ],
+  "reference": {
+    "code": "import robot\nrobot.forward(4)\nrobot.left()\nrobot.forward(4)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

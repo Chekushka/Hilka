@@ -8,3 +8,11 @@ export {
   type ParamValues,
   type ParamValueSpec
 } from './params';
+export {
+  isPlaceholder,
+  resolveGridWorld,
+  worldHasPlaceholders,
+  type GridCellSpec,
+  type GridCoordSpec,
+  type GridWorldSpec
+} from './grid';

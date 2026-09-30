@@ -13,7 +13,7 @@ import { extractNumbers, lastLine, normalizeText } from './text';
 import type { Check, CheckReport, CheckResult, Evidence } from './types';
 
 /** Kinds whose evaluators are not written yet. They never report a pass. */
-const UNSUPPORTED: ReadonlySet<Check['kind']> = new Set(['grid_goal']);
+const UNSUPPORTED: ReadonlySet<Check['kind']> = new Set([]);
 
 /** Structural equality for the plain values var_equals compares. */
 function deepEqual(a: unknown, b: unknown): boolean {
@@ -211,9 +211,13 @@ function evaluateOne(check: Check, evidence: Evidence): boolean {
       return !check.names.some((name) => names.has(name));
     }
 
-    default:
-      // grid_goal — no evaluator yet.
-      return false;
+    case 'grid_goal': {
+      // The robot ends on the goal without having walked into anything on the
+      // way — a bump is a path that only worked by luck.
+      const grid = run?.grid;
+      if (!grid) return false;
+      return grid.reachedGoal && grid.bumps === 0;
+    }
   }
 }
 

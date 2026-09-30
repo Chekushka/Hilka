@@ -212,13 +212,37 @@ describe('report shape', () => {
     expect(without.message).toBe('Фігура має інші властивості, ніж потрібно.');
   });
 
-  it('never passes a kind that has no evaluator yet', () => {
-    const report = evaluateChecks([{ kind: 'grid_goal' }], evidence({ run: ran('') }));
-    expect(report.passed).toBe(false);
-    expect(report.results[0].unsupported).toBe(true);
+  it('fails checks that needed a run when nothing was executed', () => {
+    expect(evaluateChecks([{ kind: 'grid_goal' }], evidence()).passed).toBe(false);
   });
 
   it('fails checks that needed a run when nothing was executed', () => {
     expect(evaluateChecks([{ kind: 'stdout_equals', value: 'x' }], evidence()).passed).toBe(false);
+  });
+});
+
+describe('grid_goal', () => {
+  const at = (x: number, y: number, bump = false) => ({ x, y, dir: 'E' as const, bump });
+  const withGrid = (grid: NonNullable<Evidence['run']>['grid']) => evidence({ run: { ...ran(''), grid } });
+
+  it('passes when the robot ends on the goal without a bump', () => {
+    const grid = { steps: [at(0, 0), at(1, 0)], reachedGoal: true, bumps: 0 };
+    expect(evaluateChecks([{ kind: 'grid_goal' }], withGrid(grid)).passed).toBe(true);
+  });
+
+  it('fails short of the goal', () => {
+    const grid = { steps: [at(0, 0)], reachedGoal: false, bumps: 0 };
+    expect(evaluateChecks([{ kind: 'grid_goal' }], withGrid(grid)).passed).toBe(false);
+  });
+
+  it('fails a path that only got there after walking into something', () => {
+    const grid = { steps: [at(0, 0), at(0, 0, true), at(1, 0)], reachedGoal: true, bumps: 1 };
+    expect(evaluateChecks([{ kind: 'grid_goal' }], withGrid(grid)).passed).toBe(false);
+  });
+
+  it('fails a program that never used the robot', () => {
+    const [result] = evaluateChecks([{ kind: 'grid_goal' }], withGrid(null)).results;
+    expect(result.passed).toBe(false);
+    expect(result.message).toContain('Робот');
   });
 });

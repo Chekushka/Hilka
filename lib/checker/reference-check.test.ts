@@ -16,6 +16,7 @@ function result(overrides: Partial<RunResult> = {}): RunResult {
     error: null,
     drawing: [],
     dots: [],
+    grid: null,
     timedOut: false,
     inputsConsumed: 0,
     elapsedMs: 0,

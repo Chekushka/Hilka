@@ -10,19 +10,22 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
+import { GridView } from '@/components/canvas/GridView';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
-import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
+import { createRunner, type GridWorld, type PythonRunner, type RunResult } from '@/lib/runner';
+import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
 import { evaluateCasesAgainstOwnRuns, type Check, type CheckRunOutcome } from '@/lib/checker';
 import type { FixPayload, RunCase, Surface } from '@/lib/task/types';
 import {
   deliveryFormFromPayload,
-  deliveryPayloadFields,
+  surfacePayloadFields,
   validateDeliveryForm,
   type DeliveryFormState
 } from '@/lib/task/delivery-form';
 import { FileDeliveryFields } from './FileDeliveryFields';
+import { GridWorldField } from './GridWorldField';
 import { lintForFileDelivery, type LintedSource } from './file-lint-gate';
 import { FileLintReport } from './FileLintReport';
 import { ChecksField } from './ChecksField';
@@ -30,6 +33,7 @@ import { CasesField } from './CasesField';
 import { GradeTagsField, HintsField } from './HintsField';
 import { checkKindsFor } from '@/lib/task/check-form';
 import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints, hasCasesText } from './task-form-utils';
+import { FormSection } from './FormSection';
 
 export interface DraftFixTask {
   id: string;
@@ -59,6 +63,8 @@ type PublishState =
 export function FixDraftEditor({ task }: FixDraftEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [surface, setSurface] = useState<Surface>(task.payload.surface);
+  const [grid, setGrid] = useState<GridWorld>(task.payload.grid ?? DEFAULT_GRID_WORLD);
+  const runGrid = surface === 'grid' ? grid : undefined;
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [broken, setBroken] = useState(task.payload.broken);
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
@@ -128,7 +134,9 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
     const deliveryError = validateDeliveryForm(delivery);
     if (deliveryError) {
       setSaveState('error');
-      setSaveError(t(deliveryError === 'filename' ? 'authoring.deliveryFilenameInvalid' : 'authoring.deliveryMaxKbInvalid'));
+      setSaveError(
+        t(deliveryError === 'filename' ? 'authoring.deliveryFilenameInvalid' : 'authoring.deliveryMaxKbInvalid')
+      );
       return { ok: false };
     }
     setSaveState('saving');
@@ -138,7 +146,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'fix', surface, prompt, broken, ...deliveryPayloadFields(delivery) },
+        payload: { type: 'fix', surface, prompt, broken, ...surfacePayloadFields(surface, grid, delivery) },
         checks: parsedChecks.checks,
         cases: parsedCases.cases,
         hints: parseHints(hintsText),
@@ -176,7 +184,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
     setPublishState({ kind: 'idle' });
     const results: RunResult[] = [];
     for (const runCase of cases) {
-      results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin }));
+      results.push(await runner.run(referenceCode, { mode: 'headless', stdin: runCase.stdin, grid: runGrid }));
     }
     setCaseResults(results);
     setReferenceOutcome(evaluateCasesAgainstOwnRuns(referenceCode, parsedChecks.checks, cases, results));
@@ -207,7 +215,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
     setRunningBroken(true);
     setBrokenRun(null);
     setPublishState({ kind: 'idle' });
-    const result = await runner.run(broken, { mode: 'headless' });
+    const result = await runner.run(broken, { mode: 'headless', grid: runGrid });
     setBrokenRun(result);
     setRunningBroken(false);
   }
@@ -230,9 +238,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         ...(saved.cases.length > 0 ? { caseRuns: caseResults } : {})
       })
     });
-    const body: { error?: string; failures?: string[]; version?: number } = await response
-      .json()
-      .catch(() => ({}));
+    const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
       return;
@@ -255,7 +261,9 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   if (publishState.kind === 'success') {
     return (
       <section className="mt-6 rounded-md border-l-4 border-growth bg-surface p-4">
-        <h2 className="font-semibold text-growth">{t('authoring.publishSuccess', { version: publishState.version })}</h2>
+        <h2 className="font-semibold text-growth">
+          {t('authoring.publishSuccess', { version: publishState.version })}
+        </h2>
       </section>
     );
   }
@@ -263,103 +271,118 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   return (
     <div className="mt-6 flex flex-col gap-8">
       <form onSubmit={handleSave} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="title">
-            {t('authoring.titleLabel')}
-          </label>
-          <input
-            id="title"
-            required
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="surface">
-            {t('authoring.surfaceLabel')}
-          </label>
-          <select
-            id="surface"
-            value={surface}
-            onChange={(event) => setSurface(event.target.value as Surface)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          >
-            <option value="turtle">{t('authoring.surfaceTurtle')}</option>
-            <option value="console">{t('authoring.surfaceConsole')}</option>
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="prompt">
-            {t('authoring.promptLabel')}
-          </label>
-          <textarea
-            id="prompt"
-            required
-            rows={3}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="broken">
-            {t('authoring.brokenCodeLabel')}
-          </label>
-          <CodeEditor value={broken} onChange={setBroken} ariaLabel={t('authoring.brokenCodeLabel')} />
-          <p className="text-xs text-ink-muted">{t('authoring.brokenCodeHint')}</p>
-        </div>
-
-        <FileDeliveryFields
-          value={delivery}
-          onChange={(next) => {
-            if (next.enabled !== delivery.enabled) setFileLint(undefined);
-            setDelivery(next);
-          }}
-        />
-
-        <ChecksField
-          id="checks"
-          value={checksText}
-          onChange={setChecksText}
-          kinds={checkKindsFor('fix')}
-          hasCases={hasCasesText(casesText)}
-          label={t('authoring.checksLabel')}
-          jsonLabel={t('authoring.checksJsonLabel')}
-          jsonHint={t('authoring.checksHint')}
-          error={checksError}
-        />
-
-        <CasesField
-          id="cases"
-          value={casesText}
-          onChange={setCasesText}
-          kinds={checkKindsFor('fix')}
-          error={casesError}
-        />
-
-        <HintsField value={hintsText} onChange={setHintsText} />
-
-        <div className="flex flex-wrap gap-5">
+        <FormSection title={t('authoring.sectionAbout')}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="difficulty">
-              {t('authoring.difficultyLabel')}
+            <label className="text-sm text-ink-muted" htmlFor="title">
+              {t('authoring.titleLabel')}
             </label>
             <input
-              id="difficulty"
-              type="number"
-              min={1}
-              max={5}
-              value={difficulty}
-              onChange={(event) => setDifficulty(Number(event.target.value))}
-              className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              id="title"
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
           </div>
-          <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
-        </div>
+
+          <div className="flex flex-wrap gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-ink-muted" htmlFor="difficulty">
+                {t('authoring.difficultyLabel')}
+              </label>
+              <input
+                id="difficulty"
+                type="number"
+                min={1}
+                max={5}
+                value={difficulty}
+                onChange={(event) => setDifficulty(Number(event.target.value))}
+                className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              />
+            </div>
+            <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
+          </div>
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionStudent')}>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="surface">
+              {t('authoring.surfaceLabel')}
+            </label>
+            <select
+              id="surface"
+              value={surface}
+              onChange={(event) => setSurface(event.target.value as Surface)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            >
+              <option value="turtle">{t('authoring.surfaceTurtle')}</option>
+              <option value="console">{t('authoring.surfaceConsole')}</option>
+              <option value="grid">{t('authoring.surfaceGrid')}</option>
+            </select>
+          </div>
+
+          {surface === 'grid' && <GridWorldField value={grid} onChange={setGrid} />}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="prompt">
+              {t('authoring.promptLabel')}
+            </label>
+            <textarea
+              id="prompt"
+              required
+              rows={3}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="broken">
+              {t('authoring.brokenCodeLabel')}
+            </label>
+            <CodeEditor value={broken} onChange={setBroken} ariaLabel={t('authoring.brokenCodeLabel')} />
+            <p className="text-xs text-ink-muted">{t('authoring.brokenCodeHint')}</p>
+          </div>
+
+          {surface === 'grid' ? (
+            <p className="text-sm text-ink-muted">{t('authoring.gridNoFile')}</p>
+          ) : (
+            <FileDeliveryFields
+              value={delivery}
+              onChange={(next) => {
+                if (next.enabled !== delivery.enabled) setFileLint(undefined);
+                setDelivery(next);
+              }}
+            />
+          )}
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionChecking')}>
+          <ChecksField
+            id="checks"
+            value={checksText}
+            onChange={setChecksText}
+            kinds={checkKindsFor('fix')}
+            hasCases={hasCasesText(casesText)}
+            label={t('authoring.checksLabel')}
+            jsonLabel={t('authoring.checksJsonLabel')}
+            jsonHint={t('authoring.checksHint')}
+            error={checksError}
+          />
+
+          <CasesField
+            id="cases"
+            value={casesText}
+            onChange={setCasesText}
+            kinds={checkKindsFor('fix')}
+            error={casesError}
+          />
+        </FormSection>
+
+        <FormSection>
+          <HintsField value={hintsText} onChange={setHintsText} />
+        </FormSection>
 
         <div className="flex items-center gap-3">
           <button
@@ -374,7 +397,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         </div>
       </form>
 
-      <section className="flex flex-col gap-4 border-t border-line pt-6">
+      <section className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5">
         <div>
           <h2 className="text-lg font-semibold text-ink">{t('authoring.referenceTitle')}</h2>
           <p className="mt-1 text-sm text-ink-muted">{t('authoring.referenceNote')}</p>
@@ -405,6 +428,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
             )}
             <div className="flex flex-wrap gap-4">
               {surface === 'turtle' && <TurtleCanvas drawing={result.drawing} label={t('workspace.yourDrawing')} />}
+              {surface === 'grid' && <GridView world={grid} steps={result.grid?.steps ?? []} />}
               {surface === 'console' && (
                 <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
                   {result.stdout || t('workspace.outputEmpty')}
@@ -419,7 +443,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         ))}
       </section>
 
-      <section className="flex flex-col gap-4 border-t border-line pt-6">
+      <section className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5">
         <div>
           <h2 className="text-lg font-semibold text-ink">{t('authoring.brokenRunTitle')}</h2>
           <p className="mt-1 text-sm text-ink-muted">{t('authoring.brokenRunNote')}</p>
@@ -437,6 +461,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         {brokenRun && (
           <div className="flex flex-wrap gap-4">
             {surface === 'turtle' && <TurtleCanvas drawing={brokenRun.drawing} label={t('workspace.yourDrawing')} />}
+            {surface === 'grid' && <GridView world={grid} steps={brokenRun.grid?.steps ?? []} />}
             {surface === 'console' && (
               <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
                 {brokenRun.stdout || t('workspace.outputEmpty')}
@@ -444,13 +469,11 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
             )}
           </div>
         )}
-        {brokenRun?.error && (
-          <p className="text-sm text-ink-muted">{humanize(brokenRun.error, broken).explanation}</p>
-        )}
+        {brokenRun?.error && <p className="text-sm text-ink-muted">{humanize(brokenRun.error, broken).explanation}</p>}
         {brokenRun?.timedOut && <p className="text-sm text-ink-muted">{humanizeTimeout().explanation}</p>}
       </section>
 
-      <section className="flex flex-col gap-3 border-t border-line pt-6">
+      <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5">
         {delivery.enabled && caseResults && fileLint !== undefined && <FileLintReport result={fileLint} />}
         {delivery.enabled && caseResults && fileLint === undefined && (
           <p className="text-xs text-ink-muted">{t('authoring.deliveryLintNeedsRun')}</p>
@@ -459,12 +482,21 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
         <button
           type="button"
           onClick={handlePublish}
-          disabled={!caseResults || casesFailed || referenceFailsChecks || !brokenRun || fileLintBlocks || publishState.kind === 'publishing'}
+          disabled={
+            !caseResults ||
+            casesFailed ||
+            referenceFailsChecks ||
+            !brokenRun ||
+            fileLintBlocks ||
+            publishState.kind === 'publishing'
+          }
           className="self-start rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
           {publishState.kind === 'publishing' ? t('authoring.publishing') : t('authoring.publish')}
         </button>
-        {(!caseResults || !brokenRun) && <p className="text-xs text-ink-muted">{t('authoring.publishNeedsBothRuns')}</p>}
+        {(!caseResults || !brokenRun) && (
+          <p className="text-xs text-ink-muted">{t('authoring.publishNeedsBothRuns')}</p>
+        )}
 
         {publishState.kind === 'run_failed' && (
           <p className="text-sm text-attention">{t('authoring.publishRunFailed')}</p>

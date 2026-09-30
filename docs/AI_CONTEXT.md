@@ -108,8 +108,7 @@ lib/
 components/
   task-types/            one component per task type
   editor/                CodeMirror wrapper, error line marking
-  canvas/                turtle canvas renderer + action-log playback
-  grid/                  optional 8×8 grid (build only after turtle works)
+  canvas/                turtle canvas renderer + playback; the 8×8 grid view (GridView.tsx)
   meta/                  XP, topic progress, garden
 content/
   seed-tasks/            JSON export of tasks, checked into git as backup + handoff format
@@ -256,7 +255,7 @@ interface RunResult {
   stdout: string;
   error: PyError | null;     // { type, message, line, col }
   drawing: Segment[];        // turtle output, empty when unused
-  actions: GridAction[];     // optional grid API, empty when unused
+  grid: GridRun | null;       // the robot's steps, bumps, reachedGoal; null when unused
   timedOut: boolean;
   inputsConsumed: number;
   vars: Record<string, PyValue>;        // module globals after the run — powers var_equals
@@ -286,7 +285,15 @@ first task of the project. See SPIKE.md — everything else assumes it passes.
 
 Turtle is the curriculum's own visual layer — grade 7 is built on it and grade 9 returns to it
 (CURRICULUM.md). It is therefore the **primary** visualization, and the invented 8×8 grid world
-is optional and secondary.
+is secondary.
+
+The grid was built after turtle, on request, and stays secondary: additional tasks in the
+linear-algorithm, loop and debugging lessons, never a lesson's core. It follows turtle's shape —
+a module stub of our own (`lib/runner/modules/robot.ts`, `import robot`) records what happened
+and draws nothing; the world is task data (`payload.grid`) handed to the runner with every run
+so `can_move()` can answer and a rock can stop the robot; the checker only reads the recorded
+facts (`grid_goal`). Bumps do not raise — the picture shows them. Details in TASK_SCHEMA.md,
+"Grid".
 
 **Skulpt's turtle renderer is not used.** It draws into a DOM element, which does not exist in
 a Worker, and it would put rendering on the wrong side of the runner boundary. Instead

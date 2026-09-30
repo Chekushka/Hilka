@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Onest } from 'next/font/google';
 import { t } from '@/lib/i18n';
 import './globals.css';
 
 /*
  * Both families need complete Ukrainian Cyrillic coverage, including the
  * Ukrainian-specific glyphs listed in docs/design-brief-python-platform.md.
- * Inter and JetBrains Mono both cover them; most display faces do not.
+ * Onest (the humanist sans the mockups are set in, and one the brief names)
+ * and JetBrains Mono both cover them; most display faces do not. Inter stays
+ * in the CSS fallback stack (app/globals.css).
  * Monospace is reserved for code, output, and anything the student typed. It is
  * not a styling device for labels.
  */
-const interface_ = Inter({
+const interface_ = Onest({
   variable: '--font-ui',
   subsets: ['latin', 'cyrillic'],
   display: 'swap'

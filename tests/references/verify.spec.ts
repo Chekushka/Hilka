@@ -30,15 +30,16 @@ for (const file of files) {
   test(`${task.slug}: reference solution passes its own checks`, async ({ page }) => {
     const runPython = (code: string, options: RunOptions): Promise<RunResult> =>
       page.evaluate(
-        ([source, mode, stdin, timeoutMs, randomSeed, exprs]) =>
-          window.__runner__!.run(source, { mode, stdin, timeoutMs, randomSeed, exprs }),
+        ([source, mode, stdin, timeoutMs, randomSeed, exprs, grid]) =>
+          window.__runner__!.run(source, { mode, stdin, timeoutMs, randomSeed, exprs, grid }),
         [
           code,
           'headless' as const,
           options.stdin,
           options.timeoutMs,
           options.randomSeed,
-          options.exprs
+          options.exprs,
+          options.grid
         ] as const
       );
 

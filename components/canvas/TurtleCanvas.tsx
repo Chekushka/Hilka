@@ -115,7 +115,9 @@ export function TurtleCanvas({
       ref={ref}
       role="img"
       aria-label={label}
-      style={{ width, height }}
+      // Drawn at its fixed size, shown at most that wide: on a phone it scales
+      // down with the screen instead of overflowing it.
+      style={{ width: '100%', maxWidth: width, height: 'auto', aspectRatio: `${width} / ${height}` }}
       className="rounded-md border border-line bg-code-bg"
     />
   );

@@ -24,7 +24,7 @@ const FALLBACKS: Record<Check['kind'], string> = {
   shape_props: 'Фігура має інші властивості, ніж потрібно.',
   uses: 'У розв’язку бракує потрібної конструкції.',
   forbids: 'У розв’язку є те, чого в цій задачі використовувати не можна.',
-  grid_goal: 'Герой ще не дійшов до цілі.'
+  grid_goal: 'Робот ще не дійшов до акумулятора або дорогою вперся в камінь чи край поля.'
 };
 
 export function fallbackMessage(check: Check): string {

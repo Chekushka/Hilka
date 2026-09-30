@@ -10,10 +10,12 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
+import { GridView } from '@/components/canvas/GridView';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
-import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
+import { createRunner, type GridWorld, type PythonRunner, type RunResult } from '@/lib/runner';
+import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
 import type { Check } from '@/lib/checker';
 import { isFillTemplateValid } from '@/lib/task/fill';
 import type { FillPayload } from '@/lib/task/types';
@@ -21,6 +23,8 @@ import { ChecksField } from './ChecksField';
 import { GradeTagsField, HintsField } from './HintsField';
 import { checkKindsFor } from '@/lib/task/check-form';
 import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import { FillGridFields } from './FillGridFields';
+import { FormSection } from './FormSection';
 
 export interface DraftFillTask {
   id: string;
@@ -49,6 +53,9 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [template, setTemplate] = useState(task.payload.template);
+  const [onGrid, setOnGrid] = useState(task.payload.grid !== undefined);
+  const [grid, setGrid] = useState<GridWorld>(task.payload.grid ?? DEFAULT_GRID_WORLD);
+  const runGrid = onGrid ? grid : undefined;
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
   const [hintsText, setHintsText] = useState(task.hints.join('\n'));
   const [difficulty, setDifficulty] = useState(task.difficulty);
@@ -92,7 +99,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'fill', prompt, template },
+        payload: { type: 'fill', prompt, template, ...(onGrid ? { grid } : {}) },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -119,7 +126,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
     setRunning(true);
     setRun(null);
     setPublishState({ kind: 'idle' });
-    const result = await runner.run(referenceCode, { mode: 'headless' });
+    const result = await runner.run(referenceCode, { mode: 'headless', grid: runGrid });
     setRun(result);
     setRunning(false);
   }
@@ -137,9 +144,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ referenceCode, run })
     });
-    const body: { error?: string; failures?: string[]; version?: number } = await response
-      .json()
-      .catch(() => ({}));
+    const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
       return;
@@ -160,7 +165,9 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
   if (publishState.kind === 'success') {
     return (
       <section className="mt-6 rounded-md border-l-4 border-growth bg-surface p-4">
-        <h2 className="font-semibold text-growth">{t('authoring.publishSuccess', { version: publishState.version })}</h2>
+        <h2 className="font-semibold text-growth">
+          {t('authoring.publishSuccess', { version: publishState.version })}
+        </h2>
       </section>
     );
   }
@@ -168,78 +175,87 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
   return (
     <div className="mt-6 flex flex-col gap-8">
       <form onSubmit={handleSave} className="flex flex-col gap-5">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="title">
-            {t('authoring.titleLabel')}
-          </label>
-          <input
-            id="title"
-            required
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="prompt">
-            {t('authoring.promptLabel')}
-          </label>
-          <textarea
-            id="prompt"
-            required
-            rows={3}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm text-ink-muted" htmlFor="template">
-            {t('authoring.templateLabel')}
-          </label>
-          <textarea
-            id="template"
-            rows={6}
-            value={template}
-            onChange={(event) => setTemplate(event.target.value)}
-            spellCheck={false}
-            className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
-          />
-          <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
-        </div>
-
-        <ChecksField
-          id="checks"
-          value={checksText}
-          onChange={setChecksText}
-          kinds={checkKindsFor('fill')}
-          hasCases={false}
-          label={t('authoring.checksLabel')}
-          jsonLabel={t('authoring.checksJsonLabel')}
-          jsonHint={t('authoring.checksHint')}
-        />
-
-        <HintsField value={hintsText} onChange={setHintsText} />
-
-        <div className="flex flex-wrap gap-5">
+        <FormSection title={t('authoring.sectionAbout')}>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-ink-muted" htmlFor="difficulty">
-              {t('authoring.difficultyLabel')}
+            <label className="text-sm text-ink-muted" htmlFor="title">
+              {t('authoring.titleLabel')}
             </label>
             <input
-              id="difficulty"
-              type="number"
-              min={1}
-              max={5}
-              value={difficulty}
-              onChange={(event) => setDifficulty(Number(event.target.value))}
-              className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              id="title"
+              required
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
           </div>
-          <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
-        </div>
+
+          <div className="flex flex-wrap gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm text-ink-muted" htmlFor="difficulty">
+                {t('authoring.difficultyLabel')}
+              </label>
+              <input
+                id="difficulty"
+                type="number"
+                min={1}
+                max={5}
+                value={difficulty}
+                onChange={(event) => setDifficulty(Number(event.target.value))}
+                className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
+              />
+            </div>
+            <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
+          </div>
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionStudent')}>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="prompt">
+              {t('authoring.promptLabel')}
+            </label>
+            <textarea
+              id="prompt"
+              required
+              rows={3}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm text-ink-muted" htmlFor="template">
+              {t('authoring.templateLabel')}
+            </label>
+            <textarea
+              id="template"
+              rows={6}
+              value={template}
+              onChange={(event) => setTemplate(event.target.value)}
+              spellCheck={false}
+              className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
+            />
+            <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
+          </div>
+          <FillGridFields on={onGrid} onToggle={setOnGrid} world={grid} onWorldChange={setGrid} />
+        </FormSection>
+
+        <FormSection title={t('authoring.sectionChecking')}>
+          <ChecksField
+            id="checks"
+            value={checksText}
+            onChange={setChecksText}
+            kinds={checkKindsFor('fill')}
+            hasCases={false}
+            label={t('authoring.checksLabel')}
+            jsonLabel={t('authoring.checksJsonLabel')}
+            jsonHint={t('authoring.checksHint')}
+          />
+        </FormSection>
+
+        <FormSection>
+          <HintsField value={hintsText} onChange={setHintsText} />
+        </FormSection>
 
         <div className="flex items-center gap-3">
           <button
@@ -254,7 +270,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
         </div>
       </form>
 
-      <section className="flex flex-col gap-4 border-t border-line pt-6">
+      <section className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5">
         <div>
           <h2 className="text-lg font-semibold text-ink">{t('authoring.referenceTitle')}</h2>
           <p className="mt-1 text-sm text-ink-muted">{t('authoring.referenceNote')}</p>
@@ -278,7 +294,11 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
 
         {run && (
           <div className="flex flex-wrap gap-4">
-            <TurtleCanvas drawing={run.drawing} label={t('workspace.yourDrawing')} />
+            {runGrid ? (
+              <GridView world={runGrid} steps={run.grid?.steps ?? []} />
+            ) : (
+              <TurtleCanvas drawing={run.drawing} label={t('workspace.yourDrawing')} />
+            )}
             {run.stdout && (
               <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
                 {run.stdout}

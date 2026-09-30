@@ -57,15 +57,18 @@ type Payload =
       indentMode: 'given' | 'chosen';   // 'chosen' = student sets indentation too
     }
 
-  | { type: 'fill';    prompt: string; template: string }   // gaps as {{1}}, {{2}}
+  | { type: 'fill';    prompt: string; template: string   // gaps as {{1}}, {{2}}
+      grid?: GridWorld }                               // present = the gaps drive the grid robot
 
   | { type: 'code';    prompt: string; starter: string;
       surface: 'console' | 'turtle' | 'grid';
-      delivery?: 'inline' | 'file'; file?: FileSpec }   // delivery default 'inline'
+      delivery?: 'inline' | 'file'; file?: FileSpec    // delivery default 'inline'
+      grid?: GridWorldSpec }                           // required iff surface is 'grid'; may hold {name} placeholders
 
   | { type: 'fix';     prompt: string; broken: string;
       surface: 'console' | 'turtle' | 'grid';
-      delivery?: 'inline' | 'file'; file?: FileSpec }   // delivery default 'inline'
+      delivery?: 'inline' | 'file'; file?: FileSpec    // delivery default 'inline'
+      grid?: GridWorld }                               // required iff surface is 'grid'
 ```
 
 `code` and `fix` execute Python. `fill` executes Python after substitution. `quiz`, `predict`
@@ -281,6 +284,62 @@ missing `float()` conversions in IDLE, saves, and uploads the result. The upload
 validation above, then the same `RunCase`/`Check` evaluation as an inline `fix` task — the
 `broken` string above must still fail at publish, exactly as for inline delivery.
 
+## Grid
+
+`surface: 'grid'` puts the task on an 8×8 field with a robot (`code` and `fix` only). The world
+is task data, in the payload:
+
+```ts
+interface GridWorld {
+  start: { x: number; y: number; dir: 'N' | 'E' | 'S' | 'W' };  // N is up, toward row 0
+  goal:  { x: number; y: number };                              // the battery
+  rocks: { x: number; y: number }[];
+}
+```
+
+Columns `x` and rows `y` run 0–7 from the top-left corner. `lib/task/grid.ts`'s
+`isValidGridWorld` is the shape check the authoring routes apply: every cell on the field, a
+direction to face, the goal not on the start, no rock on either. A grid task is always inline —
+IDLE has no `robot` module, so `delivery: 'file'` is rejected on it.
+
+The student program drives the robot through a module of our own (`lib/runner/modules/robot.ts`),
+not a CPython one:
+
+```python
+import robot                 # or: from robot import *
+robot.forward()              # one cell; robot.forward(3) for three
+robot.left(); robot.right()  # quarter turns on the spot
+robot.at_goal()              # True on the battery — for while/if
+robot.can_move()             # False when a rock or the edge is straight ahead
+```
+
+A move into a rock or off the field **does not raise**: the robot stays put, the step is recorded
+as a bump, and the program carries on. The run reports `RunResult.grid` — every step from the
+start state on, the bump count, and whether the last step stands on the goal — or `null` when the
+program never imported `robot`. More than 2000 steps stops the run as a timeout (a `while` that
+never reaches the goal). The world travels with every run of the task: Check, Run, the reference
+warm-up, the authoring editors' reference and broken runs, and `npm run verify:references`.
+
+**On `fill`.** `fill` has no `surface` field, so a world on its payload is the switch:
+`payload.grid` present puts the gaps on the grid, and every run carries it, exactly as for `code`
+and `fix`. The template imports `robot` itself, since the gaps are the only thing the student
+writes. The authoring forms offer it as «Робот на полі 8×8» under the template.
+
+**Parameterized worlds.** On a `code` task with `params`, any coordinate or the start direction
+may be a `{name}` placeholder instead of a value — `"goal": { "x": "{gx}", "y": "{gy}" }` — so
+each student's battery (or robot, or rock) sits where their seed puts it, and a neighbour's path
+does not fit. The stored shape is `GridWorldSpec` (`lib/seed/grid.ts`); `resolveGridWorld`
+substitutes with the same values as the prompt and `reference.code`, and `resolveTaskParams`
+refuses a variant whose world is invalid rather than hand it to a student. The reference usually
+needs the same parameters (`robot.forward(6 - {gy})`). Two proofs run in CI: every combination's
+world is valid (`lib/task/grid-params.test.ts`, no Python), and the reference solves every one
+(`npm run verify:references`). A draft editor opening such a task shows a note instead of the
+field editor and keeps the placeholders on save. `fix` and `fill` take no `params`, so their
+worlds must be concrete; the authoring routes reject placeholders there.
+
+`grid_goal` passes when the robot ends on the goal **with no bumps** — a path that only got there
+after walking into a rock worked by luck. It has no fields; the goal is the world's.
+
 ## Run cases
 
 ```ts
@@ -329,7 +388,7 @@ type Check = { message?: string } & (
   | { kind: 'uses';            any?: string[]; all?: string[] }   // AST node / call names
   | { kind: 'forbids';         names: string[] }
 
-  // --- grid (optional, build later) --------------------------------------
+  // --- grid (see "Grid") --------------------------------------------------
   | { kind: 'grid_goal' }
 );
 ```
@@ -339,7 +398,7 @@ type Check = { message?: string } & (
 `lib/checker/` evaluates these today: `choice_equals`, `order_equals`,
 `text_equals`, `stdout_equals`, `stdout_contains`, `last_line_equals`,
 `number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`,
-`uses`, `forbids`, `var_equals`, `expr`.
+`uses`, `forbids`, `var_equals`, `expr`, `grid_goal`.
 
 `order_equals` compares `submission.orderedLines[i].index` against `check.lines[i]` always, and
 additionally `.indent` against `check.indents[i]` when `checkIndent` is true — `indents` is the
@@ -364,9 +423,8 @@ run itself. The checker only reads these two maps; it still never executes
 anything itself. See "Python Runner" in AI_CONTEXT.md and the `name_$rw$`
 gotcha before reading `RunResult.vars` from anywhere new.
 
-Not yet, and **never reported as a pass** — `evaluateCheck` marks it
-`unsupported` rather than letting a task through: `grid_goal` waits on the
-grid being built at all.
+Every kind has an evaluator now. `evaluateCheck` still keeps an `unsupported` path — a kind
+listed there is never reported as a pass — for the next kind documented before it is built.
 
 ### Rules that are not optional
 
@@ -472,6 +530,9 @@ Keep parameter spaces small and every combination valid. A range that can produc
 zero or a negative square root will produce it, in a graded session, for exactly one student.
 `lib/seed/params.ts`'s `enumerateParamCombinations` throws past 500 combinations rather than
 silently taking a long time to verify or publish.
+
+Placeholders also work in a grid task's world (`payload.grid`), where a coordinate or the start
+direction may be a `{name}` — see "Grid", "Parameterized worlds".
 
 **Not built**: an authoring UI — a parameterized task is hand-authored JSON in
 `content/seed-tasks/`, the same way `cases` started (docs/TASKS.md); `params` on `fix` or

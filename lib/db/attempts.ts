@@ -63,6 +63,45 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
   }));
 }
 
+export interface StudentAttemptRow extends SessionAttemptRow {
+  taskVersion: number;
+  /** As the task-type view reported it (lib/task/types.ts, `AttemptOutcome`); read with lib/dashboard/submitted-answer.ts. */
+  submittedAnswer: Record<string, unknown> | null;
+}
+
+/**
+ * One student's attempts in one session, newest first, with what they
+ * submitted — the student card. The caller has already checked that the
+ * session is the teacher's own (`getSessionForTeacher`).
+ */
+export async function listAttemptsForStudent(sessionId: string, studentName: string): Promise<StudentAttemptRow[]> {
+  const rows = await getDb()
+    .select({
+      id: attempts.id,
+      studentName: attempts.studentName,
+      taskId: attempts.taskId,
+      taskTitle: tasks.title,
+      taskVersion: attempts.taskVersion,
+      passed: attempts.passed,
+      hintsUsed: attempts.hintsUsed,
+      durationMs: attempts.durationMs,
+      score: attempts.score,
+      flags: attempts.flags,
+      submittedAnswer: attempts.submittedAnswer,
+      createdAt: attempts.createdAt
+    })
+    .from(attempts)
+    .innerJoin(tasks, eq(attempts.taskId, tasks.id))
+    .where(and(eq(attempts.sessionId, sessionId), eq(attempts.studentName, studentName)))
+    .orderBy(desc(attempts.createdAt));
+  return rows.map(({ flags, score, ...row }) => ({
+    ...row,
+    score: score === null ? null : Number(score),
+    sourceHash: typeof flags?.sourceHash === 'string' ? flags.sourceHash : null,
+    createdAt: row.createdAt.toISOString()
+  }));
+}
+
 /**
  * Every file-delivery attempt in a session, with its source — for the
  * teacher's bulk download. A file-delivery attempt is exactly one that

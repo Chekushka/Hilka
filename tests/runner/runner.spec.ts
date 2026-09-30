@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import type { RunResult } from '@/lib/runner';
+import type { GridWorld, RunResult } from '@/lib/runner';
 
 /**
  * One test per curriculum construct that actually runs Python, plus the two
@@ -10,7 +10,7 @@ import type { RunResult } from '@/lib/runner';
 async function run(
   page: Page,
   code: string,
-  options: { stdin?: string[]; timeoutMs?: number; randomSeed?: number; exprs?: string[] } = {}
+  options: { stdin?: string[]; timeoutMs?: number; randomSeed?: number; exprs?: string[]; grid?: GridWorld } = {}
 ): Promise<RunResult> {
   return page.evaluate(
     ([source, opts]) =>
@@ -214,4 +214,40 @@ test('str letter and case methods follow CPython on Ukrainian text', async ({ pa
   );
   expect(result.error).toBeNull();
   expect(result.stdout).toBe('True True True True Кіт І Пес їЖАК True\n');
+});
+
+const WORLD: GridWorld = { start: { x: 0, y: 5, dir: 'E' }, goal: { x: 3, y: 4 }, rocks: [{ x: 2, y: 5 }] };
+
+test('the grid robot moves, turns and reports whether it reached the goal', async ({ page }) => {
+  const result = await run(page, 'import robot\nrobot.forward()\nrobot.left()\nrobot.forward()\nrobot.right()\nrobot.forward(2)', {
+    grid: WORLD
+  });
+  expect(result.error).toBeNull();
+  expect(result.grid!.steps.map(({ x, y, dir }) => `${x},${y},${dir}`)).toEqual([
+    '0,5,E',
+    '1,5,E',
+    '1,5,N',
+    '1,4,N',
+    '1,4,E',
+    '2,4,E',
+    '3,4,E'
+  ]);
+  expect(result.grid).toMatchObject({ reachedGoal: true, bumps: 0 });
+});
+
+test('a rock stops the robot without an error, and the bump is recorded', async ({ page }) => {
+  const result = await run(page, 'from robot import *\nforward(3)\nprint(can_move(), at_goal())', { grid: WORLD });
+  expect(result.error).toBeNull();
+  expect(result.grid!.steps.at(-1)).toMatchObject({ x: 1, y: 5, bump: true });
+  expect(result.grid).toMatchObject({ reachedGoal: false, bumps: 1 });
+  expect(result.stdout).toBe('False False\n');
+});
+
+test('a robot loop that never ends is stopped as a timeout', async ({ page }) => {
+  const result = await run(page, 'import robot\nwhile True:\n    robot.left()', { grid: WORLD });
+  expect(result.timedOut).toBe(true);
+});
+
+test('a program that never imports robot reports no grid', async ({ page }) => {
+  expect((await run(page, 'print(1)', { grid: WORLD })).grid).toBeNull();
 });

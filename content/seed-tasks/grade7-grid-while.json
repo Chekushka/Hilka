@@ -1,0 +1,60 @@
+{
+  "slug": "g7-grid-while",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Робот: іди, доки не дійдеш",
+  "payload": {
+    "type": "code",
+    "surface": "grid",
+    "prompt": "Уяви, що ти не знаєш, скільки клітинок до акумулятора. robot.at_goal() відповідає True, коли робот уже на місці. Веди робота вперед циклом while, доки він не дійде.",
+    "starter": "import robot\n\n",
+    "grid": {
+      "start": {
+        "x": 0,
+        "y": 2,
+        "dir": "E"
+      },
+      "goal": {
+        "x": 7,
+        "y": 2
+      },
+      "rocks": [
+        {
+          "x": 2,
+          "y": 4
+        },
+        {
+          "x": 5,
+          "y": 1
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "kind": "grid_goal",
+      "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись."
+    },
+    {
+      "kind": "uses",
+      "all": [
+        "while"
+      ],
+      "message": "Скористайся циклом while — він сам зупиниться, коли робот дійде."
+    }
+  ],
+  "hints": [
+    "Цикл while повторює тіло, поки умова правдива.",
+    "Умова «ще не дійшов» — це not robot.at_goal().",
+    "while not robot.at_goal(): і всередині robot.forward()."
+  ],
+  "reference": {
+    "code": "import robot\nwhile not robot.at_goal():\n    robot.forward()\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

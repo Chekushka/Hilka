@@ -32,6 +32,40 @@ export interface Dot {
   color: string;
 }
 
+/** Which way the grid robot faces. North is up — towards row 0. */
+export type GridDir = 'N' | 'E' | 'S' | 'W';
+
+export interface GridCell {
+  x: number;
+  y: number;
+}
+
+/**
+ * The 8×8 grid world (docs/TASK_SCHEMA.md, "Grid"). Task data, handed to the
+ * runner so the `robot` module can answer `can_move()` and stop at a rock.
+ * Columns x and rows y run 0–7 from the top-left corner.
+ */
+export interface GridWorld {
+  start: GridCell & { dir: GridDir };
+  goal: GridCell;
+  rocks: GridCell[];
+}
+
+/** The robot after one call — a move, a turn, or a move that bumped and stayed put. */
+export interface GridStep extends GridCell {
+  dir: GridDir;
+  bump: boolean;
+}
+
+/** What the robot did. Facts about the run, like `vars`; the checker decides what they mean. */
+export interface GridRun {
+  /** The start state first, then one entry per move or turn. */
+  steps: GridStep[];
+  /** Whether the last step stands on the goal. */
+  reachedGoal: boolean;
+  bumps: number;
+}
+
 export interface PyError {
   /** Skulpt's exception type name: NameError, TypeError, SyntaxError, … */
   type: string;
@@ -51,6 +85,8 @@ export interface RunResult {
   /** Empty when the program never touched turtle. */
   drawing: Segment[];
   dots: Dot[];
+  /** Null when the program never imported `robot`. */
+  grid: GridRun | null;
   timedOut: boolean;
   inputsConsumed: number;
   /** Execution time with input waits excluded, matching how the limit is counted. */
@@ -85,6 +121,8 @@ export interface RunOptions {
   randomSeed?: number;
   /** `expr` check bodies to evaluate against the final global scope after the run. */
   exprs?: string[];
+  /** The world `import robot` moves in. Absent means an empty field, start top-left facing east. */
+  grid?: GridWorld;
   onStdout?: (chunk: string) => void;
   /** Interactive only. Resolve with what the student typed. */
   onInputRequest?: (prompt: string) => Promise<string>;
