@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTeacherCookie, readTeacherId } from './session-cookie';
+import { createTeacherCookie, readAuthSecret, readTeacherId } from './session-cookie';
 
 const TEACHER_ID = '00000000-0000-4000-8000-000000000001';
 
@@ -44,5 +44,13 @@ describe('createTeacherCookie / readTeacherId', () => {
   it('throws a clear error when AUTH_SECRET is unset', () => {
     vi.stubEnv('AUTH_SECRET', '');
     expect(() => createTeacherCookie(TEACHER_ID)).toThrow('AUTH_SECRET');
+  });
+});
+
+describe('readAuthSecret', () => {
+  it('is the secret, or null for unset or blank — never a throw', () => {
+    expect(readAuthSecret({ AUTH_SECRET: 'k' })).toBe('k');
+    expect(readAuthSecret({})).toBeNull();
+    expect(readAuthSecret({ AUTH_SECRET: ' ' })).toBeNull();
   });
 });

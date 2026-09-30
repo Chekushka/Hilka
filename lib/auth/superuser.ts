@@ -9,12 +9,15 @@
  *   SUPERUSER_EMAIL          optional: where new sign-up requests are announced
  *                            (lib/auth/access-email.ts). Not a login.
  *
- * Unset or malformed, the superuser does not exist: /admin/login refuses
- * every attempt. Fails closed, never open.
+ * Unset or malformed — or with AUTH_SECRET missing, since the session
+ * cookie is signed with it — the superuser does not exist: /admin/login
+ * says the area is not configured and refuses every attempt, and the server
+ * log names what is missing. Fails closed, never open, and never a crash.
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { isPlausibleEmail, normalizeEmail } from './email';
 import { parsePasswordHash, verifyPassword } from './password';
+import { readAuthSecret } from './session-cookie';
 
 export interface SuperuserConfig {
   login: string;
@@ -46,4 +49,24 @@ export function checkSuperuserCredentials(login: string, password: string, confi
 export function superuserEmail(env: Record<string, string | undefined>): string | null {
   const email = normalizeEmail(env.SUPERUSER_EMAIL ?? '');
   return isPlausibleEmail(email) ? email : null;
+}
+
+export type SuperuserReadiness =
+  | { ready: true; config: SuperuserConfig; secret: string }
+  | { ready: false; missing: 'superuser' | 'auth_secret' };
+
+/** Everything the superuser's area needs, or which part is missing — never throws. */
+export function superuserReadiness(env: Record<string, string | undefined>): SuperuserReadiness {
+  const config = superuserConfig(env);
+  if (!config) return { ready: false, missing: 'superuser' };
+  const secret = readAuthSecret(env);
+  if (!secret) return { ready: false, missing: 'auth_secret' };
+  return { ready: true, config, secret };
+}
+
+/** The server-log line for a readiness failure: names the variables, never their values. */
+export function describeMissing(missing: 'superuser' | 'auth_secret'): string {
+  return missing === 'auth_secret'
+    ? 'AUTH_SECRET is not set — the superuser session cannot be signed (docs/CI_CD.md, step 5)'
+    : 'SUPERUSER_LOGIN or SUPERUSER_PASSWORD_HASH is not set or malformed (docs/CI_CD.md, step 7)';
 }

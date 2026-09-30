@@ -11,9 +11,19 @@ export const TEACHER_COOKIE_NAME = 'hilka_teacher';
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-/** AUTH_SECRET, or a thrown error — never an empty key. Shared with lib/auth/admin-cookie.ts's callers. */
+/** AUTH_SECRET, or null when unset or blank. For callers that fail gracefully (the superuser's area). */
+export function readAuthSecret(env: Record<string, string | undefined> = process.env): string | null {
+  const value = env.AUTH_SECRET?.trim();
+  return value ? value : null;
+}
+
+/**
+ * AUTH_SECRET, or a thrown error — never an empty key. Teacher login fails
+ * closed this way on purpose (docs/CI_CD.md, step 5); the superuser's area
+ * uses `readAuthSecret` and shows "not configured" instead.
+ */
 export function secret(): string {
-  const value = process.env.AUTH_SECRET;
+  const value = readAuthSecret();
   if (!value) {
     throw new Error('AUTH_SECRET is not set. See docs/CI_CD.md — required for teacher login.');
   }
