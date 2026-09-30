@@ -47,9 +47,15 @@ export async function listTeachers(): Promise<TeacherListRow[]> {
  * A sign-up: a pending row for a new address, nothing at all for a known one
  * — whatever its status, asking again never changes it, so a disabled
  * teacher cannot re-queue themselves and nobody learns what exists.
+ * `created` is for the caller's notification only, never for the response.
  */
-export async function requestTeacherAccess(email: string): Promise<void> {
-  await getDb().insert(teachers).values({ email, status: 'pending' }).onConflictDoNothing({ target: teachers.email });
+export async function requestTeacherAccess(email: string): Promise<{ created: boolean }> {
+  const rows = await getDb()
+    .insert(teachers)
+    .values({ email, status: 'pending' })
+    .onConflictDoNothing({ target: teachers.email })
+    .returning({ id: teachers.id });
+  return { created: rows.length > 0 };
 }
 
 /** The superuser adds an address directly: active at once, a pending or disabled one included. */

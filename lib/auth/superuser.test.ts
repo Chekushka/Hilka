@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hashPassword } from './password';
-import { checkSuperuserCredentials, superuserConfig } from './superuser';
+import { checkSuperuserCredentials, superuserConfig, superuserEmail } from './superuser';
 
 const passwordHash = hashPassword('a long enough password');
 
@@ -27,5 +27,13 @@ describe('checkSuperuserCredentials', () => {
 
   it('ignores spaces around the login, as typed on a phone', () => {
     expect(checkSuperuserCredentials(' admin ', 'a long enough password', config)).toBe(true);
+  });
+});
+
+describe('superuserEmail', () => {
+  it('normalizes the address, and is null when unset or not an address', () => {
+    expect(superuserEmail({ SUPERUSER_EMAIL: ' Admin@School.UA ' })).toBe('admin@school.ua');
+    expect(superuserEmail({})).toBeNull();
+    expect(superuserEmail({ SUPERUSER_EMAIL: 'admin' })).toBeNull();
   });
 });

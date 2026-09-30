@@ -6,11 +6,14 @@
  *
  *   SUPERUSER_LOGIN          any name, e.g. `admin`
  *   SUPERUSER_PASSWORD_HASH  from `npm run superuser:hash`
+ *   SUPERUSER_EMAIL          optional: where new sign-up requests are announced
+ *                            (lib/auth/access-email.ts). Not a login.
  *
  * Unset or malformed, the superuser does not exist: /admin/login refuses
  * every attempt. Fails closed, never open.
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { isPlausibleEmail, normalizeEmail } from './email';
 import { parsePasswordHash, verifyPassword } from './password';
 
 export interface SuperuserConfig {
@@ -37,4 +40,10 @@ export function checkSuperuserCredentials(login: string, password: string, confi
   const loginMatches = timingSafeEqual(digest(login.trim()), digest(config.login));
   const passwordMatches = verifyPassword(password, config.passwordHash);
   return loginMatches && passwordMatches;
+}
+
+/** Where new sign-up requests are announced; null when unset or not an address. */
+export function superuserEmail(env: Record<string, string | undefined>): string | null {
+  const email = normalizeEmail(env.SUPERUSER_EMAIL ?? '');
+  return isPlausibleEmail(email) ? email : null;
 }

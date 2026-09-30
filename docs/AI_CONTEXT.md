@@ -248,6 +248,14 @@ then nothing is checked until the window passes (successful logins do not count)
 malformed variables mean there is no superuser: the login refuses everything — fail closed. The
 unused `role: 'admin'` column predates this and does not grant anything.
 
+**Access notifications** go through Resend like the magic link (`lib/auth/access-email.ts`, sent
+after the response by `lib/auth/deliver-email.ts`). A new request is announced to
+`SUPERUSER_EMAIL` — optional, and only an address to write to, never a login — with a link to
+`/admin`; only a request that actually created a row is announced, so repeating one sends
+nothing. A teacher who gains access (approved, re-enabled, or added directly) gets a link to
+`/login`, never a login link itself, since that expires in 15 minutes. Rejecting and disabling
+send nothing. Outside Vercel with no Resend settings the email is logged instead.
+
 ## Python Runner
 
 **Skulpt, in a Web Worker, behind an adapter.**
