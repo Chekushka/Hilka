@@ -1,0 +1,58 @@
+{
+  "slug": "g7-grid-own-battery",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Робот: свій акумулятор",
+  "payload": {
+    "type": "code",
+    "surface": "grid",
+    "prompt": "У кожного на полі акумулятор стоїть у своєму місці — подивись, де він у тебе. Доведи робота: спершу вгору, потім праворуч.",
+    "starter": "import robot\n\n",
+    "grid": {
+      "start": {
+        "x": 1,
+        "y": 6,
+        "dir": "N"
+      },
+      "goal": {
+        "x": "{gx}",
+        "y": "{gy}"
+      },
+      "rocks": []
+    }
+  },
+  "params": {
+    "gx": {
+      "int": [
+        3,
+        6
+      ]
+    },
+    "gy": {
+      "int": [
+        1,
+        3
+      ]
+    }
+  },
+  "checks": [
+    {
+      "kind": "grid_goal",
+      "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись."
+    }
+  ],
+  "hints": [
+    "Порахуй клітинки вгору від робота до рядка, де стоїть акумулятор.",
+    "Коли робот піднявся, поверни його праворуч: robot.right().",
+    "Тепер порахуй клітинки праворуч до акумулятора — стільки кроків і зроби."
+  ],
+  "reference": {
+    "code": "import robot\nrobot.forward(6 - {gy})\nrobot.right()\nrobot.forward({gx} - 1)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

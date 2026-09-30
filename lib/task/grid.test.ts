@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_GRID_WORLD, isValidGridWorld, placeOnGrid } from './grid';
+import { DEFAULT_GRID_WORLD, gridWorldOf, isGridWorldSpec, isValidGridWorld, placeOnGrid } from './grid';
+import type { CodeTask, FillTask } from './types';
 
 const world = { start: { x: 0, y: 7, dir: 'E' }, goal: { x: 7, y: 7 }, rocks: [{ x: 3, y: 7 }] };
 
@@ -58,5 +59,43 @@ describe('placeOnGrid', () => {
       world = placeOnGrid(world, tool, { x, y });
       expect(isValidGridWorld(world)).toBe(true);
     }
+  });
+});
+
+describe('isGridWorldSpec', () => {
+  it('accepts a valid concrete world', () => {
+    expect(isGridWorldSpec(world)).toBe(true);
+  });
+
+  it('accepts placeholders in coordinates and the direction', () => {
+    expect(isGridWorldSpec({ start: { x: 1, y: 6, dir: '{d}' }, goal: { x: '{gx}', y: 2 }, rocks: [{ x: '{r}', y: 0 }] })).toBe(
+      true
+    );
+  });
+
+  it('still rejects a cell off the field, loose text, or a missing part', () => {
+    expect(isGridWorldSpec({ start: { x: 9, y: 6, dir: 'N' }, goal: { x: '{gx}', y: 2 }, rocks: [] })).toBe(false);
+    expect(isGridWorldSpec({ start: { x: 1, y: 6, dir: 'N' }, goal: { x: 'x{gx}', y: 2 }, rocks: [] })).toBe(false);
+    expect(isGridWorldSpec({ start: { x: 1, y: 6, dir: 'N' }, goal: { x: '{gx}', y: 2 } })).toBe(false);
+  });
+});
+
+describe('gridWorldOf', () => {
+  const base = { id: 't', slug: 's', topicId: 'p', title: 'T', checks: [], hints: [], difficulty: 1, gradeTags: [7], version: 1, status: 'published' } as const;
+
+  it('gives a fill task its world, and none without one', () => {
+    const fill = { ...base, type: 'fill', payload: { type: 'fill', prompt: '', template: 'robot.{{1}}()', grid: world }, reference: { code: '' } } as unknown as FillTask;
+    expect(gridWorldOf(fill)).toEqual(world);
+    expect(gridWorldOf({ ...fill, payload: { ...fill.payload, grid: undefined } })).toBeUndefined();
+  });
+
+  it('never hands an unresolved parameterized world to a run', () => {
+    const code = {
+      ...base,
+      type: 'code',
+      payload: { type: 'code', surface: 'grid', prompt: '', starter: '', grid: { ...world, goal: { x: '{gx}', y: 7 } } },
+      reference: { code: '' }
+    } as unknown as CodeTask;
+    expect(gridWorldOf(code)).toBeUndefined();
   });
 });

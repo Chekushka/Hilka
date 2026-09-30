@@ -9,6 +9,7 @@
  * assembly — the run, the checker, the result panel — is identical to them.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { GridRunNote } from '@/components/canvas/GridView';
 import { CodePane, CodeVisual } from '@/components/task/CodePane';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
@@ -90,6 +91,9 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
             <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
           ) : (
             !result && <RunDockIdle engine={engine} />
+          )}
+          {world && result && !result.error && !result.timedOut && !report?.passed && (
+            <GridRunNote run={result.grid} />
           )}
           {result && <ResultPanel result={result} report={report} code={code} onRetry={retry} />}
         </WorkspaceDock>

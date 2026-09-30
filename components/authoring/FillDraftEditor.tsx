@@ -10,10 +10,12 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
+import { GridView } from '@/components/canvas/GridView';
 import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
-import { createRunner, type PythonRunner, type RunResult } from '@/lib/runner';
+import { createRunner, type GridWorld, type PythonRunner, type RunResult } from '@/lib/runner';
+import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
 import type { Check } from '@/lib/checker';
 import { isFillTemplateValid } from '@/lib/task/fill';
 import type { FillPayload } from '@/lib/task/types';
@@ -21,6 +23,7 @@ import { ChecksField } from './ChecksField';
 import { GradeTagsField, HintsField } from './HintsField';
 import { checkKindsFor } from '@/lib/task/check-form';
 import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import { FillGridFields } from './FillGridFields';
 import { FormSection } from './FormSection';
 
 export interface DraftFillTask {
@@ -50,6 +53,9 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [template, setTemplate] = useState(task.payload.template);
+  const [onGrid, setOnGrid] = useState(task.payload.grid !== undefined);
+  const [grid, setGrid] = useState<GridWorld>(task.payload.grid ?? DEFAULT_GRID_WORLD);
+  const runGrid = onGrid ? grid : undefined;
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
   const [hintsText, setHintsText] = useState(task.hints.join('\n'));
   const [difficulty, setDifficulty] = useState(task.difficulty);
@@ -93,7 +99,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'fill', prompt, template },
+        payload: { type: 'fill', prompt, template, ...(onGrid ? { grid } : {}) },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -120,7 +126,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
     setRunning(true);
     setRun(null);
     setPublishState({ kind: 'idle' });
-    const result = await runner.run(referenceCode, { mode: 'headless' });
+    const result = await runner.run(referenceCode, { mode: 'headless', grid: runGrid });
     setRun(result);
     setRunning(false);
   }
@@ -231,6 +237,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
             />
             <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
           </div>
+          <FillGridFields on={onGrid} onToggle={setOnGrid} world={grid} onWorldChange={setGrid} />
         </FormSection>
 
         <FormSection title={t('authoring.sectionChecking')}>
@@ -287,7 +294,11 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
 
         {run && (
           <div className="flex flex-wrap gap-4">
-            <TurtleCanvas drawing={run.drawing} label={t('workspace.yourDrawing')} />
+            {runGrid ? (
+              <GridView world={runGrid} steps={run.grid?.steps ?? []} />
+            ) : (
+              <TurtleCanvas drawing={run.drawing} label={t('workspace.yourDrawing')} />
+            )}
             {run.stdout && (
               <pre className="min-w-[220px] flex-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
                 {run.stdout}

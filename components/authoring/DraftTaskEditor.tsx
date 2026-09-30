@@ -18,7 +18,7 @@ import { TurtleCanvas } from '@/components/canvas/TurtleCanvas';
 import { humanize, humanizeTimeout } from '@/lib/errors';
 import { t } from '@/lib/i18n';
 import { createRunner, type GridWorld, type PythonRunner, type RunResult } from '@/lib/runner';
-import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
+import { DEFAULT_GRID_WORLD, isValidGridWorld } from '@/lib/task/grid';
 import { evaluateCasesAgainstOwnRuns, type Check, type CheckRunOutcome } from '@/lib/checker';
 import type { CodePayload, RunCase, Surface } from '@/lib/task/types';
 import {
@@ -65,7 +65,12 @@ type PublishState =
 export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
   const [title, setTitle] = useState(task.title);
   const [surface, setSurface] = useState<Surface>(task.payload.surface);
-  const [grid, setGrid] = useState<GridWorld>(task.payload.grid ?? DEFAULT_GRID_WORLD);
+  // A world with parameter placeholders is hand-authored JSON with no editor
+  // here (docs/TASK_SCHEMA.md, "Parameterization"): kept as it is on save,
+  // never swapped for the default world.
+  const storedGrid = task.payload.grid;
+  const gridTemplate = storedGrid && !isValidGridWorld(storedGrid) ? storedGrid : null;
+  const [grid, setGrid] = useState<GridWorld>(isValidGridWorld(storedGrid) ? storedGrid : DEFAULT_GRID_WORLD);
   const runGrid = surface === 'grid' ? grid : undefined;
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [starter, setStarter] = useState(task.payload.starter);
@@ -141,7 +146,14 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'code', surface, prompt, starter, ...surfacePayloadFields(surface, grid, delivery) },
+        payload: {
+          type: 'code',
+          surface,
+          prompt,
+          starter,
+          ...surfacePayloadFields(surface, grid, delivery),
+          ...(surface === 'grid' && gridTemplate ? { grid: gridTemplate } : {})
+        },
         checks: parsedChecks.checks,
         cases: parsedCases.cases,
         hints: parseHints(hintsText),
@@ -302,7 +314,12 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
             </select>
           </div>
 
-          {surface === 'grid' && <GridWorldField value={grid} onChange={setGrid} />}
+          {surface === 'grid' &&
+            (gridTemplate ? (
+              <p className="text-sm text-ink-muted">{t('authoring.gridParameterized')}</p>
+            ) : (
+              <GridWorldField value={grid} onChange={setGrid} />
+            ))}
 
           <div className="flex flex-col gap-1.5">
             <label className="text-sm text-ink-muted" htmlFor="prompt">

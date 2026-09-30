@@ -6,7 +6,7 @@
  * adversarial one.
  */
 import { isFillTemplateValid } from './fill';
-import { isValidGridWorld } from './grid';
+import { isGridWorldSpec, isValidGridWorld } from './grid';
 import type { CodePayload, FillPayload, FixPayload, ParsonsPayload, PredictPayload, QuizPayload, TaskPayload } from './types';
 
 function isFileSpec(value: unknown): boolean {
@@ -25,10 +25,12 @@ function isFileSpec(value: unknown): boolean {
 /**
  * A grid task needs its world, and can only be solved in the browser: IDLE
  * has no `robot` module (lib/runner/modules/robot.ts), so no file delivery.
+ * Only `code` takes parameters, so only its world may hold placeholders.
  */
-function isSurfaceValid(p: Record<string, unknown>): boolean {
+function isSurfaceValid(p: Record<string, unknown>, parameterizable: boolean): boolean {
   if (p.surface !== 'grid') return p.grid === undefined;
-  return isValidGridWorld(p.grid) && (p.delivery === undefined || p.delivery === 'inline');
+  const world = parameterizable ? isGridWorldSpec(p.grid) : isValidGridWorld(p.grid);
+  return world && (p.delivery === undefined || p.delivery === 'inline');
 }
 
 /** `delivery` absent or `'inline'` needs nothing more; `'file'` needs a well-formed `file`. */
@@ -46,7 +48,7 @@ export function isCodePayload(value: unknown): value is CodePayload {
     typeof p.prompt === 'string' &&
     typeof p.starter === 'string' &&
     isDeliveryValid(p) &&
-    isSurfaceValid(p)
+    isSurfaceValid(p, true)
   );
 }
 
@@ -113,7 +115,7 @@ export function isFixPayload(value: unknown): value is FixPayload {
     typeof p.broken === 'string' &&
     p.broken.length > 0 &&
     isDeliveryValid(p) &&
-    isSurfaceValid(p)
+    isSurfaceValid(p, false)
   );
 }
 
@@ -126,7 +128,9 @@ export function isFillPayload(value: unknown): value is FillPayload {
     typeof p.template === 'string' &&
     // A template with no {{n}} gap is just a code task — reject it here
     // rather than storing a fill task with nothing for the student to fill.
-    isFillTemplateValid(p.template)
+    isFillTemplateValid(p.template) &&
+    // No surface on fill: a world, when there is one, is the grid.
+    (p.grid === undefined || isValidGridWorld(p.grid))
   );
 }
 

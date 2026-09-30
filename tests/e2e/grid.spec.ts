@@ -80,3 +80,95 @@ test('a teacher places a rock on the field and publishes a grid task', async ({ 
   await page.getByRole('button', { name: 'Опублікувати' }).click();
   await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
 });
+
+test('a fill task drives the robot: the gaps are the conditions of two while loops', async ({ page }) => {
+  await page.goto('/practice/g7-35-while-practice/g7-grid-fill-wall-then-up');
+  const field = page.getByRole('img', { name: /Поле 8×8/ });
+  await expect(field).toHaveAccessibleName(/Акумулятор у стовпці 6, рядку 2/);
+  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+
+  // The wrong question in the second loop: the way is free after the turn, so it never runs.
+  await page.getByLabel('Пропуск 1').fill('can_move');
+  await page.getByLabel('Пропуск 2').fill('left');
+  await page.getByLabel('Пропуск 3').fill('can_move');
+  await page.getByRole('button', { name: 'Запустити' }).click();
+  await expect(page.getByText('Робот зупинився в стовпці 6, рядку 7. До акумулятора ще не дійшов.')).toBeVisible({
+    timeout: 20_000
+  });
+
+  await page.getByLabel('Пропуск 3').fill('at_goal');
+  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
+  await expect(field).toHaveAccessibleName(/робот у стовпці 6, рядку 2/);
+});
+
+test('a parameterized world puts each student\'s battery where their seed says, the same every time', async ({ page }) => {
+  // In practice there is no student to seed from: listed, never opened.
+  await page.goto('/practice/g7-28-linear');
+  await expect(page.getByRole('listitem').filter({ hasText: 'Робот: свій акумулятор' })).toContainText(
+    'лише на занятті з учителем'
+  );
+
+  await page.goto('/s/demo01');
+  await page.getByRole('button', { name: 'Тарас' }).click();
+  await page.getByRole('button', { name: 'Робот: свій акумулятор' }).click();
+  const field = page.getByRole('img', { name: /Поле 8×8/ });
+  const name = (await field.getAttribute('aria-label')) ?? '';
+  const [, column, row] = name.match(/Акумулятор у стовпці (\d), рядку (\d)/) ?? [];
+  expect(Number(column)).toBeGreaterThanOrEqual(4);
+  expect(Number(column)).toBeLessThanOrEqual(7);
+  expect(Number(row)).toBeGreaterThanOrEqual(2);
+  expect(Number(row)).toBeLessThanOrEqual(4);
+
+  // The same student gets the same world after a reload.
+  await page.reload();
+  await page.getByRole('button', { name: 'Робот: свій акумулятор' }).click();
+  await expect(page.getByRole('img', { name: /Поле 8×8/ })).toHaveAccessibleName(
+    new RegExp(`Акумулятор у стовпці ${column}, рядку ${row}`)
+  );
+
+  // The robot starts in column 2, row 7, facing up: climb to the row, turn, walk to the column.
+  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await typeIntoEditor(page, 0, `import robot\nrobot.forward(${7 - Number(row)})\nrobot.right()\nrobot.forward(${Number(column) - 2})\n`);
+  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
+});
+
+test('a teacher puts a fill task on the grid and publishes it', async ({ page }) => {
+  await page.goto('/login');
+  await page.getByLabel('Електронна пошта').fill('demo-teacher@hilka.dev');
+  await page.getByRole('button', { name: 'Надіслати посилання' }).click();
+  const href = await page.getByRole('link', { name: /\/api\/auth\/verify\?token=/ }).getAttribute('href');
+  await page.goto(href!);
+
+  await page.getByRole('link', { name: 'Завдання' }).click();
+  await page.getByRole('link', { name: 'Нове завдання' }).click();
+  await page.getByLabel('Тип завдання').selectOption('fill');
+  await page.getByLabel('Ідентифікатор (slug)').fill(`e2e-grid-fill-${Date.now()}`);
+  await page.getByLabel('Назва').fill('Робот: скільки кроків');
+  await page.getByLabel('Умова').fill('Скільки кроків до акумулятора?');
+  await page.getByLabel('Шаблон').fill('import robot\nrobot.forward({{1}})\n');
+  await page.getByLabel('Робот на полі 8×8').check();
+  // The default world: left edge to right edge along row 5.
+  await expect(page.getByRole('img', { name: /Поле 8×8/ })).toBeVisible();
+  await useJsonMode(page, 'checks');
+  await page.getByLabel('Перевірки (JSON)').fill(JSON.stringify([{ kind: 'grid_goal' }]));
+  await Promise.all([
+    page.waitForResponse((response) => response.url().endsWith('/api/tasks') && response.request().method() === 'POST'),
+    page.getByRole('button', { name: 'Створити чернетку' }).click()
+  ]);
+  await expect(page.getByRole('heading', { name: 'Редагування чернетки' })).toBeVisible();
+  await expect(page.getByLabel('Робот на полі 8×8')).toBeChecked();
+
+  // One step short stops before the battery, and publish refuses it; seven steps reach it.
+  await typeIntoEditor(page, 0, 'import robot\nrobot.forward(6)\n');
+  await page.getByRole('button', { name: 'Запустити еталон' }).click();
+  await expect(page.getByRole('img', { name: /робот у стовпці 7, рядку 5/ })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Еталонний розв\'язок не проходить власні перевірки:')).toBeVisible({ timeout: 15_000 });
+  await typeIntoEditor(page, 0, 'import robot\nrobot.forward(7)\n');
+  await page.getByRole('button', { name: 'Запустити еталон' }).click();
+  await expect(page.getByRole('img', { name: /робот у стовпці 8, рядку 5/ })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Опублікувати' }).click();
+  await expect(page.getByText('Опубліковано. Версія 1.')).toBeVisible({ timeout: 15_000 });
+});

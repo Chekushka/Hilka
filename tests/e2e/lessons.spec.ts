@@ -61,7 +61,9 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
     'Вартість поїздки',
     'Робот: прямо до мети',
     'Робот: поворот за ріг',
-    'Робот: обійти каміння'
+    'Робот: обійти каміння',
+    // Parameterized: listed with its session-only note, and skipped by the next-task walk below.
+    expect.stringMatching(/^Робот: свій акумулятор.*лише на занятті з учителем/)
   ]);
 
   // The next-task link walks core into additional.
@@ -122,7 +124,7 @@ test('the session builder adds a whole lesson and warns in graded mode', async (
   // A practice lesson with an additional task: both kinds of warning.
   await page.getByLabel('Додати урок цілком').selectOption({ label: '7 кл. · урок 28: Лінійний алгоритм (Практика)' });
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 10')).toBeVisible();
+  await expect(page.getByText('обрано: 11')).toBeVisible();
   const warning = page.locator('form').getByRole('alert');
   await expect(warning).toContainText('Периметр прямокутника — з практичного уроку');
   await expect(warning).toContainText('Площа прямокутника — з практичного уроку');
@@ -132,7 +134,7 @@ test('the session builder adds a whole lesson and warns in graded mode', async (
 
   // Adding the same lesson again changes nothing.
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 10')).toBeVisible();
+  await expect(page.getByText('обрано: 11')).toBeVisible();
 
   // Practice mode never warns.
   await page.getByLabel('Режим').selectOption('practice');

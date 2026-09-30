@@ -13,7 +13,7 @@ import { evaluateChecks } from './evaluate';
 import { normalizeText } from './text';
 import type { Check, Evidence, Submission } from './types';
 import type { GridWorld, RunOptions, RunResult } from '@/lib/runner';
-import { enumerateParamCombinations, substituteParams, type ParamSpec } from '@/lib/seed';
+import { enumerateParamCombinations, resolveGridWorld, substituteParams, type GridWorldSpec, type ParamSpec } from '@/lib/seed';
 
 export type RunPython = (code: string, options: RunOptions) => Promise<RunResult>;
 
@@ -160,7 +160,7 @@ export interface ReferenceCheckTask {
   checks: Check[];
   cases?: { stdin: string[]; checks?: Check[]; label?: string }[] | null;
   reference?: { code: string } | null;
-  payload?: { broken?: string; answerMode?: 'text' | 'choice'; options?: string[]; surface?: string; grid?: GridWorld };
+  payload?: { broken?: string; answerMode?: 'text' | 'choice'; options?: string[]; surface?: string; grid?: GridWorldSpec };
   /** `code` only (docs/TASK_SCHEMA.md, "Parameterization") — every combination is checked, not just one seed. */
   params?: ParamSpec | null;
 }
@@ -201,8 +201,12 @@ export async function checkTaskReference(
   const hasCases = (task.cases?.length ?? 0) > 0;
   const cases = hasCases ? task.cases! : [{ stdin: [], checks: [] as Check[] }];
   const combinations = task.params ? enumerateParamCombinations(task.params) : [{}];
-  // Every run of a grid task, the broken one included, happens in the task's own world.
-  const grid = task.payload?.surface === 'grid' ? task.payload.grid : undefined;
+  // Every run of a grid task, the broken one included, happens in the task's
+  // own world — `code`/`fix` on the grid surface, or a `fill` with a world.
+  // A parameterized world is resolved per combination, like the code.
+  const gridSpec = task.type === 'fill' || task.payload?.surface === 'grid' ? task.payload?.grid : undefined;
+  const worldFor = (combo: Record<string, string | number>): GridWorld | undefined =>
+    gridSpec && resolveGridWorld(gridSpec, combo);
 
   // The target for a broken payload's shape_equals etc. below: the correct
   // reference's own drawing/stdout from its first case (first combination,
@@ -221,7 +225,7 @@ export async function checkTaskReference(
         mode: 'headless',
         stdin,
         exprs: exprsOf(checks),
-        grid
+        grid: worldFor(combo)
       });
       // `predict` has no code of its own to submit — a perfect prediction IS
       // the reference's real stdout (lib/task/types.ts). Choice mode compares
@@ -250,7 +254,7 @@ export async function checkTaskReference(
 
   if (task.type === 'fix' && task.payload?.broken) {
     const broken = task.payload.broken;
-    const result = await runPython(broken, { mode: 'headless', exprs: exprsOf(task.checks), grid });
+    const result = await runPython(broken, { mode: 'headless', exprs: exprsOf(task.checks), grid: worldFor({}) });
     // A broken program that raises or times out has correctly failed; only a
     // clean run that satisfies every check is the bug TASK_SCHEMA.md warns
     // about.

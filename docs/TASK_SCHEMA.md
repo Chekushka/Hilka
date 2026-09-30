@@ -57,12 +57,13 @@ type Payload =
       indentMode: 'given' | 'chosen';   // 'chosen' = student sets indentation too
     }
 
-  | { type: 'fill';    prompt: string; template: string }   // gaps as {{1}}, {{2}}
+  | { type: 'fill';    prompt: string; template: string   // gaps as {{1}}, {{2}}
+      grid?: GridWorld }                               // present = the gaps drive the grid robot
 
   | { type: 'code';    prompt: string; starter: string;
       surface: 'console' | 'turtle' | 'grid';
       delivery?: 'inline' | 'file'; file?: FileSpec    // delivery default 'inline'
-      grid?: GridWorld }                               // required iff surface is 'grid'
+      grid?: GridWorldSpec }                           // required iff surface is 'grid'; may hold {name} placeholders
 
   | { type: 'fix';     prompt: string; broken: string;
       surface: 'console' | 'turtle' | 'grid';
@@ -319,6 +320,23 @@ program never imported `robot`. More than 2000 steps stops the run as a timeout 
 never reaches the goal). The world travels with every run of the task: Check, Run, the reference
 warm-up, the authoring editors' reference and broken runs, and `npm run verify:references`.
 
+**On `fill`.** `fill` has no `surface` field, so a world on its payload is the switch:
+`payload.grid` present puts the gaps on the grid, and every run carries it, exactly as for `code`
+and `fix`. The template imports `robot` itself, since the gaps are the only thing the student
+writes. The authoring forms offer it as «Робот на полі 8×8» under the template.
+
+**Parameterized worlds.** On a `code` task with `params`, any coordinate or the start direction
+may be a `{name}` placeholder instead of a value — `"goal": { "x": "{gx}", "y": "{gy}" }` — so
+each student's battery (or robot, or rock) sits where their seed puts it, and a neighbour's path
+does not fit. The stored shape is `GridWorldSpec` (`lib/seed/grid.ts`); `resolveGridWorld`
+substitutes with the same values as the prompt and `reference.code`, and `resolveTaskParams`
+refuses a variant whose world is invalid rather than hand it to a student. The reference usually
+needs the same parameters (`robot.forward(6 - {gy})`). Two proofs run in CI: every combination's
+world is valid (`lib/task/grid-params.test.ts`, no Python), and the reference solves every one
+(`npm run verify:references`). A draft editor opening such a task shows a note instead of the
+field editor and keeps the placeholders on save. `fix` and `fill` take no `params`, so their
+worlds must be concrete; the authoring routes reject placeholders there.
+
 `grid_goal` passes when the robot ends on the goal **with no bumps** — a path that only got there
 after walking into a rock worked by luck. It has no fields; the goal is the world's.
 
@@ -512,6 +530,9 @@ Keep parameter spaces small and every combination valid. A range that can produc
 zero or a negative square root will produce it, in a graded session, for exactly one student.
 `lib/seed/params.ts`'s `enumerateParamCombinations` throws past 500 combinations rather than
 silently taking a long time to verify or publish.
+
+Placeholders also work in a grid task's world (`payload.grid`), where a coordinate or the start
+direction may be a `{name}` — see "Grid", "Parameterized worlds".
 
 **Not built**: an authoring UI — a parameterized task is hand-authored JSON in
 `content/seed-tasks/`, the same way `cases` started (docs/TASKS.md); `params` on `fix` or

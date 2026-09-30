@@ -5,7 +5,7 @@
  */
 import type { Check, ReferenceArtifacts } from '@/lib/checker';
 import type { GridWorld } from '@/lib/runner';
-import type { ParamSpec } from '@/lib/seed';
+import type { GridWorldSpec, ParamSpec } from '@/lib/seed';
 
 export type TaskType = 'quiz' | 'predict' | 'parsons' | 'fill' | 'code' | 'fix';
 export type TaskStatus = 'draft' | 'published' | 'archived';
@@ -36,8 +36,12 @@ export interface CodePayload {
   delivery?: Delivery;
   /** Required when `delivery` is `'file'`. */
   file?: FileSpec;
-  /** Required when `surface` is `'grid'` (lib/task/grid.ts). */
-  grid?: GridWorld;
+  /**
+   * Required when `surface` is `'grid'` (lib/task/grid.ts). On a task with
+   * `params`, a coordinate or the start direction may be a `{name}`
+   * placeholder, resolved per student like the rest (lib/seed/grid.ts).
+   */
+  grid?: GridWorldSpec;
 }
 
 export interface ParsonsLine {
@@ -120,6 +124,8 @@ export interface FillPayload {
   type: 'fill';
   prompt: string;
   template: string;
+  /** Present, the gaps drive the grid robot in this world (docs/TASK_SCHEMA.md, "Grid"). `fill` has no `surface`; the world is the switch. */
+  grid?: GridWorld;
 }
 
 /** Widens to the union in TASK_SCHEMA.md as each task type is built. */

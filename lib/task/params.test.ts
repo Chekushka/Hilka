@@ -69,3 +69,39 @@ describe('resolveTaskParams', () => {
     expect(resolved.payload.prompt).toBe('Сторона: {sside}');
   });
 });
+
+describe('resolveTaskParams — grid worlds', () => {
+  const gridTask = task({
+    payload: {
+      type: 'code',
+      surface: 'grid',
+      prompt: 'Доведи робота.',
+      starter: 'import robot\n',
+      grid: { start: { x: 1, y: 6, dir: 'N' }, goal: { x: '{gx}', y: '{gy}' }, rocks: [] }
+    },
+    params: { gx: { int: [3, 6] }, gy: { int: [1, 3] } },
+    reference: { code: 'import robot\nrobot.forward(6 - {gy})\nrobot.right()\nrobot.forward({gx} - 1)\n' }
+  });
+
+  it('places the goal from the same values as the reference code', () => {
+    const resolved = resolveTaskParams(gridTask, 42);
+    const goal = resolved.payload.grid!.goal as { x: number; y: number };
+    expect(goal.x).toBeGreaterThanOrEqual(3);
+    expect(goal.x).toBeLessThanOrEqual(6);
+    expect(resolved.reference.code).toContain(`robot.forward(6 - ${goal.y})`);
+    expect(resolved.reference.code).toContain(`robot.forward(${goal.x} - 1)`);
+  });
+
+  it('is deterministic — the same seed always places the same world', () => {
+    expect(resolveTaskParams(gridTask, 7).payload.grid).toEqual(resolveTaskParams(gridTask, 7).payload.grid);
+  });
+
+  it('refuses a variant whose world is invalid rather than hand it to a student', () => {
+    const onStart = task({
+      ...gridTask,
+      payload: { ...gridTask.payload, grid: { start: { x: 1, y: 6, dir: 'N' }, goal: { x: '{gx}', y: 6 }, rocks: [] } } as CodeTask['payload'],
+      params: { gx: { int: [1, 1] } }
+    });
+    expect(() => resolveTaskParams(onStart, 1)).toThrow(/invalid grid world/);
+  });
+});

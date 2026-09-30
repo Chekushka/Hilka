@@ -31,6 +31,7 @@ import { GridWorldField } from './GridWorldField';
 import { formatParsonsLines, parseParsonsLines } from './parsons-form-utils';
 import { ChecksField } from './ChecksField';
 import { CasesField } from './CasesField';
+import { FillGridFields } from './FillGridFields';
 import { FormSection } from './FormSection';
 import { GradeTagsField, HintsField } from './HintsField';
 import { checkKindsFor } from '@/lib/task/check-form';
@@ -88,6 +89,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
 
   // fill-only
   const [template, setTemplate] = useState('');
+  const [fillOnGrid, setFillOnGrid] = useState(false);
 
   // code/fix-only. The file name follows the slug until the teacher edits it.
   const [delivery, setDelivery] = useState<DeliveryFormState>(() => deliveryFormFromPayload({}));
@@ -194,7 +196,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                         broken: brokenCode,
                         ...surfacePayloadFields(surface, grid, deliveryForm)
                       }
-                    : { type: 'fill', prompt, template },
+                    : { type: 'fill', prompt, template, ...(fillOnGrid ? { grid } : {}) },
         checks: parsedChecks.checks,
         ...((taskType === 'code' || taskType === 'fix') && parsedCases.cases.length > 0
           ? { cases: parsedCases.cases }
@@ -509,6 +511,10 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
             />
             <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
           </div>
+        )}
+
+        {taskType === 'fill' && (
+          <FillGridFields on={fillOnGrid} onToggle={setFillOnGrid} world={grid} onWorldChange={setGrid} />
         )}
 
         {hasDelivery && surface !== 'grid' && (

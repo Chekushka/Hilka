@@ -4,6 +4,7 @@
  * take. The robot itself lives in lib/runner/modules/robot.ts.
  */
 import type { GridCell, GridWorld } from '@/lib/runner';
+import { isPlaceholder, type GridWorldSpec } from '@/lib/seed';
 import type { CodeTask, FillTask, FixTask } from './types';
 
 export const GRID_SIZE = 8;
@@ -40,10 +41,47 @@ export function isValidGridWorld(value: unknown): value is GridWorld {
   return !w.rocks.some((rock) => sameCell(rock, start) || sameCell(rock, goal));
 }
 
-/** The world a runnable task's runs take — only `code`/`fix` with `surface: 'grid'` have one. */
+/** A coordinate as stored: on the field, or a placeholder a parameter fills in. */
+function isCoordSpec(value: unknown): boolean {
+  return isPlaceholder(value) || (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value < GRID_SIZE);
+}
+
+function isCellSpec(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+  const { x, y } = value as Record<string, unknown>;
+  return isCoordSpec(x) && isCoordSpec(y);
+}
+
+/**
+ * A world as a `code` task stores it: concrete and valid, or with
+ * placeholders in it — then only the shape is checked here, since whether
+ * each variant is a valid world depends on the parameters; every
+ * combination is proven valid in CI (lib/task/grid-params.test.ts) and
+ * resolving one checks it again (`resolveTaskParams`).
+ */
+export function isGridWorldSpec(value: unknown): value is GridWorldSpec {
+  if (isValidGridWorld(value)) return true;
+  if (typeof value !== 'object' || value === null) return false;
+  const w = value as Record<string, unknown>;
+  const start = w.start as Record<string, unknown> | undefined;
+  return (
+    isCellSpec(w.start) &&
+    (DIRS.has(start?.dir as string) || isPlaceholder(start?.dir)) &&
+    isCellSpec(w.goal) &&
+    Array.isArray(w.rocks) &&
+    w.rocks.every(isCellSpec)
+  );
+}
+
+/**
+ * The world a runnable task's runs take: `code`/`fix` with `surface: 'grid'`,
+ * or a `fill` with a world. A world still holding placeholders is no world
+ * to run in — only a resolved session variant reaches a student.
+ */
 export function gridWorldOf(task: CodeTask | FixTask | FillTask): GridWorld | undefined {
-  if (task.type === 'fill' || task.payload.surface !== 'grid') return undefined;
-  return task.payload.grid;
+  if (task.type !== 'fill' && task.payload.surface !== 'grid') return undefined;
+  const world: unknown = task.payload.grid;
+  return isValidGridWorld(world) ? world : undefined;
 }
 
 /** A new grid task starts with something to solve: left edge to right edge. */
