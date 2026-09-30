@@ -31,3 +31,15 @@ describe('createFixedWindowLimiter', () => {
     expect(limiter.attempt('b', 0)).toBe(false);
   });
 });
+
+describe('isBlocked', () => {
+  it('reports a spent window without recording an attempt, and clears when the window passes', () => {
+    const limiter = createFixedWindowLimiter(2, 1000);
+    expect(limiter.isBlocked('a', 0)).toBe(false);
+    limiter.attempt('a', 0);
+    expect(limiter.isBlocked('a', 10)).toBe(false);
+    limiter.attempt('a', 20);
+    expect(limiter.isBlocked('a', 30)).toBe(true);
+    expect(limiter.isBlocked('a', 1000)).toBe(false);
+  });
+});

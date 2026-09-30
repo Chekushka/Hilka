@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { t } from '@/lib/i18n';
 
@@ -12,6 +13,9 @@ export default async function LoginPage({
       <h1 className="text-xl font-semibold text-ink">{t('auth.loginTitle')}</h1>
       {error === 'invalid' && <p className="mt-2 text-sm text-attention">{t('auth.invalidToken')}</p>}
       <LoginForm />
+      <Link href="/signup" className="mt-6 text-sm text-accent">
+        {t('auth.signupLink')}
+      </Link>
     </main>
   );
 }

@@ -74,6 +74,11 @@ jobs:
       # Only signs a same-run cookie for the browser tests; not a secret
       # worth protecting, unlike the real value Vercel needs (docs/CI_CD.md).
       AUTH_SECRET: ci-throwaway-secret
+      # A throwaway superuser for tests/e2e/teacher-access.spec.ts: the hash of
+      # `ci-superuser-password` (npm run superuser:hash). Not a real credential;
+      # production's lives only in Vercel's settings (docs/CI_CD.md, step 7).
+      SUPERUSER_LOGIN: ci-superuser
+      SUPERUSER_PASSWORD_HASH: scrypt:16384:8:1:yDI7znEv7V7tv5oVmMYBIg:uZcIJ0lcLinuyM7SEcwzN1-IMrXspkqlUhvoGwxj-9Q
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

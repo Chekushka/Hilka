@@ -36,3 +36,10 @@ export function agoFrom(iso: string, now: number): Ago {
   if (minutes < 60) return { unit: 'minutes', n: minutes };
   return { unit: 'hours', n: Math.floor(minutes / 60) };
 }
+
+const date = new Intl.DateTimeFormat('uk-UA', { timeZone: SCHOOL_TIME_ZONE, day: '2-digit', month: '2-digit', year: 'numeric' });
+
+/** "30.09.2026" in Kyiv time. */
+export function formatDate(iso: string): string {
+  return date.format(new Date(iso));
+}

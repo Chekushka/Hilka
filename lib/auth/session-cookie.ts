@@ -11,7 +11,8 @@ export const TEACHER_COOKIE_NAME = 'hilka_teacher';
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-function secret(): string {
+/** AUTH_SECRET, or a thrown error — never an empty key. Shared with lib/auth/admin-cookie.ts's callers. */
+export function secret(): string {
   const value = process.env.AUTH_SECRET;
   if (!value) {
     throw new Error('AUTH_SECRET is not set. See docs/CI_CD.md — required for teacher login.');
