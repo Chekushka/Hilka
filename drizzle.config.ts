@@ -3,7 +3,8 @@ import { defineConfig } from 'drizzle-kit';
 /**
  * Migrations are generated locally, committed under drizzle/, and applied by
  * .github/workflows/migrate.yml on merge — never at app boot, where concurrent
- * serverless instances would race each other.
+ * serverless instances would race each other. A Vercel preview's own database
+ * is migrated by its build instead (scripts/db/migrate-preview.ts).
  */
 export default defineConfig({
   dialect: 'postgresql',

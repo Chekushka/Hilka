@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run sync:skulpt && next dev",
-    "build": "npm run sync:skulpt && next build",
+    "build": "npm run sync:skulpt && npm run db:migrate:preview && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
@@ -13,6 +13,7 @@
     "guardrails": "bash scripts/guardrails.sh",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:preview": "tsx scripts/db/migrate-preview.ts",
     "db:seed": "tsx scripts/db/seed-content.ts",
     "db:seed:demo": "tsx scripts/db/seed-demo-session.ts",
     "superuser:hash": "tsx scripts/superuser-hash.ts",

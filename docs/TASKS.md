@@ -56,6 +56,7 @@ Pages serving the spike, branch protection on `main`, and the `production` envir
 | `reference-check.yml` — references vs their own checks | ✅ | Live. `npm run verify:references` drives the real runner via `/runner` (no database needed) against `content/seed-tasks/*.json` |
 | Vercel Git integration + preview deploys | ✅ | Installed; PR #7 carried its check. **Deployment Protection is on**, so a logged-out classroom machine cannot open a preview until Vercel Authentication is off or a sharable link is used — CI_CD.md §5 |
 | Neon branch-per-preview | ✅ | Integration installed, and confirmed by the project owner: every PR preview gets its own Neon branch |
+| Migrations on preview databases | ✅ | A preview's Neon branch is copied from production and `migrate.yml` only migrates production, so a PR adding a migration used to deploy a crashing preview (the `teachers.status` #441 on `/admin`). `npm run build` now runs `db:migrate:preview` (`scripts/db/migrate-preview.ts`; the decision in `lib/db/preview-migration.ts`, unit-tested): only when `VERCEL_ENV=preview`, through the unpooled URL, under an advisory lock, with the same bookkeeping as `db:migrate`. Verified on Postgres against a copy missing the last migration: applies exactly it, two concurrent runs apply it once, `drizzle-kit migrate` then finds nothing pending; skips outside previews; fails a preview with no database URL. CI_CD.md step 6 |
 
 ## Python Runner
 
