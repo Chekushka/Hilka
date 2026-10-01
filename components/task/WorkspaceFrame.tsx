@@ -31,6 +31,7 @@ import { useState, type ReactNode } from 'react';
 import { Hints } from './Hints';
 import { t } from '@/lib/i18n';
 import type { Task } from '@/lib/task/types';
+import { PromptText } from './PromptText';
 
 /** What the page around a task adds to the task panel. The task-type views pass it through untouched. */
 export interface WorkspaceChrome {
@@ -97,7 +98,7 @@ export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, doc
         <section className="px-5 pb-5 pt-5">
           <p className="text-sm font-semibold text-accent">{t(`task.types.${task.type}`)}</p>
           <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-ink">{task.title}</h1>
-          <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-ink">{task.payload.prompt}</p>
+          <PromptText prompt={task.payload.prompt} className="mt-3 text-base leading-relaxed text-ink" />
         </section>
         {chrome?.theory && <Theory>{chrome.theory}</Theory>}
         <span className="flex-1" />

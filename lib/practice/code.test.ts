@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { formatProgressCode, isValidProgressCode, normalizeProgressCode, PROGRESS_CODE_ALPHABET } from './code';
 
 describe('normalizeProgressCode', () => {
+  it('reads Cyrillic lookalikes typed on a Ukrainian layout as Latin', () => {
+    // Cyrillic Н, Р, С, К and lower-case т among real Latin letters and digits.
+    expect(normalizeProgressCode('НРСК-т2d9')).toBe('HPCKT2D9');
+  });
+
   it('uppercases', () => {
     expect(normalizeProgressCode('abcdefgh')).toBe('ABCDEFGH');
   });

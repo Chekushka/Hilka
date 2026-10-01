@@ -11,6 +11,7 @@
  */
 import { t } from '@/lib/i18n';
 import type { FileSpec } from './types';
+import { promptPlainText } from './prompt';
 
 /** The triple that already identifies an attempt, carried in the file itself. */
 export interface FileHeader {
@@ -52,7 +53,8 @@ export function generateStarterFile(input: {
     }
     parts.push(commentBlock(lines.join('\n')));
   }
-  parts.push(commentBlock(input.prompt.trim()));
+  // A fenced sample's ``` lines would only be noise in a comment (lib/task/prompt.ts).
+  parts.push(commentBlock(promptPlainText(input.prompt).trim()));
   const code = input.code.endsWith('\n') ? input.code : `${input.code}\n`;
   return `${parts.join('\n\n')}\n\n${code}`;
 }

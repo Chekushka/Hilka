@@ -6,14 +6,19 @@
  * (`node:crypto`) and lives server-side in `lib/db/progress-codes.ts`
  * instead, so this file stays importable from the browser.
  */
+import { CYRILLIC_LOOKALIKES } from '@/lib/session/code';
 export const PROGRESS_CODE_LENGTH = 8;
 
 /** Uppercase A-Z and 2-9, minus 0/O/1/I/L — the pairs a tired 12-year-old confuses. */
 export const PROGRESS_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
-/** Case-insensitive; dashes and spaces stripped, so "abcd-efgh" and "ABCDEFGH" are the same code. */
+/**
+ * Case-insensitive; dashes and spaces stripped, so "abcd-efgh" and "ABCDEFGH"
+ * are the same code; and Cyrillic lookalikes typed on a Ukrainian keyboard
+ * layout read as the Latin letters they look like, as for session codes.
+ */
 export function normalizeProgressCode(input: string): string {
-  return input.toUpperCase().replace(/[\s-]/g, '');
+  return [...input.toUpperCase().replace(/[\s-]/g, '')].map((char) => CYRILLIC_LOOKALIKES[char] ?? char).join('');
 }
 
 export function isValidProgressCode(code: string): boolean {

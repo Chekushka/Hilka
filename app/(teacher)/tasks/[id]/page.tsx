@@ -11,6 +11,7 @@ import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { getTaskForAuthoring } from '@/lib/db/task-authoring';
 import { t } from '@/lib/i18n';
 import type { TaskRow } from '@/lib/db/task-mapping';
+import { PromptText } from '@/components/task/PromptText';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,7 @@ function PublishedCodeView({ task }: { task: TaskRow }) {
           })}
         </p>
       )}
-      <p className="text-ink">{task.payload.prompt}</p>
+      <PromptText prompt={task.payload.prompt} className="text-ink" />
 
       {task.payload.surface === 'turtle' && (
         <TurtleCanvas drawing={task.reference?.artifacts?.drawing ?? []} label={t('workspace.target')} />
@@ -77,7 +78,7 @@ function PublishedParsonsView({ task }: { task: TaskRow }) {
         {t('authoring.notEditable')}
       </p>
       <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
-      <p className="text-ink">{task.payload.prompt}</p>
+      <PromptText prompt={task.payload.prompt} className="text-ink" />
       <p className="text-sm text-ink-muted">
         {task.payload.indentMode === 'chosen'
           ? t('authoring.parsonsIndentModeChosen')
@@ -115,7 +116,7 @@ function PublishedQuizView({ task }: { task: TaskRow }) {
         {t('authoring.notEditable')}
       </p>
       <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
-      <p className="text-ink">{task.payload.prompt}</p>
+      <PromptText prompt={task.payload.prompt} className="text-ink" />
 
       <div>
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.quizOptionsLabel')}</p>
@@ -147,7 +148,7 @@ function PublishedPredictView({ task }: { task: TaskRow }) {
         {t('authoring.notEditable')}
       </p>
       <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
-      <p className="text-ink">{task.payload.prompt}</p>
+      <PromptText prompt={task.payload.prompt} className="text-ink" />
 
       <div>
         <p className="text-xs uppercase tracking-wide text-ink-muted">{t('authoring.predictCodeLabel')}</p>
@@ -183,7 +184,7 @@ function PublishedFixView({ task }: { task: TaskRow }) {
           })}
         </p>
       )}
-      <p className="text-ink">{task.payload.prompt}</p>
+      <PromptText prompt={task.payload.prompt} className="text-ink" />
 
       {task.payload.surface === 'turtle' && (
         <TurtleCanvas drawing={task.reference?.artifacts?.drawing ?? []} label={t('workspace.target')} />
@@ -236,7 +237,7 @@ function PublishedFillView({ task }: { task: TaskRow }) {
         {t('authoring.notEditable')}
       </p>
       <p className="text-sm text-ink-muted">{t('authoring.versionLabel', { version: task.version })}</p>
-      <p className="text-ink">{task.payload.prompt}</p>
+      <PromptText prompt={task.payload.prompt} className="text-ink" />
 
       <TurtleCanvas drawing={task.reference?.artifacts?.drawing ?? []} label={t('workspace.target')} />
       {task.reference?.artifacts?.stdout && (
