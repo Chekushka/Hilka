@@ -104,6 +104,10 @@ test('running a program that calls input() opens a live answer line', async ({ p
   // into the output panel above it. Exact match: the editor above also
   // contains this text as source code.
   await expect(page.getByText('Як тебе звати?', { exact: true })).toBeVisible();
+  // Which input() is asking: its line number and its source line.
+  const asking = page.getByTestId('input-asking');
+  await expect(asking).toContainText('рядок 1');
+  await expect(asking.locator('code')).toHaveText('name = input("Як тебе звати? ")');
 
   await answer.fill('Тарас');
   await answer.press('Enter');

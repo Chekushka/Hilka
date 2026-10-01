@@ -37,7 +37,7 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
   const [values, setValues] = useState<Record<number, string>>({});
   const world = gridWorldOf(task);
   const runnable = useMemo(() => ({ ...task, grid: world }), [task, world]);
-  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput } = useTaskRunner(runnable);
+  const { engine, busy, result, report, target, pendingInput, run, check, submitInput } = useTaskRunner(runnable);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -74,7 +74,7 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
     lastCheckedCodeRef.current = code;
     check(code);
   };
-  const showsOutput = (result?.stdout ?? '').length > 0 || pendingInputPrompt !== null;
+  const showsOutput = (result?.stdout ?? '').length > 0 || pendingInput !== null;
 
   return (
     <WorkspaceFrame
@@ -88,7 +88,7 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
           actions={<RunCheckActions busy={busy} disabled={disabled} onRun={() => run(code)} onCheck={retry} />}
         >
           {showsOutput ? (
-            <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
+            <OutputPanel stdout={result?.stdout ?? ''} pendingInput={pendingInput} onSubmitInput={submitInput} />
           ) : (
             !result && <RunDockIdle engine={engine} />
           )}

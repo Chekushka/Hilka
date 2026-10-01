@@ -142,6 +142,19 @@ test('waiting for input does not count against the limit', async ({ page }) => {
   expect(result.stdout.trim()).toBe('готово');
 });
 
+test('each input() reports the line that is asking', async ({ page }) => {
+  // Two bare input() calls look identical to the student; the line is what
+  // tells them apart. Inside a function and a loop, it is the input() line
+  // itself, not the call site or the loop header.
+  const lines = await page.evaluate(() =>
+    window.__runner__!.inputLines(
+      'a = int(input())\nb = int(input("b? "))\ndef ask():\n    return input()\nfor i in range(2):\n    ask()\nprint(a + b)',
+      ['1', '2', 'x', 'y']
+    )
+  );
+  expect(lines).toEqual([1, 2, 4, 4]);
+});
+
 test('exposes module-level variables after the run, for var_equals', async ({ page }) => {
   const result = await run(page, 'a = 7\nb = 3\ntotal = a + b\nname = "ага"\nitems = [1, 2, total]');
   expect(result.error).toBeNull();

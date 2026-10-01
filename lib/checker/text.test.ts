@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractNumbers, lastLine, normalizeText } from './text';
+import { extractNumbers, lastLine, normalizeOutput, normalizeText } from './text';
 
 describe('normalizeText', () => {
   it('trims only when asked', () => {
@@ -9,6 +9,12 @@ describe('normalizeText', () => {
 
   it('forgives a double space and a capital letter in loose mode', () => {
     expect(normalizeText(' Привіт   Світ ', 'loose')).toBe('привіт світ');
+  });
+});
+
+describe('normalizeOutput', () => {
+  it('drops spaces at the end of every line, keeping the leading ones', () => {
+    expect(normalizeOutput('  /\\  \n /  \\ \n|    |\n')).toBe('/\\\n /  \\\n|    |');
   });
 });
 

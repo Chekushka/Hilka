@@ -84,6 +84,26 @@ describe('output checks', () => {
   });
 });
 
+describe('stdout_equals', () => {
+  const house: Check[] = [{ kind: 'stdout_equals', value: '  /\\\n /  \\\n/____\\\n|    |\n|____|' }];
+
+  it('accepts an ASCII picture padded with invisible spaces after the slashes', () => {
+    const padded = '  /\\  \n /  \\ \n/____\\\n|    |\n|____|\n';
+    expect(evaluateChecks(house, evidence({ run: ran(padded) })).passed).toBe(true);
+  });
+
+  it('still fails a line whose leading spaces are wrong', () => {
+    const shifted = '  /\\\n/  \\\n/____\\\n|    |\n|____|\n';
+    expect(evaluateChecks(house, evidence({ run: ran(shifted) })).passed).toBe(false);
+  });
+
+  it('compares exactly with trim: false', () => {
+    const exact: Check[] = [{ kind: 'stdout_equals', value: 'a \n', trim: false }];
+    expect(evaluateChecks(exact, evidence({ run: ran('a \n') })).passed).toBe(true);
+    expect(evaluateChecks(exact, evidence({ run: ran('a\n') })).passed).toBe(false);
+  });
+});
+
 describe('turtle checks', () => {
   it('compares against the executed reference, not stored coordinates', () => {
     const checks: Check[] = [{ kind: 'shape_equals', normalize: ['translate', 'rotate'] }];

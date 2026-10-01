@@ -15,6 +15,7 @@ declare global {
         }
       ): Promise<RunResult>;
       runInteractive(code: string, answers: string[], delayMs: number): Promise<RunResult>;
+      inputLines(code: string, answers: string[]): Promise<(number | null)[]>;
       parse(code: string): Promise<ParseResult>;
     };
   }

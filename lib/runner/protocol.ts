@@ -41,6 +41,8 @@ export interface InputRequestMessage {
   type: 'input-request';
   id: number;
   prompt: string;
+  /** The program line whose `input()` is waiting, or null if it could not be found. */
+  line: number | null;
 }
 
 export interface DoneMessage {

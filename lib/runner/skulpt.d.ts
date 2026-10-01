@@ -3,6 +3,8 @@
  * because this code has to survive being moved to the server — this declares
  * only the surface the worker actually uses.
  */
+import type { SuspensionFrame } from './suspension-line';
+
 export interface SkulptPyObject {
   v?: unknown;
   /** Skulpt's own type name for the value: 'int', 'str', 'list', 'function', … */
@@ -70,7 +72,14 @@ export interface SkulptGlobal {
   astnodes: Record<string, unknown>;
   importMainWithBody(name: string, dumpJS: boolean, body: string, canSuspend: boolean): unknown;
   misceval: {
-    asyncToPromise(fn: () => unknown): Promise<unknown>;
+    /**
+     * A handler that returns nothing leaves the suspension to Skulpt's own
+     * handling, so it can observe a suspension without taking it over.
+     */
+    asyncToPromise(
+      fn: () => unknown,
+      handlers?: Record<string, (suspension: SuspensionFrame) => Promise<unknown> | undefined>
+    ): Promise<unknown>;
     isTrue(value: SkulptPyObject): boolean;
   };
   ffi: {

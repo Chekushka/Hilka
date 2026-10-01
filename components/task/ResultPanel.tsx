@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import { PassedNote, ResultFrame as Frame } from './ResultFrame';
 import { humanize, humanizeTimeout, setUnmatchedReporter } from '@/lib/errors';
 import { t } from '@/lib/i18n';
+import { notYetNote } from '@/lib/task/not-yet-note';
 import type { CheckReport } from '@/lib/checker';
 import type { RunResult } from '@/lib/runner';
 
@@ -87,7 +88,7 @@ export function ResultPanel({ result, report, code, onRetry }: ResultPanelProps)
           <li key={`${check.check.kind}-${index}`}>{check.message}</li>
         ))}
       </ul>
-      <p className="mt-2 text-ink-muted">{t('result.notYetNote')}</p>
+      <p className="mt-2 text-ink-muted">{t(`result.notYetNote.${notYetNote(failures.map((failure) => failure.check))}`)}</p>
     </Frame>
   );
 }
