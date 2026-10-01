@@ -435,6 +435,13 @@ listed there is never reported as a pass — for the next kind documented before
 
 ### Rules that are not optional
 
+**`stdout_equals` ignores what the student cannot see.** With `trim` (the default, `true`),
+spaces at the end of every line are dropped and the whole output is trimmed before comparing
+(`lib/checker/text.ts`'s `normalizeOutput`). Trailing spaces are invisible on screen, so an ASCII
+picture padded with spaces after its slashes — seen in class on the grade 7 house — passes when
+it looks right. Leading spaces stay significant from the second line on: they are the picture.
+`trim: false` compares byte for byte.
+
 **`stdout_equals` is banned on any task with `cases`.** Prompt wording varies legitimately
 between correct solutions; exact matching fails students who are right. Use `number_close`,
 `numbers_equal`, or `last_line_equals` instead. Enforce this in the authoring UI, not by

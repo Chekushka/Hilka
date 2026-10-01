@@ -9,7 +9,7 @@
 import { extractNames } from './ast';
 import { isClosed, boundingBox, shapeContains, shapesMatch, totalLength } from './geometry';
 import { fallbackMessage } from './messages';
-import { extractNumbers, lastLine, normalizeText } from './text';
+import { extractNumbers, lastLine, normalizeOutput, normalizeText } from './text';
 import type { Check, CheckReport, CheckResult, Evidence } from './types';
 
 /** Kinds whose evaluators are not written yet. They never report a pass. */
@@ -95,7 +95,7 @@ function evaluateOne(check: Check, evidence: Evidence): boolean {
       if (!run) return false;
       const trim = check.trim ?? true;
       return trim
-        ? run.stdout.trim() === check.value.trim()
+        ? normalizeOutput(run.stdout) === normalizeOutput(check.value)
         : run.stdout === check.value;
     }
 

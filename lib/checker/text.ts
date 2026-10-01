@@ -17,6 +17,22 @@ export function normalizeText(value: string, mode?: 'trim' | 'loose'): string {
   return value;
 }
 
+/**
+ * What `stdout_equals` compares by default: the output with spaces at the end
+ * of every line removed, then trimmed as a whole. Trailing spaces are
+ * invisible on screen, so a student whose picture looks exactly right — a
+ * symmetric ASCII house padded with spaces after the slashes — must not fail
+ * on them. Leading spaces stay significant from the second line on: they are
+ * the picture.
+ */
+export function normalizeOutput(stdout: string): string {
+  return stdout
+    .split('\n')
+    .map((line) => line.replace(/\s+$/, ''))
+    .join('\n')
+    .trim();
+}
+
 export function lastLine(stdout: string): string {
   const lines = stdout.replace(/\s+$/, '').split('\n');
   return lines.length > 0 ? lines[lines.length - 1] : '';
