@@ -80,6 +80,13 @@ in particular already executes Python after substitution, but the substitution *
 editing surface, so there is no separate file to hand out.
 
 Notes:
+- **`prompt` is plain text, with one piece of markup.** Lines break as written. A block between
+  two lines of ```` ``` ```` is a *sample* — output to reproduce, a picture made of characters —
+  and is shown in the code face with every space kept (`lib/task/prompt.ts`,
+  `components/task/PromptText.tsx`). Deliberately not Markdown: "a * b" in a prompt must stay
+  "a * b". An unclosed fence stays literal text. The file-delivery starter file drops the fence
+  lines from its comment. `grade7-code-ascii-house` is the reason: collapsed spaces in a
+  proportional face turned its house into a different drawing from the one it checks for.
 - `parsons.indentMode: 'chosen'` is the harder variant and the only one that teaches Python
   indentation. Default to `'given'` for a topic's first Parsons task and `'chosen'` later. Every
   line starts flat in `components/task-types/ParsonsTaskView.tsx`; the student sets each one's

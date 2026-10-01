@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hashPassword } from './password';
-import { checkSuperuserCredentials, superuserConfig, superuserEmail } from './superuser';
+import { checkSuperuserCredentials, describeMissing, superuserConfig, superuserEmail, superuserReadiness } from './superuser';
 
 const passwordHash = hashPassword('a long enough password');
 
@@ -35,5 +35,25 @@ describe('superuserEmail', () => {
     expect(superuserEmail({ SUPERUSER_EMAIL: ' Admin@School.UA ' })).toBe('admin@school.ua');
     expect(superuserEmail({})).toBeNull();
     expect(superuserEmail({ SUPERUSER_EMAIL: 'admin' })).toBeNull();
+  });
+});
+
+describe('superuserReadiness', () => {
+  const env = { SUPERUSER_LOGIN: 'admin', SUPERUSER_PASSWORD_HASH: passwordHash, AUTH_SECRET: 'signing-key' };
+
+  it('is ready with the superuser and the signing secret', () => {
+    expect(superuserReadiness(env)).toEqual({ ready: true, config: { login: 'admin', passwordHash }, secret: 'signing-key' });
+  });
+
+  it('names what is missing instead of throwing: the superuser first, then the secret', () => {
+    expect(superuserReadiness({ ...env, SUPERUSER_LOGIN: undefined })).toEqual({ ready: false, missing: 'superuser' });
+    expect(superuserReadiness({ ...env, AUTH_SECRET: undefined })).toEqual({ ready: false, missing: 'auth_secret' });
+    expect(superuserReadiness({ ...env, AUTH_SECRET: '   ' })).toEqual({ ready: false, missing: 'auth_secret' });
+  });
+
+  it('logs variable names, never values', () => {
+    expect(describeMissing('auth_secret')).toContain('AUTH_SECRET');
+    expect(describeMissing('superuser')).toContain('SUPERUSER_PASSWORD_HASH');
+    expect(describeMissing('superuser')).not.toContain(passwordHash);
   });
 });

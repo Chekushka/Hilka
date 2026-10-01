@@ -191,6 +191,7 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
               onChange={(event) => setPrompt(event.target.value)}
               className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
+            <p className="text-xs text-ink-muted">{t('authoring.promptHint')}</p>
           </div>
 
           <div className="flex flex-col gap-1.5">

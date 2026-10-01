@@ -11,6 +11,7 @@ import { useState, type FormEvent } from 'react';
 import { formatProgressCode, normalizeProgressCode } from '@/lib/practice/code';
 import { loadLocalProgressCode, saveLocalProgressCode, useLocalProgressCode } from '@/lib/practice/local-progress';
 import { hasCompletedTask, mergeProgress, type PracticeProgress } from '@/lib/practice/progress';
+import { RESTORE_FAILURE_MESSAGE, requestRestore } from '@/lib/practice/restore';
 import { t } from '@/lib/i18n';
 
 interface ProgressPanelProps {
@@ -55,38 +56,17 @@ export function ProgressPanel({ progress, setProgress, currentTaskSlug }: Progre
     event.preventDefault();
     setRestoreStatus('restoring');
     setRestoreMessage(null);
-    try {
-      const response = await fetch('/api/progress/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: restoreInput })
-      });
-      if (response.status === 404) {
-        setRestoreStatus('error');
-        setRestoreMessage(t('practice.restoreNotFound'));
-        return;
-      }
-      if (response.status === 400) {
-        setRestoreStatus('error');
-        setRestoreMessage(t('practice.restoreInvalidFormat'));
-        return;
-      }
-      if (response.status === 429) {
-        setRestoreStatus('error');
-        setRestoreMessage(t('practice.restoreRateLimited'));
-        return;
-      }
-      if (!response.ok) throw new Error('restore failed');
-      const data: { state: PracticeProgress } = await response.json();
-      setProgress((previous) => mergeProgress(previous, data.state));
-      saveLocalProgressCode(normalizeProgressCode(restoreInput));
-      setRestoreInput('');
-      setRestoreStatus('done');
-      setRestoreMessage(t('practice.restoreSuccess'));
-    } catch {
+    const outcome = await requestRestore(restoreInput);
+    if (!outcome.ok) {
       setRestoreStatus('error');
-      setRestoreMessage(t('practice.restoreError'));
+      setRestoreMessage(t(RESTORE_FAILURE_MESSAGE[outcome.reason]));
+      return;
     }
+    setProgress((previous) => mergeProgress(previous, outcome.state));
+    saveLocalProgressCode(normalizeProgressCode(restoreInput));
+    setRestoreInput('');
+    setRestoreStatus('done');
+    setRestoreMessage(t('practice.restoreSuccess'));
   }
 
   return (

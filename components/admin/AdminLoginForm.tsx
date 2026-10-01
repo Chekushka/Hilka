@@ -31,9 +31,11 @@ export function AdminLoginForm() {
     setError(
       response?.status === 429
         ? t('admin.rateLimited')
-        : response?.status === 401
-          ? t('admin.invalid')
-          : t('admin.error')
+        : response?.status === 503
+          ? t('admin.notConfigured')
+          : response?.status === 401
+            ? t('admin.invalid')
+            : t('admin.error')
     );
   }
 

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ContinueWithCodeForm } from '@/components/entry/ContinueWithCodeForm';
 import { JoinByCodeForm } from '@/components/entry/JoinByCodeForm';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { Plant } from '@/components/meta/Plant';
@@ -9,7 +10,8 @@ const GARDEN_STAGES: PlantStage[] = [0, 1, 2, 3, 4];
 
 /**
  * The entry page. Two ways in for a student — the teacher's session code in
- * class, the lessons on their own — and a quiet one for the teacher. No
+ * class, the lessons on their own (or a progress code to pick them up where
+ * another device left off) — and a quiet one for the teacher. No
  * account, no email, no password for a student (CLAUDE.md rule 8).
  *
  * Reads nothing from the database, so it still opens when the database does
@@ -31,8 +33,10 @@ export default function Home() {
           <p className="mt-2 max-w-xl text-lg text-ink-muted">{t('home.subtitle')}</p>
         </div>
 
+        {/* min-w-0 on the cards: a grid item never shrinks below its content by default, and the
+            large session-code field would otherwise push a phone screen sideways. */}
         <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-          <section aria-labelledby="join-title" className="flex flex-col rounded-xl border border-line bg-surface p-6 sm:p-8">
+          <section aria-labelledby="join-title" className="flex min-w-0 flex-col rounded-xl border border-line bg-surface p-6 sm:p-8">
             <h2 id="join-title" className="text-xl font-semibold text-ink">
               {t('home.joinTitle')}
             </h2>
@@ -53,7 +57,7 @@ export default function Home() {
             </ol>
           </section>
 
-          <section aria-labelledby="practice-title" className="flex flex-col rounded-xl border border-line bg-surface p-6 sm:p-8">
+          <section aria-labelledby="practice-title" className="flex min-w-0 flex-col rounded-xl border border-line bg-surface p-6 sm:p-8">
             <h2 id="practice-title" className="text-xl font-semibold text-ink">
               {t('home.practiceTitle')}
             </h2>
@@ -73,6 +77,12 @@ export default function Home() {
             >
               {t('home.practiceLink')}
             </Link>
+            <div className="mt-6 border-t border-line pt-5">
+              <h3 className="font-semibold text-ink">{t('home.continueTitle')}</h3>
+              <div className="mt-2">
+                <ContinueWithCodeForm />
+              </div>
+            </div>
           </section>
         </div>
       </main>

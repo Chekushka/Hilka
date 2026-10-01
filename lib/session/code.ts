@@ -10,9 +10,10 @@ export const SESSION_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 /*
  * A Ukrainian classroom keyboard is usually left on the Cyrillic layout, and
  * these letters look identical to the Latin ones on the projector. A student
- * who types Cyrillic «С» for Latin «C» has done nothing wrong.
+ * who types Cyrillic «С» for Latin «C» has done nothing wrong. The practice
+ * progress code (lib/practice/code.ts) is read the same way.
  */
-const CYRILLIC_LOOKALIKES: Record<string, string> = {
+export const CYRILLIC_LOOKALIKES: Record<string, string> = {
   А: 'A',
   В: 'B',
   Е: 'E',

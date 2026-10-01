@@ -167,7 +167,7 @@ The project settings that matter, and what goes wrong when they are wrong:
 |---|---|---|
 | Framework preset | Next.js | Auto-detected |
 | Root Directory | `./` | No `src/`, no monorepo |
-| Build Command | **default** — do not override | The default runs `npm run build`, which is `sync:skulpt && next build`. `sync:skulpt` copies Skulpt into `public/runner/`, which is gitignored and therefore only exists if the script runs. Override it with a bare `next build` and the Worker 404s on the engine: the page loads and «Готую Python…» never goes away |
+| Build Command | **default** — do not override | The default runs `npm run build`, which is `sync:skulpt && db:migrate:preview && next build` (the middle step migrates a preview's own database and is a no-op anywhere else — step 6). `sync:skulpt` copies Skulpt into `public/runner/`, which is gitignored and therefore only exists if the script runs. Override it with a bare `next build` and the Worker 404s on the engine: the page loads and «Готую Python…» never goes away |
 | Install Command | **default** (`npm ci`) | Not `--omit=dev` — the build needs TypeScript and the `@types` packages |
 | Node.js Version | **22.x** | Matches `.nvmrc`, which Vercel does not reliably read. This dropdown, or `engines.node`, is what actually decides |
 | Function Region | **`fra1`** (Frankfurt) | Must equal the Neon region. Every `/practice` request is a database round trip made server-side, so a region mismatch costs more than the distance from Kyiv to the function. Hobby allows one region; the default is `iad1` |
@@ -238,6 +238,23 @@ committed under `drizzle/`, and applied by `migrate.yml` on merge. Never at app
 boot — serverless instances start concurrently and would race. CI fails if a
 schema change is committed without its migration.
 
+**Preview databases are migrated by their own build.** A preview's Neon branch is
+a copy of production made when the preview is created, and `migrate.yml` only
+ever touches production — so before this, a PR that added a migration deployed a
+preview that crashed on the first query using it (seen with
+`teachers.status`: React error #441 on `/admin`, `column "status" does not exist`
+in the log). `npm run build` now runs `db:migrate:preview`
+(`scripts/db/migrate-preview.ts`, rules in `lib/db/preview-migration.ts`), which
+acts only when `VERCEL_ENV` is `preview`: it applies `drizzle/` to that preview's
+database through `DATABASE_URL_UNPOOLED` (falling back to `DATABASE_URL`, with a
+warning), under a Postgres advisory lock so two builds of one preview take turns.
+Same migrator and bookkeeping table as `npm run db:migrate`, so only what
+production has not got yet is applied. Production, development, CI and local
+builds skip it — production still migrates only through `migrate.yml`. A preview
+build with no database URL fails, with the reason, rather than deploying a site
+that cannot work. A preview whose branch was created before this existed gets
+migrated by its next build: push to the PR or redeploy it.
+
 **`pg` and `sslmode=require`.** Connecting prints a warning: `pg` currently
 treats `sslmode=require` as `verify-full`, and in `pg` v9 it will fall back to
 libpq semantics, which verify nothing. Harmless today; when that upgrade lands,
@@ -252,7 +269,7 @@ verifying Neon's certificate.
 | Cloud environment for agents | `DATABASE_URL` (Neon **dev** branch) | remote sessions |
 | Repo secrets | *(none needed)* | Vercel and Neon are wired through their apps |
 | Vercel project settings | `AUTH_SECRET` | teacher login (`lib/auth/session-cookie.ts`) — no integration sets this one, see step 5 |
-| Vercel project settings | `SUPERUSER_LOGIN`, `SUPERUSER_PASSWORD_HASH` | the superuser at `/admin`, who approves teacher sign-ups (`lib/auth/superuser.ts`). The hash comes from `npm run superuser:hash` (reads the password without echoing it; 12 characters at least) and has no `$` in it, so it pastes as is. Changing it logs the superuser out everywhere. Without both, `/admin/login` refuses every attempt and logs why — nobody can approve new teachers, but existing ones keep working |
+| Vercel project settings | `SUPERUSER_LOGIN`, `SUPERUSER_PASSWORD_HASH` | the superuser at `/admin`, who approves teacher sign-ups (`lib/auth/superuser.ts`). The hash comes from `npm run superuser:hash` (reads the password without echoing it; 12 characters at least) and has no `$` in it, so it pastes as is. Changing it logs the superuser out everywhere. Without both — or without `AUTH_SECRET`, which signs the superuser's cookie — `/admin/login` shows a notice naming the missing variable instead of the form, and the login API answers 503 with the reason in the log; nobody can approve new teachers, but existing ones keep working. Remember a redeploy after adding a variable (step 5) |
 | Vercel project settings | `SUPERUSER_EMAIL` (optional) | where a new teacher's access request is announced (`lib/auth/access-email.ts`), through the same `RESEND_API_KEY`/`EMAIL_FROM`. Unset, requests still arrive at `/admin`, just without an email. Teachers are emailed when they gain access regardless of this one |
 | Vercel project settings | `RESEND_API_KEY`, `EMAIL_FROM` | magic-link email (`lib/auth/login-email.ts`). `EMAIL_FROM` must be on a domain verified in Resend (e.g. `Hilka <login@your-domain>`); Resend's `onboarding@resend.dev` only delivers to the Resend account owner's own address. Without both, nothing is sent on Vercel and the route logs an error |
 | `.github/workflows/ci.yml` | `AUTH_SECRET` (throwaway, hard-coded) | the `browser` job only; not a real secret, just needs to be *some* value |

@@ -245,7 +245,10 @@ Its session is its own signed cookie (`hilka_admin`, `lib/auth/admin-cookie.ts`)
 `SameSite=Strict`, and signed over the current password hash as well as `AUTH_SECRET`, so changing
 the password ends every superuser session at once. Five failed logins per 15 minutes per address,
 then nothing is checked until the window passes (successful logins do not count). Unset or
-malformed variables mean there is no superuser: the login refuses everything — fail closed. The
+malformed variables — or a missing `AUTH_SECRET`, which signs its cookie — mean there is no
+superuser: fail closed, but gracefully, unlike the teacher side. `/admin/login` shows a notice
+naming the missing variable (names only, never values) instead of the form, the login API answers
+503 and logs the reason, the admin API answers 401 (`superuserReadiness`). The
 unused `role: 'admin'` column predates this and does not grant anything.
 
 **Access notifications** go through Resend like the magic link (`lib/auth/access-email.ts`, sent

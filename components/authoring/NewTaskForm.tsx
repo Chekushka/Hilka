@@ -347,6 +347,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
             onChange={(event) => setPrompt(event.target.value)}
             className="rounded-md border border-line bg-surface px-3 py-2 text-ink"
           />
+          <p className="text-xs text-ink-muted">{t('authoring.promptHint')}</p>
         </div>
 
         {taskType === 'code' ? (
