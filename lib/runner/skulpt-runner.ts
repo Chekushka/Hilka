@@ -67,7 +67,7 @@ export class SkulptRunner implements PythonRunner {
         this.worker?.postMessage({ type: 'input', id: message.id, value: '' } satisfies ToWorker);
         return;
       }
-      void ask(message.prompt).then((value) => {
+      void ask(message.prompt, message.line).then((value) => {
         this.worker?.postMessage({ type: 'input', id: message.id, value } satisfies ToWorker);
       });
       return;

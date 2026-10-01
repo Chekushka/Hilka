@@ -619,6 +619,14 @@ read it; `Sk.currLineNo` is only populated at suspensions. `Segment.line` is the
 null in practice and playback highlighting uses call order. Equivalent for the linear code grade
 7 writes, but it rules out line highlighting for anything with branches.
 
+**A suspending builtin *can* see its line — through the suspension, not the frame.** `input()`
+returns a promise, which Skulpt turns into a suspension that every compiled frame wraps in its
+own, each recording `$filename` and `$lineno`. A `'Sk.promise'` handler passed to
+`asyncToPromise` that returns nothing observes that chain without taking it over; the innermost
+`<stdin>.py` frame is the `input()` line (`lib/runner/suspension-line.ts`). The handler runs
+after `inputfun` returns, so the worker posts `input-request` in a microtask, once the line is
+known. Turtle calls never suspend, which is why this does not rescue `Segment.line`.
+
 **Skulpt's error text is not CPython's.** The grade 8 archetype `input()` + `+ 1` gives
 `TypeError: cannot concatenate 'str' and 'int' objects`, where CPython 3 says `can only
 concatenate str (not "int") to str`. No shared substring, so the rules in `lib/errors/` match

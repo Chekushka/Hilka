@@ -124,8 +124,11 @@ export interface RunOptions {
   /** The world `import robot` moves in. Absent means an empty field, start top-left facing east. */
   grid?: GridWorld;
   onStdout?: (chunk: string) => void;
-  /** Interactive only. Resolve with what the student typed. */
-  onInputRequest?: (prompt: string) => Promise<string>;
+  /**
+   * Interactive only. Resolve with what the student typed. `line` is the
+   * program line whose `input()` is asking — null when the engine cannot tell.
+   */
+  onInputRequest?: (prompt: string, line: number | null) => Promise<string>;
 }
 
 export interface PythonRunner {

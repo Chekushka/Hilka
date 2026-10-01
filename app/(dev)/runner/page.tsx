@@ -21,6 +21,8 @@ interface TestHooks {
     }
   ): Promise<RunResult>;
   runInteractive(code: string, answers: string[], delayMs: number): Promise<RunResult>;
+  /** Runs interactively, answering in order, and returns the line each `input()` reported. */
+  inputLines(code: string, answers: string[]): Promise<(number | null)[]>;
   parse(code: string): Promise<ParseResult>;
 }
 
@@ -51,6 +53,18 @@ export default function RunnerDevPage() {
               setTimeout(() => resolve(queue.shift() ?? ''), delayMs);
             })
         });
+      },
+      inputLines: async (source, answers) => {
+        const queue = [...answers];
+        const lines: (number | null)[] = [];
+        await runner.run(source, {
+          mode: 'interactive',
+          onInputRequest: (_prompt, line) => {
+            lines.push(line);
+            return Promise.resolve(queue.shift() ?? '');
+          }
+        });
+        return lines;
       }
     };
     return () => {

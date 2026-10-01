@@ -11,6 +11,7 @@ import { createRobotRecorder, ROBOT_MODULE_PATH, ROBOT_MODULE_SOURCE, robotRun }
 import { patchStrUnicode } from './modules/str-unicode';
 import { createRecorder, TURTLE_MODULE_PATH, TURTLE_MODULE_SOURCE } from './modules/turtle';
 import { skulptToAst } from './ast';
+import { suspensionLine, type SuspensionFrame } from './suspension-line';
 import { describeError } from './describe-error';
 import { extractVars } from './py-values';
 import type { SkulptException, SkulptGlobal, SkulptModule } from './skulpt.d';
@@ -54,6 +55,8 @@ patchStrUnicode(Sk);
 Sk.configure({ __future__: Sk.python3 });
 
 let pendingInput: ((value: string) => void) | null = null;
+/** Line of the `input()` call now suspending — see suspension-line.ts. */
+let inputLine: number | null = null;
 
 function post(message: FromWorker): void {
   (self as unknown as { postMessage: (m: FromWorker) => void }).postMessage(message);
@@ -103,7 +106,13 @@ async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<v
         return queue.shift() as string;
       }
       const started = Date.now();
-      post({ type: 'input-request', id: request.id, prompt: prompt ?? '' });
+      inputLine = null;
+      // Posted after the current synchronous unwind: the suspension this
+      // promise turns into reaches the handler below first, and that handler
+      // is what knows the line.
+      void Promise.resolve().then(() =>
+        post({ type: 'input-request', id: request.id, prompt: prompt ?? '', line: inputLine })
+      );
       return new Promise<string>((resolve) => {
         pendingInput = (value: string) => {
           const waited = Date.now() - started;
@@ -136,8 +145,15 @@ async function handleRun(request: Extract<ToWorker, { type: 'run' }>): Promise<v
   let timedOut = false;
   let vars: Record<string, PyValue> = {};
   try {
-    const finished = await Sk.misceval.asyncToPromise(() =>
-      Sk.importMainWithBody('<stdin>', false, code, true)
+    const finished = await Sk.misceval.asyncToPromise(
+      () => Sk.importMainWithBody('<stdin>', false, code, true),
+      {
+        // Only observes: returning nothing leaves the promise to Skulpt.
+        'Sk.promise': (suspension: SuspensionFrame) => {
+          inputLine = suspensionLine(suspension);
+          return undefined;
+        }
+      }
     );
     // Only reachable once the program — the epilogue included — ran to
     // completion, so a raised exception never leaves stale vars behind.

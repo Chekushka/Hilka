@@ -37,6 +37,8 @@
     "outputEmpty": "Запусти код — і побачиш результат тут.",
     "inputLabel": "Відповідь для input()",
     "inputSubmit": "Надіслати",
+    "inputWaiting": "Програма чекає на твою відповідь",
+    "inputWaitingLine": "Програма чекає на твою відповідь — рядок {line}:",
     "caseLabel": "Випадок {n}",
     "yourDrawing": "Твій малюнок",
     "target": "Зразок",

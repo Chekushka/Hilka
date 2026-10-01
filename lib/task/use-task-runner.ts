@@ -32,13 +32,28 @@ export interface TaskRunnerState {
   report: CaseScoredReport | null;
   target: Segment[];
   /**
-   * Set while a plain Run is inside `input()`, waiting on the student — the
-   * text is what the student's own code passed to `input(...)`, shown next
-   * to the answer field rather than printed into stdout (the engine hands it
-   * over separately, never as part of the program's own output). `null`
-   * outside of a wait; `submitInput` is how the workspace answers it.
+   * Set while a plain Run is inside `input()`, waiting on the student;
+   * `null` outside of a wait. `submitInput` is how the workspace answers it.
    */
-  pendingInputPrompt: string | null;
+  pendingInput: PendingInput | null;
+}
+
+/** An `input()` call the student's own program is waiting in. */
+export interface PendingInput {
+  /**
+   * What the code passed to `input(...)`, shown next to the answer field
+   * rather than printed into stdout (the engine hands it over separately,
+   * never as part of the program's own output).
+   */
+  prompt: string;
+  /** The program line whose `input()` is asking — null when the engine could not tell. */
+  line: number | null;
+  /**
+   * That line's source as it was when the run started, so a program with
+   * several `input()` calls shows which one is asking even after the student
+   * edits the code mid-run, and in `fill`, which has no line numbers.
+   */
+  source: string | null;
 }
 
 const EMPTY_RESULT: RunResult = {
@@ -84,7 +99,7 @@ export function useTaskRunner(task: RunnableTask) {
     result: null,
     report: null,
     target: [],
-    pendingInputPrompt: null
+    pendingInput: null
   });
 
   useEffect(() => {
@@ -178,7 +193,7 @@ export function useTaskRunner(task: RunnableTask) {
       setState((previous) => ({
         ...previous,
         busy: false,
-        pendingInputPrompt: null,
+        pendingInput: null,
         result: erroredResult ?? shownResult ?? EMPTY_RESULT,
         report: erroredResult ? null : { passed: allPassed, results, score: casesPassed / cases.length }
       }));
@@ -205,14 +220,15 @@ export function useTaskRunner(task: RunnableTask) {
           ...previous,
           result: { ...(previous.result ?? EMPTY_RESULT), stdout: (previous.result ?? EMPTY_RESULT).stdout + chunk }
         })),
-      onInputRequest: (prompt) =>
+      onInputRequest: (prompt, line) =>
         new Promise<string>((resolve) => {
           inputResolveRef.current = resolve;
-          setState((previous) => ({ ...previous, pendingInputPrompt: prompt }));
+          const source = line === null ? null : (code.split('\n')[line - 1]?.trim() ?? null);
+          setState((previous) => ({ ...previous, pendingInput: { prompt, line, source } }));
         })
     });
     inputResolveRef.current = null;
-    setState((previous) => ({ ...previous, busy: false, pendingInputPrompt: null, result, report: null }));
+    setState((previous) => ({ ...previous, busy: false, pendingInput: null, result, report: null }));
   }, [grid]);
 
   const execute = useCallback(
@@ -223,7 +239,7 @@ export function useTaskRunner(task: RunnableTask) {
         ...previous,
         busy: true,
         report: null,
-        pendingInputPrompt: null,
+        pendingInput: null,
         // A plain Run streams into this from here; Check keeps the previous
         // result on screen until its own single result replaces it below.
         result: judge ? previous.result : EMPTY_RESULT
@@ -245,7 +261,7 @@ export function useTaskRunner(task: RunnableTask) {
     const resolve = inputResolveRef.current;
     if (!resolve) return;
     inputResolveRef.current = null;
-    setState((previous) => ({ ...previous, pendingInputPrompt: null }));
+    setState((previous) => ({ ...previous, pendingInput: null }));
     resolve(value);
   }, []);
 

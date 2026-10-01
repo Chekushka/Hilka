@@ -7,6 +7,7 @@
  * an IDE arguing with them while they type.
  *
  * The failing line is marked with a calm background, never a red squiggle.
+ * The line whose `input()` is waiting gets the accent instead.
  *
  * `fill` is the student workspace's variant (components/task/CodePane.tsx): it
  * takes the whole code pane, no box of its own, and sets code larger — the
@@ -26,30 +27,34 @@ import { EditorState, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, EditorView, keymap, lineNumbers, type DecorationSet } from '@codemirror/view';
 import { t } from '@/lib/i18n';
 
-const setErrorLine = StateEffect.define<number | null>();
-
-const errorLineField = StateField.define<DecorationSet>({
-  create() {
-    return Decoration.none;
-  },
-  update(decorations, transaction) {
-    let next = decorations.map(transaction.changes);
-    for (const effect of transaction.effects) {
-      if (!effect.is(setErrorLine)) continue;
-      const line = effect.value;
-      if (line === null || line < 1 || line > transaction.state.doc.lines) {
-        next = Decoration.none;
-      } else {
-        const at = transaction.state.doc.line(line);
-        next = Decoration.set([
-          Decoration.line({ class: 'cm-attention-line' }).range(at.from)
-        ]);
+/** One highlighted line, moved or cleared by its effect; `null` clears it. */
+function lineHighlight(className: string) {
+  const set = StateEffect.define<number | null>();
+  const field = StateField.define<DecorationSet>({
+    create() {
+      return Decoration.none;
+    },
+    update(decorations, transaction) {
+      let next = decorations.map(transaction.changes);
+      for (const effect of transaction.effects) {
+        if (!effect.is(set)) continue;
+        const line = effect.value;
+        if (line === null || line < 1 || line > transaction.state.doc.lines) {
+          next = Decoration.none;
+        } else {
+          const at = transaction.state.doc.line(line);
+          next = Decoration.set([Decoration.line({ class: className }).range(at.from)]);
+        }
       }
-    }
-    return next;
-  },
-  provide: (field) => EditorView.decorations.from(field)
-});
+      return next;
+    },
+    provide: (field) => EditorView.decorations.from(field)
+  });
+  return { set, field };
+}
+
+const errorLine = lineHighlight('cm-attention-line');
+const inputLine = lineHighlight('cm-input-line');
 
 const theme = EditorView.theme({
   '&': { fontSize: '14px', backgroundColor: 'var(--code-bg)', color: 'var(--ink)' },
@@ -72,6 +77,12 @@ const theme = EditorView.theme({
     // someone who cannot separate red from green anyway.
     backgroundColor: 'color-mix(in srgb, var(--attention) 18%, transparent)',
     boxShadow: 'inset 3px 0 0 0 var(--attention)'
+  },
+  // The line whose input() is waiting: the accent, not the attention colour,
+  // because nothing is wrong — the program is asking a question.
+  '.cm-input-line': {
+    backgroundColor: 'var(--accent-soft)',
+    boxShadow: 'inset 3px 0 0 0 var(--accent)'
   }
 });
 
@@ -79,6 +90,8 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   errorLine?: number | null;
+  /** The line whose `input()` a running program is waiting in. */
+  inputLine?: number | null;
   readOnly?: boolean;
   ariaLabel: string;
   variant?: 'boxed' | 'fill';
@@ -87,7 +100,8 @@ interface CodeEditorProps {
 export function CodeEditor({
   value,
   onChange,
-  errorLine = null,
+  errorLine: errorLineNumber = null,
+  inputLine: inputLineNumber = null,
   readOnly = false,
   ariaLabel,
   variant = 'boxed'
@@ -112,7 +126,8 @@ export function CodeEditor({
         python(),
         indentUnit.of('    '),
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
-        errorLineField,
+        errorLine.field,
+        inputLine.field,
         theme,
         EditorView.lineWrapping,
         EditorState.readOnly.of(readOnly),
@@ -137,8 +152,19 @@ export function CodeEditor({
   }, []);
 
   useEffect(() => {
-    view.current?.dispatch({ effects: setErrorLine.of(errorLine) });
-  }, [errorLine]);
+    view.current?.dispatch({ effects: errorLine.set.of(errorLineNumber) });
+  }, [errorLineNumber]);
+
+  useEffect(() => {
+    const editor = view.current;
+    if (!editor) return;
+    const effects: StateEffect<unknown>[] = [inputLine.set.of(inputLineNumber)];
+    // On a phone the line can be off screen while the answer field has the focus.
+    if (inputLineNumber !== null && inputLineNumber >= 1 && inputLineNumber <= editor.state.doc.lines) {
+      effects.push(EditorView.scrollIntoView(editor.state.doc.line(inputLineNumber).from, { y: 'nearest' }));
+    }
+    editor.dispatch({ effects });
+  }, [inputLineNumber]);
 
   if (variant === 'boxed') {
     return <div ref={host} className="overflow-hidden rounded-md border border-line" />;
@@ -151,7 +177,7 @@ export function CodeEditor({
   );
 }
 
-const SYMBOLS = [':', '(', ')', '"', "'", '=', '[', ']', ',', '_', '+', '-', '*', '/', '<', '>', '#'];
+const SYMBOLS = [':', '(', ')', '"', "'", '=', '[', ']', '{', '}', ',', '_', '+', '-', '*', '/', '<', '>', '#'];
 
 const keyClass =
   'flex h-10 min-w-10 flex-none items-center justify-center rounded-md border border-line bg-surface px-2.5 font-mono text-base text-ink active:bg-accent-soft';

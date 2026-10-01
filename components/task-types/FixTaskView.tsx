@@ -40,7 +40,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
   const [code, setCode] = useState(fileSpec ? '' : task.payload.broken);
   const world = gridWorldOf(task);
   const runnable = useMemo(() => ({ ...task, grid: world }), [task, world]);
-  const { engine, busy, result, report, target, pendingInputPrompt, run, check, submitInput, parse } = useTaskRunner(runnable);
+  const { engine, busy, result, report, target, pendingInput, run, check, submitInput, parse } = useTaskRunner(runnable);
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
@@ -76,7 +76,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
     check(code);
   };
   const showsOutput =
-    task.payload.surface === 'console' || (result?.stdout ?? '').length > 0 || pendingInputPrompt !== null;
+    task.payload.surface === 'console' || (result?.stdout ?? '').length > 0 || pendingInput !== null;
 
   return (
     <WorkspaceFrame
@@ -90,7 +90,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
           actions={<RunCheckActions busy={busy} disabled={disabled} onRun={() => run(code)} onCheck={retry} />}
         >
           {showsOutput && !loading ? (
-            <OutputPanel stdout={result?.stdout ?? ''} pendingInputPrompt={pendingInputPrompt} onSubmitInput={submitInput} />
+            <OutputPanel stdout={result?.stdout ?? ''} pendingInput={pendingInput} onSubmitInput={submitInput} />
           ) : (
             !result && <RunDockIdle engine={engine} />
           )}
@@ -131,6 +131,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
             value={code}
             onChange={setCode}
             errorLine={result?.error?.line ?? null}
+            inputLine={pendingInput?.line ?? null}
             readOnly={fileSpec !== undefined}
             ariaLabel={t('workspace.editorLabel')}
             variant="fill"
