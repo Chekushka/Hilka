@@ -87,6 +87,11 @@ export const CHECK_FIELDS: Record<CheckKind, readonly FieldSpec[]> = {
     { key: 'values', type: 'numberList', required: true },
     { key: 'tol', type: 'number', required: true }
   ],
+  matches_reference: [
+    { key: 'compare', type: 'select', options: ['numbers', 'last_line'], required: true },
+    { key: 'tol', type: 'optionalNumber' },
+    { key: 'normalize', type: 'select', options: ['trim', 'loose'] }
+  ],
   var_equals: [
     { key: 'name', type: 'text', required: true },
     { key: 'value', type: 'json', required: true }
@@ -116,6 +121,7 @@ export const CHECK_KINDS = Object.keys(CHECK_FIELDS) as CheckKind[];
 const RUN_KINDS: readonly CheckKind[] = [
   'number_close',
   'numbers_equal',
+  'matches_reference',
   'last_line_equals',
   'stdout_contains',
   'stdout_equals',
@@ -162,6 +168,8 @@ export function defaultCheck(kind: CheckKind): Check {
       return { kind, value: 0, tol: 0.01, which: 'last' };
     case 'numbers_equal':
       return { kind, values: [], tol: 0 };
+    case 'matches_reference':
+      return { kind, compare: 'numbers' };
     case 'var_equals':
       return { kind, name: '', value: 0 };
     case 'expr':

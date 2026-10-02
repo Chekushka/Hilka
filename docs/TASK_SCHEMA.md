@@ -377,6 +377,8 @@ type Check = { message?: string } & (
   | { kind: 'last_line_equals';value: string; normalize?: 'trim' | 'loose' }
   | { kind: 'number_close';    value: number; tol: number; which?: 'last' | 'first' | number }
   | { kind: 'numbers_equal';   values: number[]; tol: number }
+  | { kind: 'matches_reference'; compare: 'numbers' | 'last_line'; tol?: number;
+                               normalize?: 'trim' | 'loose' }   // vs the reference's own output
 
   // --- program state ------------------------------------------------------
   | { kind: 'var_equals';      name: string; value: unknown }
@@ -404,8 +406,19 @@ type Check = { message?: string } & (
 
 `lib/checker/` evaluates these today: `choice_equals`, `order_equals`,
 `text_equals`, `stdout_equals`, `stdout_contains`, `last_line_equals`,
-`number_close`, `numbers_equal`, `shape_equals`, `shape_contains`, `shape_props`,
-`uses`, `forbids`, `var_equals`, `expr`, `grid_goal`.
+`number_close`, `numbers_equal`, `matches_reference`, `shape_equals`, `shape_contains`,
+`shape_props`, `uses`, `forbids`, `var_equals`, `expr`, `grid_goal`.
+
+`matches_reference` is the console counterpart of `shape_equals`: the expected output is never
+typed, it is what the reference solution prints **for the same case's input**, run alongside the
+student's program (`lib/task/check-code.ts` runs the reference per case when a check of this kind
+is present; `Evidence.reference.stdout` carries it). `compare: 'numbers'` compares every number
+in the output with the reference's, in order, within `tol` (default 1e-6) — like `numbers_equal`,
+so a prompt that prints a number counts too; `'last_line'` compares the last lines, normalized
+as asked. Never an exact `stdout` comparison, so it is allowed on tasks with input (rule 6). It
+is what makes a parameterized console task checkable at all: a typed value is right for one
+variant, the reference's output is right for every one ("Parameterization"). With no reference
+output to compare with, it fails rather than passes.
 
 `order_equals` compares `submission.orderedLines[i].index` against `check.lines[i]` always, and
 additionally `.indent` against `check.indents[i]` when `checkIndent` is true — `indents` is the
@@ -444,7 +457,7 @@ it looks right. Leading spaces stay significant from the second line on: they ar
 
 **`stdout_equals` is banned on any task with `cases`.** Prompt wording varies legitimately
 between correct solutions; exact matching fails students who are right. Use `number_close`,
-`numbers_equal`, or `last_line_equals` instead. Enforce this in the authoring UI, not by
+`numbers_equal`, `last_line_equals` or `matches_reference` instead. Enforce this in the authoring UI, not by
 convention.
 
 **`shape_equals` compares normalized segment sets, never command logs.** Normalization: round
@@ -517,7 +530,10 @@ interface ParamSpec {
 }
 ```
 
-Placeholders are written `{a}` in `payload` text, in `cases[].stdin`, and in `reference.code`.
+Placeholders are written `{a}` in `payload` text, in `cases[].stdin`, and in `reference.code`
+— on `code` (`prompt`, `starter`, a grid world), `fix` (`prompt`, `broken`) and `fill` (`prompt`,
+`template`; a gap `{{1}}` is never a placeholder). Never in checks, hints or check messages: those
+are shown as written, so a message must not mention `{a}`.
 Values are derived from `seed = hash(sessionId + studentName + taskId)` via a seeded PRNG in
 `lib/seed/`, so the same student always sees the same variant and a teacher's report reproduces
 it exactly.
@@ -529,16 +545,20 @@ otherwise-ordinary task; `lib/task/use-task-runner.ts`'s existing warm-up run (w
 re-executes `reference.code` fresh on every page load, parameterized or not) does the rest with
 no changes of its own.
 
-This means only checks whose expected value comes from *running* the reference actually work
-today — `shape_equals`/`shape_contains` (turtle) and anything with no fixed value at all
-(`shape_props`, `uses`, `forbids`). A check with a hand-typed expected value —
-`number_close`/`text_equals`/`stdout_equals`/`var_equals` — stays fixed across every variant, so
-it is very likely wrong for at least one combination. `npm run verify:references` (which checks
-*every* combination, not a sampled seed) catches this immediately as a normal reference-check
-failure — it is a real authoring mistake, not a special case to detect separately. `expr` is the
-one exception: `check.python` is plain text, so writing the placeholder directly into the
-expression (e.g. `"total == {a} * 4"`) substitutes the same way `reference.code` does — that
-path is untested today.
+This means only checks whose expected value comes from *running* the reference work —
+`shape_equals`/`shape_contains` (turtle), `matches_reference` (console: the reference runs on the
+same case's input and its output is the expected one), and anything with no fixed value at all
+(`shape_props`, `uses`, `forbids`, `grid_goal`). A check with a hand-typed expected value —
+`number_close`/`text_equals`/`stdout_equals`/`last_line_equals`/`var_equals`/`expr` — stays fixed
+across every variant, so it is very likely wrong for at least one combination.
+`npm run verify:references` (which checks *every* combination, not a sampled seed) catches this
+immediately as a normal reference-check failure — it is a real authoring mistake, not a special
+case to detect separately. (An earlier version of this section said placeholders inside an
+`expr` were substituted; `resolveTaskParams` has never substituted checks, so they are not.)
+
+For a parameterized `fix`, the verification also runs the broken program for **every**
+combination and every case, with that case's input and checks: each variant must fail somewhere,
+or the student given that variant would start from a program that already passes.
 
 Keep parameter spaces small and every combination valid. A range that can produce a division by
 zero or a negative square root will produce it, in a graded session, for exactly one student.
@@ -548,10 +568,16 @@ silently taking a long time to verify or publish.
 Placeholders also work in a grid task's world (`payload.grid`), where a coordinate or the start
 direction may be a `{name}` — see "Grid", "Parameterized worlds".
 
+Worked examples in `content/`: `g7-code-turtle-star-variant` (turtle `code`),
+`g7-grid-own-battery` (a grid world), `g7-fill-polygon-variant` (turtle `fill`: the number of
+sides) and `g8-fix-discount-variant` (console `fix` with `matches_reference`: the percentage).
+
 **Not built**: an authoring UI — a parameterized task is hand-authored JSON in
-`content/seed-tasks/`, the same way `cases` started (docs/TASKS.md); `params` on `fix` or
-`predict`; anything beyond `code`. `/practice` has no session or student identity, so a
-parameterized task must only ever be assigned to a session, never opened there.
+`content/seed-tasks/`, the same way `cases` started (docs/TASKS.md); `params` on `predict` (its
+expected answer is the shown program's output, which would have to be computed per variant at
+publish time — there is no server-side Python to do it on request); placeholders in a `fix` or
+`fill` grid world. `/practice` has no session or student identity, so a parameterized task must
+only ever be assigned to a session, never opened there.
 
 ## Randomness and determinism
 

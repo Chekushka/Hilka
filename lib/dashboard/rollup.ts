@@ -11,7 +11,8 @@
 import type { SessionAttemptRow } from '@/lib/db/attempts';
 import type { SessionTaskSummary } from '@/lib/session/types';
 
-export type CellStatus = 'not_started' | 'passed' | 'stuck';
+/** 'not_assigned': outside the student's pool (lib/seed/assignment.ts) — not theirs to do. */
+export type CellStatus = 'not_started' | 'passed' | 'stuck' | 'not_assigned';
 
 export interface RollupCell {
   status: CellStatus;
@@ -30,11 +31,17 @@ export interface RollupRow {
 export function buildRollup(
   roster: string[],
   tasks: SessionTaskSummary[],
-  attempts: Pick<SessionAttemptRow, 'studentName' | 'taskId' | 'passed'>[]
+  attempts: Pick<SessionAttemptRow, 'studentName' | 'taskId' | 'passed'>[],
+  /** With a pool: the tasks each student was given. Absent means every task, for everyone. */
+  assignedTo?: (studentName: string) => ReadonlySet<string>
 ): RollupRow[] {
   const rows = roster.map((studentName) => {
+    const assigned = assignedTo?.(studentName);
     const cells = tasks.map((task): RollupCell => {
       const own = attempts.filter((a) => a.studentName === studentName && a.taskId === task.id);
+      if (assigned && !assigned.has(task.id)) {
+        return { status: 'not_assigned', attempts: own.length };
+      }
       if (own.length === 0) {
         return { status: 'not_started', attempts: 0 };
       }

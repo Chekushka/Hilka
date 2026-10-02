@@ -7,7 +7,7 @@
 import { randomInt } from 'node:crypto';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { SESSION_CODE_ALPHABET, SESSION_CODE_LENGTH } from '@/lib/session/code';
-import type { SessionMode } from '@/lib/session/types';
+import type { SessionKind, SessionMode } from '@/lib/session/types';
 import { isFileDelivery } from '@/lib/task/prerequisite';
 import type { TaskType } from '@/lib/task/types';
 import { getDb } from './client';
@@ -34,6 +34,8 @@ export interface TaskPickerOption {
   /** With `fileDelivery`, what the builder's sequencing warning reads (lib/task/prerequisite.ts). */
   type: TaskType;
   fileDelivery: boolean;
+  /** Each student gets their own variant (`tasks.params`, lib/task/params.ts). */
+  parameterized: boolean;
 }
 
 /** Every published task, for the builder's own client-side topic/grade filtering — the catalog is small enough not to need a filtered query. */
@@ -48,13 +50,18 @@ export async function listPublishedTasksForPicker(): Promise<TaskPickerOption[]>
       gradeTags: tasks.gradeTags,
       difficulty: tasks.difficulty,
       type: tasks.type,
-      payload: tasks.payload
+      payload: tasks.payload,
+      params: tasks.params
     })
     .from(tasks)
     .innerJoin(topics, eq(tasks.topicId, topics.id))
     .where(eq(tasks.status, 'published'))
     .orderBy(asc(topics.order), asc(tasks.slug));
-  return rows.map(({ payload, ...row }) => ({ ...row, fileDelivery: isFileDelivery(payload) }));
+  return rows.map(({ payload, params, ...row }) => ({
+    ...row,
+    fileDelivery: isFileDelivery(payload),
+    parameterized: params !== null
+  }));
 }
 
 /** Narrows a teacher-submitted task id list down to ones that are actually published, in the order given. */
@@ -71,10 +78,17 @@ export async function filterToPublishedTaskIds(candidateIds: string[]): Promise<
 export interface CreateSessionInput {
   classId: string;
   mode: SessionMode;
+  kind: SessionKind;
   taskIds: string[];
+  improvementTaskIds: string[];
   timeLimitS: number | null;
   hintsEnabled: boolean;
   shuffle: boolean;
+  /** Each student gets this many of `taskIds`; null for all. */
+  poolSize?: number | null;
+  dueAt: Date | null;
+  /** A class check only: the homework it checks. */
+  checksSessionId?: string | null;
 }
 
 /**
@@ -95,10 +109,15 @@ export async function createSession(input: CreateSessionInput): Promise<{ id: st
         classId: input.classId,
         code,
         mode: input.mode,
+        kind: input.kind,
         taskIds: input.taskIds,
+        improvementTaskIds: input.improvementTaskIds,
         timeLimitS: input.timeLimitS,
         hintsEnabled: input.hintsEnabled,
-        shuffle: input.shuffle
+        shuffle: input.shuffle,
+        poolSize: input.poolSize ?? null,
+        dueAt: input.dueAt,
+        checksSessionId: input.checksSessionId ?? null
       })
       .onConflictDoNothing()
       .returning({ id: sessions.id, code: sessions.code });

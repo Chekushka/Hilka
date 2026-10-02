@@ -55,8 +55,18 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
       }
       next={
         next
-          ? { kind: 'link', href: `/practice/${lesson.slug}/${next.slug}`, label: t('result.nextTask') }
-          : { kind: 'link', href: `/practice/${lesson.slug}`, label: t('result.backToLesson') }
+          ? {
+              kind: 'link',
+              href: `/practice/${lesson.slug}/${next.slug}`,
+              label: t('result.nextTask'),
+              shortLabel: t('result.nextShort')
+            }
+          : {
+              kind: 'link',
+              href: `/practice/${lesson.slug}`,
+              label: t('result.backToLesson'),
+              shortLabel: t('result.backToLessonShort')
+            }
       }
       context={
         <>

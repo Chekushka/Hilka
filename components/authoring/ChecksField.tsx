@@ -261,6 +261,9 @@ function CheckRow({
           {(kind === 'shape_equals' || kind === 'shape_contains') && (
             <p className="text-xs text-ink-muted">{t('builder.referenceNote')}</p>
           )}
+          {kind === 'matches_reference' && (
+            <p className="text-xs text-ink-muted">{t('builder.matchesReferenceNote')}</p>
+          )}
           <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
             {CHECK_FIELDS[kind].map((field) => (
               <CheckFieldControl
@@ -416,7 +419,11 @@ function CheckFieldControl({
             ['true', t('builder.yes')],
             ['false', t('builder.no')]
           ]
-        : [['', t('builder.none')], ...(field.options ?? []).map((option) => [option, t(`builder.normalizeText.${option}`)])];
+        : [
+            // A required select has no "none": the check would be missing a key it needs.
+            ...(field.required ? [] : [['', t('builder.none')]]),
+            ...(field.options ?? []).map((option) => [option, t(`builder.normalizeText.${option}`)])
+          ];
     control = (
       <select
         id={id}

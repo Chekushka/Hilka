@@ -10,6 +10,7 @@
  */
 import { useEffect, useRef } from 'react';
 import type { Segment } from '@/lib/runner';
+import { useTheme } from '@/lib/theme-client';
 
 interface TurtleCanvasProps {
   drawing: Segment[];
@@ -42,6 +43,8 @@ export function TurtleCanvas({
   highlightLast = false
 }: TurtleCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
+  // The tokens are resolved into pixels below, so a theme switch has to draw again.
+  const theme = useTheme();
 
   useEffect(() => {
     const canvas = ref.current;
@@ -108,7 +111,7 @@ export function TurtleCanvas({
     } else {
       stroke(drawing, ink, 1.5, []);
     }
-  }, [drawing, target, width, height, highlightLast]);
+  }, [drawing, target, width, height, highlightLast, theme]);
 
   return (
     <canvas

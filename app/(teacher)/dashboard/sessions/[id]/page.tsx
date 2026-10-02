@@ -1,10 +1,19 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
+import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
+import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
+import { SessionControls } from '@/components/dashboard/SessionControls';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
-import { getSessionForTeacher, type TeacherSessionDetail } from '@/lib/db/sessions';
+import { loadHomeworkFacts } from '@/lib/db/homework-facts';
+import {
+  getSessionForTeacher,
+  listCheckAttempts,
+  listClassChecks,
+  type TeacherSessionDetail
+} from '@/lib/db/sessions';
 import {
   STUCK_RULES,
   countStates,
@@ -17,13 +26,41 @@ import type { CellStatus } from '@/lib/dashboard/rollup';
 import { findSharedFiles } from '@/lib/dashboard/shared-files';
 import { formatPoints } from '@/lib/dashboard/csv';
 import { agoFrom, formatClock } from '@/lib/dashboard/time';
-import { sessionAllowsHighBand, suggestGradesForRoster, type SuggestedGrade } from '@/lib/grading/grade';
+import { DEFAULT_GRADING } from '@/lib/grading/config';
+import { sessionAllowsHighBand, type SuggestedGrade } from '@/lib/grading/grade';
+import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
+import { summarizeDevices } from '@/lib/homework/devices';
+import type { StudentFacts } from '@/lib/homework/facts';
+import type { HomeworkGrade } from '@/lib/homework/grade';
+import { isHomeworkGrade, suggestSessionGrades } from '@/lib/homework/session-grades';
 import { t } from '@/lib/i18n';
+import { assignedTo } from '@/lib/session/assigned';
 
 export const dynamic = 'force-dynamic';
 
-/** A suggestion for the teacher, never a verdict — see lib/grading/grade.ts. */
-function GradeCell({ suggestion }: { suggestion: SuggestedGrade }) {
+/** The facts column: a word per kind of fact, each a reason to open the card — never a verdict (lib/homework/facts.ts). */
+function FactsCell({ facts }: { facts: StudentFacts | undefined }) {
+  const words = facts
+    ? [
+        facts.pasted.length > 0 && t('dashboard.factPasted'),
+        facts.similar.length > 0 && t('dashboard.factSimilar'),
+        facts.untaught.length > 0 && t('dashboard.factUntaught')
+      ].filter((word): word is string => typeof word === 'string')
+    : [];
+  if (words.length === 0) return <span className="text-ink-muted">—</span>;
+  return (
+    <span className="flex flex-wrap gap-1" data-testid="facts">
+      {words.map((word) => (
+        <span key={word} className="rounded-full border border-attention px-2 py-0.5 text-xs text-ink">
+          {word}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** A suggestion for the teacher, never a verdict — see lib/grading/grade.ts and lib/homework/grade.ts. */
+function GradeCell({ suggestion }: { suggestion: SuggestedGrade | HomeworkGrade }) {
   if (suggestion.grade === null) {
     return (
       <span className="text-ink-muted" aria-label={t('dashboard.gradeNone')} title={t('dashboard.gradeNone')}>
@@ -35,10 +72,20 @@ function GradeCell({ suggestion }: { suggestion: SuggestedGrade }) {
     earned: formatPoints(suggestion.earned),
     possible: suggestion.possible
   });
+  const extras = isHomeworkGrade(suggestion)
+    ? [
+        suggestion.fixedTasks > 0 && t('dashboard.gradeFixed', { n: suggestion.fixedTasks }),
+        suggestion.lateAttempts > 0 && t('dashboard.gradeLate', { n: suggestion.lateAttempts }),
+        suggestion.recovered > 0 && t('dashboard.gradeRecovered', { points: formatPoints(suggestion.recovered) }),
+        suggestion.checkedTasks > 0 &&
+          t('dashboard.gradeChecked', { confirmed: suggestion.confirmedTasks, checked: suggestion.checkedTasks })
+      ].filter((text): text is string => typeof text === 'string')
+    : [];
   return (
-    <span title={suggestion.capped ? `${points}. ${t('dashboard.gradeCappedHint')}` : points}>
+    <span title={[points, suggestion.capped && t('dashboard.gradeCappedHint'), ...extras].filter(Boolean).join('. ')}>
       <span className="text-lg font-semibold text-ink">{suggestion.grade}</span>
       {suggestion.capped && <span className="ml-1 text-xs text-ink-muted">{t('dashboard.gradeCapped')}</span>}
+      {extras.length > 0 && <span className="block text-xs text-ink-muted">{extras.join(' · ')}</span>}
     </span>
   );
 }
@@ -46,7 +93,8 @@ function GradeCell({ suggestion }: { suggestion: SuggestedGrade }) {
 const CELL_WORD: Record<CellStatus, string> = {
   passed: 'dashboard.resultPassed',
   stuck: 'dashboard.resultNotYet',
-  not_started: 'dashboard.rollupNotStarted'
+  not_started: 'dashboard.rollupNotStarted',
+  not_assigned: 'dashboard.rollupNotAssigned'
 };
 
 /**
@@ -73,6 +121,8 @@ async function loadClassView(session: TeacherSessionDetail) {
   const students = sortForClassTable(
     summarizeStudents(session.roster, session.tasks, rows, {
       mode: session.mode,
+      kind: session.kind,
+      assignedTo: assignedTo(session) ?? undefined,
       open: session.open,
       now
     })
@@ -106,9 +156,22 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   const taskTallies = tallyTasks(students, session.tasks.length);
   const sharedFiles = findSharedFiles(rows);
   const graded = session.mode === 'graded';
-  const grades = graded
+  const homework = session.kind === 'homework';
+  // A class check has no grade of its own: its results land in the homework's (lib/homework/grade.ts).
+  const check = session.kind === 'check';
+  const [checkRows, classChecks] = homework
+    ? await Promise.all([listCheckAttempts(session.id), listClassChecks(session.id)])
+    : [[], []];
+  const grades =
+    graded && !check
+      ? new Map(suggestSessionGrades(session, rows, checkRows).map((row) => [row.studentName, row.suggestion]))
+      : null;
+  // Facts for the teacher (docs/HOMEWORK.md, section 5): homework only, as decided.
+  const facts = homework ? await loadHomeworkFacts(session) : null;
+  // Device marks (docs/HOMEWORK.md, section 2): how many browsers worked under each name.
+  const devices = homework
     ? new Map(
-        suggestGradesForRoster(session.roster, session.tasks, rows).map((row) => [row.studentName, row.suggestion])
+        session.roster.map((name) => [name, summarizeDevices(rows.filter((row) => row.studentName === name)).length])
       )
     : null;
   const taskIndex = new Map(session.tasks.map((task, index) => [task.id, index]));
@@ -126,12 +189,36 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           <p className="mt-1 text-sm text-ink-muted">
             {t('dashboard.sessionSubtitle', {
               classTitle: session.classTitle,
-              mode: t(graded ? 'sessionBuilder.modeGraded' : 'sessionBuilder.modePractice'),
+              mode: t(
+                homework
+                  ? 'sessionBuilder.modeHomework'
+                  : check
+                    ? 'dashboard.checkTitle'
+                    : graded
+                    ? 'sessionBuilder.modeGraded'
+                    : 'sessionBuilder.modePractice'
+              ),
               n: session.roster.length
             })}
             {' · '}
             {session.open ? t('dashboard.sessionOpen') : t('dashboard.sessionClosed')}
           </p>
+          {check && session.checks && (
+            <p className="mt-1 text-sm text-ink" data-testid="check-of">
+              {t('dashboard.checkOf', { code: session.checks.code })}{' '}
+              <Link href={`/dashboard/sessions/${session.checks.id}`} className="text-accent">
+                {t('dashboard.checkOfLink', { code: session.checks.code })}
+              </Link>
+            </p>
+          )}
+          {homework && session.dueAt && (
+            <p className="mt-1 text-base text-ink" data-testid="homework-due">
+              {t('dashboard.homeworkDue', {
+                date: formatDeadline(session.dueAt),
+                distance: deadlineDistance(session.dueAt, now)
+              })}
+            </p>
+          )}
         </div>
         <ul className="ml-auto flex flex-wrap gap-2" aria-label={t('dashboard.studentsTitle')}>
           {TALLY_ORDER.filter(({ state }) => state !== 'stuck' || !graded).map(({ state, key }) => (
@@ -148,13 +235,14 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
         {session.open && <span className="text-xs text-ink-muted">{t('dashboard.liveUpdating')}</span>}
+        {session.open && <SessionControls sessionId={session.id} dueAt={homework ? session.dueAt : null} />}
         <span className="flex-1" />
         {rows.some((row) => row.sourceHash !== null) && (
           <a href={`/api/dashboard/sessions/${session.id}/files`} className="text-accent">
             {t('dashboard.downloadFiles')}
           </a>
         )}
-        {graded && rows.length > 0 && (
+        {grades && rows.length > 0 && (
           <a href={`/api/dashboard/sessions/${session.id}/grades`} className="text-accent">
             {t('dashboard.exportGrades')}
           </a>
@@ -182,6 +270,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   <th className="py-3 pr-4 text-right font-medium">{t('dashboard.columnAttempts')}</th>
                   <th className="py-3 pr-4 text-right font-medium">{t('dashboard.columnHintsShort')}</th>
                   <th className="py-3 pr-5 font-medium">{t('dashboard.columnLastActivity')}</th>
+                  {devices && <th className="py-3 pr-5 text-right font-medium">{t('dashboard.columnDevices')}</th>}
+                  {facts && <th className="py-3 pr-5 font-medium">{t('dashboard.columnFacts')}</th>}
                   {grades && (
                     <th className="py-3 pr-5 text-center font-medium">{t('dashboard.columnSuggestedGrade')}</th>
                   )}
@@ -266,6 +356,22 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                           <span className="text-ink-muted">—</span>
                         )}
                       </td>
+                      {devices && (
+                        <td className="py-3.5 pr-5 text-right tabular-nums">
+                          {(devices.get(student.studentName) ?? 0) > 1 ? (
+                            <span className="font-semibold text-attention" data-testid="devices-many">
+                              {devices.get(student.studentName)}
+                            </span>
+                          ) : (
+                            <span className="text-ink">{devices.get(student.studentName) || '—'}</span>
+                          )}
+                        </td>
+                      )}
+                      {facts && (
+                        <td className="py-3.5 pr-5">
+                          <FactsCell facts={facts.byStudent.get(student.studentName)} />
+                        </td>
+                      )}
                       {grades && (
                         <td className="py-3.5 pr-5 text-center">
                           {/* Every row comes from the roster, so every name has a suggestion. */}
@@ -279,19 +385,32 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             </table>
           </div>
           <p className="mt-2 text-xs text-ink-muted">
-            {graded
+            {homework
+              ? `${t('dashboard.homeworkNote')} ${t('dashboard.factsNote')}`
+              : graded
               ? t('dashboard.stuckRuleGraded')
               : t('dashboard.stuckRule', {
                   checks: STUCK_RULES.failedChecks,
                   minutes: STUCK_RULES.idleMinutes
                 })}
           </p>
-          {graded && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.gradeNote')}</p>}
-          {graded && !sessionAllowsHighBand(session.tasks) && (
+          {grades && !homework && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.gradeNote')}</p>}
+          {grades && !sessionAllowsHighBand([...session.tasks, ...session.improvementTasks]) && (
             <p className="mt-1 text-sm text-attention">{t('dashboard.gradeNoHardTask')}</p>
           )}
         </section>
       )}
+
+      {homework && session.tasks.length > 0 && (
+        <ClassCheckPanel
+          homeworkId={session.id}
+          tasks={session.tasks.map(({ id: taskId, title }) => ({ id: taskId, title }))}
+          checks={classChecks}
+          fixCreditPercent={Math.round(DEFAULT_GRADING.fixCredit * 100)}
+        />
+      )}
+
+      {rows.some((row) => row.passed) && <RecheckPanel sessionId={session.id} />}
 
       {session.tasks.length > 0 && (
         <section aria-labelledby="session-tasks" className="mt-8">
@@ -302,7 +421,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             {session.tasks.map((task, index) => {
               const tally = taskTallies[index];
               return (
-                <li key={task.id} className="rounded-lg border border-line bg-surface px-4 py-3">
+                <li key={task.id} data-task-id={task.id} className="rounded-lg border border-line bg-surface px-4 py-3">
                   <p className="font-medium text-ink">
                     {index + 1}. {task.title}
                   </p>
@@ -326,6 +445,20 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               );
             })}
           </ol>
+        </section>
+      )}
+
+      {facts && facts.similarGroups.length > 0 && (
+        <section className="mt-8" data-testid="similar-code">
+          <h2 className="text-lg font-semibold text-ink">{t('dashboard.similarTitle')}</h2>
+          <p className="mt-1 text-sm text-ink-muted">{t('dashboard.similarNote')}</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            {facts.similarGroups.map((group) => (
+              <li key={`${group.taskId}:${group.studentNames.join(',')}`} className="text-ink">
+                {t('dashboard.similarItem', { task: group.taskTitle, names: group.studentNames.join(', ') })}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

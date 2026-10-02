@@ -28,10 +28,14 @@ export function SuccessPanel({ next }: { next?: NextTaskAction }) {
   // The way on is the obvious next thing, so it takes the keyboard focus —
   // Enter moves on without hunting for the button. On a phone the panel sits
   // at the top of the page while the student is down at Check, so it is
-  // brought into view; from lg it is always on screen.
+  // brought into view. From lg the task panel scrolls on its own, and a
+  // student who had scrolled it down to a hint would never see the panel open
+  // above: it is scrolled back to the top of that panel, not the page.
   useEffect(() => {
     nextRef.current?.querySelector<HTMLElement>('a, button')?.focus({ preventScroll: true });
-    if (!window.matchMedia('(min-width: 64rem)').matches) {
+    if (window.matchMedia('(min-width: 64rem)').matches) {
+      panelRef.current?.scrollIntoView({ block: 'nearest' });
+    } else {
       panelRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
   }, []);

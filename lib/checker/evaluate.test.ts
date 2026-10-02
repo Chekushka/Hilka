@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Segment } from '@/lib/runner';
-import { evaluateChecks } from './evaluate';
+import { evaluateCheck, evaluateChecks } from './evaluate';
 import type { Check, Evidence } from './types';
 
 function seg(x1: number, y1: number, x2: number, y2: number, color = 'black'): Segment {
@@ -264,5 +264,37 @@ describe('grid_goal', () => {
     const [result] = evaluateChecks([{ kind: 'grid_goal' }], withGrid(null)).results;
     expect(result.passed).toBe(false);
     expect(result.message).toContain('Робот');
+  });
+});
+
+describe('matches_reference', () => {
+  const run = (stdout: string) => ({ stdout, drawing: [], error: null, timedOut: false });
+  const evidence = (student: string, reference: string | undefined) => ({
+    submission: { code: '' },
+    run: run(student),
+    reference: reference === undefined ? null : { stdout: reference }
+  });
+
+  it('compares the numbers with the reference’s, whatever the prompt text', () => {
+    const check = { kind: 'matches_reference' as const, compare: 'numbers' as const };
+    expect(evaluateCheck(check, evidence('Площа: 12.0\n', '12\n')).passed).toBe(true);
+    expect(evaluateCheck(check, evidence('Введіть: 3 4\n12\n', '12\n')).passed).toBe(false);
+    expect(evaluateCheck(check, evidence('13\n', '12\n')).passed).toBe(false);
+  });
+
+  it('honours a tolerance', () => {
+    const check = { kind: 'matches_reference' as const, compare: 'numbers' as const, tol: 0.01 };
+    expect(evaluateCheck(check, evidence('3.141\n', '3.14159\n')).passed).toBe(true);
+  });
+
+  it('compares the last line, normalized as asked', () => {
+    const check = { kind: 'matches_reference' as const, compare: 'last_line' as const, normalize: 'loose' as const };
+    expect(evaluateCheck(check, evidence('Число?\nДодатне \n', 'додатне\n')).passed).toBe(true);
+    expect(evaluateCheck(check, evidence('нуль\n', 'додатне\n')).passed).toBe(false);
+  });
+
+  it('fails rather than passes when there is no reference output to compare with', () => {
+    const check = { kind: 'matches_reference' as const, compare: 'numbers' as const };
+    expect(evaluateCheck(check, evidence('12\n', undefined)).passed).toBe(false);
   });
 });

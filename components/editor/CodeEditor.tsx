@@ -95,6 +95,11 @@ interface CodeEditorProps {
   readOnly?: boolean;
   ariaLabel: string;
   variant?: 'boxed' | 'fill';
+  /**
+   * Each change to the document: `pasted` holds the inserted text for a paste
+   * or a drop, null otherwise (lib/task/activity.ts counts these — counts only).
+   */
+  onActivity?: (change: { pasted: string | null }) => void;
 }
 
 export function CodeEditor({
@@ -104,17 +109,20 @@ export function CodeEditor({
   inputLine: inputLineNumber = null,
   readOnly = false,
   ariaLabel,
-  variant = 'boxed'
+  variant = 'boxed',
+  onActivity
 }: CodeEditorProps) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
+  const onActivityRef = useRef(onActivity);
 
   // The editor is created once and keeps its own document, so the change
-  // handler is reached through a ref rather than rebuilding the view.
+  // handlers are reached through refs rather than rebuilding the view.
   useEffect(() => {
     onChangeRef.current = onChange;
-  }, [onChange]);
+    onActivityRef.current = onActivity;
+  }, [onChange, onActivity]);
 
   useEffect(() => {
     if (!host.current) return;
@@ -136,6 +144,13 @@ export function CodeEditor({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             onChangeRef.current(update.state.doc.toString());
+            for (const transaction of update.transactions) {
+              if (!transaction.docChanged) continue;
+              const pasteLike = transaction.isUserEvent('input.paste') || transaction.isUserEvent('input.drop');
+              let inserted = '';
+              if (pasteLike) transaction.changes.iterChanges((_a, _b, _c, _d, text) => (inserted += text.toString()));
+              onActivityRef.current?.({ pasted: pasteLike ? inserted : null });
+            }
           }
         })
       ]

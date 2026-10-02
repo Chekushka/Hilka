@@ -1,11 +1,13 @@
 /**
  * The app bar every screen shares (docs/mockups): the mark and wordmark on the
- * left, linking home, then whatever the route group puts beside it. Quiet on
- * purpose — no shadow, one hairline, the same surface as the task panel.
+ * left, linking home, then whatever the route group puts beside it, and the
+ * light/dark switch on every screen. Quiet on purpose — no shadow, one
+ * hairline, the same surface as the task panel.
  */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { BrandLockup } from '@/components/brand/BrandMark';
+import { ThemeToggle } from './ThemeToggle';
 import { t } from '@/lib/i18n';
 
 interface AppHeaderProps {
@@ -31,6 +33,7 @@ export function AppHeader({ nav, aside }: AppHeaderProps) {
       )}
       <span className="flex-1" />
       {aside}
+      <ThemeToggle />
     </header>
   );
 }

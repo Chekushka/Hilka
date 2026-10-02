@@ -3,6 +3,7 @@
  * shape is in docs/TASK_SCHEMA.md; this grows toward it as the types are
  * built, rather than being declared in full and left half-implemented.
  */
+import type { EditorActivity } from './activity';
 import type { Check, ReferenceArtifacts } from '@/lib/checker';
 import type { GridWorld } from '@/lib/runner';
 import type { GridWorldSpec, ParamSpec } from '@/lib/seed';
@@ -274,6 +275,8 @@ export interface FixTask {
   gradeTags: number[];
   version: number;
   status: TaskStatus;
+  /** `{name}` placeholders in the prompt, the program, the cases and the reference, resolved per student (lib/task/params.ts). Session-only. */
+  params?: ParamSpec;
 }
 
 /**
@@ -298,6 +301,8 @@ export interface FillTask {
   gradeTags: number[];
   version: number;
   status: TaskStatus;
+  /** `{name}` placeholders in the prompt, the program, the cases and the reference, resolved per student (lib/task/params.ts). Session-only. */
+  params?: ParamSpec;
 }
 
 /** Every task type the student-facing surfaces know how to render today. */
@@ -312,4 +317,6 @@ export interface AttemptOutcome {
   durationMs: number;
   /** Shape matches `Submission` — `{ code }` for `code`, `fix` and `fill`, `{ orderedLines }` for `parsons`, `{ choiceIndices }` for `quiz`, `{ text }` for `predict`. */
   submittedAnswer: Record<string, unknown>;
+  /** `code` and `fix` only: paste and edit counts since the task opened (lib/task/activity.ts). */
+  activity?: EditorActivity;
 }

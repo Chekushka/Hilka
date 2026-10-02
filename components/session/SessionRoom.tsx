@@ -2,10 +2,14 @@
 
 /**
  * Join-by-code entry (design-brief-python-platform.md, "Entry"): pick a name
- * from the class roster, then work through the session's tasks. The "done"
- * marker shown here is a client-side convenience for this visit, not the
- * record of truth — the results dashboard reading from `attempts` is
- * teacher-side work that does not exist yet.
+ * from the class roster, then work through the session's tasks. Once a name is
+ * picked, the student's own attempts are read back from the server
+ * (`GET /api/sessions/[code]/me`), so done marks, locks and fixes left survive
+ * a reload, another device and another day — homework (docs/HOMEWORK.md)
+ * depends on it, and a graded lesson's lock no longer resets on a reload.
+ * Every Check is appended to that list as it is posted, and the rules in
+ * lib/homework/rules.ts derive everything shown from it; the server applies
+ * the same rules and refuses what they do not allow.
  *
  * `studentName` is read from sessionStorage through `useSyncExternalStore`
  * rather than an effect: the value only exists in the browser, so the server
@@ -18,20 +22,28 @@
  * threaded into `TaskWorkspace`, `timeLimitS` drives the countdown below, and
  * a `'graded'` session locks a task to its first Check (`'practice'` keeps
  * unlimited retries, unchanged) — resolving TASKS.md's open question of
- * whether a graded attempt is final on first submit. Time running out or a
- * task already being submitted are both enforced only in the UI, same as
- * every other client-computed result in this flow (CLAUDE.md rule 4 keeps
- * the database out of reach here); a teacher reading the dashboard still
- * sees every attempt actually posted to `/api/attempts`.
+ * whether a graded attempt is final on first submit. Time running out is
+ * still enforced only in the UI; a task already submitted is enforced by
+ * `POST /api/attempts` as well.
+ *
+ * Homework adds: the deadline and the late rule above the list, a note that
+ * every device is marked (option D — entry stays free), two fixes after a
+ * failed first Check, and the improvement tasks once a point is lost. A class
+ * check of a homework runs as a graded lesson, with a note saying what it does
+ * to the homework's grade.
  */
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
 import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
+import { DEFAULT_GRADING } from '@/lib/grading/config';
+import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
+import { improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
 import { t } from '@/lib/i18n';
+import { assignTasks } from '@/lib/seed';
 import { nextOpenTaskId } from '@/lib/session/next-task';
 import { filePrerequisite } from '@/lib/task/prerequisite';
-import type { JoinedSession } from '@/lib/session/types';
+import type { JoinedSession, JoinedSessionTask, OwnAttempt, OwnSessionState } from '@/lib/session/types';
 import type { Task } from '@/lib/task/types';
 
 interface SessionRoomProps {
@@ -89,19 +101,99 @@ function formatRemaining(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+const percent = (share: number) => Math.round(share * 100);
+
+/** The note under the deadline: what late work is worth, from the grading config. */
+function lateRuleText(): string {
+  const [step] = DEFAULT_GRADING.lateSteps;
+  return t('session.lateRule', {
+    days: Math.round(step.withinHours / 24),
+    early: percent(step.credit),
+    late: percent(DEFAULT_GRADING.lateCreditBeyond)
+  });
+}
+
+/** A notice in the room: accent for information, attention for what needs acting on. Never red. */
+function Notice({ tone = 'info', children, testId }: { tone?: 'info' | 'attention'; children: ReactNode; testId?: string }) {
+  return (
+    <p
+      data-testid={testId}
+      className={`rounded-lg border-l-4 px-4 py-3 text-sm text-ink ${
+        tone === 'attention' ? 'border-attention bg-surface' : 'border-accent bg-accent-soft'
+      }`}
+    >
+      {children}
+    </p>
+  );
+}
+
+/** The task list's mark for one task, in words — never colour alone. */
+function StatusMark({ state, graded, homework }: { state: TaskState; graded: boolean; homework: boolean }) {
+  switch (state.status) {
+    case 'passed':
+      return (
+        <span className="text-sm text-growth">
+          {!homework
+            ? t('session.taskDone')
+            : state.viaFix
+              ? t('session.statusFixed', { credit: percent(DEFAULT_GRADING.fixCredit) })
+              : t('session.statusPassed')}
+        </span>
+      );
+    case 'fixable':
+      return <span className="text-sm text-attention">{t('session.statusFixable', { n: state.fixesLeft })}</span>;
+    case 'failed':
+      return (
+        <span className="text-sm text-ink-muted">
+          {homework ? t('session.statusFailed') : graded ? t('session.taskSubmitted') : null}
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
 export function SessionRoom({ code, session }: SessionRoomProps) {
   const storedName = useStoredName(code);
   const [pickedName, setPickedName] = useState<string | null>(null);
   const studentName = pickedName ?? storedName;
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  // What the selected task looked like when it was opened: a homework task
+  // passed during this visit keeps its success moment, one already passed
+  // before opens on the "counted" screen instead.
+  const [openedAs, setOpenedAs] = useState<TaskState['status'] | null>(null);
   const [taskCache, setTaskCache] = useState<Record<string, Task>>({});
   const [taskLoadFailed, setTaskLoadFailed] = useState<string | null>(null);
   const fetchedRef = useRef<Set<string>>(new Set());
-  const [passed, setPassed] = useState<ReadonlySet<string>>(new Set());
-  // 'graded' locks a task to its first Check; 'practice' never populates this.
-  const [submitted, setSubmitted] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const [own, setOwn] = useState<OwnSessionState | null>(null);
   const graded = session.mode === 'graded';
+  const homework = session.kind === 'homework';
+  const classCheck = session.kind === 'check' && (
+    <Notice testId="check-notice">
+      {t('session.checkNotice', { credit: percent(DEFAULT_GRADING.fixCredit) })}
+    </Notice>
+  );
+  // This student's own tasks, in their own order: all of them, or a pool drawn for them, maybe
+  // shuffled (lib/seed/assignment.ts) — the server draws the same.
+  const myTasks: JoinedSessionTask[] = studentName
+    ? assignTasks(
+        session.tasks.map((task) => task.id),
+        session.id,
+        studentName,
+        session.assignment
+      ).flatMap((taskId) => session.tasks.filter((task) => task.id === taskId))
+    : session.tasks;
+  const rules: SessionRules = {
+    kind: session.kind,
+    mode: session.mode,
+    taskIds: myTasks.map((task) => task.id),
+    improvementTaskIds: session.improvementTasks.map((task) => task.id)
+  };
+  const attempts: OwnAttempt[] = own?.attempts ?? [];
+  const stateOf = (taskId: string) => taskState(rules, taskId, attempts);
+  const improvementVisible = improvementOpen(rules, attempts);
+  const visibleTasks: JoinedSessionTask[] = improvementVisible ? [...myTasks, ...session.improvementTasks] : myTasks;
 
   const hasTimeLimit = session.timeLimitS !== null;
   const examStart = useStoredExamStart(code);
@@ -111,11 +203,32 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     const id = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
   }, [hasTimeLimit, examStart]);
+  // The deadline is shown in days and hours, so a minute's tick is plenty.
+  useEffect(() => {
+    if (!session.dueAt) return;
+    const id = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, [session.dueAt]);
   const remainingS =
     hasTimeLimit && examStart !== null
       ? Math.max(0, session.timeLimitS! - Math.floor((nowMs - examStart) / 1000))
       : null;
   const timeUp = remainingS === 0;
+
+  const loadOwnState = useCallback(
+    (name: string) => {
+      fetch(`/api/sessions/${code}/me?student=${encodeURIComponent(name)}`)
+        .then((response) => (response.ok ? (response.json() as Promise<OwnSessionState>) : Promise.reject()))
+        .then(setOwn)
+        // Unreachable server: the student can still work; the server keeps the count either way.
+        .catch(() => setOwn((previous) => previous ?? { attempts: [], usedElsewhere: false }));
+    },
+    [code]
+  );
+
+  useEffect(() => {
+    if (studentName) loadOwnState(studentName);
+  }, [studentName, loadOwnState]);
 
   useEffect(() => {
     if (!selectedTaskId || !studentName || fetchedRef.current.has(selectedTaskId)) return;
@@ -155,16 +268,30 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     [code, session.timeLimitS]
   );
 
+  function openTask(taskId: string | null) {
+    setSelectedTaskId(taskId);
+    setOpenedAs(taskId ? stateOf(taskId).status : null);
+    window.scrollTo(0, 0);
+  }
+
   function submitAttempt(taskId: string, taskVersion: number, outcome: AttemptOutcome) {
     if (!studentName) return;
-    if (outcome.passed) {
-      setPassed((previous) => new Set(previous).add(taskId));
-    }
-    if (graded) {
-      setSubmitted((previous) => new Map(previous).set(taskId, outcome.passed));
-    }
+    // Appended at once, so the room moves with the Check; the server's answer
+    // only matters when it refuses, and then the room re-reads what counts.
+    setOwn((previous) => ({
+      usedElsewhere: previous?.usedElsewhere ?? false,
+      attempts: [
+        ...(previous?.attempts ?? []),
+        {
+          taskId,
+          passed: outcome.passed,
+          score: outcome.score ?? null,
+          hintsUsed: outcome.hintsUsed,
+          createdAt: new Date().toISOString()
+        }
+      ]
+    }));
     // Best-effort: a lost attempt does not block the student from moving on.
-    // Retrying belongs to a sync layer this slice does not build yet.
     fetch('/api/attempts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -177,16 +304,45 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         passed: outcome.passed,
         ...(outcome.score !== undefined ? { score: outcome.score } : {}),
         hintsUsed: outcome.hintsUsed,
-        durationMs: outcome.durationMs
+        durationMs: outcome.durationMs,
+        ...(outcome.activity ? { activity: outcome.activity } : {})
       })
-    }).catch(() => undefined);
+    })
+      .then((response) => {
+        if (response.status === 409) loadOwnState(studentName);
+      })
+      .catch(() => undefined);
   }
+
+  const lateNow = session.dueAt ? lateCredit(nowMs, Date.parse(session.dueAt)) : 1;
+  const deadline = homework && session.dueAt && (
+    <div className="space-y-2" data-testid="homework-deadline">
+      <p className="text-sm font-semibold text-accent">{t('session.homeworkTitle')}</p>
+      <p className="text-base text-ink">
+        {t('session.dueAt', { date: formatDeadline(session.dueAt), distance: deadlineDistance(session.dueAt, nowMs) })}
+      </p>
+      {lateNow < 1 ? (
+        <Notice tone="attention" testId="homework-late">
+          {t('session.lateNow', { credit: percent(lateNow) })}
+        </Notice>
+      ) : (
+        <p className="text-sm text-ink-muted">{lateRuleText()}</p>
+      )}
+    </div>
+  );
 
   if (!studentName) {
     return (
       <main className="mx-auto w-full max-w-3xl p-6">
         <p className="text-sm text-ink-muted">{t('session.sessionCode', { code })}</p>
         <h1 className="mt-1 text-2xl font-semibold text-ink">{t('session.pickName')}</h1>
+        {homework && (
+          <div className="mt-4 space-y-3">
+            {deadline}
+            <Notice testId="device-notice">{t('session.deviceNotice')}</Notice>
+          </div>
+        )}
+        {classCheck && <div className="mt-4">{classCheck}</div>}
         {/* Big targets in a grid: a class of 25 finds a name by scanning, not by reading a line. */}
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {session.roster.map((name) => (
@@ -229,39 +385,69 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     );
   }
 
+  if (!own) {
+    return (
+      <main className="mx-auto w-full max-w-2xl p-6">
+        <p className="text-sm text-ink-muted">{t('session.loadingState')}</p>
+      </main>
+    );
+  }
+
   if (selectedTaskId) {
-    const lockedPassed = submitted.get(selectedTaskId);
-    const locked = graded && lockedPassed !== undefined;
-    // Offered only after a passed Check. Moving on never touches `submitted`,
-    // so a graded task stays locked to its first Check, and a locked one is
-    // skipped rather than reopened.
+    const state = stateOf(selectedTaskId);
+    const isImprovement = rules.improvementTaskIds.includes(selectedTaskId);
+    // A graded lesson locks a task at its first Check, as it always did. Homework
+    // locks once no Check is left, and on reopening a task already counted.
+    const locked = homework
+      ? state.status === 'failed' || (state.status === 'passed' && openedAs === 'passed')
+      : graded && state.status !== 'new';
+    const lockedPassed = state.status === 'passed';
+    // Offered only after a passed Check. A locked task is skipped rather than
+    // reopened.
     const nextId = nextOpenTaskId(
-      session.tasks.map((task) => task.id),
+      visibleTasks.map((task) => task.id),
       selectedTaskId,
-      (taskId) => passed.has(taskId) || submitted.has(taskId)
+      (taskId) => {
+        const status = stateOf(taskId).status;
+        return status === 'passed' || status === 'failed';
+      }
     );
     // A file task's in-browser prerequisite in the teacher's order (lib/task/prerequisite.ts):
-    // advice while this visit has not seen it passed, never a lock.
+    // advice while it is not passed, never a lock.
     const prerequisite = filePrerequisite(
-      session.tasks.map((task) => ({ ...task, topicKey: task.topicId })),
+      visibleTasks.map((task) => ({ ...task, topicKey: task.topicId })),
       selectedTaskId
     );
-    const showPrerequisite = prerequisite !== null && !passed.has(prerequisite.id) && !submitted.has(prerequisite.id);
+    const prerequisiteState = prerequisite ? stateOf(prerequisite.id).status : null;
+    const showPrerequisite =
+      prerequisite !== null && prerequisiteState !== 'passed' && prerequisiteState !== 'failed';
     const next: NextTaskAction = {
       kind: 'button',
       label: nextId ? t('result.nextTask') : t('result.backToTaskList'),
-      onSelect: () => {
-        setSelectedTaskId(nextId);
-        window.scrollTo(0, 0);
-      }
+      shortLabel: nextId ? t('result.nextShort') : t('result.backToTaskListShort'),
+      onSelect: () => openTask(nextId)
     };
-    const position = session.tasks.findIndex((task) => task.id === selectedTaskId) + 1;
+    const position = visibleTasks.findIndex((task) => task.id === selectedTaskId) + 1;
     const backToList = (
-      <button type="button" onClick={() => setSelectedTaskId(null)} className="text-accent">
+      <button type="button" onClick={() => openTask(null)} className="text-accent">
         ← {t('session.backToList')}
       </button>
     );
     if (locked || !selectedTask) {
+      const lockedTitle = homework
+        ? lockedPassed
+          ? t('session.homeworkPassedTitle')
+          : t('session.homeworkFailedTitle')
+        : t('session.taskLockedTitle');
+      const lockedNote = homework
+        ? state.status === 'passed'
+          ? state.viaFix
+            ? t('session.homeworkFixedNote', { credit: percent(DEFAULT_GRADING.fixCredit) })
+            : t('session.homeworkPassedNote')
+          : t('session.homeworkFailedNote')
+        : lockedPassed
+          ? t('session.taskLockedPassedNote')
+          : t('session.taskLockedFailedNote');
       return (
         <main className="mx-auto w-full max-w-2xl p-6">
           <div className="flex items-center justify-between text-sm">
@@ -277,12 +463,13 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
                 className={`flex items-center gap-2 text-xl font-semibold ${lockedPassed ? 'text-growth' : 'text-attention'}`}
               >
                 <span aria-hidden="true">{lockedPassed ? '✓' : '○'}</span>
-                {t('session.taskLockedTitle')}
+                {lockedTitle}
               </h1>
-              <p className="mt-2 text-ink">
-                {lockedPassed ? t('session.taskLockedPassedNote') : t('session.taskLockedFailedNote')}
-              </p>
-              {lockedPassed && <NextTaskButton action={next} />}
+              <p className="mt-2 text-ink">{lockedNote}</p>
+              {homework && !lockedPassed && improvementVisible && !isImprovement && (
+                <p className="mt-2 text-ink">{t('session.homeworkImprovementHint')}</p>
+              )}
+              {(lockedPassed || homework) && <NextTaskButton action={next} />}
             </section>
           ) : (
             <p className="mt-4 text-sm text-ink-muted">
@@ -292,6 +479,22 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         </main>
       );
     }
+    const homeworkNotice =
+      homework &&
+      (isImprovement ? (
+        <Notice>{t('session.improvementOneCheck')}</Notice>
+      ) : state.status === 'new' ? (
+        <Notice>
+          {t('session.firstCheckCounts', {
+            n: DEFAULT_GRADING.maxFixes,
+            credit: percent(DEFAULT_GRADING.fixCredit)
+          })}
+        </Notice>
+      ) : state.status === 'fixable' ? (
+        <Notice tone="attention" testId="fixes-left">
+          {t('session.fixesLeft', { n: state.fixesLeft, credit: percent(DEFAULT_GRADING.fixCredit) })}
+        </Notice>
+      ) : null);
     return (
       <TaskWorkspace
         key={selectedTask.id}
@@ -305,53 +508,67 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               {backToList}
               <span className="flex-1" />
               {position > 0 && (
-                <span className="text-ink-muted">{t('task.position', { n: position, total: session.tasks.length })}</span>
+                <span className="text-ink-muted">{t('task.position', { n: position, total: visibleTasks.length })}</span>
               )}
               {timerBadge}
             </>
           ),
-          notice: showPrerequisite && (
-            <PrerequisiteNote
-              action={{
-                kind: 'button',
-                title: prerequisite.title,
-                onSelect: () => {
-                  setSelectedTaskId(prerequisite.id);
-                  window.scrollTo(0, 0);
-                }
-              }}
-            />
+          notice: (homeworkNotice || showPrerequisite) && (
+            <>
+              {homeworkNotice && <div className="px-5 pt-4">{homeworkNotice}</div>}
+              {showPrerequisite && (
+                <PrerequisiteNote
+                  action={{
+                    kind: 'button',
+                    title: prerequisite.title,
+                    onSelect: () => openTask(prerequisite.id)
+                  }}
+                />
+              )}
+            </>
           )
         }}
       />
     );
   }
 
+  const taskButton = (task: JoinedSessionTask) => (
+    <li key={task.id}>
+      <button
+        type="button"
+        data-task-id={task.id}
+        onClick={() => openTask(task.id)}
+        className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-left text-ink hover:border-accent"
+      >
+        <span>{task.title}</span>
+        <StatusMark state={stateOf(task.id)} graded={graded} homework={homework} />
+      </button>
+    </li>
+  );
+
   return (
-    <main className="mx-auto w-full max-w-2xl p-6">
+    <main className="mx-auto w-full max-w-2xl space-y-4 p-6">
+      {deadline}
+      {classCheck}
+      {own.usedElsewhere && (
+        <Notice tone="attention" testId="used-elsewhere">
+          {t('session.usedElsewhere')}
+        </Notice>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">{t('session.taskListTitle')}</h1>
         {timerBadge}
       </div>
-      <ul className="mt-4 space-y-2">
-        {session.tasks.map((task) => (
-          <li key={task.id}>
-            <button
-              type="button"
-              data-task-id={task.id}
-              onClick={() => setSelectedTaskId(task.id)}
-              className="flex w-full items-center justify-between rounded-lg border border-line bg-surface px-4 py-3 text-left text-ink hover:border-accent"
-            >
-              <span>{task.title}</span>
-              {passed.has(task.id) ? (
-                <span className="text-sm text-growth">{t('session.taskDone')}</span>
-              ) : (
-                submitted.has(task.id) && <span className="text-sm text-ink-muted">{t('session.taskSubmitted')}</span>
-              )}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <ul className="space-y-2">{myTasks.map(taskButton)}</ul>
+      {improvementVisible && (
+        <section aria-labelledby="improvement-title" className="space-y-2 pt-2">
+          <h2 id="improvement-title" className="text-lg font-semibold text-ink">
+            {t('session.improvementTitle')}
+          </h2>
+          <p className="text-sm text-ink-muted">{t('session.improvementNote')}</p>
+          <ul className="space-y-2">{session.improvementTasks.map(taskButton)}</ul>
+        </section>
+      )}
     </main>
   );
 }

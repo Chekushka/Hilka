@@ -13,6 +13,8 @@ function row(overrides: Partial<SessionAttemptRow> = {}): SessionAttemptRow {
     durationMs: 12_345,
     score: null,
     sourceHash: null,
+    deviceId: null,
+    activity: null,
     createdAt: '2026-01-01T12:00:00.000Z',
     ...overrides
   };

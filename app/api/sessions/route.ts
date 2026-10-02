@@ -8,15 +8,23 @@ import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { getClassForTeacher } from '@/lib/db/classes';
 import { createSession, filterToPublishedTaskIds } from '@/lib/db/session-authoring';
-import type { SessionMode } from '@/lib/session/types';
+import type { SessionKind, SessionMode } from '@/lib/session/types';
 
 interface CreateSessionBody {
   classId: string;
   mode: SessionMode;
+  /** Absent from older clients: a lesson. */
+  kind?: SessionKind;
   taskIds: string[];
   timeLimitS: number | null;
   hintsEnabled: boolean;
   shuffle: boolean;
+  /** Each student gets this many of the tasks (lib/seed/assignment.ts); absent or null for all. */
+  poolSize?: number | null;
+  /** Homework: ISO deadline, required. */
+  dueAt?: string | null;
+  /** Homework: tasks offered once a point is lost. */
+  improvementTaskIds?: string[];
 }
 
 function isValidBody(body: unknown): body is CreateSessionBody {
@@ -30,7 +38,14 @@ function isValidBody(body: unknown): body is CreateSessionBody {
     b.taskIds.every((id) => typeof id === 'string') &&
     (b.timeLimitS === null || (typeof b.timeLimitS === 'number' && b.timeLimitS > 0)) &&
     typeof b.hintsEnabled === 'boolean' &&
-    typeof b.shuffle === 'boolean'
+    typeof b.shuffle === 'boolean' &&
+    (b.kind === undefined || b.kind === 'lesson' || b.kind === 'homework') &&
+    (b.poolSize === undefined ||
+      b.poolSize === null ||
+      (typeof b.poolSize === 'number' && Number.isInteger(b.poolSize) && b.poolSize > 0)) &&
+    (b.dueAt === undefined || b.dueAt === null || (typeof b.dueAt === 'string' && !Number.isNaN(Date.parse(b.dueAt)))) &&
+    (b.improvementTaskIds === undefined ||
+      (Array.isArray(b.improvementTaskIds) && b.improvementTaskIds.every((id) => typeof id === 'string')))
   );
 }
 
@@ -58,13 +73,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'no_tasks' }, { status: 400 });
   }
 
+  // Homework is always graded, has a deadline and no exam clock (docs/HOMEWORK.md);
+  // an improvement task is never also a main task.
+  const homework = body.kind === 'homework';
+  if (homework && !body.dueAt) {
+    return NextResponse.json({ error: 'no_deadline' }, { status: 400 });
+  }
+  const improvementTaskIds = homework
+    ? (await filterToPublishedTaskIds(body.improvementTaskIds ?? [])).filter((id) => !taskIds.includes(id))
+    : [];
+
   const { id, code } = await createSession({
     classId: body.classId,
-    mode: body.mode,
+    mode: homework ? 'graded' : body.mode,
+    kind: homework ? 'homework' : 'lesson',
     taskIds,
-    timeLimitS: body.timeLimitS,
+    improvementTaskIds,
+    timeLimitS: homework ? null : body.timeLimitS,
     hintsEnabled: body.hintsEnabled,
-    shuffle: body.shuffle
+    shuffle: body.shuffle,
+    // A pool as large as the list is no pool at all.
+    poolSize: body.poolSize && body.poolSize < taskIds.length ? body.poolSize : null,
+    dueAt: homework && body.dueAt ? new Date(body.dueAt) : null
   });
   return NextResponse.json({ id, code }, { status: 201 });
 }

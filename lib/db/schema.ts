@@ -5,7 +5,7 @@
  * `classes.roster` is a plain array of display names and must never become a
  * students table — the no-registration constraint depends on it staying
  * trivial — and `attempts` is append-only, so a retry is a new row and "best
- * attempt" is a query.
+ * attempt" is a query. (`attempts.voided_at` is the one exception, below.)
  *
  * Deviation from the doc, deliberate: `tasks.slug`. Task content lives in
  * git as JSON (content/seed-tasks/) and is imported into the database, so it
@@ -15,6 +15,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   boolean,
   bigint,
   char,
@@ -32,6 +33,7 @@ import {
 import type { Check } from '@/lib/checker';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { PracticeProgress } from '@/lib/practice/progress';
+import type { SessionKind } from '@/lib/session/types';
 import type { ParamSpec } from '@/lib/seed';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 
@@ -157,12 +159,25 @@ export const sessions = pgTable(
       .references(() => classes.id),
     code: char('code', { length: 6 }).notNull(),
     mode: text('mode').$type<'practice' | 'graded'>().notNull(),
+    // 'homework' is remote work over several days (docs/HOMEWORK.md): a
+    // deadline, late credit, fixes and improvement tasks. Always graded.
+    kind: text('kind').$type<SessionKind>().notNull().default('lesson'),
     taskIds: uuid('task_ids').array().notNull().default([]),
+    // Homework only: tasks offered once a student has lost points, which can
+    // recover lost points and never more (lib/homework/).
+    improvementTaskIds: uuid('improvement_task_ids').array().notNull().default([]),
     timeLimitS: integer('time_limit_s'),
     hintsEnabled: boolean('hints_enabled').notNull().default(true),
     shuffle: boolean('shuffle').notNull().default(false),
+    // Each student gets this many of `task_ids`, chosen per student (lib/seed/assignment.ts); null for all.
+    poolSize: integer('pool_size'),
     opensAt: timestamp('opens_at', { withTimezone: true }),
-    closesAt: timestamp('closes_at', { withTimezone: true })
+    closesAt: timestamp('closes_at', { withTimezone: true }),
+    // Homework only. Work after it is still accepted, for less credit.
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    // A class check only: the homework it checks. Its results confirm or
+    // lower that homework's credit (lib/homework/grade.ts), never a grade of their own.
+    checksSessionId: uuid('checks_session_id').references((): AnyPgColumn => sessions.id)
   },
   (table) => [
     // Codes are recycled: a code is unique only among sessions that are still
@@ -206,6 +221,13 @@ export const attempts = pgTable(
     // { pasted, edits, tooFast } — the teacher sees a flag and decides. The
     // system never accuses anyone.
     flags: jsonb('flags').$type<Record<string, unknown>>(),
+    // A random id from a cookie, one per browser (docs/HOMEWORK.md, section 2):
+    // shows the teacher how many devices worked under a name. Not a fingerprint.
+    deviceId: text('device_id'),
+    // The one field of an attempt that ever changes: a teacher cancels the
+    // attempts one device made under a student's name (someone else worked as
+    // them). A voided attempt counts for nothing and frees the try it used.
+    voidedAt: timestamp('voided_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => [index('attempts_session_idx').on(table.sessionId, table.studentName)]

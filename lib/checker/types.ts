@@ -20,6 +20,9 @@ export type Check = { message?: string } & (
   | { kind: 'last_line_equals'; value: string; normalize?: 'trim' | 'loose' }
   | { kind: 'number_close'; value: number; tol: number; which?: 'last' | 'first' | number }
   | { kind: 'numbers_equal'; values: number[]; tol: number }
+  // The expected value is the reference solution's own output on the same case,
+  // never a typed value — so it stays right for every variant of a parameterized task.
+  | { kind: 'matches_reference'; compare: 'numbers' | 'last_line'; tol?: number; normalize?: 'trim' | 'loose' }
 
   // --- program state --------------------------------------------------------
   | { kind: 'var_equals'; name: string; value: unknown }

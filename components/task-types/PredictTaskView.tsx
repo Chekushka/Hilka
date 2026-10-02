@@ -62,7 +62,10 @@ export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
       onRevealHint={() => (hintsUsedRef.current += 1)}
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
-        <WorkspaceDock actions={<CheckAction disabled={!ready} onCheck={check} />}>
+        <WorkspaceDock
+          actions={<CheckAction disabled={!ready} passed={report?.passed} onCheck={check} />}
+          next={report?.passed ? next : undefined}
+        >
           {report ? <CheckReportPanel report={report} /> : <DockIdle>{t('workspace.checkIdle')}</DockIdle>}
         </WorkspaceDock>
       }

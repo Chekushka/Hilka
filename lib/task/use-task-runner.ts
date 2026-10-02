@@ -9,9 +9,10 @@
  * overlaid against.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { evaluateChecks, type Check, type CheckReport, type CheckResult } from '@/lib/checker';
+import type { Check, CheckReport, CheckResult } from '@/lib/checker';
 import { t } from '@/lib/i18n';
 import { createRunner, type GridWorld, type ParseResult, type PythonRunner, type RunResult, type Segment } from '@/lib/runner';
+import { checkCode } from './check-code';
 import type { Reference, RunCase } from './types';
 
 export type EngineState = 'loading' | 'ready' | 'failed';
@@ -151,54 +152,29 @@ export function useTaskRunner(task: RunnableTask) {
     async (code: string) => {
       const runner = runnerRef.current;
       if (!runner) return;
-      const cases: RunCase[] = task.cases && task.cases.length > 0 ? task.cases : [{ stdin: [] }];
-      const multipleCases = cases.length > 1;
-
-      let shownResult: RunResult | null = null;
-      let erroredResult: RunResult | null = null;
-      let allPassed = true;
-      let casesPassed = 0;
-      const results: CheckResult[] = [];
-
-      for (const [i, runCase] of cases.entries()) {
-        const caseChecks = [...task.checks, ...(runCase.checks ?? [])];
-        const exprs = caseChecks.filter((c): c is Check & { kind: 'expr' } => c.kind === 'expr').map((c) => c.python);
-        const caseResult = await runner.run(code, { mode: 'headless', stdin: runCase.stdin, exprs, grid: task.grid });
-        shownResult ??= caseResult;
-        if (caseResult.error || caseResult.timedOut) {
-          erroredResult = caseResult;
-          break;
-        }
-        const caseReport = evaluateChecks(caseChecks, {
-          submission: { code },
-          run: {
-            stdout: caseResult.stdout,
-            drawing: caseResult.drawing,
-            error: caseResult.error,
-            timedOut: caseResult.timedOut,
-            vars: caseResult.vars,
-            exprResults: caseResult.exprResults,
-            grid: caseResult.grid
-          },
-          reference: { drawing: targetRef.current }
-        });
-        if (caseReport.passed) casesPassed += 1;
-        else allPassed = false;
-        const label = multipleCases ? (runCase.label ?? t('workspace.caseLabel', { n: i + 1 })) : null;
-        for (const result of caseReport.results) {
-          results.push(label ? { ...result, message: `${label}: ${result.message}` } : result);
-        }
-      }
+      const outcome = await checkCode(
+        { ...task, referenceCode: task.reference.code },
+        code,
+        (source, options) => runner.run(source, options),
+        targetRef.current
+      );
+      const multipleCases = outcome.casesTotal > 1;
+      const results: CheckResult[] = outcome.cases.flatMap((caseOutcome) => {
+        const label = multipleCases ? (caseOutcome.label ?? t('workspace.caseLabel', { n: caseOutcome.index + 1 })) : null;
+        return caseOutcome.results.map((result) => (label ? { ...result, message: `${label}: ${result.message}` } : result));
+      });
 
       setState((previous) => ({
         ...previous,
         busy: false,
         pendingInput: null,
-        result: erroredResult ?? shownResult ?? EMPTY_RESULT,
-        report: erroredResult ? null : { passed: allPassed, results, score: casesPassed / cases.length }
+        result: outcome.erroredResult ?? outcome.shownResult ?? EMPTY_RESULT,
+        report: outcome.erroredResult
+          ? null
+          : { passed: outcome.passed, results, score: outcome.casesPassed / outcome.casesTotal }
       }));
     },
-    [task.checks, task.cases, task.grid]
+    [task]
   );
 
   /**

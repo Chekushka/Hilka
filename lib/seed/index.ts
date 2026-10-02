@@ -1,3 +1,4 @@
+export { assignTasks, type AssignmentRule } from './assignment';
 export { createRng, deriveSeed, randomChoice, randomInt, type Rng } from './prng';
 export {
   enumerateParamCombinations,

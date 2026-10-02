@@ -253,7 +253,10 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
       onRevealHint={() => (hintsUsedRef.current += 1)}
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
-        <WorkspaceDock actions={<CheckAction disabled={answer.length === 0} onCheck={check} />}>
+        <WorkspaceDock
+          actions={<CheckAction disabled={answer.length === 0} passed={report?.passed} onCheck={check} />}
+          next={report?.passed ? next : undefined}
+        >
           {report ? <CheckReportPanel report={report} /> : <DockIdle>{t('workspace.checkIdle')}</DockIdle>}
         </WorkspaceDock>
       }

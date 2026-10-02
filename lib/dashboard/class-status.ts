@@ -14,7 +14,8 @@
  * floor, never an overstatement.
  */
 import type { SessionAttemptRow } from '@/lib/db/attempts';
-import type { SessionMode, SessionTaskSummary } from '@/lib/session/types';
+import { taskState } from '@/lib/homework/rules';
+import type { SessionKind, SessionMode, SessionTaskSummary } from '@/lib/session/types';
 import { buildRollup, type RollupCell } from './rollup';
 
 export type StudentState = 'not_started' | 'working' | 'stuck' | 'finished';
@@ -41,7 +42,10 @@ export interface StudentSummary {
   state: StudentState;
   /** Same order as the session's tasks. */
   cells: RollupCell[];
-  /** Passed tasks — in a graded session, tasks checked (each is final there). */
+  /**
+   * Passed tasks — in a graded lesson, tasks checked (each is final there); in
+   * homework, tasks passed or out of fixes (lib/homework/rules.ts).
+   */
   tasksDone: number;
   tasksTotal: number;
   attempts: number;
@@ -57,6 +61,10 @@ export interface StudentSummary {
 
 export interface SessionContext {
   mode: SessionMode;
+  /** Absent means a lesson. Homework is graded, with fixes (docs/HOMEWORK.md). */
+  kind?: SessionKind;
+  /** With a pool: the tasks each student was given (lib/seed/assignment.ts). Absent means every task. */
+  assignedTo?: (studentName: string) => ReadonlySet<string>;
   /** An open session can go idle; a closed one only has its final state. */
   open: boolean;
   /** Milliseconds since the epoch, passed in so the function stays pure. */
@@ -107,7 +115,9 @@ export function summarizeStudents(
   attempts: StudentAttempt[],
   context: SessionContext
 ): StudentSummary[] {
-  const rollup = new Map(buildRollup(roster, tasks, attempts).map((row) => [row.studentName, row.cells]));
+  const rollup = new Map(
+    buildRollup(roster, tasks, attempts, context.assignedTo).map((row) => [row.studentName, row.cells])
+  );
   const taskIds = new Set(tasks.map((task) => task.id));
 
   return roster.map((studentName) => {
@@ -115,9 +125,27 @@ export function summarizeStudents(
       .filter((a) => a.studentName === studentName && taskIds.has(a.taskId))
       .sort(newestFirst);
     const cells = rollup.get(studentName) ?? [];
-    const tasksDone = cells.filter((cell) =>
-      context.mode === 'graded' ? cell.status !== 'not_started' : cell.status === 'passed'
-    ).length;
+    const assigned = context.assignedTo?.(studentName);
+    const ownTasks = assigned ? tasks.filter((task) => assigned.has(task.id)) : tasks;
+    const homeworkRules = {
+      kind: 'homework' as const,
+      mode: context.mode,
+      taskIds: ownTasks.map((task) => task.id),
+      improvementTaskIds: []
+    };
+    const tasksDone =
+      context.kind === 'homework'
+        ? ownTasks.filter((task) => {
+            const status = taskState(homeworkRules, task.id, own).status;
+            return status === 'passed' || status === 'failed';
+          }).length
+        : cells.filter((cell) =>
+            cell.status === 'not_assigned'
+              ? false
+              : context.mode === 'graded'
+                ? cell.status !== 'not_started'
+                : cell.status === 'passed'
+          ).length;
 
     let hints = 0;
     let timeSpentMs = 0;
@@ -129,10 +157,15 @@ export function summarizeStudents(
 
     return {
       studentName,
-      state: stateOf(cells, own, tasksDone, context),
+      state: stateOf(
+        cells.filter((cell) => cell.status !== 'not_assigned'),
+        own,
+        tasksDone,
+        context
+      ),
       cells,
       tasksDone,
-      tasksTotal: tasks.length,
+      tasksTotal: ownTasks.length,
       attempts: own.length,
       hints,
       timeSpentMs,
@@ -181,7 +214,7 @@ export function tallyTasks(rows: StudentSummary[], taskCount: number): TaskTally
     row.cells.forEach((cell, index) => {
       if (cell.status === 'passed') tallies[index].passed += 1;
       else if (cell.status === 'stuck') tallies[index].trying += 1;
-      else tallies[index].notStarted += 1;
+      else if (cell.status === 'not_started') tallies[index].notStarted += 1;
     });
   }
   return tallies;
