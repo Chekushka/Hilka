@@ -147,7 +147,8 @@ classes
 
 sessions
   id, class_id, code char(6), mode ('practice' | 'graded'),
-  kind ('lesson' | 'homework'),          -- homework is always mode 'graded'
+  kind ('lesson' | 'homework' | 'check'), -- homework and check are always mode 'graded'
+  checks_session_id uuid | null,          -- a class check: the homework it checks
   task_ids uuid[], improvement_task_ids uuid[],
   time_limit_s int | null, hints_enabled bool,
   shuffle bool, opens_at, closes_at, due_at
@@ -602,6 +603,10 @@ Designed and decided with the project owner in docs/HOMEWORK.md; this is the arc
   device, and the system never concludes who did what.
 - **Late is judged when read.** Lateness comes from each attempt's time against the current
   `due_at`, never stored, so moving a deadline re-judges past work.
+- **A class check is a session that grades another.** `kind: 'check'` with `checks_session_id`
+  pointing at the homework: an ordinary graded session in class, with no grade of its own. The
+  homework's grade reads the checks' attempts and lowers a task whose check failed to the fix
+  credit; nothing about a check is stored on the homework itself.
 
 ## Grading
 
@@ -627,7 +632,9 @@ the number in Hilka — they see which tasks they solved.
 - **Homework** (`lib/homework/grade.ts`): a main task earns the best of its first Check and two
   fixes, a fix at 70%; each Check also takes the hint credit and the late credit of its moment —
   up to two days late 70%, later 50%. Improvement tasks count on their first Check and only
-  recover lost points; the 10–12 band needs a hard task passed on a first Check, never a fix.
+  recover lost points; the 10–12 band needs a hard task passed on a first Check, never a fix. A
+  task failed in a class check of the homework is capped at the fix credit and opens no band;
+  passing it, or not being checked, changes nothing.
 
 The numbers live in `lib/grading/config.ts` as data, not inlined in the logic — teachers disagree
 about grading, and a per-session override is the planned next step.

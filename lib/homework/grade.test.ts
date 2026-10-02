@@ -111,3 +111,64 @@ describe('suggestHomeworkGrade', () => {
     expect(rows[1].suggestion.earned).toBe(1);
   });
 });
+
+describe('suggestHomeworkGrade with a class check', () => {
+  const IN_CLASS = '2026-10-12T09:00:00.000Z';
+  const homework = [
+    attempt('t1', true, BEFORE(1)),
+    attempt('t2', true, BEFORE(2)),
+    attempt('t3', true, BEFORE(3)) // difficulty 4: opens 10–12 while it stands
+  ];
+  const check = (taskId: string, passed: boolean, at = IN_CLASS) => ({ taskId, passed, createdAt: at });
+
+  it('changes nothing when every checked task passes', () => {
+    const grade = suggestHomeworkGrade(main, [], homework, DUE, [check('t2', true), check('t3', true)]);
+    expect(grade.earned).toBe(6);
+    expect(grade.grade).toBe(12);
+    expect(grade.checkedTasks).toBe(2);
+    expect(grade.confirmedTasks).toBe(2);
+  });
+
+  it('lowers a task that fails its check to 70%, and a hard one no longer opens 10–12', () => {
+    const grade = suggestHomeworkGrade(main, [], homework, DUE, [check('t3', false)]);
+    // 1 + 2 + 3 × 0.7 = 5.1 / 6 = 85% → 11 on share, but the only hard task was refuted.
+    expect(grade.earned).toBeCloseTo(5.1);
+    expect(grade.capped).toBe(true);
+    expect(grade.grade).toBe(9);
+    expect(grade.checkedTasks).toBe(1);
+    expect(grade.confirmedTasks).toBe(0);
+  });
+
+  it('never raises a task: a fixed task stays at its fix credit after a failed check', () => {
+    const fixed = [attempt('t2', false, BEFORE(1)), attempt('t2', true, BEFORE(2), { hintsUsed: 1 })];
+    // 2 × 0.7 × 0.75 = 1.05 already below the 70% cap.
+    expect(suggestHomeworkGrade([main[1]], [], fixed, DUE, [check('t2', false)]).earned).toBeCloseTo(1.05);
+  });
+
+  it('keeps the credit of a task the student was not checked on', () => {
+    expect(suggestHomeworkGrade(main, [], homework, DUE, [check('t1', false)]).earned).toBeCloseTo(0.7 + 2 + 3);
+  });
+
+  it('reads only the first Check of a task across class checks', () => {
+    const later = '2026-10-13T09:00:00.000Z';
+    const grade = suggestHomeworkGrade(main, [], homework, DUE, [check('t3', true, later), check('t3', false)]);
+    expect(grade.confirmedTasks).toBe(0);
+    expect(grade.earned).toBeCloseTo(5.1);
+  });
+
+  it('passes each student only their own checks', () => {
+    const rows = suggestHomeworkGradesForRoster(
+      ['Олена', 'Марко'],
+      [main[2]],
+      [],
+      [
+        { ...attempt('t3', true, BEFORE(1)), studentName: 'Олена' },
+        { ...attempt('t3', true, BEFORE(2)), studentName: 'Марко' }
+      ],
+      DUE,
+      [{ ...check('t3', false), studentName: 'Марко' }]
+    );
+    expect(rows[0].suggestion.earned).toBe(3);
+    expect(rows[1].suggestion.earned).toBeCloseTo(2.1);
+  });
+});

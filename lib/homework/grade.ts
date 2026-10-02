@@ -9,7 +9,12 @@
  * - an improvement task counts on its first Check only, and its points can only
  *   recover what the main tasks lost — the share never exceeds 100%;
  * - the 10–12 band needs a hard task passed on a first Check (a main task or an
- *   improvement task); a fix does not open it.
+ *   improvement task); a fix does not open it;
+ * - a class check (docs/HOMEWORK.md, section 4a) confirms a main task when its
+ *   first Check there passes, and lowers it to fix credit when it fails — "solved
+ *   at home, not on your own yet" — which also keeps it from opening the 10–12
+ *   band. A task the student was not checked on, absent or not chosen, keeps
+ *   its credit: nobody loses points for not being there.
  *
  * Pure. Voided attempts must already be left out.
  */
@@ -20,6 +25,9 @@ import { lateCredit } from './rules';
 export interface HomeworkGrade extends SuggestedGrade {
   /** Tasks whose credit came from a fix. */
   fixedTasks: number;
+  /** Main tasks the student did in a class check, and how many of those passed. */
+  checkedTasks: number;
+  confirmedTasks: number;
   /** Attempts that counted and were made after the deadline. */
   lateAttempts: number;
   /** Points the improvement tasks brought back, after the cap. */
@@ -34,11 +42,25 @@ function caseShare(attempt: GradedAttempt): number {
   return attempt.passed ? 1 : Math.min(1, Math.max(0, attempt.score ?? 0));
 }
 
+/** One Check in a class check of this homework, by the same student. */
+export type CheckAttempt = Pick<GradedAttempt, 'taskId' | 'passed' | 'createdAt'>;
+
+/** Per task, whether the student's first Check on it in a class check passed. */
+function checkOutcomes(checks: readonly CheckAttempt[]): Map<string, boolean> {
+  const first = new Map<string, CheckAttempt>();
+  for (const check of checks) {
+    const current = first.get(check.taskId);
+    if (!current || check.createdAt < current.createdAt) first.set(check.taskId, check);
+  }
+  return new Map([...first].map(([taskId, check]) => [taskId, check.passed]));
+}
+
 export function suggestHomeworkGrade(
   mainTasks: readonly GradedTask[],
   improvementTasks: readonly GradedTask[],
   attempts: readonly GradedAttempt[],
   dueAt: string | null,
+  checks: readonly CheckAttempt[] = [],
   config: GradingConfig = DEFAULT_GRADING
 ): HomeworkGrade {
   const dueMs = dueAt === null ? null : Date.parse(dueAt);
@@ -55,6 +77,9 @@ export function suggestHomeworkGrade(
   let attemptedAny = false;
   let fixedTasks = 0;
   let lateAttempts = 0;
+  const checked = checkOutcomes(checks);
+  let checkedTasks = 0;
+  let confirmedTasks = 0;
 
   const countLate = (attempt: GradedAttempt) => {
     if (dueMs !== null && Date.parse(attempt.createdAt) > dueMs) lateAttempts += 1;
@@ -76,9 +101,15 @@ export function suggestHomeworkGrade(
         bestIsFix = index > 0;
       }
     });
+    const check = checked.get(task.id);
+    if (check !== undefined) {
+      checkedTasks += 1;
+      if (check) confirmedTasks += 1;
+      else best = Math.min(best, config.fixCredit);
+    }
     mainEarned += points * best;
     if (bestIsFix) fixedTasks += 1;
-    if (counted[0].passed && task.difficulty >= config.highBandMinDifficulty) solvedHard = true;
+    if (counted[0].passed && check !== false && task.difficulty >= config.highBandMinDifficulty) solvedHard = true;
   }
 
   for (const task of improvementTasks) {
@@ -93,7 +124,7 @@ export function suggestHomeworkGrade(
   const earned = Math.min(possible, mainEarned + improvementEarned);
   const recovered = earned - mainEarned;
   const share = possible === 0 ? 0 : earned / possible;
-  const extras = { fixedTasks, lateAttempts, recovered };
+  const extras = { fixedTasks, lateAttempts, recovered, checkedTasks, confirmedTasks };
   if (!attemptedAny) return { earned, possible, share, grade: null, capped: false, ...extras };
 
   const uncapped = gradeForShare(share, config);
@@ -108,6 +139,7 @@ export function suggestHomeworkGradesForRoster(
   improvementTasks: readonly GradedTask[],
   attempts: readonly (GradedAttempt & { studentName: string })[],
   dueAt: string | null,
+  checks: readonly (CheckAttempt & { studentName: string })[] = [],
   config: GradingConfig = DEFAULT_GRADING
 ): { studentName: string; suggestion: HomeworkGrade }[] {
   return roster.map((studentName) => ({
@@ -117,6 +149,7 @@ export function suggestHomeworkGradesForRoster(
       improvementTasks,
       attempts.filter((attempt) => attempt.studentName === studentName),
       dueAt,
+      checks.filter((check) => check.studentName === studentName),
       config
     )
   }));

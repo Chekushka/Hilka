@@ -21,6 +21,7 @@ import { orderSessionTasks } from './session-mapping';
 
 export interface TeacherSessionDetail {
   id: string;
+  classId: string;
   code: string;
   classTitle: string;
   /** `closesAt === null` — drives the dashboard's polling and the "still open" note. */
@@ -36,6 +37,16 @@ export interface TeacherSessionDetail {
   tasks: SessionTaskSummary[];
   /** Homework only. */
   improvementTasks: SessionTaskSummary[];
+  /** A class check only: the homework it checks, by id and code. */
+  checks: { id: string; code: string } | null;
+}
+
+/** A class check of a homework, as the homework's page lists it. */
+export interface ClassCheckSummary {
+  id: string;
+  code: string;
+  open: boolean;
+  taskCount: number;
 }
 
 async function taskSummaries(db: Database, ids: string[]): Promise<SessionTaskSummary[]> {
@@ -61,8 +72,17 @@ export async function getSessionForTeacher(
     .limit(1);
   if (!row) return null;
 
+  const [checked] = row.session.checksSessionId
+    ? await db
+        .select({ id: sessions.id, code: sessions.code })
+        .from(sessions)
+        .where(eq(sessions.id, row.session.checksSessionId))
+        .limit(1)
+    : [];
+
   return {
     id: row.session.id,
+    classId: row.session.classId,
     code: row.session.code,
     classTitle: row.classTitle,
     open: row.session.closesAt === null,
@@ -71,8 +91,42 @@ export async function getSessionForTeacher(
     dueAt: row.session.dueAt?.toISOString() ?? null,
     roster: row.roster,
     tasks: await taskSummaries(db, row.session.taskIds),
-    improvementTasks: await taskSummaries(db, row.session.improvementTaskIds)
+    improvementTasks: await taskSummaries(db, row.session.improvementTaskIds),
+    checks: checked ?? null
   };
+}
+
+/** The class checks of a homework, by code (sessions keep no creation time). The caller has checked the homework is the teacher's. */
+export async function listClassChecks(homeworkId: string): Promise<ClassCheckSummary[]> {
+  const rows = await getDb()
+    .select({ id: sessions.id, code: sessions.code, closesAt: sessions.closesAt, taskIds: sessions.taskIds })
+    .from(sessions)
+    .where(eq(sessions.checksSessionId, homeworkId))
+    .orderBy(asc(sessions.code));
+  return rows.map((row) => ({ id: row.id, code: row.code, open: row.closesAt === null, taskCount: row.taskIds.length }));
+}
+
+/** One Check in a class check, for the homework's grade (lib/homework/grade.ts). */
+export interface CheckAttemptRow {
+  studentName: string;
+  taskId: string;
+  passed: boolean;
+  createdAt: string;
+}
+
+/** Every Check that counts in every class check of a homework. */
+export async function listCheckAttempts(homeworkId: string): Promise<CheckAttemptRow[]> {
+  const rows = await getDb()
+    .select({
+      studentName: attempts.studentName,
+      taskId: attempts.taskId,
+      passed: attempts.passed,
+      createdAt: attempts.createdAt
+    })
+    .from(attempts)
+    .innerJoin(sessions, eq(attempts.sessionId, sessions.id))
+    .where(and(eq(sessions.checksSessionId, homeworkId), isNull(attempts.voidedAt)));
+  return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
 }
 
 export async function getOpenSessionByCode(code: string): Promise<JoinedSession | null> {

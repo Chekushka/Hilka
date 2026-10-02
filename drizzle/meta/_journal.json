@@ -43,6 +43,13 @@
       "when": 1790929916984,
       "tag": "0005_add_homework",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790931800314,
+      "tag": "0006_add_class_check",
+      "breakpoints": true
     }
   ]
 }

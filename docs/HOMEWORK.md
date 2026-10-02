@@ -1,8 +1,9 @@
 # Homework — design
 
-> **Status: step 1 built** (see "Order of work" at the end): homework with a deadline and late
-> credit, device marks, server-side state and limits, fixes and the improvement task, and the
-> suggested grade. Steps 2–4 are designed and decided but not built. Decisions were made with the
+> **Status: steps 1 and 2 built** (see "Order of work" at the end): homework with a deadline and
+> late credit, device marks, server-side state and limits, fixes and the improvement task, the
+> suggested grade, and the class check that confirms it. Steps 3–4 are designed and decided but
+> not built. Decisions were made with the
 > project owner; each is marked **Decided**. AI_CONTEXT.md carries the architectural summary.
 
 ## What is asked
@@ -151,13 +152,30 @@ difficulty 4 task it opens the 10–12 band. Total 4.65 / 6 = 77.5% → **10**. 
 solves the improvement task (difficulty 3, 2 points) on its first Check: it recovers at most the
 1.35 points lost, so 6 / 6 = 100% → **12**.
 
-### 4a. How the class check affects the grade (step 2, not built)
+### 4a. The class check and the grade
 
-**Decided: confirmation.** The class check repeats a homework task with a new variant. Passing it
-confirms that task's homework credit as is. Failing it lowers that task to fix credit (70%) —
-"solved at home, but not on your own yet". A student who missed the class check (absent, air-raid
-alert) keeps their homework credit unchanged. The suggested grade shows its parts («домашнє 9 ·
-перевірка в класі ✓ 2 з 2»), so the teacher sees why.
+**Decided: confirmation.** The class check repeats a homework task in class. Passing it confirms
+that task's homework credit as is. Failing it lowers that task to fix credit (70%) — "solved at
+home, but not on your own yet" — and a hard task that fails its check no longer opens the 10–12
+band. A student who missed the class check (absent, air-raid alert), or was not checked on a
+task, keeps their homework credit unchanged. A check never raises anything.
+
+**Built:**
+- On the homework's page, «Перевірка в класі»: choose which main tasks (all by default), a time
+  limit (10 min by default) and hints (off by default — the point is what the student can do
+  alone), then «Створити перевірку» shows a code for the projector. Several checks of one
+  homework may exist; for each task the student's earliest Check across them counts.
+- The check is an ordinary graded session of the same class (`sessions.kind = 'check'`,
+  `checks_session_id` → the homework): one Check per task, enforced by the same rules. Students
+  are told what it does: «Розв'яжеш — бал за домашнє залишиться. Не вийде — це завдання в
+  домашньому зарахується на 70%».
+- **Same task, new variant where one exists.** A parameterized task's seed includes the session,
+  so the check gives each student a different variant than at home. Other tasks are repeated as
+  they are — still a fair test of whether the student can do it alone; per-task variants for more
+  task types are step 4.
+- The check has no grade of its own: its page says so and links to the homework. The homework's
+  grade reads every check's attempts (`listCheckAttempts`; `lib/homework/grade.ts`) and shows
+  «перевірка: ✓ 1 з 2»; the student card marks each task's check result.
 
 ### 5. Anti-cheating, by threat
 
@@ -197,7 +215,7 @@ a verdict.
   program so that…". The teacher can apply it to the whole class or to the students with facts
   against them. Homework that the student can redo in class is their own; homework they cannot
   redo tells the teacher what they need to know without any accusation from the software.
-  **Decided: built (step 2), as a confirmation of the homework credit** — section 4a above.
+  **Decided and built (step 2), as a confirmation of the homework credit** — section 4a above.
 
 **Against impersonation and sabotage (threat 4):** device marks, section 2 — visible to the
 student and the teacher, and undone by cancelling the other device's attempts.
@@ -245,9 +263,9 @@ Built (`drizzle/0005_add_homework.sql`):
 | `sessions.improvement_task_ids` | Section 4 |
 | `attempts.device_id` | Section 2 |
 | `attempts.voided_at` | Section 2 — the one field of an attempt that ever changes |
+| `sessions.kind = 'check'`, `sessions.checks_session_id` (`drizzle/0006_add_class_check.sql`) | Section 4a — a class check points at its homework |
 
-Later: `sessions.checks_session_id` (a class check points at its homework, step 2), per-student
-deadlines, `attempts.flags` gaining `pasted`, `edits`, `msToPass`, `normalizedHash`, `beyondTopic`
+Later: per-student deadlines, `attempts.flags` gaining `pasted`, `edits`, `msToPass`, `normalizedHash`, `beyondTopic`
 (step 3; jsonb, no migration).
 
 ## Order of work
@@ -256,7 +274,8 @@ deadlines, `attempts.flags` gaining `pasted`, `edits`, `msToPass`, `normalizedHa
    server-restored state, server-enforced limits (which also fixed graded lessons), fixes and
    improvement tasks in the suggested grade, deadline in the room and on the dashboard.
    `tests/e2e/homework.spec.ts`; unit tests in `lib/homework/`.
-2. **Class check** — generated from the homework, confirming its credit (section 4a).
+2. ✅ **Class check** — created from the homework's page, confirming or lowering its credit
+   (section 4a). `tests/e2e/homework.spec.ts`; unit tests in `lib/homework/grade.test.ts`.
 3. **Facts for the teacher** — teacher-side re-verification, normalized similar-code groups,
    behavioural counts (decided: acceptable — counts only, never content or keystrokes),
    constructs-not-taught-yet.

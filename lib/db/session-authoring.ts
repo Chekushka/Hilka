@@ -78,6 +78,8 @@ export interface CreateSessionInput {
   hintsEnabled: boolean;
   shuffle: boolean;
   dueAt: Date | null;
+  /** A class check only: the homework it checks. */
+  checksSessionId?: string | null;
 }
 
 /**
@@ -104,7 +106,8 @@ export async function createSession(input: CreateSessionInput): Promise<{ id: st
         timeLimitS: input.timeLimitS,
         hintsEnabled: input.hintsEnabled,
         shuffle: input.shuffle,
-        dueAt: input.dueAt
+        dueAt: input.dueAt,
+        checksSessionId: input.checksSessionId ?? null
       })
       .onConflictDoNothing()
       .returning({ id: sessions.id, code: sessions.code });

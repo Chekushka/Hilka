@@ -8,8 +8,12 @@ import type { TaskType } from '@/lib/task/types';
 
 export type SessionMode = 'practice' | 'graded';
 
-/** A lesson in class, or homework over several days (docs/HOMEWORK.md). */
-export type SessionKind = 'lesson' | 'homework';
+/**
+ * A lesson in class, homework over several days, or a class check of a
+ * homework — a short graded session in class that confirms the homework was
+ * the student's own (docs/HOMEWORK.md, section 4a).
+ */
+export type SessionKind = 'lesson' | 'homework' | 'check';
 
 export interface SessionTaskSummary {
   id: string;

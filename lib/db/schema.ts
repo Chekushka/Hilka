@@ -15,6 +15,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   boolean,
   bigint,
   char,
@@ -171,7 +172,10 @@ export const sessions = pgTable(
     opensAt: timestamp('opens_at', { withTimezone: true }),
     closesAt: timestamp('closes_at', { withTimezone: true }),
     // Homework only. Work after it is still accepted, for less credit.
-    dueAt: timestamp('due_at', { withTimezone: true })
+    dueAt: timestamp('due_at', { withTimezone: true }),
+    // A class check only: the homework it checks. Its results confirm or
+    // lower that homework's credit (lib/homework/grade.ts), never a grade of their own.
+    checksSessionId: uuid('checks_session_id').references((): AnyPgColumn => sessions.id)
   },
   (table) => [
     // Codes are recycled: a code is unique only among sessions that are still

@@ -28,7 +28,9 @@
  *
  * Homework adds: the deadline and the late rule above the list, a note that
  * every device is marked (option D — entry stays free), two fixes after a
- * failed first Check, and the improvement tasks once a point is lost.
+ * failed first Check, and the improvement tasks once a point is lost. A class
+ * check of a homework runs as a graded lesson, with a note saying what it does
+ * to the homework's grade.
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
@@ -166,6 +168,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   const [own, setOwn] = useState<OwnSessionState | null>(null);
   const graded = session.mode === 'graded';
   const homework = session.kind === 'homework';
+  const classCheck = session.kind === 'check' && (
+    <Notice testId="check-notice">
+      {t('session.checkNotice', { credit: percent(DEFAULT_GRADING.fixCredit) })}
+    </Notice>
+  );
   const rules: SessionRules = {
     kind: session.kind,
     mode: session.mode,
@@ -325,6 +332,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
             <Notice testId="device-notice">{t('session.deviceNotice')}</Notice>
           </div>
         )}
+        {classCheck && <div className="mt-4">{classCheck}</div>}
         {/* Big targets in a grid: a class of 25 finds a name by scanning, not by reading a line. */}
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {session.roster.map((name) => (
@@ -531,6 +539,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   return (
     <main className="mx-auto w-full max-w-2xl space-y-4 p-6">
       {deadline}
+      {classCheck}
       {own.usedElsewhere && (
         <Notice tone="attention" testId="used-elsewhere">
           {t('session.usedElsewhere')}

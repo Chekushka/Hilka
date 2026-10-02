@@ -1,12 +1,12 @@
 /**
  * Suggested grades for a graded session or homework, one row per student
  * (docs/AI_CONTEXT.md, "Grading"; docs/HOMEWORK.md), as CSV for the journal. Owner-scoped like the attempts export.
- * A practice session has no grades, so it 404s the same way an unknown one does.
+ * A practice session or a class check has no grades, so it 404s the same way an unknown one does.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
-import { getSessionForTeacher } from '@/lib/db/sessions';
+import { getSessionForTeacher, listCheckAttempts } from '@/lib/db/sessions';
 import { gradesToCsv } from '@/lib/dashboard/csv';
 import { suggestSessionGrades } from '@/lib/homework/session-grades';
 
@@ -18,11 +18,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const session = await getSessionForTeacher(id, teacher.id);
-  if (!session || session.mode !== 'graded') {
+  // A class check has no grade of its own — its results are in the homework's.
+  if (!session || session.mode !== 'graded' || session.kind === 'check') {
     return NextResponse.json({ error: 'unknown_session' }, { status: 404 });
   }
 
-  const grades = suggestSessionGrades(session, await listAttemptsForSession(session.id));
+  const checks = session.kind === 'homework' ? await listCheckAttempts(session.id) : [];
+  const grades = suggestSessionGrades(session, await listAttemptsForSession(session.id), checks);
 
   return new NextResponse(gradesToCsv(grades), {
     headers: {

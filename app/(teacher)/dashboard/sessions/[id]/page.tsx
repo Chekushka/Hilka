@@ -1,11 +1,17 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
+import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
-import { getSessionForTeacher, type TeacherSessionDetail } from '@/lib/db/sessions';
+import {
+  getSessionForTeacher,
+  listCheckAttempts,
+  listClassChecks,
+  type TeacherSessionDetail
+} from '@/lib/db/sessions';
 import {
   STUCK_RULES,
   countStates,
@@ -18,6 +24,7 @@ import type { CellStatus } from '@/lib/dashboard/rollup';
 import { findSharedFiles } from '@/lib/dashboard/shared-files';
 import { formatPoints } from '@/lib/dashboard/csv';
 import { agoFrom, formatClock } from '@/lib/dashboard/time';
+import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { sessionAllowsHighBand, type SuggestedGrade } from '@/lib/grading/grade';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
 import { summarizeDevices } from '@/lib/homework/devices';
@@ -44,7 +51,9 @@ function GradeCell({ suggestion }: { suggestion: SuggestedGrade | HomeworkGrade 
     ? [
         suggestion.fixedTasks > 0 && t('dashboard.gradeFixed', { n: suggestion.fixedTasks }),
         suggestion.lateAttempts > 0 && t('dashboard.gradeLate', { n: suggestion.lateAttempts }),
-        suggestion.recovered > 0 && t('dashboard.gradeRecovered', { points: formatPoints(suggestion.recovered) })
+        suggestion.recovered > 0 && t('dashboard.gradeRecovered', { points: formatPoints(suggestion.recovered) }),
+        suggestion.checkedTasks > 0 &&
+          t('dashboard.gradeChecked', { confirmed: suggestion.confirmedTasks, checked: suggestion.checkedTasks })
       ].filter((text): text is string => typeof text === 'string')
     : [];
   return (
@@ -121,9 +130,15 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   const sharedFiles = findSharedFiles(rows);
   const graded = session.mode === 'graded';
   const homework = session.kind === 'homework';
-  const grades = graded
-    ? new Map(suggestSessionGrades(session, rows).map((row) => [row.studentName, row.suggestion]))
-    : null;
+  // A class check has no grade of its own: its results land in the homework's (lib/homework/grade.ts).
+  const check = session.kind === 'check';
+  const [checkRows, classChecks] = homework
+    ? await Promise.all([listCheckAttempts(session.id), listClassChecks(session.id)])
+    : [[], []];
+  const grades =
+    graded && !check
+      ? new Map(suggestSessionGrades(session, rows, checkRows).map((row) => [row.studentName, row.suggestion]))
+      : null;
   // Device marks (docs/HOMEWORK.md, section 2): how many browsers worked under each name.
   const devices = homework
     ? new Map(
@@ -148,7 +163,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               mode: t(
                 homework
                   ? 'sessionBuilder.modeHomework'
-                  : graded
+                  : check
+                    ? 'dashboard.checkTitle'
+                    : graded
                     ? 'sessionBuilder.modeGraded'
                     : 'sessionBuilder.modePractice'
               ),
@@ -157,6 +174,14 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             {' · '}
             {session.open ? t('dashboard.sessionOpen') : t('dashboard.sessionClosed')}
           </p>
+          {check && session.checks && (
+            <p className="mt-1 text-sm text-ink" data-testid="check-of">
+              {t('dashboard.checkOf', { code: session.checks.code })}{' '}
+              <Link href={`/dashboard/sessions/${session.checks.id}`} className="text-accent">
+                {t('dashboard.checkOfLink', { code: session.checks.code })}
+              </Link>
+            </p>
+          )}
           {homework && session.dueAt && (
             <p className="mt-1 text-base text-ink" data-testid="homework-due">
               {t('dashboard.homeworkDue', {
@@ -188,7 +213,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             {t('dashboard.downloadFiles')}
           </a>
         )}
-        {graded && rows.length > 0 && (
+        {grades && rows.length > 0 && (
           <a href={`/api/dashboard/sessions/${session.id}/grades`} className="text-accent">
             {t('dashboard.exportGrades')}
           </a>
@@ -334,11 +359,20 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   minutes: STUCK_RULES.idleMinutes
                 })}
           </p>
-          {graded && !homework && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.gradeNote')}</p>}
-          {graded && !sessionAllowsHighBand([...session.tasks, ...session.improvementTasks]) && (
+          {grades && !homework && <p className="mt-1 text-xs text-ink-muted">{t('dashboard.gradeNote')}</p>}
+          {grades && !sessionAllowsHighBand([...session.tasks, ...session.improvementTasks]) && (
             <p className="mt-1 text-sm text-attention">{t('dashboard.gradeNoHardTask')}</p>
           )}
         </section>
+      )}
+
+      {homework && session.tasks.length > 0 && (
+        <ClassCheckPanel
+          homeworkId={session.id}
+          tasks={session.tasks.map(({ id: taskId, title }) => ({ id: taskId, title }))}
+          checks={classChecks}
+          fixCreditPercent={Math.round(DEFAULT_GRADING.fixCredit * 100)}
+        />
       )}
 
       {session.tasks.length > 0 && (

@@ -218,3 +218,56 @@ test('a graded lesson keeps a task locked to its first Check across a reload', a
   await expect(student.getByRole('button', { name: 'Перевірити' })).toHaveCount(0);
   await student.context().close();
 });
+
+test('a class check that the student fails lowers that homework task to 70%; one they skip changes nothing', async ({
+  browser,
+  page
+}) => {
+  const { code, sessionUrl } = await buildHomework(page);
+
+  // At home, Олена and Соломія both pass the main task on the first Check.
+  for (const name of ['Олена', 'Соломія']) {
+    const student = await joinAs(browser, code, name);
+    await student.getByRole('button', { name: MAIN, exact: true }).click();
+    await answer(student, MAIN_RIGHT);
+    await expect(student.getByRole('heading', { name: 'Готово!' })).toBeVisible();
+    await student.context().close();
+  }
+
+  // One easy task, solved in full: 100%, held at 9 by the high-band rule.
+  await page.evaluate((url) => window.location.assign(url), sessionUrl);
+  const row = (name: string) => page.locator('tr', { has: page.getByRole('link', { name: new RegExp(name) }) });
+  await expect(row('Олена').locator('td').last()).toContainText('9');
+
+  // The teacher creates a class check of it.
+  const panel = page.getByTestId('class-check');
+  await expect(panel.getByLabel(MAIN)).toBeChecked();
+  await panel.getByRole('button', { name: 'Створити перевірку' }).click();
+  const checkCode = ((await panel.getByTestId('check-code').textContent()) ?? '').trim();
+  expect(checkCode).toMatch(/^[A-Z2-9]{6}$/);
+
+  // In class, Олена fails it; Соломія is absent.
+  const inClass = await (await browser.newContext()).newPage();
+  await inClass.goto(`/s/${checkCode.toLowerCase()}`);
+  await expect(inClass.getByTestId('check-notice')).toContainText('70%');
+  await inClass.getByRole('button', { name: 'Олена', exact: true }).click();
+  await inClass.getByRole('button', { name: MAIN, exact: true }).click();
+  await answer(inClass, MAIN_WRONG);
+  await expect(inClass.getByRole('heading', { name: 'Завдання здано' })).toBeVisible();
+  await inClass.context().close();
+
+  // Олена's task drops to 70% → 8; Соломія keeps her 9.
+  await page.reload();
+  await expect(row('Олена')).toContainText('перевірка: ✓ 0 з 1');
+  await expect(row('Олена').locator('td').last()).toContainText('8');
+  await expect(row('Соломія').locator('td').last()).toContainText('9');
+  await expect(row('Соломія')).not.toContainText('перевірка');
+
+  // The card says why; the check's own page has no grade and points back here.
+  await row('Олена').getByRole('link', { name: /Олена/ }).click();
+  await expect(page.getByTestId('check-result')).toContainText('зараховано на 70%');
+  await page.getByRole('link', { name: /^← / }).first().click();
+  await page.getByTestId('class-check').getByRole('link', { name: new RegExp(checkCode) }).click();
+  await expect(page.getByTestId('check-of')).toBeVisible();
+  await expect(page.getByText('Орієнтовна оцінка')).toHaveCount(0);
+});

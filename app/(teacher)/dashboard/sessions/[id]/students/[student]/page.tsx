@@ -6,12 +6,13 @@ import { SubmittedAnswer } from '@/components/dashboard/SubmittedAnswer';
 import { VoidDeviceButton } from '@/components/dashboard/VoidDeviceButton';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForStudent, type StudentAttemptRow } from '@/lib/db/attempts';
-import { getSessionForTeacher, type TeacherSessionDetail } from '@/lib/db/sessions';
+import { getSessionForTeacher, listCheckAttempts, type TeacherSessionDetail } from '@/lib/db/sessions';
 import { listTaskContent } from '@/lib/db/tasks';
 import { summarizeStudents, taskTotalsFor } from '@/lib/dashboard/class-status';
 import type { CellStatus } from '@/lib/dashboard/rollup';
 import { describeSubmittedAnswer } from '@/lib/dashboard/submitted-answer';
 import { agoFrom, formatClock, formatDate, formatDuration } from '@/lib/dashboard/time';
+import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { summarizeDevices } from '@/lib/homework/devices';
 import type { SessionTaskSummary } from '@/lib/session/types';
 import { t } from '@/lib/i18n';
@@ -70,7 +71,15 @@ async function loadStudentCard(session: TeacherSessionDetail, rawName: string) {
   }
   const devices = session.kind === 'homework' ? summarizeDevices(attempts) : [];
   const deviceNumber = new Map(devices.map((device) => [device.deviceId, device.number]));
-  return { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, now };
+  // Per task, whether the first Check in a class check of this homework passed (lib/homework/grade.ts).
+  const checkResult = new Map<string, boolean>();
+  if (session.kind === 'homework') {
+    const own = (await listCheckAttempts(session.id))
+      .filter((check) => check.studentName === studentName)
+      .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+    for (const check of own) if (!checkResult.has(check.taskId)) checkResult.set(check.taskId, check.passed);
+  }
+  return { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, checkResult, now };
 }
 
 /**
@@ -100,7 +109,8 @@ export default async function StudentCardPage({
   if (!card) {
     notFound();
   }
-  const { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, now } = card;
+  const { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, checkResult, now } =
+    card;
   const dueMs = session.dueAt ? Date.parse(session.dueAt) : null;
 
   function cellFor(own: StudentAttemptRow[]): { status: CellStatus; attempts: number } {
@@ -133,6 +143,16 @@ export default async function StudentCardPage({
                     time: formatDuration(totals.timeMs)
                   })}
             </p>
+            {checkResult.has(task.id) && (
+              <p
+                data-testid="check-result"
+                className={`mt-1 text-sm font-medium ${checkResult.get(task.id) ? 'text-growth' : 'text-attention'}`}
+              >
+                {checkResult.get(task.id)
+                  ? t('studentCard.checkPassed')
+                  : t('studentCard.checkFailed', { credit: Math.round(DEFAULT_GRADING.fixCredit * 100) })}
+              </p>
+            )}
           </div>
         </div>
 

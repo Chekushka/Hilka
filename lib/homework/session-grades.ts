@@ -6,7 +6,7 @@
  */
 import { suggestGradesForRoster, type GradedAttempt, type GradedTask, type SuggestedGrade } from '@/lib/grading/grade';
 import type { SessionKind } from '@/lib/session/types';
-import { suggestHomeworkGradesForRoster, type HomeworkGrade } from './grade';
+import { suggestHomeworkGradesForRoster, type CheckAttempt, type HomeworkGrade } from './grade';
 
 export interface GradableSession {
   kind: SessionKind;
@@ -16,12 +16,24 @@ export interface GradableSession {
   dueAt: string | null;
 }
 
+/**
+ * `checks`: homework only — every student's Checks in the class checks of this
+ * homework (lib/db/sessions.ts, `listCheckAttempts`).
+ */
 export function suggestSessionGrades(
   session: GradableSession,
-  attempts: readonly (GradedAttempt & { studentName: string })[]
+  attempts: readonly (GradedAttempt & { studentName: string })[],
+  checks: readonly (CheckAttempt & { studentName: string })[] = []
 ): { studentName: string; suggestion: SuggestedGrade | HomeworkGrade }[] {
   return session.kind === 'homework'
-    ? suggestHomeworkGradesForRoster(session.roster, session.tasks, session.improvementTasks, attempts, session.dueAt)
+    ? suggestHomeworkGradesForRoster(
+        session.roster,
+        session.tasks,
+        session.improvementTasks,
+        attempts,
+        session.dueAt,
+        checks
+      )
     : suggestGradesForRoster(session.roster, session.tasks, [...attempts]);
 }
 
