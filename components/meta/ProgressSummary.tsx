@@ -8,22 +8,35 @@
  * live in localStorage; the task list itself was read by the server page
  * (CLAUDE.md rule 4). Honey carries XP, growth carries progress, and every
  * plant also says its numbers and its stage in words — never picture alone.
+ * Each plant is a link to where its topic carries on (lib/meta/topic-map.ts),
+ * the same target as the topic map: on a phone the garden stacks above the
+ * lessons, and students tap the plants expecting them to open something.
  */
+import Link from 'next/link';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { Plant } from '@/components/meta/Plant';
 import { plantStage } from '@/lib/meta/garden';
-import { topicProgress, totalXp, type PracticeTaskMeta } from '@/lib/meta/progress';
+import { totalXp, type PracticeTaskMeta } from '@/lib/meta/progress';
+import { topicMap, type MapLesson } from '@/lib/meta/topic-map';
 import { t } from '@/lib/i18n';
 
-export function ProgressSummary({ tasks, grade }: { tasks: PracticeTaskMeta[]; grade: number }) {
+export function ProgressSummary({
+  lessons,
+  tasks,
+  grade
+}: {
+  lessons: MapLesson[];
+  tasks: PracticeTaskMeta[];
+  grade: number;
+}) {
   const [progress] = useLocalProgress();
   const completed = new Set(progress.completedTaskSlugs);
   const xp = totalXp(tasks, completed);
-  const topics = topicProgress(tasks, completed, grade);
+  const topics = topicMap(lessons, tasks, completed, grade);
   if (topics.length === 0) return null;
 
   return (
-    <section aria-labelledby="progress-summary-title" className="rounded-lg border border-line bg-surface px-4 py-4">
+    <section aria-labelledby="progress-summary-title" data-testid="garden" className="rounded-lg border border-line bg-surface px-4 py-4">
       <div className="flex items-baseline justify-between gap-4">
         <h2 id="progress-summary-title" className="text-base font-semibold text-ink">
           {t('meta.title')}
@@ -39,12 +52,11 @@ export function ProgressSummary({ tasks, grade }: { tasks: PracticeTaskMeta[]; g
           const stage = plantStage(topic.done, topic.total);
           const complete = topic.done === topic.total;
           return (
-            <div
+            <Link
               key={topic.slug}
-              role="group"
-              aria-label={topic.title}
+              href={topic.href}
               data-stage={stage}
-              className="flex flex-col items-center gap-1 text-center"
+              className="flex flex-col items-center gap-1 rounded-lg border border-line px-1 py-2 text-center hover:border-accent hover:bg-bg"
             >
               <Plant stage={stage} size={40} />
               <span className="text-xs leading-tight text-ink">{topic.title}</span>
@@ -53,7 +65,7 @@ export function ProgressSummary({ tasks, grade }: { tasks: PracticeTaskMeta[]; g
                 {t('lessons.tasksDone', { done: topic.done, total: topic.total })}
                 <span className="sr-only"> · {t(`garden.stage${stage}`)}</span>
               </span>
-            </div>
+            </Link>
           );
         })}
       </div>

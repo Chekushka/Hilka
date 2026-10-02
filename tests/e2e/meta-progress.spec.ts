@@ -13,9 +13,11 @@ test('passing a task for the first time earns XP and grows its plant, shown on t
   await page.goto('/practice');
   await expect(page.getByTestId('xp-total')).toHaveText('0 XP');
   // The garden: one plant per topic, a seed until its first task is passed.
-  const intro = page.getByRole('group', { name: 'Середовище програмування' });
+  const intro = page.getByTestId('garden').getByRole('link', { name: 'Середовище програмування' });
   await expect(intro).toHaveAttribute('data-stage', '0');
   await expect(intro).toContainText('0 з');
+  // Each plant opens where its topic carries on — tapping a flower must lead somewhere.
+  await expect(intro).toHaveAttribute('href', /^\/practice\/g7-25-intro\//);
 
   await page.goto(QUIZ);
   await page.getByLabel('Виводить текст або значення на екран').check();
