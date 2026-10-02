@@ -43,7 +43,7 @@ test('the practice page lists grade 7 lessons in order, practice lessons marked 
 
 test('a lesson shows the explanation, then core tasks, then additional tasks', async ({ page }) => {
   await page.goto('/practice');
-  await page.getByRole('link', { name: /Лінійний алгоритм/ }).click();
+  await page.getByRole('listitem').getByRole('link', { name: /Лінійний алгоритм/ }).click();
 
   await expect(page.getByRole('heading', { name: 'Лінійний алгоритм', level: 1 })).toBeVisible();
   // The explanation's code example is static text, not an editor.

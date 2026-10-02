@@ -30,7 +30,11 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         {grade !== undefined && (
           <aside className="lg:order-2">
-            <ProgressSummary tasks={practiceTasks} grade={grade} />
+            <ProgressSummary
+              lessons={lessons.map((lesson) => ({ slug: lesson.slug, taskSlugs: lesson.taskSlugs }))}
+              tasks={practiceTasks}
+              grade={grade}
+            />
           </aside>
         )}
         <div>
