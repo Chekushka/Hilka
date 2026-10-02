@@ -74,4 +74,6 @@ export interface AttemptInput {
   score?: number;
   hintsUsed: number;
   durationMs: number;
+  /** Paste and edit counts (lib/task/activity.ts); kept for homework only. Untrusted, parsed by the route. */
+  activity?: unknown;
 }

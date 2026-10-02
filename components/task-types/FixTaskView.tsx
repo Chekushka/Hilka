@@ -20,6 +20,7 @@ import { RunCheckActions, RunDockIdle, WorkspaceDock } from '@/components/task/W
 import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
+import { NO_ACTIVITY, recordChange, type EditorActivity } from '@/lib/task/activity';
 import { gridWorldOf } from '@/lib/task/grid';
 import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
@@ -44,6 +45,8 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
 
   const hintsUsedRef = useRef(0);
   const openedAtRef = useRef(0);
+  // Paste and edit counts since the task opened (lib/task/activity.ts); the server keeps them for homework only.
+  const activityRef = useRef<EditorActivity>(NO_ACTIVITY);
   const onSubmitAttemptRef = useRef(onSubmitAttempt);
   // What was actually submitted to Check, captured at click time rather than
   // read from `code` inside the effect below — the student can keep typing
@@ -64,7 +67,8 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
       score: report.score,
       hintsUsed: hintsUsedRef.current,
       durationMs: Date.now() - openedAtRef.current,
-      submittedAnswer: { code: lastCheckedCodeRef.current }
+      submittedAnswer: { code: lastCheckedCodeRef.current },
+      activity: activityRef.current
     });
   }, [report]);
 
@@ -139,6 +143,7 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
             key={fileSpec ? code : undefined}
             value={code}
             onChange={setCode}
+            onActivity={(change) => (activityRef.current = recordChange(activityRef.current, change))}
             errorLine={result?.error?.line ?? null}
             inputLine={pendingInput?.line ?? null}
             readOnly={fileSpec !== undefined}

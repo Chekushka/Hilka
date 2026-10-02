@@ -27,6 +27,7 @@ import { getAttemptContext, listOwnAttempts, lockStudentTask } from '@/lib/db/se
 import { getPublishedTaskById } from '@/lib/db/tasks';
 import { canSubmit } from '@/lib/homework/rules';
 import { deviceId } from '@/lib/session/device-cookie';
+import { parseActivity } from '@/lib/task/activity';
 import type { AttemptInput } from '@/lib/session/types';
 
 function isValidBody(body: unknown): body is AttemptInput {
@@ -71,7 +72,9 @@ export async function POST(request: Request) {
     await lockStudentTask(tx, body.sessionId, body.studentName, body.taskId);
     const prior = await listOwnAttempts(body.sessionId, body.studentName, tx);
     if (!canSubmit(context.rules, body.taskId, prior)) return null;
-    return (await recordAttempt(body, sourceHash, device, tx)).id;
+    // Paste and edit counts are kept for homework only (decided with the project owner, docs/HOMEWORK.md).
+    const activity = context.rules.kind === 'homework' ? parseActivity(body.activity) : null;
+    return (await recordAttempt(body, { sourceHash, deviceId: device, activity }, tx)).id;
   });
   if (id === null) {
     return NextResponse.json({ error: 'no_checks_left' }, { status: 409 });

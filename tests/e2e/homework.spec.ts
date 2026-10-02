@@ -30,20 +30,27 @@ async function loginAsTeacher(page: Page) {
 }
 
 /** Builds a homework through the real form; returns its code and the session page's URL. */
-async function buildHomework(page: Page): Promise<{ code: string; sessionUrl: string }> {
+async function buildHomework(
+  page: Page,
+  main: string[] = [MAIN],
+  improvement: string[] = [IMPROVEMENT],
+  classTitle = 'Демонстраційний клас'
+): Promise<{ code: string; sessionUrl: string }> {
   await loginAsTeacher(page);
   await page.getByRole('link', { name: 'Нове заняття' }).click();
-  await page.locator('#class').selectOption({ label: 'Демонстраційний клас' });
+  await page.locator('#class').selectOption({ label: classTitle });
   await page.getByLabel('Режим').selectOption('homework');
   // Three days out by default; the rules are spelled out for the teacher.
   await expect(page.getByLabel('Здати до')).not.toHaveValue('');
   await expect(page.getByTestId('homework-rules')).toContainText('70%');
 
-  for (const title of [MAIN, IMPROVEMENT]) {
+  for (const title of [...main, ...improvement]) {
     await page.locator('#taskSearch').fill(title);
     await page.getByRole('listitem').filter({ has: page.getByText(title, { exact: true }) }).getByRole('checkbox').check();
   }
-  await page.getByRole('button', { name: `Завдання для покращення оцінки: ${IMPROVEMENT}` }).click();
+  for (const title of improvement) {
+    await page.getByRole('button', { name: `Завдання для покращення оцінки: ${title}` }).click();
+  }
   await page.getByRole('button', { name: 'Створити заняття' }).click();
   await expect(page.getByText('Заняття створено. Код для учнів:')).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText(/^Здати до:/)).toBeVisible();
@@ -270,4 +277,142 @@ test('a class check that the student fails lowers that homework task to 70%; one
   await page.getByTestId('class-check').getByRole('link', { name: new RegExp(checkCode) }).click();
   await expect(page.getByTestId('check-of')).toBeVisible();
   await expect(page.getByText('Орієнтовна оцінка')).toHaveCount(0);
+});
+
+const SIGN = "Додатне, від'ємне чи нуль";
+const SIGN_SOLUTION = `n = int(input())
+if n > 0:
+    print("додатне")
+elif n < 0:
+    print("від'ємне")
+else:
+    print("нуль")
+`;
+
+async function openSign(page: Page) {
+  await page.getByRole('button', { name: SIGN, exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+}
+
+async function typeProgram(page: Page, code: string) {
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.press('Delete');
+  await page.keyboard.insertText(code);
+}
+
+/** A real paste event, the way a browser delivers Ctrl+V — the editor records it as one. */
+async function pasteProgram(page: Page, code: string) {
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.locator('.cm-content').evaluate((element, text) => {
+    const data = new DataTransfer();
+    data.setData('text/plain', text);
+    element.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+  }, code);
+  await expect(page.locator('.cm-content')).toContainText('elif n < 0:');
+}
+
+async function checkAndPass(page: Page) {
+  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
+}
+
+test('facts for the teacher: a whole paste, a renamed copy, a construct not taught yet, and a forged pass caught by the re-check', async ({
+  browser,
+  page
+}) => {
+  // A class of its own: four students, so each fact has someone to belong to.
+  await loginAsTeacher(page);
+  const classTitle = `Факти ${Date.now()}`;
+  const created = await page.evaluate(
+    (title) =>
+      fetch('/api/classes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, roster: ['Олена', 'Тарас', 'Соломія', 'Ігор'] })
+      }).then((response) => response.status),
+    classTitle
+  );
+  expect(created).toBe(201);
+  const { code, sessionUrl } = await buildHomework(page, [SIGN], [], classTitle);
+
+  // Олена pastes the whole program at once.
+  const olena = await joinAs(browser, code, 'Олена');
+  await openSign(olena);
+  await pasteProgram(olena, SIGN_SOLUTION);
+  const firstCheck = olena.waitForRequest((request) => request.url().endsWith('/api/attempts'));
+  await checkAndPass(olena);
+  const { sessionId, taskId, taskVersion } = JSON.parse((await firstCheck).postData() ?? '{}');
+  await olena.context().close();
+
+  // Тарас types the same program with other names.
+  const taras = await joinAs(browser, code, 'Тарас');
+  await openSign(taras);
+  await typeProgram(taras, SIGN_SOLUTION.replace(/\bn\b/g, 'number'));
+  await checkAndPass(taras);
+  await taras.context().close();
+
+  // Соломія solves it with a function — no lesson so far has shown `def`.
+  const solomiia = await joinAs(browser, code, 'Соломія');
+  await openSign(solomiia);
+  await typeProgram(
+    solomiia,
+    `def sign(n):
+    if n > 0:
+        return "додатне"
+    if n < 0:
+        return "від'ємне"
+    return "нуль"
+print(sign(int(input())))
+`
+  );
+  await checkAndPass(solomiia);
+  await solomiia.context().close();
+
+  // Ігор never solves it, but posts a "pass" for a program that does not pass — what devtools would do.
+  const igor = await (await browser.newContext()).newPage();
+  await igor.goto(`/s/${code.toLowerCase()}`);
+  const forged = await igor.evaluate(
+    (body) =>
+      fetch('/api/attempts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).then(
+        (response) => response.status
+      ),
+    JSON.stringify({
+      sessionId,
+      studentName: 'Ігор',
+      taskId,
+      taskVersion,
+      submittedAnswer: { code: 'print("додатне")' },
+      passed: true,
+      hintsUsed: 0,
+      durationMs: 1000
+    })
+  );
+  expect(forged).toBe(201);
+  await igor.context().close();
+
+  await page.evaluate((url) => window.location.assign(url), sessionUrl);
+  const row = (name: string) => page.locator('tr', { has: page.getByRole('link', { name: new RegExp(name) }) });
+  await expect(row('Олена').getByTestId('facts')).toContainText('вставка');
+  await expect(row('Олена').getByTestId('facts')).toContainText('схожий код');
+  await expect(row('Тарас').getByTestId('facts')).toContainText('схожий код');
+  await expect(row('Соломія').getByTestId('facts')).toContainText('не з уроків');
+  await expect(row('Соломія').getByTestId('facts')).not.toContainText('схожий код');
+  await expect(page.getByTestId('similar-code')).toContainText('Олена, Тарас');
+
+  // The re-check runs every passed answer again in this browser and finds the forged one.
+  await page.getByRole('button', { name: 'Перевірити ще раз' }).click();
+  const result = page.getByTestId('recheck-result');
+  await expect(result).toBeVisible({ timeout: 60_000 });
+  await expect(result).toContainText('Не проходять перевірку: 1 з 4');
+  await expect(result).toContainText('Ігор');
+  await expect(result).not.toContainText('Олена');
+
+  // The cards say what was observed, in plain words.
+  await row('Соломія').getByRole('link', { name: /Соломія/ }).click();
+  await expect(page.getByTestId('student-facts')).toContainText('def');
+  await page.getByRole('link', { name: /^← / }).first().click();
+  await row('Олена').getByRole('link', { name: /Олена/ }).click();
+  await expect(page.getByTestId('student-facts')).toContainText('вставлено 7 рядків за раз');
 });

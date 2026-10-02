@@ -295,7 +295,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         passed: outcome.passed,
         ...(outcome.score !== undefined ? { score: outcome.score } : {}),
         hintsUsed: outcome.hintsUsed,
-        durationMs: outcome.durationMs
+        durationMs: outcome.durationMs,
+        ...(outcome.activity ? { activity: outcome.activity } : {})
       })
     })
       .then((response) => {

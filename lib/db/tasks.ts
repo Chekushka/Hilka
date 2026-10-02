@@ -3,6 +3,7 @@
  * which is what makes it safe to edit a task while a class is working.
  */
 import { and, asc, eq, inArray } from 'drizzle-orm';
+import { programsOf, type ContentTask } from '@/lib/homework/facts';
 import type { Task, TaskPayload, TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { tasks, topics } from './schema';
@@ -56,4 +57,30 @@ export async function listTaskContent(ids: string[]): Promise<TaskContent[]> {
     .select({ id: tasks.id, type: tasks.type, version: tasks.version, payload: tasks.payload })
     .from(tasks)
     .where(inArray(tasks.id, ids));
+}
+
+/**
+ * Every published task's own programs with its grades and topic order — what
+ * "taught so far" is read from for a homework's facts (lib/homework/facts.ts).
+ */
+export async function listContentPrograms(): Promise<(ContentTask & { type: TaskType })[]> {
+  const rows = await getDb()
+    .select({
+      id: tasks.id,
+      type: tasks.type,
+      gradeTags: tasks.gradeTags,
+      topicOrder: topics.order,
+      payload: tasks.payload,
+      reference: tasks.reference
+    })
+    .from(tasks)
+    .innerJoin(topics, eq(tasks.topicId, topics.id))
+    .where(eq(tasks.status, 'published'));
+  return rows.map((row) => ({
+    id: row.id,
+    type: row.type,
+    gradeTags: row.gradeTags,
+    topicOrder: row.topicOrder,
+    programs: programsOf(row.payload, row.reference?.code ?? null)
+  }));
 }

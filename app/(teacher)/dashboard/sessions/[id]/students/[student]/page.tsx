@@ -6,6 +6,7 @@ import { SubmittedAnswer } from '@/components/dashboard/SubmittedAnswer';
 import { VoidDeviceButton } from '@/components/dashboard/VoidDeviceButton';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForStudent, type StudentAttemptRow } from '@/lib/db/attempts';
+import { loadHomeworkFacts } from '@/lib/db/homework-facts';
 import { getSessionForTeacher, listCheckAttempts, type TeacherSessionDetail } from '@/lib/db/sessions';
 import { listTaskContent } from '@/lib/db/tasks';
 import { summarizeStudents, taskTotalsFor } from '@/lib/dashboard/class-status';
@@ -14,6 +15,7 @@ import { describeSubmittedAnswer } from '@/lib/dashboard/submitted-answer';
 import { agoFrom, formatClock, formatDate, formatDuration } from '@/lib/dashboard/time';
 import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { summarizeDevices } from '@/lib/homework/devices';
+import { hasFacts, pastedWhole } from '@/lib/homework/facts';
 import type { SessionTaskSummary } from '@/lib/session/types';
 import { t } from '@/lib/i18n';
 
@@ -79,7 +81,20 @@ async function loadStudentCard(session: TeacherSessionDetail, rawName: string) {
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
     for (const check of own) if (!checkResult.has(check.taskId)) checkResult.set(check.taskId, check.passed);
   }
-  return { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, checkResult, now };
+  const facts = session.kind === 'homework' ? (await loadHomeworkFacts(session)).byStudent.get(studentName) : undefined;
+  return {
+    studentName,
+    attempts,
+    summary,
+    content,
+    taskNumber,
+    attemptNumber,
+    devices,
+    deviceNumber,
+    checkResult,
+    facts,
+    now
+  };
 }
 
 /**
@@ -109,8 +124,19 @@ export default async function StudentCardPage({
   if (!card) {
     notFound();
   }
-  const { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, checkResult, now } =
-    card;
+  const {
+    studentName,
+    attempts,
+    summary,
+    content,
+    taskNumber,
+    attemptNumber,
+    devices,
+    deviceNumber,
+    checkResult,
+    facts,
+    now
+  } = card;
   const dueMs = session.dueAt ? Date.parse(session.dueAt) : null;
 
   function cellFor(own: StudentAttemptRow[]): { status: CellStatus; attempts: number } {
@@ -197,6 +223,14 @@ export default async function StudentCardPage({
                       <span className="text-ink-muted">{t('studentCard.attemptHints', { n: attempt.hintsUsed })}</span>
                     )}
                     {late && <span className="text-attention">{t('dashboard.attemptLate')}</span>}
+                    {attempt.activity && (attempt.activity.largestPasteLines > 0 || attempt.activity.edits > 0) && (
+                      <span className={pastedWhole(attempt.activity) ? 'text-attention' : 'text-ink-muted'}>
+                        {t('studentCard.attemptActivity', {
+                          lines: attempt.activity.largestPasteLines,
+                          edits: attempt.activity.edits
+                        })}
+                      </span>
+                    )}
                     {devices.length > 1 && device !== undefined && (
                       <span className="text-ink-muted">{t('dashboard.attemptDevice', { n: device })}</span>
                     )}
@@ -266,6 +300,36 @@ export default async function StudentCardPage({
               taskArticle(task, t('studentCard.taskHeading', { n: index + 1, title: task.title }), summary.cells[index])
             )}
           </section>
+
+          {facts && hasFacts(facts) && (
+            <section
+              aria-labelledby="student-facts"
+              className="space-y-2 rounded-xl border border-attention bg-surface p-4"
+              data-testid="student-facts"
+            >
+              <h2 id="student-facts" className="text-lg font-semibold text-ink">
+                {t('studentCard.factsTitle')}
+              </h2>
+              <p className="text-sm text-ink-muted">{t('studentCard.factsIntro')}</p>
+              <ul className="list-disc space-y-1 pl-5 text-sm text-ink">
+                {facts.pasted.map((fact) => (
+                  <li key={`paste:${fact.taskTitle}`}>
+                    {t('studentCard.factPasted', { task: fact.taskTitle, lines: fact.lines, edits: fact.edits })}
+                  </li>
+                ))}
+                {facts.similar.map((fact) => (
+                  <li key={`similar:${fact.taskTitle}`}>
+                    {t('studentCard.factSimilar', { task: fact.taskTitle, names: fact.others.join(', ') })}
+                  </li>
+                ))}
+                {facts.untaught.map((fact) => (
+                  <li key={`untaught:${fact.taskTitle}`}>
+                    {t('studentCard.factUntaught', { task: fact.taskTitle, constructs: fact.constructs.join(', ') })}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {session.improvementTasks.length > 0 && (
             <section aria-labelledby="student-improvement" className="space-y-3">

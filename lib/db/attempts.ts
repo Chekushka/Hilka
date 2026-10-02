@@ -9,6 +9,8 @@ import { createHash } from 'node:crypto';
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { FileSubmissionRow } from '@/lib/dashboard/submitted-files';
 import type { AttemptInput } from '@/lib/session/types';
+import type { FactAttempt } from '@/lib/homework/facts';
+import { parseActivity, type EditorActivity } from '@/lib/task/activity';
 import { attempts, tasks } from './schema';
 import { getDb, type Executor } from './client';
 
@@ -26,6 +28,8 @@ export interface SessionAttemptRow {
   sourceHash: string | null;
   /** The browser it came from (lib/session/device-cookie.ts); null for attempts from before device marks. */
   deviceId: string | null;
+  /** Homework only: paste and edit counts (lib/task/activity.ts); null elsewhere. */
+  activity: EditorActivity | null;
   createdAt: string;
 }
 
@@ -66,6 +70,7 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
     ...row,
     score: score === null ? null : Number(score),
     sourceHash: typeof flags?.sourceHash === 'string' ? flags.sourceHash : null,
+    activity: parseActivity(flags?.activity),
     createdAt: row.createdAt.toISOString()
   }));
 }
@@ -110,6 +115,7 @@ export async function listAttemptsForStudent(sessionId: string, studentName: str
     ...row,
     score: score === null ? null : Number(score),
     sourceHash: typeof flags?.sourceHash === 'string' ? flags.sourceHash : null,
+    activity: parseActivity(flags?.activity),
     voidedAt: voidedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString()
   }));
@@ -144,12 +150,24 @@ export async function listFileSubmissionsForSession(sessionId: string): Promise<
   });
 }
 
+/** What the route adds to an attempt beyond the body: derived server-side, never taken from the client as is. */
+export interface AttemptExtras {
+  /** File-delivery tasks only. */
+  sourceHash?: string | null;
+  deviceId?: string | null;
+  /** Homework only, parsed from the body (lib/task/activity.ts). */
+  activity?: EditorActivity | null;
+}
+
 export async function recordAttempt(
   input: AttemptInput,
-  sourceHash: string | null = null,
-  deviceId: string | null = null,
+  { sourceHash = null, deviceId = null, activity = null }: AttemptExtras = {},
   db: Executor = getDb()
 ): Promise<{ id: string }> {
+  const flags = {
+    ...(sourceHash !== null ? { sourceHash } : {}),
+    ...(activity !== null ? { activity } : {})
+  };
   const [row] = await db
     .insert(attempts)
     .values({
@@ -163,9 +181,69 @@ export async function recordAttempt(
       score: input.score === undefined ? null : String(input.passed ? 1 : input.score),
       hintsUsed: input.hintsUsed,
       durationMs: input.durationMs,
-      flags: sourceHash === null ? null : { sourceHash },
+      flags: Object.keys(flags).length > 0 ? flags : null,
       deviceId
     })
     .returning({ id: attempts.id });
   return row;
+}
+
+export interface PassedAnswerRow {
+  id: string;
+  studentName: string;
+  taskId: string;
+  taskTitle: string;
+  taskVersion: number;
+  submittedAnswer: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+/**
+ * Every passed attempt in a session that still counts, with what was
+ * submitted — for the teacher's re-check (lib/task/recheck.ts). Oldest first.
+ */
+export async function listPassedAnswers(sessionId: string): Promise<PassedAnswerRow[]> {
+  const rows = await getDb()
+    .select({
+      id: attempts.id,
+      studentName: attempts.studentName,
+      taskId: attempts.taskId,
+      taskTitle: tasks.title,
+      taskVersion: attempts.taskVersion,
+      submittedAnswer: attempts.submittedAnswer,
+      createdAt: attempts.createdAt
+    })
+    .from(attempts)
+    .innerJoin(tasks, eq(attempts.taskId, tasks.id))
+    .where(and(eq(attempts.sessionId, sessionId), eq(attempts.passed, true), isNull(attempts.voidedAt)))
+    .orderBy(asc(attempts.createdAt));
+  return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+}
+
+/**
+ * Every attempt in a session that still counts, with its program (when it
+ * has one) and its paste/edit counts — what a homework's facts are read from
+ * (lib/homework/facts.ts). Oldest first.
+ */
+export async function listFactAttempts(sessionId: string): Promise<FactAttempt[]> {
+  const rows = await getDb()
+    .select({
+      studentName: attempts.studentName,
+      taskId: attempts.taskId,
+      taskTitle: tasks.title,
+      passed: attempts.passed,
+      submittedAnswer: attempts.submittedAnswer,
+      flags: attempts.flags,
+      createdAt: attempts.createdAt
+    })
+    .from(attempts)
+    .innerJoin(tasks, eq(attempts.taskId, tasks.id))
+    .where(and(eq(attempts.sessionId, sessionId), isNull(attempts.voidedAt)))
+    .orderBy(asc(attempts.createdAt));
+  return rows.map(({ submittedAnswer, flags, createdAt, ...row }) => ({
+    ...row,
+    code: typeof submittedAnswer?.code === 'string' ? submittedAnswer.code : null,
+    activity: parseActivity(flags?.activity),
+    createdAt: createdAt.toISOString()
+  }));
 }

@@ -15,7 +15,7 @@ Then, depending on the work:
 - `docs/design-brief-python-platform.md` — before building any student-facing screen.
 - `docs/CI_CD.md` — before touching workflows, deploys, or the guardrail script.
 - `docs/HOMEWORK.md` — before touching homework (remote, multi-day sessions), session limits or
-  device marks. Decided design; steps 1–2 are built (including the class check), 3–4 are not.
+  device marks. Decided design; steps 1–3 are built (class check, facts for the teacher), 4 is not.
 
 ## What this project is
 

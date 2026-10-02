@@ -162,7 +162,8 @@ attempts
   id, session_id, student_name, task_id, task_version,
   seed bigint, submitted_answer jsonb, passed bool,
   score numeric, hints_used int, duration_ms int,
-  flags jsonb,            -- {pasted, edits, tooFast, sourceHash}; only sourceHash is written today
+  flags jsonb,            -- {sourceHash} on file tasks; {activity: {edits, largestPasteChars,
+                          --   largestPasteLines}} on homework (counts only)
   device_id text,         -- random per-browser id from a cookie; not a fingerprint
   voided_at,              -- set when a teacher cancels one device's attempts
   created_at
@@ -542,13 +543,17 @@ v1, mitigated rather than solved:
    server-side before the response reaches a browser (docs/TASKS.md has the full picture,
    including what is still not built — an authoring UI, `fix`/`predict` support).
 2. **Task shuffling** within a graded session.
-3. **Behavioural flags** on the attempt: large paste, near-zero edit count, implausibly fast
-   submission. The teacher sees a flag and decides. The system never accuses anyone.
+3. **Behavioural facts** on homework attempts: the largest paste and the edit count, counts only
+   (`lib/task/activity.ts`). With similar code and constructs not taught yet, they are shown to
+   the teacher as facts (docs/HOMEWORK.md, section 5a). The teacher decides. The system never
+   accuses anyone.
 
-Not mitigated: devtools tampering. The intended fix is a serverless function re-running the
-declarative checks on final submission only (cold start 2–4 s is acceptable once per task, not
-per run). The architecture is already shaped for this — checks are data and the evaluator is
-isomorphic. Do not introduce anything that breaks that.
+Devtools tampering is now detectable, not prevented: the teacher's re-check re-runs every stored
+passed answer in the teacher's browser through the same `lib/task/check-code.ts` the room uses,
+and lists any that does not pass (docs/HOMEWORK.md, section 5a). The intended full fix is still a
+serverless function re-running the declarative checks on final submission (cold start 2–4 s is
+acceptable once per task, not per run). The architecture is already shaped for this — checks are
+data and the evaluator is isomorphic. Do not introduce anything that breaks that.
 
 4. **File-delivery tasks add their own threat.** A file is easier to pass around than typed code
    — forwarding a `.py` attachment costs nothing, where copying code by hand at least costs

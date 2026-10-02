@@ -2,10 +2,12 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
+import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
+import { loadHomeworkFacts } from '@/lib/db/homework-facts';
 import {
   getSessionForTeacher,
   listCheckAttempts,
@@ -28,11 +30,33 @@ import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { sessionAllowsHighBand, type SuggestedGrade } from '@/lib/grading/grade';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
 import { summarizeDevices } from '@/lib/homework/devices';
+import type { StudentFacts } from '@/lib/homework/facts';
 import type { HomeworkGrade } from '@/lib/homework/grade';
 import { isHomeworkGrade, suggestSessionGrades } from '@/lib/homework/session-grades';
 import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
+
+/** The facts column: a word per kind of fact, each a reason to open the card — never a verdict (lib/homework/facts.ts). */
+function FactsCell({ facts }: { facts: StudentFacts | undefined }) {
+  const words = facts
+    ? [
+        facts.pasted.length > 0 && t('dashboard.factPasted'),
+        facts.similar.length > 0 && t('dashboard.factSimilar'),
+        facts.untaught.length > 0 && t('dashboard.factUntaught')
+      ].filter((word): word is string => typeof word === 'string')
+    : [];
+  if (words.length === 0) return <span className="text-ink-muted">—</span>;
+  return (
+    <span className="flex flex-wrap gap-1" data-testid="facts">
+      {words.map((word) => (
+        <span key={word} className="rounded-full border border-attention px-2 py-0.5 text-xs text-ink">
+          {word}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 /** A suggestion for the teacher, never a verdict — see lib/grading/grade.ts and lib/homework/grade.ts. */
 function GradeCell({ suggestion }: { suggestion: SuggestedGrade | HomeworkGrade }) {
@@ -139,6 +163,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
     graded && !check
       ? new Map(suggestSessionGrades(session, rows, checkRows).map((row) => [row.studentName, row.suggestion]))
       : null;
+  // Facts for the teacher (docs/HOMEWORK.md, section 5): homework only, as decided.
+  const facts = homework ? await loadHomeworkFacts(session) : null;
   // Device marks (docs/HOMEWORK.md, section 2): how many browsers worked under each name.
   const devices = homework
     ? new Map(
@@ -242,6 +268,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   <th className="py-3 pr-4 text-right font-medium">{t('dashboard.columnHintsShort')}</th>
                   <th className="py-3 pr-5 font-medium">{t('dashboard.columnLastActivity')}</th>
                   {devices && <th className="py-3 pr-5 text-right font-medium">{t('dashboard.columnDevices')}</th>}
+                  {facts && <th className="py-3 pr-5 font-medium">{t('dashboard.columnFacts')}</th>}
                   {grades && (
                     <th className="py-3 pr-5 text-center font-medium">{t('dashboard.columnSuggestedGrade')}</th>
                   )}
@@ -337,6 +364,11 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                           )}
                         </td>
                       )}
+                      {facts && (
+                        <td className="py-3.5 pr-5">
+                          <FactsCell facts={facts.byStudent.get(student.studentName)} />
+                        </td>
+                      )}
                       {grades && (
                         <td className="py-3.5 pr-5 text-center">
                           {/* Every row comes from the roster, so every name has a suggestion. */}
@@ -351,7 +383,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           </div>
           <p className="mt-2 text-xs text-ink-muted">
             {homework
-              ? t('dashboard.homeworkNote')
+              ? `${t('dashboard.homeworkNote')} ${t('dashboard.factsNote')}`
               : graded
               ? t('dashboard.stuckRuleGraded')
               : t('dashboard.stuckRule', {
@@ -374,6 +406,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           fixCreditPercent={Math.round(DEFAULT_GRADING.fixCredit * 100)}
         />
       )}
+
+      {rows.some((row) => row.passed) && <RecheckPanel sessionId={session.id} />}
 
       {session.tasks.length > 0 && (
         <section aria-labelledby="session-tasks" className="mt-8">
@@ -408,6 +442,20 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               );
             })}
           </ol>
+        </section>
+      )}
+
+      {facts && facts.similarGroups.length > 0 && (
+        <section className="mt-8" data-testid="similar-code">
+          <h2 className="text-lg font-semibold text-ink">{t('dashboard.similarTitle')}</h2>
+          <p className="mt-1 text-sm text-ink-muted">{t('dashboard.similarNote')}</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            {facts.similarGroups.map((group) => (
+              <li key={`${group.taskId}:${group.studentNames.join(',')}`} className="text-ink">
+                {t('dashboard.similarItem', { task: group.taskTitle, names: group.studentNames.join(', ') })}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

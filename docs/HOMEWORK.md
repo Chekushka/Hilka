@@ -1,9 +1,9 @@
 # Homework — design
 
-> **Status: steps 1 and 2 built** (see "Order of work" at the end): homework with a deadline and
-> late credit, device marks, server-side state and limits, fixes and the improvement task, the
-> suggested grade, and the class check that confirms it. Steps 3–4 are designed and decided but
-> not built. Decisions were made with the
+> **Status: steps 1–3 built** (see "Order of work" at the end): homework with a deadline and late
+> credit, device marks, server-side state and limits, fixes and the improvement task, the
+> suggested grade, the class check that confirms it, and the facts for the teacher (re-check,
+> similar code, paste/edit counts, constructs not taught yet). Step 4 is designed but not built. Decisions were made with the
 > project owner; each is marked **Decided**. AI_CONTEXT.md carries the architectural summary.
 
 ## What is asked
@@ -227,6 +227,40 @@ browser** (the same runner and checker, with the student's own seed, exactly as 
 already does for references) and flags any attempt whose stored code does not pass. Forging a
 pass then requires forging code that passes — which is solving the task.
 
+### 5a. The facts, as built (step 3)
+
+Each is an observation for the teacher; none changes a grade, none is shown to a student.
+
+- **Re-check** («Перевірити збережені відповіді», on every session page with a passed attempt;
+  `components/dashboard/RecheckPanel.tsx`). `GET /api/dashboard/sessions/[id]/recheck` returns
+  every passed attempt with what was submitted and the task as that student saw it (their own
+  variant of a parameterized task). The teacher's browser runs each through
+  `lib/task/recheck.ts` — programs through `lib/task/check-code.ts`, the very routine the room's
+  Check now uses, so the two cannot disagree; quiz, predict and parsons answers through the
+  evaluator directly — and lists any stored answer that does not pass. An attempt on an older
+  version of a task is counted as not re-checked rather than judged by checks it never faced.
+  Nothing is stored: the result lives on the page.
+- **Paste and edit counts** (homework only, as decided). The code editor reports each change and
+  each paste or drop (`CodeEditor`'s `onActivity`); `lib/task/activity.ts` keeps three counts —
+  edits, largest paste in characters and in lines — never text, never keystrokes or timing. `code`
+  and `fix` tasks send them with each attempt; `POST /api/attempts` keeps them in
+  `attempts.flags.activity` only when the session is homework. A paste of 5+ lines with at most 3
+  edits is a fact (`PASTE_RULE`). Fill gaps are not counted.
+- **Similar code** (`lib/homework/similar.ts`). Each student's latest passing program per task,
+  with comments, spacing and variable names normalized away; keywords, built-ins, modules,
+  attribute names, numbers and strings kept, and indentation kept. Programs under 25 tokens are
+  never compared — short answers match by honest coincidence — and `fill` programs never are,
+  since they share their template by design.
+- **Constructs not taught yet** (`lib/homework/constructs.ts`). "Taught" is read from the content,
+  not kept by hand: every construct used by a published task in the homework's grades whose topic
+  comes no later than the latest topic the homework covers — in its reference, starter, broken
+  program, template, shown code or Parsons lines. A student's latest program per task is compared
+  with that set, and what is left is named as code: `def`, `sum()`, `[… for …]`, `f"{x:…}"`.
+- **Where it shows** (homework): a «Факти» column on the class table (a word per kind: «вставка»,
+  «схожий код», «не з уроків»), a «Однаковий за структурою код» list on the session page, a
+  «Факти» box on the student card in plain sentences, and each attempt's counts beside it.
+  `lib/homework/facts.ts` gathers them; `lib/db/homework-facts.ts` reads what they need.
+
 ### 6. The student's side at home
 
 - No teacher to ask, so hints default to on, and the lesson's explanation is one click away (it
@@ -276,9 +310,8 @@ Later: per-student deadlines, `attempts.flags` gaining `pasted`, `edits`, `msToP
    `tests/e2e/homework.spec.ts`; unit tests in `lib/homework/`.
 2. ✅ **Class check** — created from the homework's page, confirming or lowering its credit
    (section 4a). `tests/e2e/homework.spec.ts`; unit tests in `lib/homework/grade.test.ts`.
-3. **Facts for the teacher** — teacher-side re-verification, normalized similar-code groups,
-   behavioural counts (decided: acceptable — counts only, never content or keystrokes),
-   constructs-not-taught-yet.
+3. ✅ **Facts for the teacher** — section 5a. `tests/e2e/homework.spec.ts`; unit tests in
+   `lib/homework/` and `lib/task/`.
 4. **Individual work** — shuffle, per-student task pools, variants for `fix`/`fill`/`predict`.
 
 ## Decided
