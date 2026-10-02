@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Onest } from 'next/font/google';
 import { t } from '@/lib/i18n';
+import { themeInitScript } from '@/lib/theme';
 import './globals.css';
 
 /*
@@ -31,7 +32,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="uk" className={`${interface_.variable} ${code.variable} h-full antialiased`}>
+    // suppressHydrationWarning: the theme script sets data-theme on <html> before React
+    // hydrates, so the attribute legitimately differs from the server's HTML.
+    <html
+      lang="uk"
+      className={`${interface_.variable} ${code.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Before the first paint, or a dark-theme page flashes light on every load (lib/theme.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

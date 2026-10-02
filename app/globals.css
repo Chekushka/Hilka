@@ -60,11 +60,20 @@
 
   --font-ui: "Onest", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-code: "JetBrains Mono", ui-monospace, "Fira Code", monospace;
+
+  /* Native controls and scrollbars follow the theme too. */
+  color-scheme: light;
 }
 
-/* An afternoon classroom with south-facing windows is a real condition. */
+/*
+ * Dark. An afternoon classroom with south-facing windows is a real condition.
+ * The system decides until someone presses the toggle in the app bar
+ * (lib/theme-client.ts), which sets data-theme on <html>. CSS cannot share one
+ * declaration block between the two selectors, so the palette is written
+ * twice — lib/theme.test.ts fails if the copies ever differ.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #1a201d;          /* green-tinted, not neutral charcoal */
     --surface: #242b27;
     --shell: #12160f;
@@ -82,7 +91,31 @@
     --failure: #d4645a;
 
     --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
+
+    color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1a201d;          /* green-tinted, not neutral charcoal */
+  --surface: #242b27;
+  --shell: #12160f;
+  --line: #333c36;
+  --ink: #e3e7de;
+  --ink-muted: #9aa69b;
+  --code-bg: #1e2521;
+
+  --accent: #6fa79c;
+  --accent-soft: #2a3b37;
+  --growth: #86b575;
+  --honey: #dfae4e;
+  --soil: #4d4536;
+  --attention: #c79358;
+  --failure: #d4645a;
+
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
+
+  color-scheme: dark;
 }
 
 /* Tailwind v4 reads the scale from here, so utilities and raw CSS stay in sync. */

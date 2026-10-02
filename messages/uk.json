@@ -2,7 +2,9 @@
   "shell": {
     "home": "Hilka — на головну",
     "navLabel": "Розділи",
-    "lessons": "Уроки"
+    "lessons": "Уроки",
+    "themeToDark": "Увімкнути темну тему",
+    "themeToLight": "Увімкнути світлу тему"
   },
   "home": {
     "title": "Python — крок за кроком",
