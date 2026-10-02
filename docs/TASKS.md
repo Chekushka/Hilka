@@ -200,10 +200,10 @@ class too), and any roster name can be picked by anyone with the code.
 | Item | Status | Notes |
 |---|---|---|
 | Design proposal | ✅ | `docs/HOMEWORK.md` |
-| Step 1: homework that survives days (deadline, claim + resume code, server-side state and first-Check lock) | ❌ | Waits on the proposal's decisions 1–3 |
-| Step 2: facts for the teacher (re-verify in the teacher's browser, similar code, behavioural counts, constructs not taught yet) | ❌ | |
-| Step 3: individual work (shuffle, per-student pools, variants for `fix`/`fill`/`predict`) | ❌ | |
-| Step 4: in-class check generated from the homework | ❌ | |
+| Step 1: homework that survives days (deadline, late marking, identity, server-side state and first-Check lock, fix credit and the improvement task in the suggested grade) | ❌ | Decided with the project owner: late work accepted and marked; first Check counts, a later fix earns reduced credit, plus a task for improving the grade; homework produces a suggested grade. Waits on the identity choice (`docs/HOMEWORK.md`, section 2) |
+| Step 2: in-class check generated from the homework, feeding the grade | ❌ | Decided: built, and it influences the grade; how (confirmation or weighted) is open |
+| Step 3: facts for the teacher (re-verify in the teacher's browser, similar code, behavioural counts, constructs not taught yet) | ❌ | |
+| Step 4: individual work (shuffle, per-student pools, variants for `fix`/`fill`/`predict`) | ❌ | |
 
 ## Teacher Flow
 
