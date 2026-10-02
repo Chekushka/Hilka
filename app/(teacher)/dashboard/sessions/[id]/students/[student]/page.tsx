@@ -3,13 +3,17 @@ import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { SubmittedAnswer } from '@/components/dashboard/SubmittedAnswer';
+import { VoidDeviceButton } from '@/components/dashboard/VoidDeviceButton';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { listAttemptsForStudent } from '@/lib/db/attempts';
+import { listAttemptsForStudent, type StudentAttemptRow } from '@/lib/db/attempts';
 import { getSessionForTeacher, type TeacherSessionDetail } from '@/lib/db/sessions';
 import { listTaskContent } from '@/lib/db/tasks';
 import { summarizeStudents, taskTotalsFor } from '@/lib/dashboard/class-status';
+import type { CellStatus } from '@/lib/dashboard/rollup';
 import { describeSubmittedAnswer } from '@/lib/dashboard/submitted-answer';
-import { agoFrom, formatClock, formatDuration } from '@/lib/dashboard/time';
+import { agoFrom, formatClock, formatDate, formatDuration } from '@/lib/dashboard/time';
+import { summarizeDevices } from '@/lib/homework/devices';
+import type { SessionTaskSummary } from '@/lib/session/types';
 import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -45,22 +49,28 @@ async function loadStudentCard(session: TeacherSessionDetail, rawName: string) {
   }
 
   const now = Date.now();
-  const [summary] = summarizeStudents([studentName], session.tasks, attempts, {
+  // Voided attempts are shown, marked, but never counted.
+  const counted = attempts.filter((attempt) => attempt.voidedAt === null);
+  const [summary] = summarizeStudents([studentName], session.tasks, counted, {
     mode: session.mode,
+    kind: session.kind,
     open: session.open,
     now
   });
-  const content = new Map((await listTaskContent(session.tasks.map((task) => task.id))).map((row) => [row.id, row]));
-  const taskNumber = new Map(session.tasks.map((task, index) => [task.id, index + 1]));
+  const allTasks = [...session.tasks, ...session.improvementTasks];
+  const content = new Map((await listTaskContent(allTasks.map((task) => task.id))).map((row) => [row.id, row]));
+  const taskNumber = new Map(allTasks.map((task, index) => [task.id, index + 1]));
   // Numbered per task, oldest first, the way a student would count their tries.
   const attemptNumber = new Map<string, number>();
-  for (const task of session.tasks) {
+  for (const task of allTasks) {
     attempts
       .filter((attempt) => attempt.taskId === task.id)
       .reverse()
       .forEach((attempt, index) => attemptNumber.set(attempt.id, index + 1));
   }
-  return { studentName, attempts, summary, content, taskNumber, attemptNumber, now };
+  const devices = session.kind === 'homework' ? summarizeDevices(attempts) : [];
+  const deviceNumber = new Map(devices.map((device) => [device.deviceId, device.number]));
+  return { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, now };
 }
 
 /**
@@ -90,7 +100,108 @@ export default async function StudentCardPage({
   if (!card) {
     notFound();
   }
-  const { studentName, attempts, summary, content, taskNumber, attemptNumber, now } = card;
+  const { studentName, attempts, summary, content, taskNumber, attemptNumber, devices, deviceNumber, now } = card;
+  const dueMs = session.dueAt ? Date.parse(session.dueAt) : null;
+
+  function cellFor(own: StudentAttemptRow[]): { status: CellStatus; attempts: number } {
+    const live = own.filter((attempt) => attempt.voidedAt === null);
+    if (live.length === 0) return { status: 'not_started', attempts: 0 };
+    return { status: live.some((attempt) => attempt.passed) ? 'passed' : 'stuck', attempts: live.length };
+  }
+
+  function taskArticle(task: SessionTaskSummary, heading: string, cell: { status: CellStatus; attempts: number }) {
+    const own = attempts.filter((attempt) => attempt.taskId === task.id);
+    const totals = taskTotalsFor(
+      own.filter((attempt) => attempt.voidedAt === null),
+      task.id
+    );
+    const payload = content.get(task.id);
+    return (
+      <article key={task.id} className="rounded-xl border border-line bg-surface p-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-1">
+            <CellMark status={cell.status} attempts={cell.attempts} size={16} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold text-ink">{heading}</h3>
+            <p className="mt-0.5 text-sm text-ink-muted">
+              {own.length === 0
+                ? t('studentCard.taskNoAttempts')
+                : t('studentCard.taskMeta', {
+                    attempts: own.length,
+                    hints: totals.hints,
+                    time: formatDuration(totals.timeMs)
+                  })}
+            </p>
+          </div>
+        </div>
+
+        {own.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {own.map((attempt, attemptIndex) => {
+              const oldVersion = payload && attempt.taskVersion !== payload.version;
+              const score =
+                !attempt.passed && attempt.score !== null && attempt.score > 0
+                  ? t('studentCard.attemptScore', { pct: Math.round(attempt.score * 100) })
+                  : null;
+              const late = dueMs !== null && Date.parse(attempt.createdAt) > dueMs;
+              const device = attempt.deviceId ? deviceNumber.get(attempt.deviceId) : undefined;
+              return (
+                <details
+                  key={attempt.id}
+                  id={`attempt-${attempt.id}`}
+                  open={attemptIndex === 0}
+                  data-voided={attempt.voidedAt !== null || undefined}
+                  className={`group rounded-lg border border-line bg-bg/40 open:bg-surface ${
+                    attempt.voidedAt !== null ? 'opacity-60' : ''
+                  }`}
+                >
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+                    <span aria-hidden="true" className="w-3 text-ink-muted transition-transform group-open:rotate-90">
+                      ›
+                    </span>
+                    <span className="font-medium text-ink">
+                      {t('studentCard.attemptSummary', {
+                        n: attemptNumber.get(attempt.id) ?? 0,
+                        time: formatClock(attempt.createdAt)
+                      })}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1.5 font-semibold ${attempt.passed ? 'text-growth' : 'text-attention'}`}
+                    >
+                      <CellMark status={attempt.passed ? 'passed' : 'stuck'} attempts={1} size={11} decorative />
+                      {t(attempt.passed ? 'studentCard.attemptPassed' : 'studentCard.attemptNotYet')}
+                    </span>
+                    {score && <span className="text-ink-muted">{score}</span>}
+                    {attempt.hintsUsed > 0 && (
+                      <span className="text-ink-muted">{t('studentCard.attemptHints', { n: attempt.hintsUsed })}</span>
+                    )}
+                    {late && <span className="text-attention">{t('dashboard.attemptLate')}</span>}
+                    {devices.length > 1 && device !== undefined && (
+                      <span className="text-ink-muted">{t('dashboard.attemptDevice', { n: device })}</span>
+                    )}
+                    {attempt.voidedAt !== null && (
+                      <span className="font-semibold text-ink-muted">{t('dashboard.attemptVoided')}</span>
+                    )}
+                  </summary>
+                  <div className="space-y-2 px-3 pb-3 pt-1">
+                    {oldVersion && (
+                      <p className="text-xs text-ink-muted">
+                        {t('studentCard.attemptOldVersion', { version: attempt.taskVersion })}
+                      </p>
+                    )}
+                    <SubmittedAnswer
+                      view={payload ? describeSubmittedAnswer(payload.payload, attempt.submittedAnswer) : { kind: 'unreadable' }}
+                    />
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        )}
+      </article>
+    );
+  }
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
@@ -131,97 +242,60 @@ export default async function StudentCardPage({
             <h2 id="student-tasks" className="text-lg font-semibold text-ink">
               {t('studentCard.tasksTitle')}
             </h2>
-            {session.tasks.map((task, index) => {
-              const own = attempts.filter((attempt) => attempt.taskId === task.id);
-              const totals = taskTotalsFor(own, task.id);
-              const cell = summary.cells[index];
-              const payload = content.get(task.id);
-              return (
-                <article key={task.id} className="rounded-xl border border-line bg-surface p-4">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-1">
-                      <CellMark status={cell.status} attempts={cell.attempts} size={16} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-ink">
-                        {t('studentCard.taskHeading', { n: index + 1, title: task.title })}
-                      </h3>
-                      <p className="mt-0.5 text-sm text-ink-muted">
-                        {own.length === 0
-                          ? t('studentCard.taskNoAttempts')
-                          : t('studentCard.taskMeta', {
-                              attempts: own.length,
-                              hints: totals.hints,
-                              time: formatDuration(totals.timeMs)
-                            })}
-                      </p>
-                    </div>
-                  </div>
-
-                  {own.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {own.map((attempt, attemptIndex) => {
-                        const oldVersion = payload && attempt.taskVersion !== payload.version;
-                        const score =
-                          !attempt.passed && attempt.score !== null && attempt.score > 0
-                            ? t('studentCard.attemptScore', { pct: Math.round(attempt.score * 100) })
-                            : null;
-                        return (
-                          <details
-                            key={attempt.id}
-                            id={`attempt-${attempt.id}`}
-                            open={attemptIndex === 0}
-                            className="group rounded-lg border border-line bg-bg/40 open:bg-surface"
-                          >
-                            <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
-                              <span
-                                aria-hidden="true"
-                                className="w-3 text-ink-muted transition-transform group-open:rotate-90"
-                              >
-                                ›
-                              </span>
-                              <span className="font-medium text-ink">
-                                {t('studentCard.attemptSummary', {
-                                  n: attemptNumber.get(attempt.id) ?? 0,
-                                  time: formatClock(attempt.createdAt)
-                                })}
-                              </span>
-                              <span
-                                className={`inline-flex items-center gap-1.5 font-semibold ${attempt.passed ? 'text-growth' : 'text-attention'}`}
-                              >
-                                <CellMark status={attempt.passed ? 'passed' : 'stuck'} attempts={1} size={11} decorative />
-                                {t(attempt.passed ? 'studentCard.attemptPassed' : 'studentCard.attemptNotYet')}
-                              </span>
-                              {score && <span className="text-ink-muted">{score}</span>}
-                              {attempt.hintsUsed > 0 && (
-                                <span className="text-ink-muted">
-                                  {t('studentCard.attemptHints', { n: attempt.hintsUsed })}
-                                </span>
-                              )}
-                            </summary>
-                            <div className="space-y-2 px-3 pb-3 pt-1">
-                              {oldVersion && (
-                                <p className="text-xs text-ink-muted">
-                                  {t('studentCard.attemptOldVersion', { version: attempt.taskVersion })}
-                                </p>
-                              )}
-                              <SubmittedAnswer
-                                view={
-                                  payload
-                                    ? describeSubmittedAnswer(payload.payload, attempt.submittedAnswer)
-                                    : { kind: 'unreadable' }
-                                }
-                              />
-                            </div>
-                          </details>
-                        );
-                      })}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
+            {session.tasks.map((task, index) =>
+              taskArticle(task, t('studentCard.taskHeading', { n: index + 1, title: task.title }), summary.cells[index])
+            )}
           </section>
+
+          {session.improvementTasks.length > 0 && (
+            <section aria-labelledby="student-improvement" className="space-y-3">
+              <h2 id="student-improvement" className="text-lg font-semibold text-ink">
+                {t('session.improvementTitle')}
+              </h2>
+              {session.improvementTasks.map((task) =>
+                taskArticle(
+                  task,
+                  task.title,
+                  cellFor(attempts.filter((attempt) => attempt.taskId === task.id))
+                )
+              )}
+            </section>
+          )}
+
+          {devices.length > 0 && (
+            <section aria-labelledby="student-devices" className="space-y-3" data-testid="student-devices">
+              <h2 id="student-devices" className="text-lg font-semibold text-ink">
+                {t('dashboard.devicesTitle')}
+              </h2>
+              <p className="text-sm text-ink-muted">{t('dashboard.devicesNote')}</p>
+              <ul className="space-y-2">
+                {devices.map((device) => (
+                  <li
+                    key={device.deviceId}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-line bg-surface px-4 py-3 text-sm"
+                  >
+                    <span className="font-semibold text-ink">{t('dashboard.deviceLabel', { n: device.number })}</span>
+                    <span className="text-ink-muted">
+                      {t('dashboard.deviceSummary', {
+                        attempts: device.attempts,
+                        first: `${formatDate(device.firstAt)} ${formatClock(device.firstAt)}`,
+                        last: `${formatDate(device.lastAt)} ${formatClock(device.lastAt)}`
+                      })}
+                    </span>
+                    <span className="flex-1" />
+                    {attempts.some((attempt) => attempt.deviceId === device.deviceId && attempt.voidedAt === null) && (
+                      <VoidDeviceButton
+                        sessionId={session.id}
+                        studentName={studentName}
+                        deviceId={device.deviceId}
+                        number={device.number}
+                      />
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
         <aside

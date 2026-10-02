@@ -14,8 +14,8 @@ Then, depending on the work:
 - `docs/SPIKE.md` — the open verification questions. Nothing is built before it passes.
 - `docs/design-brief-python-platform.md` — before building any student-facing screen.
 - `docs/CI_CD.md` — before touching workflows, deploys, or the guardrail script.
-- `docs/HOMEWORK.md` — before building anything for homework (remote, multi-day sessions). A
-  proposal awaiting decisions, not a description of built code.
+- `docs/HOMEWORK.md` — before touching homework (remote, multi-day sessions), session limits or
+  device marks. Decided design; step 1 is built, steps 2–4 are not.
 
 ## What this project is
 
@@ -81,6 +81,6 @@ one, stop and raise it instead of working around it.
 The spike is answered (`docs/SPIKE.md`) and Skulpt stayed. Built so far: the entry page and app
 shell, the runner, the check
 evaluator, error humanization, the database layer, practice mode, sessions, a read-only teacher
-dashboard, task authoring, all six task types end to end, the 8×8 grid robot (secondary to turtle), and lessons (mandatory/practice) with grade 7 content for lessons 25–42 and grade 8 content for lessons 43–61 (projects included), and the practice meta layer
-(XP, the garden). The authoring forms build checks, cases and hints visually. Grade 9 content does not exist yet. `docs/TASKS.md` is the map —
+dashboard, task authoring, all six task types end to end, the 8×8 grid robot (secondary to turtle), and lessons (mandatory/practice) with grade 7 content for lessons 25–42 and grade 8 content for lessons 43–61 (projects included), the practice meta layer
+(XP, the garden), and homework (deadline, late credit, fixes, improvement tasks, device marks). The authoring forms build checks, cases and hints visually. Grade 9 content does not exist yet. `docs/TASKS.md` is the map —
 read it rather than guessing from the folder tree.

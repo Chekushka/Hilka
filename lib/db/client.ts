@@ -15,6 +15,9 @@ import * as schema from './schema';
 
 export type Database = NodePgDatabase<typeof schema>;
 
+/** The database or a transaction on it — for queries that must also run inside one. */
+export type Executor = Database | Parameters<Parameters<Database['transaction']>[0]>[0];
+
 let cached: Database | null = null;
 
 export function getDb(): Database {

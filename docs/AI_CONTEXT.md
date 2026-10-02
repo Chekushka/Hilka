@@ -22,12 +22,15 @@ Core loop: read a short task → produce an answer (click / drag / type / write 
 see result in ~1 s → advance. The design bet is that *frequency of small wins* matters more
 than depth of feedback.
 
-Two use contexts, deliberately different in strictness:
+Three use contexts, deliberately different in strictness:
 - **Practice** — anonymous. Progress lives in `localStorage`; a student can press save to
   mint a **progress code** and restore it later on any machine. See "Progress Codes".
 - **Session** — teacher-created, joined by 6-character code, student picks their name from a
   class roster. Results persist and are gradable. No passwords, no email, no personal data
   beyond a display name the teacher entered.
+- **Homework** — a session with `kind: 'homework'`: the same entry, open for days with a
+  deadline, late credit, fixes and improvement tasks, and every device marked. See
+  docs/HOMEWORK.md and "Homework" below.
 
 The interface language is Ukrainian; the codebase, comments, and docs are English.
 
@@ -144,8 +147,10 @@ classes
 
 sessions
   id, class_id, code char(6), mode ('practice' | 'graded'),
-  task_ids uuid[], time_limit_s int | null, hints_enabled bool,
-  shuffle bool, opens_at, closes_at
+  kind ('lesson' | 'homework'),          -- homework is always mode 'graded'
+  task_ids uuid[], improvement_task_ids uuid[],
+  time_limit_s int | null, hints_enabled bool,
+  shuffle bool, opens_at, closes_at, due_at
 
 progress_codes
   code char(8) primary key,   -- human-readable alphabet, no 0/O/1/I/l
@@ -157,6 +162,8 @@ attempts
   seed bigint, submitted_answer jsonb, passed bool,
   score numeric, hints_used int, duration_ms int,
   flags jsonb,            -- {pasted, edits, tooFast, sourceHash}; only sourceHash is written today
+  device_id text,         -- random per-browser id from a cookie; not a fingerprint
+  voided_at,              -- set when a teacher cancels one device's attempts
   created_at
 
 lessons
@@ -173,6 +180,9 @@ Non-obvious invariants:
 - `roster` is a plain array of display names. It is **not** a table of students and must never
   grow into one — the "no registration" constraint depends on this staying trivial.
 - `attempts` is append-only. A retry is a new row. "Best attempt" is a query, not an update.
+  The one exception is `voided_at`: a teacher cancels what one device did under a student's name
+  (docs/HOMEWORK.md, section 2). A voided row keeps its content, is shown marked on the student
+  card, and is left out of everything that counts — `listAttemptsForSession`, the rules and grades.
 - `sessions.code` is unique only among currently open sessions. Codes are recycled.
 - `tasks.version` is bumped on publish. Draft edits are invisible to students — this is what
   makes it safe to edit a task while a class is working.
@@ -572,6 +582,27 @@ appear in more than one lesson. Content lives in `content/lessons/` and is impor
 tasks. Explanations show static code only — nothing on the explanation screen runs Python.
 `topics.theory_md` is superseded by the lesson explanation and unused by students.
 
+## Homework
+
+Designed and decided with the project owner in docs/HOMEWORK.md; this is the architecture.
+
+- **Not a subsystem.** A session with `kind: 'homework'`, `mode: 'graded'`, a `due_at`, and
+  `improvement_task_ids` beside `task_ids`. Builder, room, attempts, dashboard and exports are the
+  session's own, branching on `kind`.
+- **One set of rules, applied twice.** `lib/homework/rules.ts` (pure) says what a student may still
+  do on a task in any session: a practice lesson never limits, a graded lesson allows one Check,
+  homework allows a first Check and two fixes, an improvement task one Check once a main task's
+  first Check failed. The room derives everything it shows from it; `POST /api/attempts` applies
+  the same function to the stored attempts inside a transaction holding a per-(session, name,
+  task) advisory lock, and refuses with 409. The room reads the student's attempts back on entry
+  (`GET /api/sessions/[code]/me`), so state survives reloads and devices in every session.
+- **Identity is free; devices are marked.** No secret behind a roster name (rule 8, and decided:
+  option D). A random id in an httpOnly cookie marks every attempt; the student is told; the
+  teacher sees devices per name and can void one device's attempts. Nothing is ever blocked on a
+  device, and the system never concludes who did what.
+- **Late is judged when read.** Lateness comes from each attempt's time against the current
+  `due_at`, never stored, so moving a deadline re-judges past work.
+
 ## Grading
 
 Decided with the teacher. Hilka **suggests** a grade; the teacher decides, and students never see
@@ -580,7 +611,8 @@ the number in Hilka — they see which tasks they solved.
 - Only **graded sessions** produce a grade, and they should draw only from mandatory lessons
   ("Course Structure"). Practice and additional tasks never lower anyone's grade.
 - **First Check only.** A graded session locks each task to its first Check
-  (`components/session/SessionRoom.tsx`); a Check whose program crashes is not an attempt.
+  (`lib/homework/rules.ts`, enforced by the room and by `POST /api/attempts`); a Check whose
+  program crashes is not an attempt.
 - **Points by difficulty**: 1–2 → 1 point, 3 → 2, 4–5 → 3.
 - **Partial credit**: a task with input cases earns the share of cases it passed
   (`attempts.score`, reported by `lib/task/use-task-runner.ts`; a pass is always 1).
@@ -591,6 +623,11 @@ the number in Hilka — they see which tasks they solved.
 - **10–12 needs a fully solved task of difficulty 4–5**; otherwise the grade stops at 9. A session
   with no such task says so on the dashboard.
 - **Nothing submitted → no grade** (the teacher's «н»), never an automatic 1.
+
+- **Homework** (`lib/homework/grade.ts`): a main task earns the best of its first Check and two
+  fixes, a fix at 70%; each Check also takes the hint credit and the late credit of its moment —
+  up to two days late 70%, later 50%. Improvement tasks count on their first Check and only
+  recover lost points; the 10–12 band needs a hard task passed on a first Check, never a fix.
 
 The numbers live in `lib/grading/config.ts` as data, not inlined in the logic — teachers disagree
 about grading, and a per-session override is the planned next step.

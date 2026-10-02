@@ -6,11 +6,11 @@
  * attempts only (lib/dashboard/shared-files.ts).
  */
 import { createHash } from 'node:crypto';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { FileSubmissionRow } from '@/lib/dashboard/submitted-files';
 import type { AttemptInput } from '@/lib/session/types';
 import { attempts, tasks } from './schema';
-import { getDb } from './client';
+import { getDb, type Executor } from './client';
 
 export interface SessionAttemptRow {
   id: string;
@@ -24,6 +24,8 @@ export interface SessionAttemptRow {
   score: number | null;
   /** SHA-256 of the uploaded source; null for anything that was not a file upload. */
   sourceHash: string | null;
+  /** The browser it came from (lib/session/device-cookie.ts); null for attempts from before device marks. */
+  deviceId: string | null;
   createdAt: string;
 }
 
@@ -36,7 +38,11 @@ export function hashSource(code: string): string {
   return createHash('sha256').update(code, 'utf8').digest('hex');
 }
 
-/** Every attempt in a session, task title joined in — newest first per student. */
+/**
+ * Every attempt in a session that still counts, task title joined in — newest
+ * first per student. Voided attempts (lib/db/sessions.ts, `voidDeviceAttempts`)
+ * are left out, so every tally, grade and export built on this ignores them.
+ */
 export async function listAttemptsForSession(sessionId: string): Promise<SessionAttemptRow[]> {
   const rows = await getDb()
     .select({
@@ -49,11 +55,12 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
       durationMs: attempts.durationMs,
       score: attempts.score,
       flags: attempts.flags,
+      deviceId: attempts.deviceId,
       createdAt: attempts.createdAt
     })
     .from(attempts)
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
-    .where(eq(attempts.sessionId, sessionId))
+    .where(and(eq(attempts.sessionId, sessionId), isNull(attempts.voidedAt)))
     .orderBy(asc(attempts.studentName), desc(attempts.createdAt));
   return rows.map(({ flags, score, ...row }) => ({
     ...row,
@@ -65,13 +72,16 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
 
 export interface StudentAttemptRow extends SessionAttemptRow {
   taskVersion: number;
+  /** Set when the teacher cancelled this device's attempts; shown, never counted. */
+  voidedAt: string | null;
   /** As the task-type view reported it (lib/task/types.ts, `AttemptOutcome`); read with lib/dashboard/submitted-answer.ts. */
   submittedAnswer: Record<string, unknown> | null;
 }
 
 /**
  * One student's attempts in one session, newest first, with what they
- * submitted — the student card. The caller has already checked that the
+ * submitted — the student card. Voided ones included and marked, so the card
+ * can show what was cancelled; nothing that counts reads this. The caller has already checked that the
  * session is the teacher's own (`getSessionForTeacher`).
  */
 export async function listAttemptsForStudent(sessionId: string, studentName: string): Promise<StudentAttemptRow[]> {
@@ -88,16 +98,19 @@ export async function listAttemptsForStudent(sessionId: string, studentName: str
       score: attempts.score,
       flags: attempts.flags,
       submittedAnswer: attempts.submittedAnswer,
+      deviceId: attempts.deviceId,
+      voidedAt: attempts.voidedAt,
       createdAt: attempts.createdAt
     })
     .from(attempts)
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
     .where(and(eq(attempts.sessionId, sessionId), eq(attempts.studentName, studentName)))
     .orderBy(desc(attempts.createdAt));
-  return rows.map(({ flags, score, ...row }) => ({
+  return rows.map(({ flags, score, voidedAt, ...row }) => ({
     ...row,
     score: score === null ? null : Number(score),
     sourceHash: typeof flags?.sourceHash === 'string' ? flags.sourceHash : null,
+    voidedAt: voidedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString()
   }));
 }
@@ -118,7 +131,13 @@ export async function listFileSubmissionsForSession(sessionId: string): Promise<
     })
     .from(attempts)
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
-    .where(and(eq(attempts.sessionId, sessionId), sql`${attempts.flags} ->> 'sourceHash' is not null`));
+    .where(
+      and(
+        eq(attempts.sessionId, sessionId),
+        isNull(attempts.voidedAt),
+        sql`${attempts.flags} ->> 'sourceHash' is not null`
+      )
+    );
   return rows.flatMap(({ submittedAnswer, createdAt, ...row }) => {
     const code = submittedAnswer?.code;
     return typeof code === 'string' ? [{ ...row, code, createdAt: createdAt.toISOString() }] : [];
@@ -127,9 +146,11 @@ export async function listFileSubmissionsForSession(sessionId: string): Promise<
 
 export async function recordAttempt(
   input: AttemptInput,
-  sourceHash: string | null = null
+  sourceHash: string | null = null,
+  deviceId: string | null = null,
+  db: Executor = getDb()
 ): Promise<{ id: string }> {
-  const [row] = await getDb()
+  const [row] = await db
     .insert(attempts)
     .values({
       sessionId: input.sessionId,
@@ -142,7 +163,8 @@ export async function recordAttempt(
       score: input.score === undefined ? null : String(input.passed ? 1 : input.score),
       hintsUsed: input.hintsUsed,
       durationMs: input.durationMs,
-      flags: sourceHash === null ? null : { sourceHash }
+      flags: sourceHash === null ? null : { sourceHash },
+      deviceId
     })
     .returning({ id: attempts.id });
   return row;

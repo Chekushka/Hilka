@@ -171,3 +171,34 @@ describe('tallyTasks', () => {
     ]);
   });
 });
+
+describe('summarizeStudents in homework', () => {
+  const tasks = [
+    { id: 'a', slug: 'a', title: 'A', difficulty: 1 },
+    { id: 'b', slug: 'b', title: 'B', difficulty: 1 }
+  ];
+  const at = (taskId: string, passed: boolean, minute: number) => ({
+    studentName: 'Олена',
+    taskId,
+    passed,
+    hintsUsed: 0,
+    durationMs: 1000,
+    createdAt: `2026-10-05T10:${String(minute).padStart(2, '0')}:00.000Z`
+  });
+  const context = { mode: 'graded' as const, kind: 'homework' as const, open: true, now: Date.parse('2026-10-05T12:00:00Z') };
+
+  it('counts a failed task as done only once its fixes run out', () => {
+    const [withFixes] = summarizeStudents(['Олена'], tasks, [at('a', true, 1), at('b', false, 2)], context);
+    expect(withFixes.tasksDone).toBe(1);
+    expect(withFixes.state).toBe('working');
+
+    const [outOfFixes] = summarizeStudents(
+      ['Олена'],
+      tasks,
+      [at('a', true, 1), at('b', false, 2), at('b', false, 3), at('b', false, 4)],
+      context
+    );
+    expect(outOfFixes.tasksDone).toBe(2);
+    expect(outOfFixes.state).toBe('finished');
+  });
+});

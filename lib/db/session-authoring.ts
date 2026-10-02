@@ -7,7 +7,7 @@
 import { randomInt } from 'node:crypto';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { SESSION_CODE_ALPHABET, SESSION_CODE_LENGTH } from '@/lib/session/code';
-import type { SessionMode } from '@/lib/session/types';
+import type { SessionKind, SessionMode } from '@/lib/session/types';
 import { isFileDelivery } from '@/lib/task/prerequisite';
 import type { TaskType } from '@/lib/task/types';
 import { getDb } from './client';
@@ -71,10 +71,13 @@ export async function filterToPublishedTaskIds(candidateIds: string[]): Promise<
 export interface CreateSessionInput {
   classId: string;
   mode: SessionMode;
+  kind: SessionKind;
   taskIds: string[];
+  improvementTaskIds: string[];
   timeLimitS: number | null;
   hintsEnabled: boolean;
   shuffle: boolean;
+  dueAt: Date | null;
 }
 
 /**
@@ -95,10 +98,13 @@ export async function createSession(input: CreateSessionInput): Promise<{ id: st
         classId: input.classId,
         code,
         mode: input.mode,
+        kind: input.kind,
         taskIds: input.taskIds,
+        improvementTaskIds: input.improvementTaskIds,
         timeLimitS: input.timeLimitS,
         hintsEnabled: input.hintsEnabled,
-        shuffle: input.shuffle
+        shuffle: input.shuffle,
+        dueAt: input.dueAt
       })
       .onConflictDoNothing()
       .returning({ id: sessions.id, code: sessions.code });

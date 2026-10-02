@@ -55,6 +55,7 @@ export default async function DashboardPage() {
                     >
                       <span className="font-mono">{session.code}</span>
                       <span className="text-ink-muted">
+                        {session.kind === 'homework' && `${t('dashboard.homeworkBadge')} · `}
                         {session.open ? t('dashboard.sessionOpen') : t('dashboard.sessionClosed')} ·{' '}
                         {t('dashboard.sessionTaskCount', { n: session.taskCount })}
                       </span>

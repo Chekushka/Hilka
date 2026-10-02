@@ -28,7 +28,8 @@ export async function GET(
   // The task must belong to this open session — not just exist and be
   // published — so a student cannot reach tasks outside what was assigned.
   const session = await getOpenSessionByCode(code);
-  if (!session || !session.tasks.some((task) => task.id === taskId)) {
+  const assigned = [...(session?.tasks ?? []), ...(session?.improvementTasks ?? [])];
+  if (!session || !assigned.some((task) => task.id === taskId)) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 

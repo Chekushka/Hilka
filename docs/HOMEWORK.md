@@ -1,8 +1,9 @@
-# Homework — design proposal
+# Homework — design
 
-> **Status: proposal, nothing built.** Written for the project owner to decide on. Decisions
-> already made are marked **Decided**; what is still open is collected at the end. Nothing here
-> overrides AI_CONTEXT.md until the design is settled and that file is updated.
+> **Status: step 1 built** (see "Order of work" at the end): homework with a deadline and late
+> credit, device marks, server-side state and limits, fixes and the improvement task, and the
+> suggested grade. Steps 2–4 are designed and decided but not built. Decisions were made with the
+> project owner; each is marked **Decided**. AI_CONTEXT.md carries the architectural summary.
 
 ## What is asked
 
@@ -13,10 +14,11 @@ protection.
 
 ## Why a classroom session is not enough at home
 
-A session today was designed for 45 minutes with the teacher watching. Read against a
-three-day window at home, five things in the current code stop holding:
+A session was designed for 45 minutes with the teacher watching. Read against a three-day window
+at home, five things in the code stopped holding (as found before step 1; the first, second,
+fourth and fifth are now fixed for every session, sections 1–3):
 
-| What the code does today | Why it is fine in class | What happens at home |
+| What the code did | Why it is fine in class | What happens at home |
 |---|---|---|
 | Nothing ever sets `sessions.closes_at`; a session stays open until someone edits the database | The teacher ends the lesson | No deadline at all |
 | Graded mode's "first Check is final" is React state in `SessionRoom` | Nobody reloads during a test with the teacher watching | A reload, or a second tab, gives unlimited retries |
@@ -24,7 +26,7 @@ three-day window at home, five things in the current code stop holding:
 | A student picks **any** roster name, with no secret | The teacher sees who sits where | Anyone with the code can work as anyone else, or fail someone's graded tasks on purpose |
 | Progress ("done" marks) lives in this visit's memory | One sitting | Day two starts from an empty list |
 
-So the first half of this proposal is not anti-cheating at all: it is making a session survive
+So the first half of this design is not anti-cheating at all: it is making a session survive
 several days, several devices and an unattended browser. The anti-cheating measures come after,
 and they only mean something once those holes are closed.
 
@@ -54,153 +56,108 @@ state.
 
 ### 1. Deadline and lifetime
 
-- `sessions.due_at` (timestamptz). The builder offers presets — "до завтра 20:00", "за 3 дні",
-  "до наступного уроку" — and a date/time picker; times are Kyiv time
-  (`lib/dashboard/time.ts` already formats in it).
-- `opens_at` (already in the schema, unused) lets a teacher prepare homework on Friday that opens
-  on Monday.
-- **Decided: late work is accepted and marked.** After `due_at` the homework stays open; each
-  attempt made after the deadline (or after the student's own extended deadline) carries
-  `flags.late`, and the class table and student card show it. Power cuts and air-raid alerts are
-  the reason content is not tied to the timetable (AI_CONTEXT.md, "Course Structure"), and the
-  same reason applies to deadlines. Whether "late" also lowers the suggested grade is open (end of
-  this file); by default it does not — it is a fact for the teacher.
-- The homework closes when the teacher closes it, not by itself.
-- The teacher can extend the deadline for the class or for one student, and close early.
-- A closed homework releases its code back to the pool, which is also the moment the code
-  uniqueness index (`sessions_open_code_idx`) starts doing its job — today nothing ever closes.
+- `sessions.due_at` (timestamptz). The builder offers «Завтра, 18:00», «Через 3 дні», «Через
+  тиждень» and a date/time picker on the teacher's clock; the room and the dashboard show it in
+  Kyiv time with how far off it is («через 2 дні») — words, not a ticking clock
+  (`lib/homework/deadline.ts`).
+- **Decided: late work is accepted, marked, and earns less** — up to two days late 70% of the
+  credit, later 50% (`lateSteps`, `lateCreditBeyond` in `lib/grading/config.ts`;
+  `lib/homework/rules.ts`'s `lateCredit`). Lateness is computed when grades are read, from each
+  attempt's time against the current deadline, so moving the deadline re-judges past work. The
+  rule is stated to students under the deadline, and once it has passed the room says so in an
+  attention notice with the current percentage. Power cuts and air-raid alerts are why it is not
+  refused outright.
+- The teacher can move the deadline and close the session from the session page. Closing frees
+  the code; before this, nothing closed a session at all, lesson or not.
+- **Not built:** per-student deadline extensions, and `opens_at` (a homework that opens later).
 
 ### 2. Identity that survives several days — without accounts
 
-**Open — the one decision step 1 still waits on.**
+**Decided: option D — free entry, every device marked.** The problem: a roster name has no
+secret behind it, so at home anyone with the code can work under anyone's name, and with
+first-Check grading that can cost someone their first tries.
 
-The problem in one sentence: today the only thing standing between a student and their roster
-name is the 6-character session code, which the whole class knows. In class that is fine,
-because the teacher sees who sits where. At home, with first-try-only grading (decided below),
-it means a classmate can open your name and burn your first try with a wrong answer — and
-nothing records that it was not you.
+- **Entry is unchanged**: the session code, then the student's name picked from the roster.
+- Every browser gets a random id in a long-lived cookie (`hilka_device`,
+  `lib/session/device-cookie.ts`) — not a fingerprint, nothing about the person — and every
+  attempt records it (`attempts.device_id`).
+- **The student is told up front**, on the name screen of a homework, that every device is marked
+  and the teacher sees it. If their name was already used from another browser, the task list
+  says so calmly — «Під цим ім'ям уже працювали з іншого пристрою. Якщо це був не ти — скажи
+  вчителю» — information, never a block.
+- **The teacher** sees a «Пристрої» column on the class table (more than one is highlighted) and,
+  on the student card, each device with its number of Checks and first/last use, and a button that
+  **cancels everything one device did** under that name (`attempts.voided_at`). Cancelled
+  attempts stay visible on the card, marked «скасовано», and stop counting everywhere — grades,
+  tallies, exports — and the tries they used are free again.
 
-Rule 8 forbids accounts, email and passwords. Three designs fit within it.
-
-**A. Claim on first use + continue code.**
-- *Student:* enters the session code, picks their name, works. That first device now owns the
-  name (a cookie for this homework). The screen shows an 8-character **continue code**
-  («Код продовження: KX7M-2PQR») with a copy button and «Запиши або сфотографуй його».
-- *Another device:* picking the same name asks for the continue code. Typing it moves the work
-  there — same tasks, same results.
-- *Teacher:* nothing to prepare. The class table shows who has claimed their name and on how many
-  devices. **Reset claim** frees a name; the student then claims it again.
-- *Lost code:* the student asks the teacher, who resets the claim. Nothing is lost, the results
-  stay.
-- *Weak point:* whoever opens a name **first** gets it. A classmate could claim your name before
-  you, and use your first tries. Mitigation: every attempt records which claim made it, so
-  "reset claim" can also **void the attempts that claim made** — the real student gets their
-  first tries back. The sabotage is undone, not just noticed. The real student notices
-  immediately («Це ім'я вже зайняте») and tells the teacher.
-- *Stored:* a hash of the token and of the continue code, a timestamp. Nothing about the person.
-
-**B. Teacher-issued personal codes.**
-- *Teacher:* before the first homework, presses «Роздрукувати коди» for the class and hands out
-  slips — one per roster name, e.g. «Олена К. — 4827-KM». Once per class, reused for every
-  homework.
-- *Student:* enters the session code, picks their name, types their personal code. Works on any
-  device, every time, no claiming.
-- *Weak point:* the slip. Students aged 12–15 lose it, leave it in the classroom, or share it
-  with a friend "to help". A lost slip means the teacher re-issues one; a shared slip means a
-  friend can act as you, with no "already taken" warning to tell you.
-- *Rule 8:* it is not a password the student chooses, there is no account and nothing personal,
-  but it is a credential handed to a child. That is your call; AI_CONTEXT.md would record it as
-  an exception if you take it.
-
-**C. Both:** A by default; a per-class switch turns B on for classes where A was abused.
-
-|  | A — claim + continue code | B — printed codes |
-|---|---|---|
-| Teacher preparation | none | print and hand out once per class |
-| Student friction | none on the first device; a code only on the second | a code every time |
-| Someone takes your name first | possible; you see it at once, the teacher resets and voids their attempts | not possible |
-| A friend logs in as you with your permission | possible (you gave them the continue code) | possible (you gave them the slip) |
-| Lost code | teacher resets, nothing lost | teacher re-issues, nothing lost |
-| Works when the first device was the school computer | yes, with the continue code | yes |
-
-**Recommendation: A.** No preparation, no codes for the honest majority, and the one real weak
-point (claiming first) is both visible to the victim and fully reversible, which is what matters
-under first-try-only grading. Add B later only if a class actually abuses A. Neither stops a
-friend whom the student *invited* — no design without real accounts can, and the class check
-(section 5) is the answer to that.
-
-A new table, `session_claims`, rather than a column on the roster — the roster must stay a plain
-array of names (AI_CONTEXT.md, "Non-obvious invariants").
+Considered and set aside: **A**, the first device claims the name and a continue code moves it to
+another device — it stops an intruder before the fact, but makes honest students carry a code and
+leaves a student who lost it stuck until the teacher answers; and **B**, teacher-printed personal
+codes — a credential handed to a child, every time. D can be tightened to A later for a class that
+abuses it.
 
 ### 3. State on the server
 
-- On entry, the room loads the student's own attempts for the session (a new
-  `GET /api/sessions/[code]/me`, authorized by the claim cookie): done marks, locked tasks and
-  the task currently open are restored on any device, any day.
-- **Which Check was first is decided by the server**, not the UI: `POST /api/attempts` knows
-  whether this name already has an attempt on this task, so a reload or a second device cannot
-  produce a second "first" try. In homework, a later attempt is recorded as a fix (section 4); in
-  a graded class session, it is refused. The second half also fixes the in-class reload hole,
-  so it is worth doing for every graded session.
-- A time limit, if a homework has one ("once you start, 40 minutes"), is anchored on the server
-  at the first task opened, not in `sessionStorage`.
+- On entry the room reads the student's own attempts back (`GET /api/sessions/[code]/me`), so done
+  marks, locks and fixes left survive a reload, another tab, another device and another day.
+  Every session does this, not only homework.
+- **`POST /api/attempts` applies the same rules as the room** (`lib/homework/rules.ts`'s
+  `canSubmit`) inside a transaction holding an advisory lock per (session, name, task), so a
+  double click or two tabs cannot both be "the first". A Check the rules do not allow gets 409 and
+  is not recorded. This also closed the in-class hole: a graded lesson's first-Check lock used to
+  live only in the browser, and a reload handed back a fresh task.
+- Homework has no time limit.
 
 ### 4. Attempts and grading
 
-**Decided:** homework produces a suggested grade (the teacher still decides, as with every
-grade in Hilka — AI_CONTEXT.md, "Grading"); the **first Check counts**; after a failed first
-Check the student **may fix the task for lower credit**; and the teacher can add **a task for
-improving the grade**. The defaults below are proposed and open to change; they live in
-`lib/grading/config.ts` as data like the rest of the grading numbers.
+**Decided:** homework produces a suggested grade (the teacher still decides — AI_CONTEXT.md,
+"Grading"); the **first Check counts in full**; after a failed first Check the student has **two
+fixes**, and a pass on a fix earns **70%**; the teacher can add **tasks for improving the grade**,
+shown only after a point is lost. The numbers are data in `lib/grading/config.ts` (`maxFixes`,
+`fixCredit`); the rules are `lib/homework/rules.ts`, the grade `lib/homework/grade.ts`.
 
-**Per task, in order:**
+**Per task:**
 
 | What happened | Credit (share of the task's points) |
 |---|---|
-| Passed on the first Check | 100% (75% if a hint was opened — the existing rule) |
-| First Check failed, passed on a later Check (a fix) | **60%** (hint rule applied on top) |
-| Never passed | partial credit for input cases, as today, from the *first* Check |
+| Passed on the first Check | 100% |
+| First Check failed, passed on the second or third (a fix) | 70% |
+| Never passed | the best partial credit for input cases among the counted Checks, the same factors applied |
 
-- A fix is allowed as many times as the student needs — the fix is already worth less, and the
-  point of fixing is learning. The student card shows how many Checks it took.
-- In the room: after a failed first Check the task does not lock (as class graded mode does); it
-  says «Можна виправити — зарахується частково» and stays open.
-- The **10–12 band** (needs a fully solved difficulty 4–5 task) is opened only by a first-Check
-  pass or by the grade-improvement task, not by a fix.
+On top of that, per Check: 75% if a hint was opened (the existing rule) and the late credit of
+the moment it was made. The task earns the best of its counted Checks. A fourth Check is refused
+by the server and ignored by grading.
 
-**The task for improving the grade («Завдання для покращення оцінки»):**
-- In the builder, the teacher marks one or more of the homework's tasks as improvement tasks.
-- It appears to a student once they have lost points somewhere (a failed first Check), not
-  before — the main tasks come first.
-- Its points can only **recover lost points**: the share of points is capped at 100% of the main
-  tasks. First Check counts on it too, with no fix credit — it is already the second chance.
-- A good source: the lesson's additional tasks (AI_CONTEXT.md, "Course Structure"), which are
-  harder by design. The builder could offer them as suggestions.
+- In the room, before the first Check: «Зараховується перша перевірка. Якщо помилишся, зможеш
+  виправити ще 2 рази — виправлене зараховується на 70%». After a failed one the task stays open
+  with the fixes left; with none left it locks. A task already counted reopens on a «Зараховано»
+  screen, not a fresh editor. The task list says each task's state in words.
+- The **10–12 band** (needs a fully solved difficulty 4–5 task) is opened by a first-Check pass
+  on a main task or by an improvement task, never by a fix.
 
-**Worked example**, on the current bands (`lib/grading/config.ts`). Main tasks of difficulty 2,
-3 and 4, worth 1 + 2 + 3 = 6 points. Task 1: first Check ✓ → 1. Task 2: first Check ✗, fixed →
-2 × 0.6 = 1.2. Task 3: first Check ✓ after a hint → 3 × 0.75 = 2.25, and as a first-Check pass on
-a difficulty 4 task it opens the 10–12 band. Total 4.45 / 6 = 74% → **9**. The student then
-solves the improvement task (difficulty 3, 2 points) on its first Check: it may recover at most
-the 1.55 points lost, so 6 / 6 = 100% → **12**. Had task 3 been the one that was only fixed, the
-band would stay closed and the grade would stop at 9 — unless the improvement task is itself
-difficulty 4–5.
+**Tasks for improving the grade («Завдання для покращення оцінки»):**
+- In the builder, any chosen task can be marked «покращення»; it is stored apart from the main
+  tasks (`sessions.improvement_task_ids`).
+- It appears once the student has lost points — a main task whose first Check did not pass — and
+  stays, even after that task is fixed. The server refuses it before then.
+- One Check, no fixes. Its points only **recover lost points**: the share never exceeds 100% of
+  the main tasks.
 
-### 4a. How the class check affects the grade
+**Worked example** (`lib/homework/grade.test.ts` runs it). Main tasks of difficulty 2, 3 and 4,
+worth 1 + 2 + 3 = 6 points. Task 1: first Check ✓ → 1. Task 2: first Check ✗, fixed → 2 × 0.7 =
+1.4. Task 3: first Check ✓ after a hint → 3 × 0.75 = 2.25, and as a first-Check pass on a
+difficulty 4 task it opens the 10–12 band. Total 4.65 / 6 = 77.5% → **10**. The student then
+solves the improvement task (difficulty 3, 2 points) on its first Check: it recovers at most the
+1.35 points lost, so 6 / 6 = 100% → **12**.
 
-**Decided: it influences the grade. How — open.** Two ways it can, recommended first:
+### 4a. How the class check affects the grade (step 2, not built)
 
-- **Confirmation (recommended).** The class check repeats a homework task with a new variant.
-  Passing it confirms that task's homework credit as is. Failing it lowers that task to fix
-  credit (60%) — "you solved it at home, but not on your own yet". A student who missed the
-  class check (absent, air-raid alert) keeps their homework credit unchanged; nobody loses points
-  for not being there. This targets exactly what the check is for: homework someone else did.
-- **Weighted.** Final = 70% homework + 30% class check, both through the same bands. Simpler to
-  explain to students, but it lowers the grade of a student who did honest homework and had a
-  bad five minutes in class, and it needs a rule for absence.
-
-The suggested grade shows its parts either way («домашнє 9 · перевірка в класі ✓ 2 з 2»), so the
-teacher sees why.
+**Decided: confirmation.** The class check repeats a homework task with a new variant. Passing it
+confirms that task's homework credit as is. Failing it lowers that task to fix credit (70%) —
+"solved at home, but not on your own yet". A student who missed the class check (absent, air-raid
+alert) keeps their homework credit unchanged. The suggested grade shows its parts («домашнє 9 ·
+перевірка в класі ✓ 2 з 2»), so the teacher sees why.
 
 ### 5. Anti-cheating, by threat
 
@@ -240,10 +197,10 @@ a verdict.
   program so that…". The teacher can apply it to the whole class or to the students with facts
   against them. Homework that the student can redo in class is their own; homework they cannot
   redo tells the teacher what they need to know without any accusation from the software.
-  **Decided: built, and it influences the grade.** How exactly is in section 4a above.
+  **Decided: built (step 2), as a confirmation of the homework credit** — section 4a above.
 
-**Against impersonation and sabotage (threat 4):** the claim in section 2. Every claim, reset
-and refused attempt to pick a claimed name is visible to the teacher.
+**Against impersonation and sabotage (threat 4):** device marks, section 2 — visible to the
+student and the teacher, and undone by cancelling the other device's attempts.
 
 **Against devtools tampering (threat 5):** the planned server-side CPython is not needed to close
 most of it. Every code attempt already stores the student's source. A **"перевірити ще раз"**
@@ -256,64 +213,63 @@ pass then requires forging code that passes — which is solving the task.
 
 - No teacher to ask, so hints default to on, and the lesson's explanation is one click away (it
   already is, under «Як це працює»).
-- The deadline is always visible in the room: "Здати до п'ятниці, 18:00 · залишилось 2 дні", in
-  words, not a ticking clock — a countdown is pressure the brief avoids.
-- The entry page remembers the homework codes this device has joined (localStorage) and shows
-  "Домашнє завдання: 3 з 5, до п'ятниці" with a link back, so nobody needs to find the code again.
-- A finished homework says so plainly ("Усе здано. Учитель побачить твої відповіді."), with the
-  done tasks still open for practice.
+- The deadline is always visible in the room: «Здати до: пт, 9 жовтня о 18:00 (через 2 дні)»,
+  with the late rule under it — words, not a ticking clock.
+- Each task in the list says where it stands: «Зараховано», «Виправлено · 70%», «Можна
+  виправити: ще 2», «Не зараховано».
+- **Not built:** the entry page remembering this device's homework codes («Домашнє завдання: 3 з 5,
+  до п'ятниці»), and a plain "everything handed in" line once all tasks are counted.
 
 ### 7. The teacher's side
 
-- Session builder: a third mode beside «Практика» and «З оцінюванням» — «Домашнє завдання» —
-  with the deadline, late policy, attempt policy, and the pool size.
-- Dashboard: a "Домашні завдання" list with status (opens, open, due today, closed) and how many
-  finished. The class table gets a late mark, claims (and a reset button), and the facts above
-  next to each name. "Needs help" (`lib/dashboard/class-status.ts`) needs different thresholds
-  over days than over minutes, or turning off for homework.
-- Extend deadline / close now / re-verify.
+- Session builder: a third mode beside «Практика» and «З оцінюванням» — «Домашнє завдання» — with
+  the deadline and the «покращення» mark on chosen tasks; the rules are stated under the
+  deadline. The time limit does not apply.
+- Session page: the deadline, «Змінити термін», «Закрити заняття», a «Пристрої» column, and the
+  suggested grade with what shaped it («виправлено: 1 · після терміну: 2 · повернуто: 1.4»).
+  «Needs help» is off for homework, as for a graded lesson; a task counts as done once passed or
+  out of fixes.
+- Student card: late, device and cancelled marks on each attempt, the improvement tasks, and the
+  devices with their cancel button.
+- **Not built:** a separate homework list on the dashboard (homework is labelled in the session
+  list), re-verification (step 3).
 
 ## Data model changes
 
+Built (`drizzle/0005_add_homework.sql`):
+
 | Change | Why |
 |---|---|
-| `sessions.kind` `'lesson' \| 'homework'` | Keeps `mode` meaning what it means today (`practice`/`graded`) |
-| `sessions.due_at`, `pool_size`, improvement task ids | Sections 1, 4, 5 |
-| `session_claims` (id, session_id, student_name, token_hash, resume_code_hash, created_at, reset_at) | Section 2 — no personal data |
-| `attempts.claim_id` | Section 2 — so resetting a claim can void the attempts it made |
-| `sessions.checks_session_id` (a class check points at its homework) | Section 4a |
-| `attempts.flags` gains `late`, `pasted`, `edits`, `msToPass`, `normalizedHash`, `beyondTopic` | jsonb, no migration for the flags themselves |
-| per-student deadline extensions (session_id, student_name, due_at) | Section 1 |
+| `sessions.kind` `'lesson' \| 'homework'`, default `'lesson'` | Keeps `mode` meaning what it means (`practice`/`graded`); homework is stored as `graded` |
+| `sessions.due_at` | Section 1 |
+| `sessions.improvement_task_ids` | Section 4 |
+| `attempts.device_id` | Section 2 |
+| `attempts.voided_at` | Section 2 — the one field of an attempt that ever changes |
 
-## Suggested order
+Later: `sessions.checks_session_id` (a class check points at its homework, step 2), per-student
+deadlines, `attempts.flags` gaining `pasted`, `edits`, `msToPass`, `normalizedHash`, `beyondTopic`
+(step 3; jsonb, no migration).
 
-1. **Homework that survives days** — `kind`, `due_at`, late marking, closing, identity
-   (section 2), server-restored state, server-enforced first Check (which also fixes graded class
-   sessions), fix credit and the improvement task in the suggested grade, deadline in the room and
-   on the dashboard. Useful on its own.
-2. **Class check** — generated from the homework, feeding the grade (section 4a). Moved up: it
-   is now part of the grade, and the strongest anti-cheating measure.
+## Order of work
+
+1. ✅ **Homework that survives days** — `kind`, `due_at`, late credit, closing, device marks,
+   server-restored state, server-enforced limits (which also fixed graded lessons), fixes and
+   improvement tasks in the suggested grade, deadline in the room and on the dashboard.
+   `tests/e2e/homework.spec.ts`; unit tests in `lib/homework/`.
+2. **Class check** — generated from the homework, confirming its credit (section 4a).
 3. **Facts for the teacher** — teacher-side re-verification, normalized similar-code groups,
-   behavioural counts, constructs-not-taught-yet.
+   behavioural counts (decided: acceptable — counts only, never content or keystrokes),
+   constructs-not-taught-yet.
 4. **Individual work** — shuffle, per-student task pools, variants for `fix`/`fill`/`predict`.
 
 ## Decided
 
-- Late work is accepted and marked (section 1).
-- First Check counts; a later fix earns reduced credit; the teacher can add a task for improving
-  the grade (section 4).
+- Identity: option D — free entry from the roster, every device marked, students told; the
+  teacher can cancel one device's attempts (section 2).
+- Late work is accepted: up to two days late 70%, later 50%, and students are told (section 1).
+- First Check counts in full; two fixes at 70% (section 4).
+- Improvement tasks appear only after a lost point and recover lost points only (section 4).
 - Homework produces a suggested grade (section 4).
-- The class check is built and influences the grade (sections 5, 4a).
-
-## Still open
-
-1. **Identity**: A (claim + continue code, recommended), B (printed personal codes), or C (both)?
-   Section 2. Step 1 waits on this.
-2. **Fix credit**: 60% of the task's points, unlimited fix Checks — or a different share, or only
-   one fix?
-3. **Improvement task**: shown only after a lost point, recovering lost points only, first Check
-   counts — as proposed?
-4. **Class check**: confirmation (recommended) or weighted? Section 4a.
-5. **Late**: a fact only (default), or should late work also earn less?
-6. **Behavioural facts**: acceptable to record paste size, edit count and time-to-pass for
-   homework? (Counts only, never content or keystrokes.)
+- The class check is built and confirms the homework credit; failing it lowers a task to 70%
+  (section 4a).
+- Behavioural counts may be recorded for homework (section 5).

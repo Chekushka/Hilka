@@ -14,7 +14,8 @@
  * floor, never an overstatement.
  */
 import type { SessionAttemptRow } from '@/lib/db/attempts';
-import type { SessionMode, SessionTaskSummary } from '@/lib/session/types';
+import { taskState } from '@/lib/homework/rules';
+import type { SessionKind, SessionMode, SessionTaskSummary } from '@/lib/session/types';
 import { buildRollup, type RollupCell } from './rollup';
 
 export type StudentState = 'not_started' | 'working' | 'stuck' | 'finished';
@@ -41,7 +42,10 @@ export interface StudentSummary {
   state: StudentState;
   /** Same order as the session's tasks. */
   cells: RollupCell[];
-  /** Passed tasks — in a graded session, tasks checked (each is final there). */
+  /**
+   * Passed tasks — in a graded lesson, tasks checked (each is final there); in
+   * homework, tasks passed or out of fixes (lib/homework/rules.ts).
+   */
   tasksDone: number;
   tasksTotal: number;
   attempts: number;
@@ -57,6 +61,8 @@ export interface StudentSummary {
 
 export interface SessionContext {
   mode: SessionMode;
+  /** Absent means a lesson. Homework is graded, with fixes (docs/HOMEWORK.md). */
+  kind?: SessionKind;
   /** An open session can go idle; a closed one only has its final state. */
   open: boolean;
   /** Milliseconds since the epoch, passed in so the function stays pure. */
@@ -115,9 +121,21 @@ export function summarizeStudents(
       .filter((a) => a.studentName === studentName && taskIds.has(a.taskId))
       .sort(newestFirst);
     const cells = rollup.get(studentName) ?? [];
-    const tasksDone = cells.filter((cell) =>
-      context.mode === 'graded' ? cell.status !== 'not_started' : cell.status === 'passed'
-    ).length;
+    const homeworkRules = {
+      kind: 'homework' as const,
+      mode: context.mode,
+      taskIds: tasks.map((task) => task.id),
+      improvementTaskIds: []
+    };
+    const tasksDone =
+      context.kind === 'homework'
+        ? tasks.filter((task) => {
+            const status = taskState(homeworkRules, task.id, own).status;
+            return status === 'passed' || status === 'failed';
+          }).length
+        : cells.filter((cell) =>
+            context.mode === 'graded' ? cell.status !== 'not_started' : cell.status === 'passed'
+          ).length;
 
     let hints = 0;
     let timeSpentMs = 0;

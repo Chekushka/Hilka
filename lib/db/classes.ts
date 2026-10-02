@@ -3,7 +3,7 @@
  * their own classes and sessions, never another teacher's.
  */
 import { and, asc, eq } from 'drizzle-orm';
-import type { SessionMode } from '@/lib/session/types';
+import type { SessionKind, SessionMode } from '@/lib/session/types';
 import { getDb } from './client';
 import { classes, sessions } from './schema';
 
@@ -11,6 +11,7 @@ export interface TeacherSessionSummary {
   id: string;
   code: string;
   mode: SessionMode;
+  kind: SessionKind;
   open: boolean;
   taskCount: number;
 }
@@ -93,6 +94,7 @@ export async function listClassesForTeacher(teacherId: string): Promise<TeacherC
       sessionId: sessions.id,
       sessionCode: sessions.code,
       sessionMode: sessions.mode,
+      sessionKind: sessions.kind,
       sessionClosesAt: sessions.closesAt,
       sessionTaskIds: sessions.taskIds
     })
@@ -113,6 +115,7 @@ export async function listClassesForTeacher(teacherId: string): Promise<TeacherC
         id: row.sessionId,
         code: row.sessionCode,
         mode: row.sessionMode,
+        kind: row.sessionKind ?? 'lesson',
         open: row.sessionClosesAt === null,
         taskCount: (row.sessionTaskIds ?? []).length
       });

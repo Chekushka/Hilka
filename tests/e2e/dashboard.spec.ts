@@ -8,6 +8,9 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 const DEMO_CODE = 'demo01';
+// The square's row in the room: its title, then — since the room restores a student's
+// attempts — maybe its mark from an earlier spec in this run. Other titles contain «Квадрат».
+const SQUARE_ROW = /^Квадрат(\s?Виконано)?$/;
 const TEACHER_EMAIL = 'demo-teacher@hilka.dev';
 const STUDENT_NAME = 'Тарас';
 
@@ -58,7 +61,7 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
   // Complete the task as a student first, so there is something to see.
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name: STUDENT_NAME }).click();
-  await page.getByRole('button', { name: 'Квадрат', exact: true }).click();
+  await page.getByRole('button', { name: SQUARE_ROW }).click();
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
   await Promise.all([
@@ -114,7 +117,7 @@ test('the class table shows a student who has tried a task but never passed it',
 
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name: STUCK_STUDENT }).click();
-  await page.getByRole('button', { name: 'Квадрат', exact: true }).click();
+  await page.getByRole('button', { name: SQUARE_ROW }).click();
   await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
   // A rectangle, not a square — fails on purpose.
   await typeSolution(

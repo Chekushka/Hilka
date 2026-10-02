@@ -12,11 +12,21 @@
  * For a file-delivery task the source hash is computed here, from the task as
  * the database knows it — never taken from the body — so a client cannot opt
  * its upload out of shared-file flagging (lib/dashboard/shared-files.ts).
+ *
+ * How many Checks a task allows is decided here too, not only in the room
+ * (lib/homework/rules.ts, `canSubmit`): a graded lesson's first Check is final,
+ * homework allows two fixes after a failed one, an improvement task one Check
+ * once a point is lost. The room alone could be reloaded around. Over the
+ * limit, the answer is 409 and nothing is recorded. Each attempt carries this
+ * browser's device mark (lib/session/device-cookie.ts).
  */
 import { NextResponse } from 'next/server';
 import { hashSource, recordAttempt } from '@/lib/db/attempts';
-import { validateAttemptContext } from '@/lib/db/sessions';
+import { getDb } from '@/lib/db/client';
+import { getAttemptContext, listOwnAttempts, lockStudentTask } from '@/lib/db/sessions';
 import { getPublishedTaskById } from '@/lib/db/tasks';
+import { canSubmit } from '@/lib/homework/rules';
+import { deviceId } from '@/lib/session/device-cookie';
 import type { AttemptInput } from '@/lib/session/types';
 
 function isValidBody(body: unknown): body is AttemptInput {
@@ -50,11 +60,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const valid = await validateAttemptContext(body.sessionId, body.taskId, body.studentName);
-  if (!valid) {
+  const context = await getAttemptContext(body.sessionId, body.taskId, body.studentName);
+  if (!context) {
     return NextResponse.json({ error: 'invalid_session' }, { status: 403 });
   }
 
-  const { id } = await recordAttempt(body, await fileSourceHash(body));
+  const device = await deviceId();
+  const sourceHash = await fileSourceHash(body);
+  const id = await getDb().transaction(async (tx) => {
+    await lockStudentTask(tx, body.sessionId, body.studentName, body.taskId);
+    const prior = await listOwnAttempts(body.sessionId, body.studentName, tx);
+    if (!canSubmit(context.rules, body.taskId, prior)) return null;
+    return (await recordAttempt(body, sourceHash, device, tx)).id;
+  });
+  if (id === null) {
+    return NextResponse.json({ error: 'no_checks_left' }, { status: 409 });
+  }
   return NextResponse.json({ id }, { status: 201 });
 }
