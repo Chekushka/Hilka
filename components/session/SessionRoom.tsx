@@ -250,6 +250,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     const next: NextTaskAction = {
       kind: 'button',
       label: nextId ? t('result.nextTask') : t('result.backToTaskList'),
+      shortLabel: nextId ? t('result.nextShort') : t('result.backToTaskListShort'),
       onSelect: () => {
         setSelectedTaskId(nextId);
         window.scrollTo(0, 0);

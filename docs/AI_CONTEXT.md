@@ -750,3 +750,13 @@ state that is also true before it.
 any editor not flagged dark, and ours never is (the theme switches through CSS variables, not
 through CodeMirror), so the caret vanished on the dark code background. `caretColor: 'var(--ink)'`
 in the editor theme fixes it; `tests/e2e/editor-caret.spec.ts` checks both themes.
+
+**Content inserted above a scrolled panel pushes itself out of view.** From `lg` the workspace's
+task panel scrolls on its own. When a Check passes, `SuccessPanel` is inserted at the top of that
+panel; if the student had scrolled it down (to the theory or a hint), the browser's scroll
+anchoring keeps what they were reading in place, so the new panel lands entirely above the
+visible area — viewport ratio 0, not merely off by a little. That is how students in class
+"could not find" the next-task button. `SuccessPanel` scrolls the panel back to itself
+(`scrollIntoView({ block: 'nearest' })`), and the way on is also on the dock bar now;
+`tests/e2e/workspace.spec.ts` reproduces the scrolled case. Anything else that appears at the
+top of a scrolling region in response to an action needs the same treatment.

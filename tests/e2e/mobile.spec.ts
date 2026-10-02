@@ -37,4 +37,6 @@ test('a turtle task is solvable with a phone keyboard and the key bar', async ({
   await expect(check).toBeInViewport();
   await check.tap();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeInViewport({ timeout: 20_000 });
+  // The way on is also under the thumb, on the bar that held Check.
+  await expect(page.getByRole('link', { name: 'Далі', exact: true })).toBeInViewport();
 });

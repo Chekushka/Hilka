@@ -100,6 +100,9 @@
     "nextTask": "Перейти до наступного завдання",
     "backToLesson": "Повернутися до уроку",
     "backToTaskList": "Повернутися до списку завдань",
+    "nextShort": "Далі",
+    "backToLessonShort": "До уроку",
+    "backToTaskListShort": "До списку",
     "passedDock": "Перевірку пройдено.",
     "earned": "Отримано",
     "garden": "Твій сад"

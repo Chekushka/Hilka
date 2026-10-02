@@ -87,7 +87,16 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock
-          actions={<RunCheckActions busy={busy} disabled={disabled} onRun={() => run(code)} onCheck={retry} />}
+          actions={
+            <RunCheckActions
+              busy={busy}
+              disabled={disabled}
+              passed={report?.passed}
+              onRun={() => run(code)}
+              onCheck={retry}
+            />
+          }
+          next={report?.passed ? next : undefined}
         >
           {showsOutput && !loading ? (
             <OutputPanel stdout={result?.stdout ?? ''} pendingInput={pendingInput} onSubmitInput={submitInput} />

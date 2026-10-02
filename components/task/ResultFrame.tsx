@@ -2,8 +2,8 @@
  * The frame every not-yet result is shown in, inside the result dock. None of it is
  * punishment: "not yet" is a quiet attention tone with an open circle or a
  * diamond, never red, never shaking, never "Error" as a heading. A pass is
- * celebrated in the task panel (SuccessPanel); the dock only notes it
- * (PassedNote), so the word and the way on appear once.
+ * celebrated in the task panel (SuccessPanel); the dock's body only notes it
+ * (PassedNote), and the way on sits on the dock's bar (WorkspaceDock).
  *
  * Meaning is carried by the icon's shape and by the words as well as colour:
  * a class of twenty-five contains someone who cannot separate red from green.

@@ -9,12 +9,15 @@
  * and is shown by SuccessPanel, not here.
  */
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { PlantStage } from '@/lib/meta/garden';
 
 export type NextTaskAction = (
   | { kind: 'link'; href: string; label: string }
   | { kind: 'button'; onSelect: () => void; label: string }
 ) & {
+  /** A word or two for the result dock's bar, where Run and Check already take the room — `result.nextShort`. */
+  shortLabel?: string;
   /** What this pass earned — practice only, and only on a task's first pass. */
   reward?: {
     /** e.g. "+30 XP". */
@@ -27,14 +30,23 @@ export type NextTaskAction = (
 const defaultClassName =
   'mt-3 inline-flex items-center rounded-md bg-accent px-5 py-2.5 text-base font-semibold text-surface';
 
-export function NextTaskButton({ action, className = defaultClassName }: { action: NextTaskAction; className?: string }) {
+export function NextTaskButton({
+  action,
+  className = defaultClassName,
+  children = action.label
+}: {
+  action: NextTaskAction;
+  className?: string;
+  /** In place of `action.label`, e.g. the short label with an arrow. */
+  children?: ReactNode;
+}) {
   return action.kind === 'link' ? (
     <Link href={action.href} className={className}>
-      {action.label}
+      {children}
     </Link>
   ) : (
     <button type="button" onClick={action.onSelect} className={className}>
-      {action.label}
+      {children}
     </button>
   );
 }
