@@ -14,7 +14,7 @@ import { listPassedAnswers } from '@/lib/db/attempts';
 import { getSessionForTeacher } from '@/lib/db/sessions';
 import { getPublishedTaskById } from '@/lib/db/tasks';
 import { deriveSeed } from '@/lib/seed';
-import { resolveTaskParams } from '@/lib/task/params';
+import { isParameterized, resolveTaskParams } from '@/lib/task/params';
 import type { RecheckItem } from '@/lib/task/recheck';
 import type { Task } from '@/lib/task/types';
 
@@ -36,7 +36,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const task = tasks.get(answer.taskId) ?? null;
     const current = task !== null && task.version === answer.taskVersion ? task : null;
     const seen =
-      current && current.type === 'code' && current.params
+      current && isParameterized(current)
         ? resolveTaskParams(current, deriveSeed(session.id, answer.studentName, current.id))
         : current;
     return {

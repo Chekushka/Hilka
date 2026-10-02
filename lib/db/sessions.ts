@@ -6,6 +6,7 @@
  */
 import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { SessionRules } from '@/lib/homework/rules';
+import { assignTasks, type AssignmentRule } from '@/lib/seed';
 import type {
   JoinedSession,
   JoinedSessionTask,
@@ -39,6 +40,8 @@ export interface TeacherSessionDetail {
   improvementTasks: SessionTaskSummary[];
   /** A class check only: the homework it checks, by id and code. */
   checks: { id: string; code: string } | null;
+  /** Which of `tasks` each student gets, and in what order (lib/seed/assignment.ts). */
+  assignment: AssignmentRule;
 }
 
 /** A class check of a homework, as the homework's page lists it. */
@@ -92,7 +95,8 @@ export async function getSessionForTeacher(
     roster: row.roster,
     tasks: await taskSummaries(db, row.session.taskIds),
     improvementTasks: await taskSummaries(db, row.session.improvementTaskIds),
-    checks: checked ?? null
+    checks: checked ?? null,
+    assignment: { poolSize: row.session.poolSize, shuffle: row.session.shuffle }
   };
 }
 
@@ -168,6 +172,7 @@ export async function getOpenSessionByCode(code: string): Promise<JoinedSession 
     improvementTasks: orderSessionTasks(row.session.improvementTaskIds, joined),
     hintsEnabled: row.session.hintsEnabled,
     timeLimitS: row.session.timeLimitS,
+    assignment: { poolSize: row.session.poolSize, shuffle: row.session.shuffle },
     dueAt: row.session.dueAt?.toISOString() ?? null
   };
 }
@@ -179,8 +184,8 @@ export interface AttemptContext {
 
 /**
  * Everything an attempt submission must be checked against, in one query:
- * the session is open, the task belongs to it (as a main or an improvement
- * task), and the student is on the class roster. A client can lie about all
+ * the session is open, the student is on the class roster, and the task is
+ * theirs — one of their assigned main tasks or an improvement task. A client can lie about all
  * three, so the API route re-derives this rather than trusting the request body.
  */
 export async function getAttemptContext(
@@ -195,9 +200,14 @@ export async function getAttemptContext(
     .where(and(eq(sessions.id, sessionId), isNull(sessions.closesAt)))
     .limit(1);
   if (!row) return null;
-  const { taskIds, improvementTaskIds, kind, mode } = row.session;
-  if (!taskIds.includes(taskId) && !improvementTaskIds.includes(taskId)) return null;
+  const { improvementTaskIds, kind, mode } = row.session;
   if (!row.roster.includes(studentName)) return null;
+  // Only the student's own tasks: with a pool, another student's task is not theirs to answer.
+  const taskIds = assignTasks(row.session.taskIds, sessionId, studentName, {
+    poolSize: row.session.poolSize,
+    shuffle: false
+  });
+  if (!taskIds.includes(taskId) && !improvementTaskIds.includes(taskId)) return null;
   return { rules: { kind, mode, taskIds, improvementTaskIds } };
 }
 

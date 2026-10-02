@@ -130,6 +130,22 @@ function evaluateOne(check: Check, evidence: Evidence): boolean {
       return found !== undefined && within(found, check.tol, check.value);
     }
 
+    case 'matches_reference': {
+      // Expected output comes from running the reference on the same case (CLAUDE.md
+      // rule 5); a missing one fails rather than passing on nothing.
+      if (!run || reference?.stdout === undefined) return false;
+      if (check.compare === 'last_line') {
+        return (
+          normalizeText(lastLine(run.stdout), check.normalize) ===
+          normalizeText(lastLine(reference.stdout), check.normalize)
+        );
+      }
+      const got = extractNumbers(run.stdout);
+      const expected = extractNumbers(reference.stdout);
+      const tol = check.tol ?? 1e-6;
+      return got.length === expected.length && got.every((n, i) => within(n, tol, expected[i]));
+    }
+
     case 'numbers_equal': {
       if (!run) return false;
       const numbers = extractNumbers(run.stdout);

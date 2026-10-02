@@ -4,16 +4,21 @@
  * (./grade.ts). One switch, so the class table and the CSV export cannot
  * disagree. Pure.
  */
-import { suggestGradesForRoster, type GradedAttempt, type GradedTask, type SuggestedGrade } from '@/lib/grading/grade';
+import { suggestGrade, type GradedAttempt, type GradedTask, type SuggestedGrade } from '@/lib/grading/grade';
+import type { AssignmentRule } from '@/lib/seed';
+import { assignedTo } from '@/lib/session/assigned';
 import type { SessionKind } from '@/lib/session/types';
-import { suggestHomeworkGradesForRoster, type CheckAttempt, type HomeworkGrade } from './grade';
+import { suggestHomeworkGrade, type CheckAttempt, type HomeworkGrade } from './grade';
 
 export interface GradableSession {
+  id: string;
   kind: SessionKind;
   roster: string[];
   tasks: GradedTask[];
   improvementTasks: GradedTask[];
   dueAt: string | null;
+  /** With a pool, each student is graded on the tasks they were given (lib/seed/assignment.ts). */
+  assignment: AssignmentRule;
 }
 
 /**
@@ -25,16 +30,25 @@ export function suggestSessionGrades(
   attempts: readonly (GradedAttempt & { studentName: string })[],
   checks: readonly (CheckAttempt & { studentName: string })[] = []
 ): { studentName: string; suggestion: SuggestedGrade | HomeworkGrade }[] {
-  return session.kind === 'homework'
-    ? suggestHomeworkGradesForRoster(
-        session.roster,
-        session.tasks,
-        session.improvementTasks,
-        attempts,
-        session.dueAt,
-        checks
-      )
-    : suggestGradesForRoster(session.roster, session.tasks, [...attempts]);
+  const assigned = assignedTo(session);
+  return session.roster.map((studentName) => {
+    const own = attempts.filter((attempt) => attempt.studentName === studentName);
+    const ownSet = assigned?.(studentName);
+    const tasks = ownSet ? session.tasks.filter((task) => ownSet.has(task.id)) : session.tasks;
+    return {
+      studentName,
+      suggestion:
+        session.kind === 'homework'
+          ? suggestHomeworkGrade(
+              tasks,
+              session.improvementTasks,
+              own,
+              session.dueAt,
+              checks.filter((check) => check.studentName === studentName)
+            )
+          : suggestGrade(tasks, own)
+    };
+  });
 }
 
 export function isHomeworkGrade(grade: SuggestedGrade | HomeworkGrade): grade is HomeworkGrade {

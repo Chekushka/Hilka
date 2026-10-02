@@ -1,0 +1,54 @@
+{
+  "slug": "g8-fix-discount-variant",
+  "topicSlug": "arithmetic",
+  "type": "fix",
+  "title": "Ціна зі знижкою (свій відсоток)",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма зчитує ціну товару і має вивести ціну зі знижкою {p}%. Але вона рахує неправильно: для ціни 200 виходить від'ємне число. Знайди помилку й виправ її. Відсоток знижки в кожного свій.",
+    "broken": "price = float(input())\ndiscount = price * {p}\nprint(price - discount)\n"
+  },
+  "params": {
+    "p": { "choice": ["10", "15", "20", "25"] }
+  },
+  "checks": [],
+  "cases": [
+    {
+      "label": "ціна 200",
+      "stdin": ["200"],
+      "checks": [
+        {
+          "kind": "matches_reference",
+          "compare": "numbers",
+          "tol": 0.01,
+          "message": "Ціна зі знижкою не та. Знижка — це відсоток від ціни: ціна × відсоток / 100."
+        }
+      ]
+    },
+    {
+      "label": "інша ціна",
+      "stdin": ["80"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "matches_reference",
+          "compare": "numbers",
+          "tol": 0.01,
+          "message": "Для іншої ціни відповідь не та. Перевір, як рахується знижка."
+        }
+      ]
+    }
+  ],
+  "hints": [
+    "Відсоток — це сота частина: 10% від числа — це число × 10 / 100.",
+    "У рядку discount = … бракує ділення на 100."
+  ],
+  "reference": {
+    "code": "price = float(input())\ndiscount = price * {p} / 100\nprint(price - discount)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [8],
+  "version": 1,
+  "status": "published"
+}

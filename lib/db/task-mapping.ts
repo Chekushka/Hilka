@@ -129,7 +129,8 @@ export function toFixTask(row: TaskRow): FixTask | null {
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
     version: row.version,
-    status: row.status
+    status: row.status,
+    params: row.params ?? undefined
   };
 }
 
@@ -154,7 +155,8 @@ export function toFillTask(row: TaskRow): FillTask | null {
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
     version: row.version,
-    status: row.status
+    status: row.status,
+    params: row.params ?? undefined
   };
 }
 

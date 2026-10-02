@@ -169,6 +169,8 @@ export const sessions = pgTable(
     timeLimitS: integer('time_limit_s'),
     hintsEnabled: boolean('hints_enabled').notNull().default(true),
     shuffle: boolean('shuffle').notNull().default(false),
+    // Each student gets this many of `task_ids`, chosen per student (lib/seed/assignment.ts); null for all.
+    poolSize: integer('pool_size'),
     opensAt: timestamp('opens_at', { withTimezone: true }),
     closesAt: timestamp('closes_at', { withTimezone: true }),
     // Homework only. Work after it is still accepted, for less credit.

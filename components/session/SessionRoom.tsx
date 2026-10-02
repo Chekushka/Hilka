@@ -40,6 +40,7 @@ import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
 import { improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
 import { t } from '@/lib/i18n';
+import { assignTasks } from '@/lib/seed';
 import { nextOpenTaskId } from '@/lib/session/next-task';
 import { filePrerequisite } from '@/lib/task/prerequisite';
 import type { JoinedSession, JoinedSessionTask, OwnAttempt, OwnSessionState } from '@/lib/session/types';
@@ -173,18 +174,26 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       {t('session.checkNotice', { credit: percent(DEFAULT_GRADING.fixCredit) })}
     </Notice>
   );
+  // This student's own tasks, in their own order: all of them, or a pool drawn for them, maybe
+  // shuffled (lib/seed/assignment.ts) — the server draws the same.
+  const myTasks: JoinedSessionTask[] = studentName
+    ? assignTasks(
+        session.tasks.map((task) => task.id),
+        session.id,
+        studentName,
+        session.assignment
+      ).flatMap((taskId) => session.tasks.filter((task) => task.id === taskId))
+    : session.tasks;
   const rules: SessionRules = {
     kind: session.kind,
     mode: session.mode,
-    taskIds: session.tasks.map((task) => task.id),
+    taskIds: myTasks.map((task) => task.id),
     improvementTaskIds: session.improvementTasks.map((task) => task.id)
   };
   const attempts: OwnAttempt[] = own?.attempts ?? [];
   const stateOf = (taskId: string) => taskState(rules, taskId, attempts);
   const improvementVisible = improvementOpen(rules, attempts);
-  const visibleTasks: JoinedSessionTask[] = improvementVisible
-    ? [...session.tasks, ...session.improvementTasks]
-    : session.tasks;
+  const visibleTasks: JoinedSessionTask[] = improvementVisible ? [...myTasks, ...session.improvementTasks] : myTasks;
 
   const hasTimeLimit = session.timeLimitS !== null;
   const examStart = useStoredExamStart(code);
@@ -550,7 +559,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         <h1 className="text-xl font-semibold text-ink">{t('session.taskListTitle')}</h1>
         {timerBadge}
       </div>
-      <ul className="space-y-2">{session.tasks.map(taskButton)}</ul>
+      <ul className="space-y-2">{myTasks.map(taskButton)}</ul>
       {improvementVisible && (
         <section aria-labelledby="improvement-title" className="space-y-2 pt-2">
           <h2 id="improvement-title" className="text-lg font-semibold text-ink">

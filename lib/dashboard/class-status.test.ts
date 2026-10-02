@@ -202,3 +202,39 @@ describe('summarizeStudents in homework', () => {
     expect(outOfFixes.state).toBe('finished');
   });
 });
+
+describe('summarizeStudents with a pool', () => {
+  const tasks = [
+    { id: 'a', slug: 'a', title: 'A', difficulty: 1 },
+    { id: 'b', slug: 'b', title: 'B', difficulty: 1 },
+    { id: 'c', slug: 'c', title: 'C', difficulty: 1 }
+  ];
+  const passed = (taskId: string) => ({
+    studentName: 'Олена',
+    taskId,
+    passed: true,
+    hintsUsed: 0,
+    durationMs: 1000,
+    createdAt: '2026-10-05T10:00:00.000Z'
+  });
+  const context = {
+    mode: 'graded' as const,
+    open: true,
+    now: Date.parse('2026-10-05T12:00:00Z'),
+    assignedTo: () => new Set(['a', 'c'])
+  };
+
+  it('counts only the student’s own tasks and marks the rest as not assigned', () => {
+    const [row] = summarizeStudents(['Олена'], tasks, [passed('a'), passed('c')], context);
+    expect(row.tasksTotal).toBe(2);
+    expect(row.tasksDone).toBe(2);
+    expect(row.state).toBe('finished');
+    expect(row.cells.map((cell) => cell.status)).toEqual(['passed', 'not_assigned', 'passed']);
+  });
+
+  it('leaves a task nobody was given out of the class’s tally', () => {
+    const rows = summarizeStudents(['Олена'], tasks, [], context);
+    expect(tallyTasks(rows, 3)[1]).toEqual({ passed: 0, trying: 0, notStarted: 0 });
+    expect(tallyTasks(rows, 3)[0]).toEqual({ passed: 0, trying: 0, notStarted: 1 });
+  });
+});

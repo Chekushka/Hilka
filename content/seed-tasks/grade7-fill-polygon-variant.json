@@ -1,0 +1,32 @@
+{
+  "slug": "g7-fill-polygon-variant",
+  "topicSlug": "turtle-loops",
+  "type": "fill",
+  "title": "Заповни пропуски: свій многокутник",
+  "payload": {
+    "type": "fill",
+    "prompt": "Заповни пропуски так, щоб програма намалювала правильний {n}-кутник зі стороною 70. Кількість сторін у кожного своя.",
+    "template": "import turtle\nfor i in range({{1}}):\n    turtle.forward(70)\n    turtle.left({{2}})\n"
+  },
+  "params": {
+    "n": { "choice": ["5", "6", "8"] }
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Фігура не така, як на зразку. Скільки сторін просить умова, і на скільки градусів повернути після кожної?"
+    }
+  ],
+  "hints": [
+    "Цикл повторюється стільки разів, скільки сторін у фігури.",
+    "Усі повороти разом дають 360°. Поділи 360 на кількість сторін."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range({n}):\n    turtle.forward(70)\n    turtle.left(360 / {n})\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

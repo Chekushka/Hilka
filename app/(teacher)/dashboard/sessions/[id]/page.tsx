@@ -34,6 +34,7 @@ import type { StudentFacts } from '@/lib/homework/facts';
 import type { HomeworkGrade } from '@/lib/homework/grade';
 import { isHomeworkGrade, suggestSessionGrades } from '@/lib/homework/session-grades';
 import { t } from '@/lib/i18n';
+import { assignedTo } from '@/lib/session/assigned';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,7 +93,8 @@ function GradeCell({ suggestion }: { suggestion: SuggestedGrade | HomeworkGrade 
 const CELL_WORD: Record<CellStatus, string> = {
   passed: 'dashboard.resultPassed',
   stuck: 'dashboard.resultNotYet',
-  not_started: 'dashboard.rollupNotStarted'
+  not_started: 'dashboard.rollupNotStarted',
+  not_assigned: 'dashboard.rollupNotAssigned'
 };
 
 /**
@@ -120,6 +122,7 @@ async function loadClassView(session: TeacherSessionDetail) {
     summarizeStudents(session.roster, session.tasks, rows, {
       mode: session.mode,
       kind: session.kind,
+      assignedTo: assignedTo(session) ?? undefined,
       open: session.open,
       now
     })
@@ -418,7 +421,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             {session.tasks.map((task, index) => {
               const tally = taskTallies[index];
               return (
-                <li key={task.id} className="rounded-lg border border-line bg-surface px-4 py-3">
+                <li key={task.id} data-task-id={task.id} className="rounded-lg border border-line bg-surface px-4 py-3">
                   <p className="font-medium text-ink">
                     {index + 1}. {task.title}
                   </p>

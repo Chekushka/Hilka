@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveTaskParams } from './params';
-import type { CodeTask } from './types';
+import type { CodeTask, FillTask, FixTask } from './types';
 
 function task(overrides: Partial<CodeTask> = {}): CodeTask {
   return {
@@ -103,5 +103,63 @@ describe('resolveTaskParams — grid worlds', () => {
       params: { gx: { int: [1, 1] } }
     });
     expect(() => resolveTaskParams(onStart, 1)).toThrow(/invalid grid world/);
+  });
+});
+
+describe('resolveTaskParams for fix and fill', () => {
+  const fix: FixTask = {
+    id: 'f1',
+    slug: 'g8-fix-variant',
+    topicId: 'topic-1',
+    type: 'fix',
+    title: 'Виправ',
+    payload: { type: 'fix', surface: 'console', prompt: 'Помножиш на {k}.', broken: 'n = int(input())\nprint(n + {k})' },
+    checks: [{ kind: 'matches_reference', compare: 'numbers' }],
+    cases: [{ stdin: ['{start}'] }],
+    hints: [],
+    reference: { code: 'n = int(input())\nprint(n * {k})' },
+    difficulty: 2,
+    gradeTags: [8],
+    version: 1,
+    status: 'published',
+    params: { k: { int: [2, 9] }, start: { choice: ['3', '5'] } }
+  };
+  const fill: FillTask = {
+    id: 'g1',
+    slug: 'g7-fill-variant',
+    topicId: 'topic-1',
+    type: 'fill',
+    title: 'Заповни',
+    payload: { type: 'fill', prompt: 'Квадрат зі стороною {side}.', template: 'for i in range({{0}}):\n    turtle.forward({side})' },
+    checks: [{ kind: 'shape_equals' }],
+    hints: [],
+    reference: { code: 'for i in range(4):\n    turtle.forward({side})' },
+    difficulty: 2,
+    gradeTags: [7],
+    version: 1,
+    status: 'published',
+    params: { side: { choice: ['60', '80'] } }
+  };
+
+  it('substitutes the broken program, the prompt, the cases and the reference of a fix task', () => {
+    const resolved = resolveTaskParams(fix, 7);
+    expect(resolved.params).toBeUndefined();
+    expect(resolved.payload.broken).toMatch(/^n = int\(input\(\)\)\nprint\(n \+ [2-9]\)$/);
+    const k = resolved.payload.broken.match(/\+ (\d)/)![1];
+    expect(resolved.reference.code).toBe(`n = int(input())\nprint(n * ${k})`);
+    expect(resolved.payload.prompt).toBe(`Помножиш на ${k}.`);
+    expect(['3', '5']).toContain(resolved.cases![0].stdin[0]);
+  });
+
+  it('substitutes the template without touching its gaps, and the reference, of a fill task', () => {
+    const resolved = resolveTaskParams(fill, 3);
+    const side = resolved.reference.code.match(/forward\((\d+)\)/)![1];
+    expect(['60', '80']).toContain(side);
+    expect(resolved.payload.template).toBe(`for i in range({{0}}):\n    turtle.forward(${side})`);
+  });
+
+  it('gives the same student the same variant every time', () => {
+    expect(resolveTaskParams(fix, 1234)).toEqual(resolveTaskParams(fix, 1234));
+    expect(resolveTaskParams(fill, 99)).toEqual(resolveTaskParams(fill, 99));
   });
 });

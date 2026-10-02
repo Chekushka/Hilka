@@ -18,6 +18,7 @@ import { summarizeDevices } from '@/lib/homework/devices';
 import { hasFacts, pastedWhole } from '@/lib/homework/facts';
 import type { SessionTaskSummary } from '@/lib/session/types';
 import { t } from '@/lib/i18n';
+import { assignedTo } from '@/lib/session/assigned';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,9 @@ async function loadStudentCard(session: TeacherSessionDetail, rawName: string) {
   const now = Date.now();
   // Voided attempts are shown, marked, but never counted.
   const counted = attempts.filter((attempt) => attempt.voidedAt === null);
+  const assigned = assignedTo(session)?.(studentName);
   const [summary] = summarizeStudents([studentName], session.tasks, counted, {
+    assignedTo: assigned ? () => assigned : undefined,
     mode: session.mode,
     kind: session.kind,
     open: session.open,
@@ -297,7 +300,10 @@ export default async function StudentCardPage({
               {t('studentCard.tasksTitle')}
             </h2>
             {session.tasks.map((task, index) =>
-              taskArticle(task, t('studentCard.taskHeading', { n: index + 1, title: task.title }), summary.cells[index])
+              // With a pool, only the tasks this student was given.
+              summary.cells[index].status === 'not_assigned'
+                ? null
+                : taskArticle(task, t('studentCard.taskHeading', { n: index + 1, title: task.title }), summary.cells[index])
             )}
           </section>
 

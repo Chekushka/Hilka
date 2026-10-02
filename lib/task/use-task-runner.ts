@@ -152,7 +152,12 @@ export function useTaskRunner(task: RunnableTask) {
     async (code: string) => {
       const runner = runnerRef.current;
       if (!runner) return;
-      const outcome = await checkCode(task, code, (source, options) => runner.run(source, options), targetRef.current);
+      const outcome = await checkCode(
+        { ...task, referenceCode: task.reference.code },
+        code,
+        (source, options) => runner.run(source, options),
+        targetRef.current
+      );
       const multipleCases = outcome.casesTotal > 1;
       const results: CheckResult[] = outcome.cases.flatMap((caseOutcome) => {
         const label = multipleCases ? (caseOutcome.label ?? t('workspace.caseLabel', { n: caseOutcome.index + 1 })) : null;

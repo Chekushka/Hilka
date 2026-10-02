@@ -34,9 +34,21 @@ export function agoText(ago: Ago): string {
   return t(ago.unit === 'minutes' ? 'dashboard.agoMinutes' : 'dashboard.agoHours', { n: ago.n });
 }
 
-function Shape({ kind, size }: { kind: 'dot' | 'diamond' | 'tick' | 'ring' | 'hollow-diamond'; size: number }) {
+function Shape({
+  kind,
+  size
+}: {
+  kind: 'dot' | 'diamond' | 'tick' | 'ring' | 'hollow-diamond' | 'dash';
+  size: number;
+}) {
   const box = { width: size, height: size };
   switch (kind) {
+    case 'dash':
+      return (
+        <span className="inline-flex shrink-0 items-center justify-center" style={box}>
+          <span className="block h-0.5 w-2/3 rounded bg-line" />
+        </span>
+      );
     case 'dot':
       return <span className="inline-block shrink-0 rounded-full bg-accent" style={box} />;
     case 'ring':
@@ -106,8 +118,11 @@ export function CellMark({
       ? t('dashboard.resultPassed')
       : status === 'stuck'
         ? t('dashboard.rollupStuck', { n: attempts })
-        : t('dashboard.rollupNotStarted'));
-  const kind = status === 'passed' ? 'tick' : status === 'stuck' ? 'hollow-diamond' : 'ring';
+        : status === 'not_assigned'
+          ? t('dashboard.rollupNotAssigned')
+          : t('dashboard.rollupNotStarted'));
+  const kind =
+    status === 'passed' ? 'tick' : status === 'stuck' ? 'hollow-diamond' : status === 'not_assigned' ? 'dash' : 'ring';
   if (decorative) {
     return (
       <span aria-hidden="true" className="inline-flex">

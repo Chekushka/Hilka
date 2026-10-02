@@ -275,6 +275,8 @@ export interface FixTask {
   gradeTags: number[];
   version: number;
   status: TaskStatus;
+  /** `{name}` placeholders in the prompt, the program, the cases and the reference, resolved per student (lib/task/params.ts). Session-only. */
+  params?: ParamSpec;
 }
 
 /**
@@ -299,6 +301,8 @@ export interface FillTask {
   gradeTags: number[];
   version: number;
   status: TaskStatus;
+  /** `{name}` placeholders in the prompt, the program, the cases and the reference, resolved per student (lib/task/params.ts). Session-only. */
+  params?: ParamSpec;
 }
 
 /** Every task type the student-facing surfaces know how to render today. */

@@ -4,6 +4,7 @@
  * produces.
  */
 
+import type { AssignmentRule } from '@/lib/seed';
 import type { TaskType } from '@/lib/task/types';
 
 export type SessionMode = 'practice' | 'graded';
@@ -41,6 +42,8 @@ export interface JoinedSession {
   improvementTasks: JoinedSessionTask[];
   hintsEnabled: boolean;
   timeLimitS: number | null;
+  /** Which of `tasks` each student gets, and in what order (lib/seed/assignment.ts). */
+  assignment: AssignmentRule;
   /** Homework only, ISO. Late work is still accepted, for less (lib/homework/rules.ts, `lateCredit`). */
   dueAt: string | null;
 }

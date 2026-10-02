@@ -208,12 +208,12 @@ export async function checkTaskReference(
   const worldFor = (combo: Record<string, string | number>): GridWorld | undefined =>
     gridSpec && resolveGridWorld(gridSpec, combo);
 
-  // The target for a broken payload's shape_equals etc. below: the correct
-  // reference's own drawing/stdout from its first case (first combination,
-  // for a parameterized task — fix and params are never combined today).
-  let referenceArtifacts: Evidence['reference'] = null;
+  // Per combination and case, what the correct reference produced: the target
+  // a broken payload is judged against below (shape_equals, matches_reference).
+  const referenceArtifacts = new Map<string, Evidence['reference']>();
+  const artifactKey = (comboIndex: number, caseIndex: number) => `${comboIndex}:${caseIndex}`;
 
-  for (const combo of combinations) {
+  for (const [comboIndex, combo] of combinations.entries()) {
     const comboCode = task.params ? substituteParams(referenceCode, combo) : referenceCode;
     const comboLabel = task.params ? ` (${JSON.stringify(combo)})` : '';
 
@@ -245,25 +245,35 @@ export async function checkTaskReference(
         });
         continue;
       }
-      if (referenceArtifacts === null) {
-        referenceArtifacts = { stdout: result.stdout, drawing: result.drawing };
-      }
+      referenceArtifacts.set(artifactKey(comboIndex, i), { stdout: result.stdout, drawing: result.drawing });
       outcome.failures.forEach((message) => failures.push({ context, message }));
     }
   }
 
+  // Every variant of a broken program must be broken: run per combination and
+  // per case, with that case's own input and checks, it must fail somewhere. A
+  // run that raises or times out has correctly failed; only a combination
+  // whose every case passes is the bug TASK_SCHEMA.md warns about.
   if (task.type === 'fix' && task.payload?.broken) {
-    const broken = task.payload.broken;
-    const result = await runPython(broken, { mode: 'headless', exprs: exprsOf(task.checks), grid: worldFor({}) });
-    // A broken program that raises or times out has correctly failed; only a
-    // clean run that satisfies every check is the bug TASK_SCHEMA.md warns
-    // about.
-    const outcome = evaluateRun({ code: broken }, task.checks, result, referenceArtifacts);
-    if (outcome.passed) {
-      failures.push({
-        context: 'broken',
-        message: 'payload.broken passes every check — a "broken" program must fail'
-      });
+    for (const [comboIndex, combo] of combinations.entries()) {
+      const broken = task.params ? substituteParams(task.payload.broken, combo) : task.payload.broken;
+      let passesEveryCase = true;
+      for (const [i, runCase] of cases.entries()) {
+        const checks = [...task.checks, ...(runCase.checks ?? [])];
+        const stdin = task.params ? runCase.stdin.map((line) => substituteParams(line, combo)) : runCase.stdin;
+        const result = await runPython(broken, { mode: 'headless', stdin, exprs: exprsOf(checks), grid: worldFor(combo) });
+        const outcome = evaluateRun({ code: broken }, checks, result, referenceArtifacts.get(artifactKey(comboIndex, i)) ?? null);
+        if (!outcome.passed) {
+          passesEveryCase = false;
+          break;
+        }
+      }
+      if (passesEveryCase) {
+        failures.push({
+          context: task.params ? `broken (${JSON.stringify(combo)})` : 'broken',
+          message: 'payload.broken passes every check — a "broken" program must fail'
+        });
+      }
     }
   }
 

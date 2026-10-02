@@ -416,3 +416,133 @@ print(sign(int(input())))
   await row('Олена').getByRole('link', { name: /Олена/ }).click();
   await expect(page.getByTestId('student-facts')).toContainText('вставлено 7 рядків за раз');
 });
+
+const RANGE = 'Скільки разів виконається цикл';
+const INT_DIV = 'Цілочисельне ділення';
+
+test('a pool gives each student their own tasks in their own order, and the server holds them to it', async ({
+  browser,
+  page
+}) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Нове заняття' }).click();
+  await page.locator('#class').selectOption({ label: 'Демонстраційний клас' });
+  await page.getByLabel('Режим').selectOption('graded');
+  for (const title of [MAIN, RANGE, INT_DIV]) {
+    await page.locator('#taskSearch').fill(title);
+    await page.getByRole('listitem').filter({ has: page.getByText(title, { exact: true }) }).getByRole('checkbox').check();
+  }
+  await page.getByLabel('Перемішати порядок завдань').check();
+  await page.getByLabel('Скільки завдань дістається кожному учню').fill('2');
+  await expect(page.getByTestId('pool-note')).toHaveText('Кожен учень отримає 2 з 3 завдань — свій набір, завжди той самий.');
+  await page.getByRole('button', { name: 'Створити заняття' }).click();
+  await expect(page.getByText('Заняття створено. Код для учнів:')).toBeVisible({ timeout: 10_000 });
+  const code = ((await page.locator('p.font-mono.text-2xl').textContent()) ?? '').trim();
+  const sessionUrl = (await page.getByRole('link', { name: 'Переглянути заняття' }).getAttribute('href')) ?? '';
+
+  const student = await (await browser.newContext()).newPage();
+  await student.goto(`/s/${code.toLowerCase()}`);
+  await student.getByRole('button', { name: 'Олена', exact: true }).click();
+  const taskButtons = student.locator('button[data-task-id]');
+  await expect(taskButtons).toHaveCount(2);
+  const mine = await taskButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute('data-task-id')));
+
+  // The same two, in the same order, after a reload.
+  await student.reload();
+  await expect(taskButtons).toHaveCount(2);
+  expect(await taskButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute('data-task-id')))).toEqual(mine);
+
+  // The teacher's page knows the third task; the server refuses it for Олена.
+  await page.evaluate((url) => window.location.assign(url), sessionUrl);
+  await expect(page.locator('li[data-task-id]')).toHaveCount(3);
+  const all = await page
+    .locator('li[data-task-id]')
+    .evaluateAll((items) => items.map((item) => item.getAttribute('data-task-id')));
+  expect(all).toHaveLength(3);
+  const notMine = all.find((taskId) => !mine.includes(taskId))!;
+  const sessionId = sessionUrl.split('/').pop();
+  const statuses = await student.evaluate(
+    async ({ sessionCode, taskId, sessionId }) => {
+      const task = await fetch(`/api/sessions/${sessionCode}/tasks/${taskId}?student=${encodeURIComponent('Олена')}`);
+      const attempt = await fetch('/api/attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          studentName: 'Олена',
+          taskId,
+          taskVersion: 1,
+          submittedAnswer: { choiceIndices: [0] },
+          passed: true,
+          hintsUsed: 0,
+          durationMs: 1000
+        })
+      });
+      return [task.status, attempt.status];
+    },
+    { sessionCode: code, taskId: notMine, sessionId }
+  );
+  expect(statuses).toEqual([404, 403]);
+  await student.context().close();
+
+  // On the class table, Олена has two tasks, and the third is marked as not hers.
+  const row = page.locator('tr', { has: page.getByRole('link', { name: /Олена/ }) });
+  await expect(row).toContainText('0 з 2');
+  await expect(row.getByRole('img', { name: /не призначено цьому учневі/ })).toHaveCount(1);
+});
+
+const DISCOUNT = 'Ціна зі знижкою (свій відсоток)';
+const POLYGON = 'Заповни пропуски: свій многокутник';
+
+test('fix and fill tasks give each student their own variant, checked against the reference’s own output', async ({
+  browser,
+  page
+}) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Нове заняття' }).click();
+  await page.locator('#class').selectOption({ label: 'Демонстраційний клас' });
+  for (const title of [DISCOUNT, POLYGON]) {
+    await page.locator('#taskSearch').fill(title);
+    const item = page.getByRole('listitem').filter({ has: page.getByText(title, { exact: true }) });
+    await expect(item).toContainText('свій варіант кожному');
+    await item.getByRole('checkbox').check();
+  }
+  await expect(page.getByTestId('variant-count')).toContainText('Індивідуальні варіанти: 2 з 2');
+  await page.getByRole('button', { name: 'Створити заняття' }).click();
+  await expect(page.getByText('Заняття створено. Код для учнів:')).toBeVisible({ timeout: 10_000 });
+  const code = ((await page.locator('p.font-mono.text-2xl').textContent()) ?? '').trim();
+
+  const student = await (await browser.newContext()).newPage();
+  await student.goto(`/s/${code.toLowerCase()}`);
+  await student.getByRole('button', { name: 'Олена', exact: true }).click();
+
+  // The fix task: her own percentage, in the prompt and in the broken program.
+  await student.getByRole('button', { name: DISCOUNT, exact: true }).click();
+  const prompt = (await student.getByText(/зі знижкою \d+%/).first().textContent()) ?? '';
+  const percent = /зі знижкою (\d+)%/.exec(prompt)![1];
+  await expect(student.locator('.cm-content')).toContainText(`discount = price * ${percent}`);
+  await expect(student.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+
+  // A wrong fix fails; the right one — for her percentage — passes.
+  await typeProgram(student, `price = float(input())\ndiscount = price * ${percent} / 10\nprint(price - discount)\n`);
+  await student.getByRole('button', { name: 'Перевірити' }).click();
+  await expect(student.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
+  await typeProgram(student, `price = float(input())\ndiscount = price * ${percent} / 100\nprint(price - discount)\n`);
+  await checkAndPass(student);
+
+  // The fill task: her own number of sides.
+  await student.getByRole('button', { name: '← До списку завдань' }).first().click();
+  await student.getByRole('button', { name: POLYGON, exact: true }).click();
+  const sides = Number(/правильний (\d+)-кутник/.exec((await student.getByText(/-кутник/).first().textContent()) ?? '')![1]);
+  expect([5, 6, 8]).toContain(sides);
+  await expect(student.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await student.getByLabel('Пропуск 1').fill(String(sides));
+  await student.getByLabel('Пропуск 2').fill(String(360 / sides));
+  await checkAndPass(student);
+
+  // Same student, same variant, after a reload.
+  await student.reload();
+  await student.getByRole('button', { name: /^Ціна зі знижкою/ }).click();
+  await expect(student.getByText(new RegExp(`зі знижкою ${percent}%`)).first()).toBeVisible();
+  await student.context().close();
+});

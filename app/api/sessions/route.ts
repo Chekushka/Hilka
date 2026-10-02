@@ -19,6 +19,8 @@ interface CreateSessionBody {
   timeLimitS: number | null;
   hintsEnabled: boolean;
   shuffle: boolean;
+  /** Each student gets this many of the tasks (lib/seed/assignment.ts); absent or null for all. */
+  poolSize?: number | null;
   /** Homework: ISO deadline, required. */
   dueAt?: string | null;
   /** Homework: tasks offered once a point is lost. */
@@ -38,6 +40,9 @@ function isValidBody(body: unknown): body is CreateSessionBody {
     typeof b.hintsEnabled === 'boolean' &&
     typeof b.shuffle === 'boolean' &&
     (b.kind === undefined || b.kind === 'lesson' || b.kind === 'homework') &&
+    (b.poolSize === undefined ||
+      b.poolSize === null ||
+      (typeof b.poolSize === 'number' && Number.isInteger(b.poolSize) && b.poolSize > 0)) &&
     (b.dueAt === undefined || b.dueAt === null || (typeof b.dueAt === 'string' && !Number.isNaN(Date.parse(b.dueAt)))) &&
     (b.improvementTaskIds === undefined ||
       (Array.isArray(b.improvementTaskIds) && b.improvementTaskIds.every((id) => typeof id === 'string')))
@@ -87,6 +92,8 @@ export async function POST(request: Request) {
     timeLimitS: homework ? null : body.timeLimitS,
     hintsEnabled: body.hintsEnabled,
     shuffle: body.shuffle,
+    // A pool as large as the list is no pool at all.
+    poolSize: body.poolSize && body.poolSize < taskIds.length ? body.poolSize : null,
     dueAt: homework && body.dueAt ? new Date(body.dueAt) : null
   });
   return NextResponse.json({ id, code }, { status: 201 });

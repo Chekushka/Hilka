@@ -4,7 +4,7 @@
  * student opens one, the same shape /practice already sends. CLAUDE.md rule
  * 4: a route handler, never a client component, does the query.
  *
- * A `code` task with `params` (docs/TASK_SCHEMA.md, "Parameterization") is
+ * A `code`, `fix` or `fill` task with `params` (docs/TASK_SCHEMA.md, "Parameterization") is
  * resolved to one concrete variant here, server-side, before the response
  * ever reaches a browser — `seed = hash(sessionId + studentName + taskId)`
  * (docs/AI_CONTEXT.md, "Cheating and Trust"), so the same student always
@@ -15,8 +15,8 @@
 import { NextResponse } from 'next/server';
 import { getOpenSessionByCode } from '@/lib/db/sessions';
 import { getPublishedTaskById } from '@/lib/db/tasks';
-import { resolveTaskParams } from '@/lib/task/params';
-import { deriveSeed } from '@/lib/seed';
+import { isParameterized, resolveTaskParams } from '@/lib/task/params';
+import { assignTasks, deriveSeed } from '@/lib/seed';
 
 export async function GET(
   request: Request,
@@ -32,13 +32,28 @@ export async function GET(
   if (!session || !assigned.some((task) => task.id === taskId)) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
+  // With a pool, a main task is only for the students it was drawn for (lib/seed/assignment.ts).
+  if (session.assignment.poolSize !== null && session.tasks.some((task) => task.id === taskId)) {
+    const own =
+      studentName && session.roster.includes(studentName)
+        ? assignTasks(
+            session.tasks.map((task) => task.id),
+            session.id,
+            studentName,
+            session.assignment
+          )
+        : [];
+    if (!own.includes(taskId)) {
+      return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    }
+  }
 
   const task = await getPublishedTaskById(taskId);
   if (!task) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
 
-  if (task.type === 'code' && task.params) {
+  if (isParameterized(task)) {
     // The request is untrusted (CLAUDE.md, "Cheating and Trust") — the same
     // roster check /api/attempts already makes, so a name outside the class
     // cannot fish for a different variant.

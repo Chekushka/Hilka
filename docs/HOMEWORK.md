@@ -1,9 +1,10 @@
 # Homework — design
 
-> **Status: steps 1–3 built** (see "Order of work" at the end): homework with a deadline and late
+> **Status: steps 1–4 built** (see "Order of work" at the end): homework with a deadline and late
 > credit, device marks, server-side state and limits, fixes and the improvement task, the
-> suggested grade, the class check that confirms it, and the facts for the teacher (re-check,
-> similar code, paste/edit counts, constructs not taught yet). Step 4 is designed but not built. Decisions were made with the
+> suggested grade, the class check that confirms it, the facts for the teacher (re-check, similar
+> code, paste/edit counts, constructs not taught yet), and individual work (per-student pools,
+> shuffle, variants for `fix` and `fill`). `predict` variants are not built (section 5b). Decisions were made with the
 > project owner; each is marked **Decided**. AI_CONTEXT.md carries the architectural summary.
 
 ## What is asked
@@ -261,6 +262,34 @@ Each is an observation for the teacher; none changes a grade, none is shown to a
   «Факти» box on the student card in plain sentences, and each attempt's counts beside it.
   `lib/homework/facts.ts` gathers them; `lib/db/homework-facts.ts` reads what they need.
 
+### 5b. Individual work, as built (step 4)
+
+For any session, not only homework:
+
+- **A pool per student.** «Скільки завдань дістається кожному учню» in the builder: each student
+  gets K of the N tasks (`sessions.pool_size`, `drizzle/0007_add_task_pool.sql`), drawn by
+  `lib/seed/assignment.ts` from a seed of the session and the roster name — the same student
+  always gets the same tasks, on any device. The room shows only those; `POST /api/attempts`
+  refuses another task (403) and `GET /api/sessions/[code]/tasks/[taskId]` will not hand it out
+  (404). The class table counts each student against their own tasks and marks the rest «не
+  призначено»; the suggested grade and the student card read only the student's own tasks
+  (`lib/session/assigned.ts`). Improvement tasks are not pooled.
+- **Shuffle.** `sessions.shuffle` was stored and never read; now each student meets their tasks
+  in their own seeded order. The pool decides which tasks, shuffle only the order.
+- **Variants for `fix` and `fill`**, beside `code` (`lib/task/params.ts`): placeholders in the
+  prompt, the broken program or the template, the cases' input and the reference. The builder
+  marks such tasks «свій варіант кожному» and counts them («Індивідуальні варіанти: 2 з 5»). A
+  console variant is checked with the new `matches_reference` check (docs/TASK_SCHEMA.md): the
+  expected output is the reference's own output on the same input, run beside the student's —
+  so it is right for every variant, which a typed value cannot be. `npm run verify:references`
+  runs every combination, and for a `fix` requires the broken program to fail in every variant.
+  Content: `g8-fix-discount-variant` (lesson 46, additional) and `g7-fill-polygon-variant`
+  (lesson 38, additional), session-only like every parameterized task.
+- **Not built:** `predict` variants. A `predict` answer is the shown program's output; with
+  variants it would have to be computed for every combination when the task is published (in the
+  teacher's browser, ≤ 500 combinations) and stored, then picked per student — a bigger change
+  to publishing than the rest of this step, so it waits for a decision on whether it is worth it.
+
 ### 6. The student's side at home
 
 - No teacher to ask, so hints default to on, and the lesson's explanation is one click away (it
@@ -312,7 +341,9 @@ Later: per-student deadlines, `attempts.flags` gaining `pasted`, `edits`, `msToP
    (section 4a). `tests/e2e/homework.spec.ts`; unit tests in `lib/homework/grade.test.ts`.
 3. ✅ **Facts for the teacher** — section 5a. `tests/e2e/homework.spec.ts`; unit tests in
    `lib/homework/` and `lib/task/`.
-4. **Individual work** — shuffle, per-student task pools, variants for `fix`/`fill`/`predict`.
+4. ✅ **Individual work** — section 5b. `predict` variants are not built (section 5b says why).
+   `tests/e2e/homework.spec.ts`; unit tests in `lib/seed/`, `lib/task/`, `lib/checker/`,
+   `lib/dashboard/`, `lib/homework/`.
 
 ## Decided
 

@@ -45,7 +45,12 @@ export async function recheckAnswer(task: Task, submittedAnswer: unknown, run: R
     const cases = task.type === 'fill' ? undefined : task.cases;
     // The target drawing comes from running the reference, as when the room warms up.
     const reference = await run(task.reference.code, { mode: 'headless', stdin: cases?.[0]?.stdin ?? [], grid });
-    const outcome = await checkCode({ checks: task.checks, cases, grid }, code, run, reference.drawing);
+    const outcome = await checkCode(
+      { checks: task.checks, cases, grid, referenceCode: task.reference.code },
+      code,
+      run,
+      reference.drawing
+    );
     return outcome.passed ? 'passes' : 'fails';
   }
 

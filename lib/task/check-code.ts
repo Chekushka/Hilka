@@ -20,6 +20,11 @@ export interface CheckableCode {
   checks: Check[];
   cases?: RunCase[];
   grid?: GridWorld;
+  /**
+   * The reference solution, run on the same case whenever a check compares
+   * with its output (`matches_reference`). Without it such a check fails.
+   */
+  referenceCode?: string;
 }
 
 export interface CaseOutcome {
@@ -64,6 +69,11 @@ export async function checkCode(
       erroredResult = caseResult;
       break;
     }
+    // The expected output for this very input, computed by running the reference (CLAUDE.md rule 5).
+    const needsReference = task.referenceCode !== undefined && caseChecks.some((c) => c.kind === 'matches_reference');
+    const referenceStdout = needsReference
+      ? (await run(task.referenceCode!, { mode: 'headless', stdin: runCase.stdin, grid: task.grid })).stdout
+      : undefined;
     const report = evaluateChecks(caseChecks, {
       submission: { code },
       run: {
@@ -75,7 +85,7 @@ export async function checkCode(
         exprResults: caseResult.exprResults,
         grid: caseResult.grid
       },
-      reference: { drawing: target }
+      reference: { drawing: target, ...(referenceStdout !== undefined ? { stdout: referenceStdout } : {}) }
     });
     if (report.passed) casesPassed += 1;
     outcomes.push({

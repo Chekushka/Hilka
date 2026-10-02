@@ -151,7 +151,8 @@ sessions
   checks_session_id uuid | null,          -- a class check: the homework it checks
   task_ids uuid[], improvement_task_ids uuid[],
   time_limit_s int | null, hints_enabled bool,
-  shuffle bool, opens_at, closes_at, due_at
+  shuffle bool, pool_size int | null,      -- each student gets pool_size of task_ids
+  opens_at, closes_at, due_at
 
 progress_codes
   code char(8) primary key,   -- human-readable alphabet, no 0/O/1/I/l
@@ -538,11 +539,14 @@ v1, mitigated rather than solved:
 1. **Parameterized variants.** `tasks.params` defines placeholder ranges; concrete values are
    derived from `seed = hash(session_id + student_name + task_id)` (`lib/seed/`). Deterministic,
    so a teacher's report reproduces what the student saw, and different at adjacent desks. This
-   defeats copying from a neighbour, which is the realistic threat. Built for `code` tasks,
-   session-only: `GET /api/sessions/[code]/tasks/[taskId]` resolves and substitutes the variant
-   server-side before the response reaches a browser (docs/TASKS.md has the full picture,
-   including what is still not built — an authoring UI, `fix`/`predict` support).
-2. **Task shuffling** within a graded session.
+   defeats copying from a neighbour, which is the realistic threat. Built for `code`, `fix` and
+   `fill`, session-only: `GET /api/sessions/[code]/tasks/[taskId]` resolves and substitutes the
+   variant server-side before the response reaches a browser. A console variant checks with
+   `matches_reference`, whose expected output is the reference's own on the same input (still
+   not built: an authoring UI, `predict` variants — docs/HOMEWORK.md, section 5b).
+2. **Task shuffling and per-student pools** in any session (`lib/seed/assignment.ts`, seeded like
+   variants): each student may get K of the N tasks, in their own order. The server holds a
+   student to their own tasks.
 3. **Behavioural facts** on homework attempts: the largest paste and the edit count, counts only
    (`lib/task/activity.ts`). With similar code and constructs not taught yet, they are shown to
    the teacher as facts (docs/HOMEWORK.md, section 5a). The teacher decides. The system never

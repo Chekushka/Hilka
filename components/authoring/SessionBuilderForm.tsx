@@ -51,6 +51,7 @@ interface TaskOption {
   difficulty: number;
   type: TaskType;
   fileDelivery: boolean;
+  parameterized: boolean;
 }
 
 interface LessonOption {
@@ -103,6 +104,8 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
   const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [shuffle, setShuffle] = useState(false);
+  // Each student gets this many of the chosen tasks (lib/seed/assignment.ts); empty for all.
+  const [poolSize, setPoolSize] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ id: string; code: string } | null>(null);
@@ -196,6 +199,7 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
         timeLimitS: !homework && timeLimitMinutes ? Number(timeLimitMinutes) * 60 : null,
         hintsEnabled,
         shuffle,
+        poolSize: poolSize && Number(poolSize) < main.length ? Number(poolSize) : null,
         dueAt: due ? due.toISOString() : null
       })
     });
@@ -251,6 +255,7 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
     .map((id) => tasksById.get(id))
     .filter((task): task is TaskOption => task !== undefined);
   const minutes = timeLimitMinutes === '' ? null : Number(timeLimitMinutes);
+  const mainCount = selectedTaskIds.filter((id) => !(homework && improvementIds.includes(id))).length;
 
   return (
     <form onSubmit={handleSubmit} className="mt-5 grid items-start gap-5 lg:grid-cols-[17rem_minmax(0,1fr)_19rem]">
@@ -381,6 +386,25 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
           <input type="checkbox" checked={shuffle} onChange={(event) => setShuffle(event.target.checked)} />
           {t('sessionBuilder.shuffleLabel')}
         </label>
+        <div className="flex flex-col gap-1.5">
+          <label className={labelClass} htmlFor="poolSize">
+            {t('sessionBuilder.poolLabel')}
+          </label>
+          <input
+            id="poolSize"
+            type="number"
+            min={1}
+            placeholder={t('sessionBuilder.poolPlaceholder')}
+            value={poolSize}
+            onChange={(event) => setPoolSize(event.target.value)}
+            className={`w-full ${fieldClass}`}
+          />
+          {poolSize !== '' && Number(poolSize) > 0 && Number(poolSize) < mainCount && (
+            <p className="text-xs text-ink-muted" data-testid="pool-note">
+              {t('sessionBuilder.poolNote', { k: Number(poolSize), n: mainCount })}
+            </p>
+          )}
+        </div>
 
         {lessons.length > 0 && (
           <div className="flex flex-col gap-1.5 border-t border-line pt-4">
@@ -502,6 +526,7 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
                           difficulty: task.difficulty
                         })}
                         {task.fileDelivery && ` · ${t('sessionBuilder.fileTask')}`}
+                        {task.parameterized && ` · ${t('sessionBuilder.variantTask')}`}
                       </span>
                     </span>
                     <span className="shrink-0 rounded-full bg-shell px-2.5 py-1 text-xs text-ink-muted">
@@ -584,6 +609,14 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
 
         {homework && selected.length > 0 && (
           <p className="text-xs leading-relaxed text-ink-muted">{t('sessionBuilder.improvementHint')}</p>
+        )}
+        {selected.length > 0 && (
+          <p className="text-xs leading-relaxed text-ink-muted" data-testid="variant-count">
+            {t('sessionBuilder.variantCount', {
+              k: selected.filter((task) => task.parameterized).length,
+              n: selected.length
+            })}
+          </p>
         )}
 
         {nonGraded.length > 0 && (
