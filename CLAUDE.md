@@ -14,6 +14,8 @@ Then, depending on the work:
 - `docs/SPIKE.md` — the open verification questions. Nothing is built before it passes.
 - `docs/design-brief-python-platform.md` — before building any student-facing screen.
 - `docs/CI_CD.md` — before touching workflows, deploys, or the guardrail script.
+- `docs/HOMEWORK.md` — before building anything for homework (remote, multi-day sessions). A
+  proposal awaiting decisions, not a description of built code.
 
 ## What this project is
 
