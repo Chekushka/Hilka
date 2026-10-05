@@ -87,7 +87,7 @@ test('a teacher builds a chosen-indent parsons task, and a student grades it by 
 
   const klass = await api(page, '/api/classes', {
     method: 'POST',
-    body: { title: `E2E клас parsons ${stamp}`, roster: ['Олена'] }
+    body: { title: `E2E клас parsons ${stamp}`, students: [{ name: 'Олена' }] }
   });
   expect(klass.status).toBe(201);
   const { id: classId } = klass.body as { id: string };

@@ -151,10 +151,6 @@ export const classes = pgTable('classes', {
   // Not accounts, nothing else. Attempts key on the id, so a rename is one
   // field here and never touches results.
   students: jsonb('students').$type<RosterStudent[]>().notNull().default([]),
-  // Superseded by `students` and kept in step with it only while code from
-  // before migration 0009 may still be running. Nothing reads it; the next
-  // migration drops it.
-  roster: text('roster').array().notNull().default([]),
   // 7, 8 or 9, or null when the teacher did not say: the session builder
   // starts its task bank on this grade.
   grade: smallint('grade')
@@ -220,9 +216,7 @@ export const attempts = pgTable(
       .notNull()
       .references(() => sessions.id),
     // The roster entry's id (classes.students): what every lookup keys on.
-    // Nullable only for the deploy that introduces it — a trigger fills it
-    // for an insert that leaves it out, and the next migration makes it NOT NULL.
-    studentId: text('student_id'),
+    studentId: text('student_id').notNull(),
     // The name as it was when the attempt was made, never rewritten. Screens
     // show the roster's current name, and this one for a student no longer on it.
     studentName: text('student_name').notNull(),

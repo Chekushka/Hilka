@@ -7,7 +7,6 @@ import type { RosterStudent } from '@/lib/classes/roster';
 import type { SessionKind, SessionMode } from '@/lib/session/types';
 import { getDb } from './client';
 import { attempts, classes, sessions } from './schema';
-import { attemptStudentId } from './students';
 
 export interface TeacherSessionSummary {
   id: string;
@@ -82,9 +81,6 @@ export interface ClassFields {
   students: RosterStudent[];
 }
 
-/** `classes.roster` mirrors the names until the migration after 0009 drops it — code from before 0009 still reads it. */
-const legacyRoster = (students: readonly RosterStudent[]) => students.map((student) => student.name);
-
 export async function createClass(teacherId: string, fields: ClassFields): Promise<{ id: string }> {
   const [row] = await getDb()
     .insert(classes)
@@ -92,8 +88,7 @@ export async function createClass(teacherId: string, fields: ClassFields): Promi
       teacherId,
       title: fields.title,
       grade: fields.grade,
-      students: fields.students,
-      roster: legacyRoster(fields.students)
+      students: fields.students
     })
     .returning({ id: classes.id });
   return row;
@@ -108,7 +103,7 @@ export async function createClass(teacherId: string, fields: ClassFields): Promi
 export async function updateClass(classId: string, teacherId: string, fields: ClassFields): Promise<{ id: string } | null> {
   const [row] = await getDb()
     .update(classes)
-    .set({ title: fields.title, grade: fields.grade, students: fields.students, roster: legacyRoster(fields.students) })
+    .set({ title: fields.title, grade: fields.grade, students: fields.students })
     .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
     .returning({ id: classes.id });
   return row ?? null;
@@ -142,7 +137,7 @@ export async function deleteClass(classId: string, teacherId: string): Promise<b
 /** The students who have counted work in any of the class's sessions — the class form warns before removing one. */
 export async function listStudentIdsWithAttempts(classId: string): Promise<string[]> {
   const rows = await getDb()
-    .selectDistinct({ id: attemptStudentId })
+    .selectDistinct({ id: attempts.studentId })
     .from(attempts)
     .innerJoin(sessions, eq(attempts.sessionId, sessions.id))
     .where(and(eq(sessions.classId, classId), isNull(attempts.voidedAt)));

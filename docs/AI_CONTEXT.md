@@ -146,8 +146,6 @@ classes
   id, teacher_id, title,
   students jsonb,                          -- [{ id, name, seed? }]: display names with random ids,
                                            --   nothing more (lib/classes/roster.ts)
-  roster text[],                           -- superseded by students, mirrored until the
-                                           --   migration after 0009 drops it
   grade smallint | null                    -- 7..9; the session builder opens on it
 
 sessions
@@ -166,8 +164,7 @@ progress_codes
 
 attempts
   id, session_id, task_id, task_version,
-  student_id text,        -- the roster entry's id: everything keys on it (NOT NULL from the
-                          --   migration after 0009; a trigger fills it until then)
+  student_id text,        -- the roster entry's id: everything keys on it
   student_name text,      -- the name when the attempt was made; never rewritten
   seed bigint,            -- the variant seed the task was served under; null before 0009
   submitted_answer jsonb, passed bool,

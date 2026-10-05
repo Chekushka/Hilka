@@ -6,8 +6,7 @@ describe('parseClassBody', () => {
     expect(parseClassBody({ title: ' 7-А ', grade: 7, students: [{ name: 'Оля' }] })).toEqual({
       title: '7-А',
       grade: 7,
-      students: [{ name: 'Оля' }],
-      roster: undefined
+      students: [{ name: 'Оля' }]
     });
   });
 
@@ -33,13 +32,5 @@ describe('readStudents', () => {
       { id: 'bbbbbbbbbbbb', name: 'Іван' }
     ]);
     expect(readStudents(parseClassBody({ title: '7-А', students: [] })!, stored)).toBeNull();
-  });
-
-  it('accepts plain names from a form opened before ids, keeping the entries it can match', () => {
-    const body = parseClassBody({ title: '7-А', roster: ['Оля', 'Іван'] })!;
-    expect(readStudents(body, stored, () => 'bbbbbbbbbbbb')).toEqual([
-      { id: 'aaaaaaaaaaaa', name: 'Оля', seed: 'Оля' },
-      { id: 'bbbbbbbbbbbb', name: 'Іван' }
-    ]);
   });
 });

@@ -136,9 +136,9 @@ until a deploy runs against the old tables.
 
 `db:check-migration` covers what the drift check cannot: a migration that
 rewrites data. It builds a scratch database at the migration before 0009
-(student ids), writes old-shape rows the way that code wrote them, applies the
-rest, and asserts the backfill and the temporary triggers
-(`scripts/db/check-student-ids-migration.ts`). It needs a server where it may
+(student ids), writes old-shape rows the way that code wrote them, applies
+0009 and asserts the backfill and the temporary triggers, then applies 0010
+and asserts the cleanup (`scripts/db/check-student-ids-migration.ts`). It needs a server where it may
 create and drop a database — the browser job's Postgres, or a local one —
 never Neon.
 
@@ -146,8 +146,11 @@ never Neon.
 steps.** `migrate.yml` and the Vercel deploy start on the same merge and race,
 so for a few minutes old code runs against the new schema or the other way
 round. Step one adds and backfills and drops nothing, keeping old code working
-(0009 keeps `classes.roster` in step and fills `attempts.student_id` with
-triggers); step two, a release later, removes what only old code needed.
+(0009 kept `classes.roster` in step and filled `attempts.student_id` with
+triggers); step two, a release later, removes what only old code needed
+(0010). Merge step two only once step one has been in production long enough
+that no old code is serving and no open page still holds what step two stops
+accepting.
 
 ### Working on the database locally
 

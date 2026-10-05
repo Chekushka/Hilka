@@ -7,9 +7,7 @@
  * documented trade-off of a client-side checker (CLAUDE.md, "Cheating and
  * Trust") — the fix is a server-side re-check on final submission, not built
  * yet. What this route does enforce is that the row cannot lie about which
- * session, task and roster student it belongs to. The student is named by
- * roster id; a page loaded before ids existed sends the name instead, and is
- * matched to its entry the same way (lib/classes/roster.ts, `findStudent`).
+ * session, task and roster student (by roster id) it belongs to.
  *
  * For a file-delivery task the source hash is computed here, from the task as
  * the database knows it — never taken from the body — so a client cannot opt
@@ -37,7 +35,6 @@ import type { AttemptInput } from '@/lib/session/types';
 function isValidBody(body: unknown): body is AttemptInput {
   if (typeof body !== 'object' || body === null) return false;
   const b = body as Record<string, unknown>;
-  if (typeof b.studentId !== 'string' && typeof b.studentName === 'string') b.studentId = b.studentName;
   return (
     typeof b.sessionId === 'string' &&
     typeof b.studentId === 'string' &&

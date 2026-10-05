@@ -13,7 +13,7 @@ import type { FactAttempt } from '@/lib/homework/facts';
 import { parseActivity, type EditorActivity } from '@/lib/task/activity';
 import { attempts, tasks } from './schema';
 import { getDb, type Executor } from './client';
-import { attemptStudentId, attemptStudentName } from './students';
+import { attemptStudentName } from './students';
 
 export interface SessionAttemptRow {
   id: string;
@@ -55,7 +55,7 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
   const rows = await getDb()
     .select({
       id: attempts.id,
-      studentId: attemptStudentId,
+      studentId: attempts.studentId,
       studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
@@ -98,7 +98,7 @@ export async function listAttemptsForStudent(sessionId: string, studentId: strin
   const rows = await getDb()
     .select({
       id: attempts.id,
-      studentId: attemptStudentId,
+      studentId: attempts.studentId,
       studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
@@ -115,7 +115,7 @@ export async function listAttemptsForStudent(sessionId: string, studentId: strin
     })
     .from(attempts)
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
-    .where(and(eq(attempts.sessionId, sessionId), eq(attemptStudentId, studentId)))
+    .where(and(eq(attempts.sessionId, sessionId), eq(attempts.studentId, studentId)))
     .orderBy(desc(attempts.createdAt));
   return rows.map(({ flags, score, voidedAt, ...row }) => ({
     ...row,
@@ -135,7 +135,7 @@ export async function listAttemptsForStudent(sessionId: string, studentId: strin
 export async function listFileSubmissionsForSession(sessionId: string): Promise<FileSubmissionRow[]> {
   const rows = await getDb()
     .select({
-      studentId: attemptStudentId,
+      studentId: attempts.studentId,
       studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
@@ -227,7 +227,7 @@ export async function listPassedAnswers(sessionId: string): Promise<PassedAnswer
   const rows = await getDb()
     .select({
       id: attempts.id,
-      studentId: attemptStudentId,
+      studentId: attempts.studentId,
       studentName: attemptStudentName,
       studentNameThen: attempts.studentName,
       seed: attempts.seed,
@@ -256,7 +256,7 @@ export async function listPassedAnswers(sessionId: string): Promise<PassedAnswer
 export async function listFactAttempts(sessionId: string): Promise<FactAttempt[]> {
   const rows = await getDb()
     .select({
-      studentId: attemptStudentId,
+      studentId: attempts.studentId,
       studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,

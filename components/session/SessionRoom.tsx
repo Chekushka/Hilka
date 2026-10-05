@@ -12,9 +12,7 @@
  * the same rules and refuses what they do not allow.
  *
  * The student is kept by roster id (lib/classes/roster.ts), so a rename by the
- * teacher mid-session changes nothing here. Before ids the same storage slot
- * held the name; `findStudent` reads either, so a tab open across the deploy
- * carries on without asking again.
+ * teacher mid-session changes nothing here.
  *
  * The stored value is read from sessionStorage through `useSyncExternalStore`
  * rather than an effect: the value only exists in the browser, so the server
@@ -58,7 +56,7 @@ interface SessionRoomProps {
   session: JoinedSession;
 }
 
-/** Holds the student's roster id — or, written before ids, their name. The key kept its old name so such a tab carries on. */
+/** Holds the student's roster id. The key's `name` is historical: it held the name before students had ids. */
 function studentStorageKey(code: string) {
   return `hilka:session:${code}:name`;
 }

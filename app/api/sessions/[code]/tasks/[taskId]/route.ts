@@ -9,8 +9,8 @@
  * ever reaches a browser — `seed = hash(sessionId + seedKey + taskId)`
  * (docs/AI_CONTEXT.md, "Cheating and Trust"), so the same student always
  * gets the same variant and a teacher's report reproduces it exactly.
- * `?student=` is the roster id the join screen picked (or a name, from a page
- * loaded before ids); unparameterized tasks (no `params`) are unaffected either way.
+ * `?student=` is the roster id the join screen picked; unparameterized tasks
+ * (no `params`) are unaffected either way.
  */
 import { NextResponse } from 'next/server';
 import { findStudent, seedKeyOf } from '@/lib/classes/roster';

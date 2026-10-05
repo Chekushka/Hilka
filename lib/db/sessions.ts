@@ -20,7 +20,6 @@ import { isFileDelivery } from '@/lib/task/prerequisite';
 import { getDb, type Database, type Executor } from './client';
 import { attempts, classes, sessions, tasks } from './schema';
 import { orderSessionTasks } from './session-mapping';
-import { attemptStudentId } from './students';
 
 export interface TeacherSessionDetail {
   id: string;
@@ -124,7 +123,7 @@ export interface CheckAttemptRow {
 export async function listCheckAttempts(homeworkId: string): Promise<CheckAttemptRow[]> {
   const rows = await getDb()
     .select({
-      studentId: attemptStudentId,
+      studentId: attempts.studentId,
       taskId: attempts.taskId,
       passed: attempts.passed,
       createdAt: attempts.createdAt
@@ -191,7 +190,6 @@ export interface AttemptContext {
  * the session is open, the student is on the class roster, and the task is
  * theirs — one of their assigned main tasks or an improvement task. A client can lie about all
  * three, so the API route re-derives this rather than trusting the request body.
- * `studentRef` is the student's id, or their name from a page loaded before ids.
  */
 export async function getAttemptContext(
   sessionId: string,
@@ -234,7 +232,7 @@ export async function listOwnAttempts(sessionId: string, studentId: string, db: 
     })
     .from(attempts)
     .where(
-      and(eq(attempts.sessionId, sessionId), eq(attemptStudentId, studentId), isNull(attempts.voidedAt))
+      and(eq(attempts.sessionId, sessionId), eq(attempts.studentId, studentId), isNull(attempts.voidedAt))
     )
     .orderBy(asc(attempts.createdAt));
   return rows.map((row) => ({
@@ -310,7 +308,7 @@ export async function voidDeviceAttempts(
     .where(
       and(
         eq(attempts.sessionId, id),
-        eq(attemptStudentId, studentId),
+        eq(attempts.studentId, studentId),
         eq(attempts.deviceId, deviceId),
         isNull(attempts.voidedAt)
       )

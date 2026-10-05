@@ -4,8 +4,7 @@
  * survive a reload, another tab, another device and another day. Answers only
  * pass/fail and when — never what anyone submitted.
  *
- * `?student=` is the roster id (or, from a page loaded before ids, the name —
- * lib/classes/roster.ts, `findStudent`). There is no secret behind a roster
+ * `?student=` is the roster id the name screen picked. There is no secret behind a roster
  * name (option D: entry stays free), so anyone with the code could read this
  * for any student — exactly what they would see by picking that name in the room. What makes misuse visible is the
  * device mark, which this route also sets on first visit.

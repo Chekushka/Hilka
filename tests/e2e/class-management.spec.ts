@@ -196,7 +196,7 @@ test("the class and session routes refuse what is not the teacher's", async ({ p
 const DISCOUNT = 'Ціна зі знижкою (свій відсоток)';
 const DIVISION = 'Цілочисельне ділення';
 
-test("a student renamed mid-session keeps their order, their variant and their work, and a tab from before ids carries on", async ({
+test("a student renamed mid-session keeps their order, their variant and their work; a stored name is no one's id", async ({
   browser,
   page
 }) => {
@@ -249,12 +249,13 @@ test("a student renamed mid-session keeps their order, their variant and their w
   await expect(student.getByText(variant).first()).toBeVisible();
   await student.context().close();
 
-  // A tab that picked «Тарас» before ids existed still holds the name; it goes straight to his tasks.
+  // A tab still holding a name from before ids, or anything else that is no one's id, asks for the name again.
   const taras = await (await browser.newContext()).newPage();
   await taras.goto(`/s/${code.toLowerCase()}`);
   await taras.evaluate((sessionCode) => sessionStorage.setItem(`hilka:session:${sessionCode}:name`, 'Тарас'), code);
   await taras.reload();
-  await expect(taras.getByRole('heading', { name: 'Завдання заняття' })).toBeVisible();
+  await expect(taras.getByRole('heading', { name: "Обери своє ім'я" })).toBeVisible();
+  await taras.getByRole('button', { name: 'Тарас', exact: true }).click();
   await expect(taras.locator('button[data-task-id]')).toHaveCount(3);
   await taras.context().close();
 });
