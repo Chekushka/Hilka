@@ -1,0 +1,29 @@
+{
+  "slug": "g7-retype-while",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Набери код: лічба до п’яти",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\ni = 1\nwhile i <= 5:\n    print(i)\n    i = i + 1\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "1\n2\n3\n4\n5",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "Рядок i = i + 1 обов’язковий: без нього цикл ніколи не закінчиться."],
+  "reference": {
+    "code": "i = 1\nwhile i <= 5:\n    print(i)\n    i = i + 1"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

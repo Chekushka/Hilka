@@ -1,0 +1,47 @@
+{
+  "slug": "g8-retype-input",
+  "topicSlug": "io",
+  "type": "code",
+  "title": "Набери код: привітання за іменем",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам і запусти. Коли вона спитає ім’я, введи будь-яке.\n```\nname = input(\"Як тебе звати? \")\nprint(\"Привіт,\", name + \"!\")\n```",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "ім’я Ліна",
+      "stdin": ["Ліна"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Привіт, Ліна!",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "інше ім’я",
+      "stdin": ["Максим"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Привіт, Максим!",
+          "normalize": "trim"
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "input() чекає, поки ти щось введеш, і повертає це як текст."],
+  "reference": {
+    "code": "name = input(\"Як тебе звати? \")\nprint(\"Привіт,\", name + \"!\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,29 @@
+{
+  "slug": "g8-retype-while-sum",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Набери код: сума до сотні",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\ns = 0\nn = 0\nwhile s < 100:\n    n = n + 1\n    s = s + n\nprint(n, s)\n```\nПрограма шукає, скільки перших чисел треба додати, щоб сума перевищила 100.",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "14 105",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "Цикл while повторюється, поки умова s < 100 істинна."],
+  "reference": {
+    "code": "s = 0\nn = 0\nwhile s < 100:\n    n = n + 1\n    s = s + n\nprint(n, s)"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

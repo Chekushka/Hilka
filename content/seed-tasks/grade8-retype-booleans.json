@@ -1,0 +1,29 @@
+{
+  "slug": "g8-retype-booleans",
+  "topicSlug": "booleans",
+  "type": "code",
+  "title": "Набери код: істина чи хибність",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\nprint(5 > 3)\nprint(2 == 3)\nprint(5 > 3 and 2 == 3)\nprint(5 > 3 or 2 == 3)\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "True\nFalse\nFalse\nTrue",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "and — істина, коли обидві частини істинні; or — коли хоча б одна."],
+  "reference": {
+    "code": "print(5 > 3)\nprint(2 == 3)\nprint(5 > 3 and 2 == 3)\nprint(5 > 3 or 2 == 3)"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

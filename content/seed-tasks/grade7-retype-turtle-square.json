@@ -1,0 +1,28 @@
+{
+  "slug": "g7-retype-turtle-square",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Набери код: квадрат без циклу",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Набери цю програму сам і запусти — черепашка має намалювати те саме, що на зразку.\n```\nimport turtle\nturtle.forward(100)\nturtle.right(90)\nturtle.forward(100)\nturtle.right(90)\nturtle.forward(100)\nturtle.right(90)\nturtle.forward(100)\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Малюнок відрізняється від зразка. Порівняй числа у forward() і right()/left() зі зразком."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "forward() — крок уперед, right(90) — поворот праворуч на прямий кут."],
+  "reference": {
+    "code": "import turtle\nturtle.forward(100)\nturtle.right(90)\nturtle.forward(100)\nturtle.right(90)\nturtle.forward(100)\nturtle.right(90)\nturtle.forward(100)"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,75 @@
+{
+  "slug": "g8-challenge-february",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Виклик: скільки днів у лютому",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рік і виведи, скільки днів у лютому цього року: 28 або 29.\nРік високосний, якщо ділиться на 4, але не на 100, — або якщо ділиться на 400.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "2024",
+      "stdin": ["2024"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 29,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "2023",
+      "stdin": ["2023"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 28,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "1900",
+      "stdin": ["1900"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 28,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "2000",
+      "stdin": ["2000"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 29,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": ["Ділиться на 4 — це year % 4 == 0.", "Склади умову з and і or: (на 4 і не на 100) або на 400."],
+  "reference": {
+    "code": "year = int(input())\nif (year % 4 == 0 and year % 100 != 0) or year % 400 == 0:\n    print(29)\nelse:\n    print(28)"
+  },
+  "difficulty": 4,
+  "gradeTags": [8],
+  "tags": ["challenge"],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,28 @@
+{
+  "slug": "g7-easy-turtle-line",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Легкий старт: одна лінія",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй одну пряму лінію довжиною 150.",
+    "starter": "import turtle\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Потрібна одна лінія довжиною 150 — перевір число в дужках."
+    }
+  ],
+  "hints": ["Черепашці потрібна одна команда: іти вперед.", "turtle.forward(150)"],
+  "reference": {
+    "code": "import turtle\nturtle.forward(150)"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

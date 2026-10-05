@@ -1,0 +1,28 @@
+{
+  "slug": "g7-challenge-turtle-triangles",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Виклик: ряд трикутників",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй ряд із 4 рівносторонніх трикутників зі стороною 50, що стоять поруч на одній прямій, вершинами вгору.",
+    "starter": "import turtle\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Ряд не збігається зі зразком. Після кожного трикутника черепашка має перейти на 50 праворуч."
+    }
+  ],
+  "hints": ["Один трикутник вершиною вгору: тричі forward(50) і left(120).", "Після трикутника черепашка знову там, де почала. Зроби forward(50), щоб стати на початок наступного.", "Цикл у циклі: зовнішній — 4 трикутники, внутрішній — 3 сторони."],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    for j in range(3):\n        turtle.forward(50)\n        turtle.left(120)\n    turtle.forward(50)"
+  },
+  "difficulty": 5,
+  "gradeTags": [7],
+  "tags": ["challenge"],
+  "version": 1,
+  "status": "published"
+}

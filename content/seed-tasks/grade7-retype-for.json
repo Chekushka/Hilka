@@ -1,0 +1,29 @@
+{
+  "slug": "g7-retype-for",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Набери код: таблиця множення на 2",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\nfor i in range(1, 6):\n    print(i, \"* 2 =\", i * 2)\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "1 * 2 = 2\n2 * 2 = 4\n3 * 2 = 6\n4 * 2 = 8\n5 * 2 = 10",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "range(1, 6) дає числа від 1 до 5 — останнє число не входить."],
+  "reference": {
+    "code": "for i in range(1, 6):\n    print(i, \"* 2 =\", i * 2)"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

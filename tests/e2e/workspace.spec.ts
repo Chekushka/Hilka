@@ -10,7 +10,7 @@ import { expect, test } from '@playwright/test';
 test('a lesson task says where it sits and keeps the lesson theory one click away', async ({ page }) => {
   await page.goto('/practice/g7-29-turtle/g7-turtle-square');
   await expect(page.getByRole('heading', { name: 'Квадрат', exact: true })).toBeVisible();
-  await expect(page.getByText('Завдання 1 з 3')).toBeVisible();
+  await expect(page.getByText('Завдання 1 з 5')).toBeVisible();
 
   // Collapsed by default: the statement is what the student reads first.
   const theory = page.getByRole('button', { name: /Як це працює/ });

@@ -1,0 +1,29 @@
+{
+  "slug": "g7-retype-hello",
+  "topicSlug": "intro",
+  "type": "code",
+  "title": "Набери код: привітання",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\nprint(\"Привіт!\")\nprint(\"Я пишу на Python.\")\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Привіт!\nЯ пишу на Python.",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "print() виводить те, що в дужках, і переходить на новий рядок."],
+  "reference": {
+    "code": "print(\"Привіт!\")\nprint(\"Я пишу на Python.\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

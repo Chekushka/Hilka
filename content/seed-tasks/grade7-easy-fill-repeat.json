@@ -1,0 +1,28 @@
+{
+  "slug": "g7-easy-fill-repeat",
+  "topicSlug": "loops-for",
+  "type": "fill",
+  "title": "Легкий старт: повтори привіт",
+  "payload": {
+    "type": "fill",
+    "prompt": "Заповни пропуск так, щоб програма вивела «Привіт» рівно 4 рази.",
+    "template": "for i in range({{1}}):\n    print(\"Привіт\")\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Привіт\nПривіт\nПривіт\nПривіт",
+      "trim": true,
+      "message": "Має бути рівно чотири рядки «Привіт»."
+    }
+  ],
+  "hints": ["Число в range() — скільки разів повториться тіло циклу."],
+  "reference": {
+    "code": "for i in range(4):\n    print(\"Привіт\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

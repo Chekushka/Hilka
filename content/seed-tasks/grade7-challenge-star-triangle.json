@@ -1,0 +1,29 @@
+{
+  "slug": "g7-challenge-star-triangle",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Виклик: трикутник із зірочок",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Виведи трикутник із зірочок висотою 5: у першому рядку одна зірочка, у другому дві і так далі.\n```\n*\n**\n***\n****\n*****\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "*\n**\n***\n****\n*****",
+      "trim": true,
+      "message": "У рядку з номером i має бути рівно i зірочок, без пробілів."
+    }
+  ],
+  "hints": ["Рядок можна помножити на число: \"*\" * 3 дає \"***\".", "Цикл for i in range(1, 6) дає номери рядків від 1 до 5."],
+  "reference": {
+    "code": "for i in range(1, 6):\n    print(\"*\" * i)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "tags": ["challenge"],
+  "version": 1,
+  "status": "published"
+}

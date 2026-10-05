@@ -95,7 +95,7 @@ test('solving a task marks it done in the lesson and on the lesson list', async 
   await page.getByRole('link', { name: /До уроку/ }).click();
   await expect(page.getByRole('listitem').filter({ hasText: /^1\.\s*Квадрат/ })).toContainText('виконано');
   await page.getByRole('link', { name: 'Усі уроки' }).click();
-  await expect(page.getByRole('listitem').filter({ hasText: 'Черепашка малює' })).toContainText('1 з 3');
+  await expect(page.getByRole('listitem').filter({ hasText: 'Черепашка малює' })).toContainText('1 з 5');
 });
 
 test('a parameterized task is listed in its lesson but only opens in a session', async ({ page }) => {
@@ -116,15 +116,16 @@ test('the session builder adds a whole lesson and warns in graded mode', async (
   await page.getByLabel('Режим').selectOption('graded');
 
   // A mandatory lesson's core tasks: graded material, no warning.
-  await page.getByLabel('Додати урок цілком').selectOption({ label: "7 кл. · урок 29: Черепашка малює (Обов'язковий)" });
+  // Lesson 53 has no additional tasks; lesson 29's would be warned about as additional.
+  await page.getByLabel('Додати урок цілком').selectOption({ label: "8 кл. · урок 53: Проєкт 1: дискримінант (Обов'язковий)" });
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 3')).toBeVisible();
+  await expect(page.getByText('обрано: 5')).toBeVisible();
   await expect(page.locator('form').getByRole('alert')).toHaveCount(0);
 
   // A practice lesson with an additional task: both kinds of warning.
   await page.getByLabel('Додати урок цілком').selectOption({ label: '7 кл. · урок 28: Лінійний алгоритм (Практика)' });
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 11')).toBeVisible();
+  await expect(page.getByText('обрано: 13')).toBeVisible();
   const warning = page.locator('form').getByRole('alert');
   await expect(warning).toContainText('Периметр прямокутника — з практичного уроку');
   await expect(warning).toContainText('Площа прямокутника — з практичного уроку');
@@ -134,7 +135,7 @@ test('the session builder adds a whole lesson and warns in graded mode', async (
 
   // Adding the same lesson again changes nothing.
   await page.getByRole('button', { name: 'Додати', exact: true }).click();
-  await expect(page.getByText('обрано: 11')).toBeVisible();
+  await expect(page.getByText('обрано: 13')).toBeVisible();
 
   // Practice mode never warns.
   await page.getByLabel('Режим').selectOption('practice');

@@ -1,0 +1,29 @@
+{
+  "slug": "g7-easy-three-lines",
+  "topicSlug": "intro",
+  "type": "code",
+  "title": "Легкий старт: три рядки",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Виведи слово Python три рази, кожне в окремому рядку.",
+    "starter": "print(\"Python\")\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Python\nPython\nPython",
+      "trim": true,
+      "message": "Потрібно три рядки, у кожному тільки слово Python."
+    }
+  ],
+  "hints": ["Один рядок уже є. Скільки ще треба?", "Скопіюй рядок print(\"Python\") ще двічі."],
+  "reference": {
+    "code": "print(\"Python\")\nprint(\"Python\")\nprint(\"Python\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

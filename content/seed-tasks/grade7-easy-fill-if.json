@@ -1,0 +1,28 @@
+{
+  "slug": "g7-easy-fill-if",
+  "topicSlug": "conditions",
+  "type": "fill",
+  "title": "Легкий старт: знак порівняння",
+  "payload": {
+    "type": "fill",
+    "prompt": "У змінній age — вік. Заповни пропуск знаком порівняння, щоб програма вивела «Можна на атракціон», коли вік більший за 10.",
+    "template": "age = 12\nif age {{1}} 10:\n    print(\"Можна на атракціон\")\nelse:\n    print(\"Ще трохи підрости\")\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Можна на атракціон",
+      "trim": true,
+      "message": "Для віку 12 програма має сказати «Можна на атракціон». Який знак означає «більше»?"
+    }
+  ],
+  "hints": ["«Більше» в Python пишеться так само, як у математиці."],
+  "reference": {
+    "code": "age = 12\nif age > 10:\n    print(\"Можна на атракціон\")\nelse:\n    print(\"Ще трохи підрости\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}
