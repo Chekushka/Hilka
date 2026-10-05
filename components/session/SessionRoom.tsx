@@ -11,7 +11,12 @@
  * lib/homework/rules.ts derive everything shown from it; the server applies
  * the same rules and refuses what they do not allow.
  *
- * `studentName` is read from sessionStorage through `useSyncExternalStore`
+ * The student is kept by roster id (lib/classes/roster.ts), so a rename by the
+ * teacher mid-session changes nothing here. Before ids the same storage slot
+ * held the name; `findStudent` reads either, so a tab open across the deploy
+ * carries on without asking again.
+ *
+ * The stored value is read from sessionStorage through `useSyncExternalStore`
  * rather than an effect: the value only exists in the browser, so the server
  * render and the first client render must agree (null) and the real value
  * appears once React swaps in the client snapshot — the mismatch-free way to
@@ -40,6 +45,7 @@ import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
 import { checksLeft, improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
 import { t } from '@/lib/i18n';
+import { findStudent, seedKeyOf } from '@/lib/classes/roster';
 import { assignTasks } from '@/lib/seed';
 import { nextOpenTaskId } from '@/lib/session/next-task';
 import { sessionProgress, type SessionProgress } from '@/lib/session/progress';
@@ -52,7 +58,8 @@ interface SessionRoomProps {
   session: JoinedSession;
 }
 
-function nameStorageKey(code: string) {
+/** Holds the student's roster id — or, written before ids, their name. The key kept its old name so such a tab carries on. */
+function studentStorageKey(code: string) {
   return `hilka:session:${code}:name`;
 }
 
@@ -62,12 +69,12 @@ function examStartStorageKey(code: string) {
 
 const noSubscription = () => () => {};
 
-function useStoredName(code: string): string | null {
+function useStoredStudent(code: string): string | null {
   return useSyncExternalStore(
     noSubscription,
     () => {
       try {
-        return sessionStorage.getItem(nameStorageKey(code));
+        return sessionStorage.getItem(studentStorageKey(code));
       } catch {
         return null;
       }
@@ -78,7 +85,7 @@ function useStoredName(code: string): string | null {
 
 /**
  * The countdown's anchor: the moment this student started the session, kept
- * in sessionStorage (alongside the name, minted in `pickName`) so a reload
+ * in sessionStorage (alongside the student, minted in `pickStudent`) so a reload
  * does not hand back extra time.
  */
 function useStoredExamStart(code: string): number | null {
@@ -269,9 +276,11 @@ function ResultsSummary({
 }
 
 export function SessionRoom({ code, session }: SessionRoomProps) {
-  const storedName = useStoredName(code);
-  const [pickedName, setPickedName] = useState<string | null>(null);
-  const studentName = pickedName ?? storedName;
+  const storedRef = useStoredStudent(code);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  // A stored student no longer on the roster (removed since) goes back to the name screen.
+  const student = findStudent(session.roster, pickedId ?? storedRef);
+  const studentId = student?.id ?? null;
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   // What the selected task looked like when it was opened: a homework task
@@ -291,11 +300,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   );
   // This student's own tasks, in their own order: all of them, or a pool drawn for them, maybe
   // shuffled (lib/seed/assignment.ts) — the server draws the same.
-  const myTasks: JoinedSessionTask[] = studentName
+  const myTasks: JoinedSessionTask[] = student
     ? assignTasks(
         session.tasks.map((task) => task.id),
         session.id,
-        studentName,
+        seedKeyOf(student),
         session.assignment
       ).flatMap((taskId) => session.tasks.filter((task) => task.id === taskId))
     : session.tasks;
@@ -333,8 +342,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   const timeUp = remainingS === 0;
 
   const loadOwnState = useCallback(
-    (name: string) => {
-      fetch(`/api/sessions/${code}/me?student=${encodeURIComponent(name)}`)
+    (id: string) => {
+      fetch(`/api/sessions/${code}/me?student=${encodeURIComponent(id)}`)
         .then((response) => (response.ok ? (response.json() as Promise<OwnSessionState>) : Promise.reject()))
         .then(setOwn)
         // Unreachable server: the student can still work; the server keeps the count either way.
@@ -344,16 +353,16 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   );
 
   useEffect(() => {
-    if (studentName) loadOwnState(studentName);
-  }, [studentName, loadOwnState]);
+    if (studentId) loadOwnState(studentId);
+  }, [studentId, loadOwnState]);
 
   useEffect(() => {
-    if (!selectedTaskId || !studentName || fetchedRef.current.has(selectedTaskId)) return;
+    if (!selectedTaskId || !studentId || fetchedRef.current.has(selectedTaskId)) return;
     fetchedRef.current.add(selectedTaskId);
     let cancelled = false;
     // `student` lets a parameterized task (docs/TASK_SCHEMA.md) resolve to
     // this student's own variant server-side; a task with no params ignores it.
-    fetch(`/api/sessions/${code}/tasks/${selectedTaskId}?student=${encodeURIComponent(studentName)}`)
+    fetch(`/api/sessions/${code}/tasks/${selectedTaskId}?student=${encodeURIComponent(studentId)}`)
       .then((response) => (response.ok ? (response.json() as Promise<Task>) : Promise.reject()))
       .then((task) => {
         if (!cancelled) setTaskCache((previous) => ({ ...previous, [selectedTaskId]: task }));
@@ -364,15 +373,15 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     return () => {
       cancelled = true;
     };
-  }, [code, selectedTaskId, studentName]);
+  }, [code, selectedTaskId, studentId]);
 
   const selectedTask = selectedTaskId ? (taskCache[selectedTaskId] ?? null) : null;
 
-  const pickName = useCallback(
-    (name: string) => {
-      setPickedName(name);
+  const pickStudent = useCallback(
+    (id: string) => {
+      setPickedId(id);
       try {
-        sessionStorage.setItem(nameStorageKey(code), name);
+        sessionStorage.setItem(studentStorageKey(code), id);
         // The exam clock starts the moment the student begins, and only here
         // — reading it back on a later reload never resets it.
         if (session.timeLimitS !== null && !sessionStorage.getItem(examStartStorageKey(code))) {
@@ -392,7 +401,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   }
 
   function submitAttempt(taskId: string, taskVersion: number, outcome: AttemptOutcome) {
-    if (!studentName) return;
+    if (!studentId) return;
     // Appended at once, so the room moves with the Check; the server's answer
     // only matters when it refuses, and then the room re-reads what counts.
     setOwn((previous) => ({
@@ -414,7 +423,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sessionId: session.id,
-        studentName,
+        studentId,
         taskId,
         taskVersion,
         submittedAnswer: outcome.submittedAnswer,
@@ -426,7 +435,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       })
     })
       .then((response) => {
-        if (response.status === 409) loadOwnState(studentName);
+        if (response.status === 409) loadOwnState(studentId);
       })
       .catch(() => undefined);
   }
@@ -448,7 +457,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     </div>
   );
 
-  if (!studentName) {
+  if (!student) {
     return (
       <main className="mx-auto w-full max-w-3xl p-6">
         <p className="text-sm text-ink-muted">{t('session.sessionCode', { code })}</p>
@@ -462,14 +471,14 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         {classCheck && <div className="mt-4">{classCheck}</div>}
         {/* Big targets in a grid: a class of 25 finds a name by scanning, not by reading a line. */}
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {session.roster.map((name) => (
-            <li key={name}>
+          {session.roster.map((entry) => (
+            <li key={entry.id}>
               <button
                 type="button"
-                onClick={() => pickName(name)}
+                onClick={() => pickStudent(entry.id)}
                 className="w-full rounded-lg border border-line bg-surface px-4 py-3 text-left text-lg text-ink hover:border-accent focus-visible:border-accent"
               >
-                {name}
+                {entry.name}
               </button>
             </li>
           ))}

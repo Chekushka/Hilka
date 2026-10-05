@@ -11,11 +11,13 @@ import { t } from '@/lib/i18n';
 
 export function VoidDeviceButton({
   sessionId,
+  studentId,
   studentName,
   deviceId,
   number
 }: {
   sessionId: string;
+  studentId: string;
   studentName: string;
   deviceId: string;
   number: number;
@@ -31,7 +33,7 @@ export function VoidDeviceButton({
     const response = await fetch(`/api/dashboard/sessions/${sessionId}/void`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentName, deviceId })
+      body: JSON.stringify({ studentId, deviceId })
     }).catch(() => null);
     setBusy(false);
     if (!response?.ok) {

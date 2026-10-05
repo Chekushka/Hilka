@@ -16,6 +16,7 @@
     "db:migrate:preview": "tsx scripts/db/migrate-preview.ts",
     "db:seed": "tsx scripts/db/seed-content.ts",
     "db:seed:demo": "tsx scripts/db/seed-demo-session.ts",
+    "db:check-migration": "tsx scripts/db/check-student-ids-migration.ts",
     "superuser:hash": "tsx scripts/superuser-hash.ts",
     "content:write": "tsx scripts/content/write-export.ts",
     "test:browser": "playwright test",

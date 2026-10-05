@@ -3,13 +3,17 @@ import {
   MAX_ROSTER_SIZE,
   addNames,
   cleanGrade,
-  cleanRenames,
-  cleanRoster,
+  cleanStudents,
+  findStudent,
   nameKey,
+  newStudentId,
   normalizeName,
   parseNames,
   readName,
-  sortRoster
+  seedKeyOf,
+  sortRoster,
+  studentsFromNames,
+  type RosterStudent
 } from './roster';
 
 describe('normalizeName', () => {
@@ -87,24 +91,6 @@ describe('sortRoster', () => {
   });
 });
 
-describe('cleanRoster', () => {
-  it('normalizes a valid roster', () => {
-    expect(cleanRoster([' Оля ', 'Марко'])).toEqual(['Оля', 'Марко']);
-  });
-
-  it('refuses empty, non-string, blank and repeated entries', () => {
-    expect(cleanRoster([])).toBeNull();
-    expect(cleanRoster('Оля')).toBeNull();
-    expect(cleanRoster(['Оля', 3])).toBeNull();
-    expect(cleanRoster(['Оля', '  '])).toBeNull();
-    expect(cleanRoster(['Оля', 'оля'])).toBeNull();
-  });
-
-  it('refuses a roster over the limit', () => {
-    expect(cleanRoster(Array.from({ length: MAX_ROSTER_SIZE + 1 }, (_, i) => `Учень ${i}`))).toBeNull();
-  });
-});
-
 describe('cleanGrade', () => {
   it('accepts a curriculum grade or nothing', () => {
     expect(cleanGrade(8)).toBe(8);
@@ -119,51 +105,82 @@ describe('cleanGrade', () => {
   });
 });
 
-describe('cleanRenames', () => {
-  const before = ['Оля', 'Марко', 'Іван'];
+describe('seedKeyOf', () => {
+  it('seeds a student from their id, or from the name they had before ids existed', () => {
+    expect(seedKeyOf({ id: 'a1b2c3d4e5f6' })).toBe('a1b2c3d4e5f6');
+    expect(seedKeyOf({ id: 'a1b2c3d4e5f6', seed: 'Оля' })).toBe('Оля');
+  });
+});
 
-  it('accepts a rename from an old name to a new one', () => {
-    expect(cleanRenames([{ from: 'Марко', to: 'Марк' }], before, ['Оля', 'Марк', 'Іван'])).toEqual([
-      { from: 'Марко', to: 'Марк' }
+describe('newStudentId', () => {
+  it('is 12 lowercase hex characters', () => {
+    expect(newStudentId(() => 'ABCDEF01-2345-6789-abcd-ef0123456789')).toBe('abcdef012345');
+    expect(newStudentId()).toMatch(/^[0-9a-f]{12}$/);
+  });
+});
+
+describe('cleanStudents', () => {
+  const stored: RosterStudent[] = [
+    { id: 'aaaaaaaaaaaa', name: 'Оля', seed: 'Оля' },
+    { id: 'bbbbbbbbbbbb', name: 'Марко' }
+  ];
+  const ids = (...list: string[]) => {
+    const queue = [...list];
+    return () => queue.shift() ?? 'zzzzzzzzzzzz';
+  };
+
+  it('keeps stored entries by id, seed included, and renames them in place', () => {
+    expect(cleanStudents([{ id: 'aaaaaaaaaaaa', name: ' Ольга ' }, { id: 'bbbbbbbbbbbb', name: 'Марко' }], stored)).toEqual([
+      { id: 'aaaaaaaaaaaa', name: 'Ольга', seed: 'Оля' },
+      { id: 'bbbbbbbbbbbb', name: 'Марко' }
     ]);
   });
 
-  it('accepts fixing only the case of a name', () => {
-    expect(cleanRenames([{ from: 'Оля', to: 'ОЛЯ' }], before, ['ОЛЯ', 'Марко', 'Іван'])).toEqual([
-      { from: 'Оля', to: 'ОЛЯ' }
+  it('mints an id for a new name, never one already taken', () => {
+    expect(cleanStudents([{ name: 'Іван' }], stored, ids('aaaaaaaaaaaa', 'cccccccccccc'))).toEqual([
+      { id: 'cccccccccccc', name: 'Іван' }
     ]);
   });
 
-  it('treats a missing list as no renames and skips a rename to the same name', () => {
-    expect(cleanRenames(undefined, before, before)).toEqual([]);
-    expect(cleanRenames([{ from: 'Оля', to: 'Оля' }], before, before)).toEqual([]);
+  it('ignores a seed sent by the client', () => {
+    expect(cleanStudents([{ name: 'Іван', seed: 'Оля' }], stored, ids('cccccccccccc'))).toEqual([
+      { id: 'cccccccccccc', name: 'Іван' }
+    ]);
   });
 
-  it('refuses to merge two students', () => {
-    expect(cleanRenames([{ from: 'Марко', to: 'Оля' }], before, ['Оля', 'Іван'])).toBeNull();
+  it('refuses an unknown or repeated id, repeated names, blanks and bad shapes', () => {
+    expect(cleanStudents([{ id: 'dddddddddddd', name: 'Іван' }], stored)).toBeNull();
+    expect(cleanStudents([{ id: 'aaaaaaaaaaaa', name: 'Оля' }, { id: 'aaaaaaaaaaaa', name: 'Олька' }], stored)).toBeNull();
+    expect(cleanStudents([{ name: 'Оля' }, { name: 'оля' }], [])).toBeNull();
+    expect(cleanStudents([{ name: '  ' }], [])).toBeNull();
+    expect(cleanStudents(['Оля'], [])).toBeNull();
+    expect(cleanStudents([], [])).toBeNull();
+    expect(cleanStudents(Array.from({ length: MAX_ROSTER_SIZE + 1 }, (_, i) => ({ name: `Учень ${i}` })), [])).toBeNull();
+  });
+});
+
+describe('studentsFromNames', () => {
+  it('matches names already stored to their entries and treats the rest as new', () => {
+    const stored: RosterStudent[] = [{ id: 'aaaaaaaaaaaa', name: 'Оля', seed: 'Оля' }];
+    expect(studentsFromNames(['Оля', 'Іван'], stored)).toEqual([{ id: 'aaaaaaaaaaaa', name: 'Оля' }, { name: 'Іван' }]);
+    expect(studentsFromNames('Оля', stored)).toBeNull();
+  });
+});
+
+describe('findStudent', () => {
+  const roster = [
+    { id: 'aaaaaaaaaaaa', name: 'Оля' },
+    { id: 'bbbbbbbbbbbb', name: 'Марко' }
+  ];
+
+  it('finds a student by id, or by name from a page loaded before ids', () => {
+    expect(findStudent(roster, 'bbbbbbbbbbbb')?.name).toBe('Марко');
+    expect(findStudent(roster, 'Оля')?.id).toBe('aaaaaaaaaaaa');
   });
 
-  it('refuses a rename whose old name stays or whose new name is missing', () => {
-    expect(cleanRenames([{ from: 'Марко', to: 'Марк' }], before, ['Оля', 'Марко', 'Марк', 'Іван'])).toBeNull();
-    expect(cleanRenames([{ from: 'Марко', to: 'Марк' }], before, ['Оля', 'Іван'])).toBeNull();
-  });
-
-  it('refuses a name not on the old roster, and renaming twice', () => {
-    expect(cleanRenames([{ from: 'Хтось', to: 'Марк' }], before, ['Оля', 'Марк', 'Іван', 'Марко'])).toBeNull();
-    expect(
-      cleanRenames(
-        [
-          { from: 'Марко', to: 'Марк' },
-          { from: 'Марко', to: 'Марічка' }
-        ],
-        before,
-        ['Оля', 'Марк', 'Марічка', 'Іван']
-      )
-    ).toBeNull();
-  });
-
-  it('refuses malformed input', () => {
-    expect(cleanRenames('Марко', before, before)).toBeNull();
-    expect(cleanRenames([{ from: 'Марко' }], before, before)).toBeNull();
+  it('finds no one for nothing or a stranger', () => {
+    expect(findStudent(roster, null)).toBeNull();
+    expect(findStudent(roster, '')).toBeNull();
+    expect(findStudent(roster, 'Хтось')).toBeNull();
   });
 });

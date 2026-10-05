@@ -56,6 +56,7 @@ describe('structureKey', () => {
 describe('findSimilarCode', () => {
   const at = (minute: number) => `2026-10-05T10:${String(minute).padStart(2, '0')}:00.000Z`;
   const submission = (studentName: string, code: string, minute: number, taskId = 't1') => ({
+    studentId: studentName,
     studentName,
     taskId,
     taskTitle: 'Площа',
@@ -69,7 +70,9 @@ describe('findSimilarCode', () => {
       submission('Марко', DISGUISED, 2),
       submission('Ігор', DIFFERENT, 3)
     ]);
-    expect(groups).toEqual([{ taskId: 't1', taskTitle: 'Площа', studentNames: ['Марко', 'Олена'] }]);
+    expect(groups).toEqual([
+      { taskId: 't1', taskTitle: 'Площа', studentIds: ['Марко', 'Олена'], studentNames: ['Марко', 'Олена'] }
+    ]);
   });
 
   it('reads only each student’s latest program on a task', () => {
@@ -79,6 +82,14 @@ describe('findSimilarCode', () => {
       submission('Марко', DIFFERENT, 3)
     ]);
     expect(groups).toEqual([]);
+  });
+
+  it('tells apart two students who share a name, by id', () => {
+    const groups = findSimilarCode([
+      { ...submission('Олена', ORIGINAL, 1), studentId: 'a1' },
+      { ...submission('Олена', ORIGINAL, 2), studentId: 'b2' }
+    ]);
+    expect(groups).toEqual([{ taskId: 't1', taskTitle: 'Площа', studentIds: ['a1', 'b2'], studentNames: ['Олена', 'Олена'] }]);
   });
 
   it('never groups across tasks', () => {

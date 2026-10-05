@@ -143,7 +143,11 @@ teacher_login_tokens
   id, teacher_id, token_hash, expires_at, used_at, created_at
 
 classes
-  id, teacher_id, title, roster text[],    -- plain display names, nothing more
+  id, teacher_id, title,
+  students jsonb,                          -- [{ id, name, seed? }]: display names with random ids,
+                                           --   nothing more (lib/classes/roster.ts)
+  roster text[],                           -- superseded by students, mirrored until the
+                                           --   migration after 0009 drops it
   grade smallint | null                    -- 7..9; the session builder opens on it
 
 sessions
@@ -161,8 +165,12 @@ progress_codes
   created_at, updated_at, last_seen_at
 
 attempts
-  id, session_id, student_name, task_id, task_version,
-  seed bigint, submitted_answer jsonb, passed bool,
+  id, session_id, task_id, task_version,
+  student_id text,        -- the roster entry's id: everything keys on it (NOT NULL from the
+                          --   migration after 0009; a trigger fills it until then)
+  student_name text,      -- the name when the attempt was made; never rewritten
+  seed bigint,            -- the variant seed the task was served under; null before 0009
+  submitted_answer jsonb, passed bool,
   score numeric, hints_used int, duration_ms int,
   flags jsonb,            -- {sourceHash} on file tasks; {activity: {edits, largestPasteChars,
                           --   largestPasteLines}} on homework (counts only)
@@ -181,20 +189,22 @@ unmatched_errors
 ```
 
 Non-obvious invariants:
-- `roster` is a plain array of display names. It is **not** a table of students and must never
-  grow into one — the "no registration" constraint depends on this staying trivial.
+- `classes.students` is a plain list of display names, each with a random id (12 hex
+  characters, minted by the server, unique within the class) and nothing else. It is **not** a
+  table of students and must never grow into one — the "no registration" constraint depends on
+  this staying trivial. The id exists so the name can change: attempts, variants and pools key
+  on it, so a rename is one field and moves nothing. Display names stay distinct within a class,
+  because students pick themselves by name. A name that was on a roster when ids were introduced
+  (migration 0009) carries `seed` — that name — which keeps seeding its variants and pools, so
+  nothing moved under anyone mid-homework; everyone added later seeds from the id
+  (`seedKeyOf`). A removed student's attempts keep their id and the name stored on them.
 - `attempts` is append-only. A retry is a new row. "Best attempt" is a query, not an update.
   The one exception is `voided_at`: a teacher cancels what one device did under a student's name
   (docs/HOMEWORK.md, section 2). A voided row keeps its content, is shown marked on the student
   card, and is left out of everything that counts — `listAttemptsForSession`, the rules and grades.
-  Two teacher actions reach past the row level, both decided as whole-assignment or whole-name
-  operations, never edits of one result: **deleting a session** (or a whole class) removes its
-  attempts with it, and a homework's class checks with theirs (`deleteSession`, `deleteClass`);
-  **renaming a roster name** moves that name's `student_name` in every session of the class, in
-  the same transaction as the roster (`updateClass`, checked by `lib/classes/roster.ts`'s
-  `cleanRenames` so two students are never merged). A rename also changes the seed
-  (`hash(session_id + student_name + task_id)`), so in an open session with variants or a pool
-  the renamed student gets a different variant or set from then on; the class form says so.
+  One teacher action reaches past the row level, decided as a whole-assignment operation,
+  never an edit of one result: **deleting a session** (or a whole class) removes its attempts
+  with it, and a homework's class checks with theirs (`deleteSession`, `deleteClass`).
 - `sessions.code` is unique only among currently open sessions. Codes are recycled.
 - `tasks.version` is bumped on publish. Draft edits are invisible to students — this is what
   makes it safe to edit a task while a class is working.
@@ -546,7 +556,9 @@ The client-side checker means a student with devtools can mark any task passed. 
 v1, mitigated rather than solved:
 
 1. **Parameterized variants.** `tasks.params` defines placeholder ranges; concrete values are
-   derived from `seed = hash(session_id + student_name + task_id)` (`lib/seed/`). Deterministic,
+   derived from `seed = hash(session_id + seed_key + task_id)` (`lib/seed/`), where the seed key
+   is the student's roster id — or, for a student on a roster before ids, their name then
+   (`seedKeyOf`); the seed is stored on each attempt for the re-check. Deterministic,
    so a teacher's report reproduces what the student saw, and different at adjacent desks. This
    defeats copying from a neighbour, which is the realistic threat. Built for `code`, `fix` and
    `fill`, session-only: `GET /api/sessions/[code]/tasks/[taskId]` resolves and substitutes the

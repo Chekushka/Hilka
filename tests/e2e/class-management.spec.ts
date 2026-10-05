@@ -192,3 +192,69 @@ test("the class and session routes refuse what is not the teacher's", async ({ p
   });
   expect(statuses).toEqual([404, 404]);
 });
+
+const DISCOUNT = 'Ціна зі знижкою (свій відсоток)';
+const DIVISION = 'Цілочисельне ділення';
+
+test("a student renamed mid-session keeps their order, their variant and their work, and a tab from before ids carries on", async ({
+  browser,
+  page
+}) => {
+  await loginAsTeacher(page);
+  const className = `Клас з варіантами ${Date.now()}`;
+  await createClass(page, className, ['Оленка', 'Тарас']);
+  await go(page, '/sessions/new');
+  await page.locator('#class').selectOption({ label: className });
+  await page.getByLabel('Режим').selectOption('graded');
+  for (const title of [DISCOUNT, QUIZ, DIVISION]) {
+    await page.locator('#taskSearch').fill(title);
+    await page.getByRole('listitem').filter({ has: page.getByText(title, { exact: true }) }).getByRole('checkbox').check();
+  }
+  await page.getByLabel('Перемішати порядок завдань').check();
+  await page.getByRole('button', { name: 'Створити заняття' }).click();
+  await expect(page.getByText('Заняття створено. Код для учнів:')).toBeVisible({ timeout: 10_000 });
+  const code = ((await page.locator('p.font-mono.text-2xl').textContent()) ?? '').trim();
+
+  const student = await (await browser.newContext()).newPage();
+  await student.goto(`/s/${code.toLowerCase()}`);
+  await student.getByRole('button', { name: 'Оленка', exact: true }).click();
+  const taskButtons = student.locator('button[data-task-id]');
+  await expect(taskButtons).toHaveCount(3);
+  const order = await taskButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute('data-task-id')));
+  await student.getByRole('button', { name: new RegExp(`^${DISCOUNT.replace(/[()]/g, '\\$&')}`) }).click();
+  const variant = (await student.getByText(/зі знижкою \d+%/).first().textContent()) ?? '';
+  expect(variant).toMatch(/зі знижкою \d+%/);
+  await student.getByRole('button', { name: '← До списку завдань' }).first().click();
+  await student.getByRole('button', { name: new RegExp(`^${QUIZ.replace(/[()]/g, '\\$&')}`) }).click();
+  await student.getByLabel(QUIZ_RIGHT, { exact: true }).check();
+  await student.getByRole('button', { name: 'Перевірити' }).click();
+  await expect(student.getByRole('heading', { name: 'Завдання здано' })).toBeVisible();
+
+  // The teacher fixes the name while the session is open.
+  await go(page, '/dashboard');
+  await classCard(page, className).getByRole('link', { name: 'Редагувати' }).click();
+  const olenka = page.getByTestId('roster-list').getByRole('listitem').filter({ hasText: 'Оленка' });
+  await olenka.getByRole('button', { name: 'Змінити' }).click();
+  await page.getByLabel("Нове ім'я для «Оленка»").fill('Олена');
+  await page.getByLabel("Нове ім'я для «Оленка»").press('Enter');
+  await page.getByRole('button', { name: 'Зберегти' }).click();
+  await expect(page.getByRole('heading', { name: 'Мої класи' })).toBeVisible();
+
+  // Her tab carries on: no name screen, same order, same variant, her answer still counted.
+  await student.reload();
+  await expect(taskButtons).toHaveCount(3);
+  expect(await taskButtons.evaluateAll((buttons) => buttons.map((button) => button.getAttribute('data-task-id')))).toEqual(order);
+  await expect(student.getByTestId('session-progress')).toContainText("Розв'язано: 1 з 3");
+  await student.getByRole('button', { name: new RegExp(`^${DISCOUNT.replace(/[()]/g, '\\$&')}`) }).click();
+  await expect(student.getByText(variant).first()).toBeVisible();
+  await student.context().close();
+
+  // A tab that picked «Тарас» before ids existed still holds the name; it goes straight to his tasks.
+  const taras = await (await browser.newContext()).newPage();
+  await taras.goto(`/s/${code.toLowerCase()}`);
+  await taras.evaluate((sessionCode) => sessionStorage.setItem(`hilka:session:${sessionCode}:name`, 'Тарас'), code);
+  await taras.reload();
+  await expect(taras.getByRole('heading', { name: 'Завдання заняття' })).toBeVisible();
+  await expect(taras.locator('button[data-task-id]')).toHaveCount(3);
+  await taras.context().close();
+});

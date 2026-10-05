@@ -14,6 +14,7 @@
  * assign.
  */
 import { and, eq, isNull } from 'drizzle-orm';
+import { cleanStudents, studentsFromNames } from '@/lib/classes/roster';
 import { getDb } from '@/lib/db/client';
 import { classes, sessions, tasks, teachers } from '@/lib/db/schema';
 
@@ -32,19 +33,22 @@ async function main() {
     .returning({ id: teachers.id });
 
   const [existingClass] = await db
-    .select({ id: classes.id })
+    .select({ id: classes.id, students: classes.students })
     .from(classes)
     .where(and(eq(classes.teacherId, teacher.id), eq(classes.title, CLASS_TITLE)))
     .limit(1);
 
+  // Names already on the class keep their ids, so a re-run never detaches anyone's attempts.
+  const students = cleanStudents(studentsFromNames(ROSTER, existingClass?.students ?? []), existingClass?.students ?? []);
+  if (!students) throw new Error('demo roster is not a valid roster');
   let classId: string;
   if (existingClass) {
     classId = existingClass.id;
-    await db.update(classes).set({ roster: ROSTER }).where(eq(classes.id, classId));
+    await db.update(classes).set({ students, roster: ROSTER }).where(eq(classes.id, classId));
   } else {
     const [created] = await db
       .insert(classes)
-      .values({ teacherId: teacher.id, title: CLASS_TITLE, roster: ROSTER })
+      .values({ teacherId: teacher.id, title: CLASS_TITLE, students, roster: ROSTER })
       .returning({ id: classes.id });
     classId = created.id;
   }

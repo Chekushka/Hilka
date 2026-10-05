@@ -64,6 +64,7 @@ export function structureKey(code: string): string | null {
 }
 
 export interface CodeSubmission {
+  studentId: string;
   studentName: string;
   taskId: string;
   taskTitle: string;
@@ -74,7 +75,9 @@ export interface CodeSubmission {
 export interface SimilarGroup {
   taskId: string;
   taskTitle: string;
-  /** Two or more, alphabetical. */
+  /** Two or more, alphabetical by name. */
+  studentIds: string[];
+  /** The same students' names, in the same order. */
   studentNames: string[];
 }
 
@@ -86,26 +89,30 @@ export interface SimilarGroup {
 export function findSimilarCode(submissions: readonly CodeSubmission[]): SimilarGroup[] {
   const latest = new Map<string, CodeSubmission>();
   for (const submission of submissions) {
-    const key = `${submission.taskId}|${submission.studentName}`;
+    const key = `${submission.taskId}|${submission.studentId}`;
     const current = latest.get(key);
     if (!current || submission.createdAt > current.createdAt) latest.set(key, submission);
   }
 
-  const groups = new Map<string, { taskId: string; taskTitle: string; names: Set<string> }>();
+  const groups = new Map<string, { taskId: string; taskTitle: string; names: Map<string, string> }>();
   for (const submission of latest.values()) {
     const shape = structureKey(submission.code);
     if (shape === null) continue;
     const key = `${submission.taskId}|${shape}`;
-    const group = groups.get(key) ?? { taskId: submission.taskId, taskTitle: submission.taskTitle, names: new Set() };
-    group.names.add(submission.studentName);
+    const group = groups.get(key) ?? { taskId: submission.taskId, taskTitle: submission.taskTitle, names: new Map() };
+    group.names.set(submission.studentId, submission.studentName);
     groups.set(key, group);
   }
 
   return [...groups.values()]
     .filter((group) => group.names.size >= 2)
-    .map((group) => ({
-      taskId: group.taskId,
-      taskTitle: group.taskTitle,
-      studentNames: [...group.names].sort((a, b) => a.localeCompare(b, 'uk'))
-    }));
+    .map((group) => {
+      const students = [...group.names].sort(([, a], [, b]) => a.localeCompare(b, 'uk'));
+      return {
+        taskId: group.taskId,
+        taskTitle: group.taskTitle,
+        studentIds: students.map(([id]) => id),
+        studentNames: students.map(([, name]) => name)
+      };
+    });
 }

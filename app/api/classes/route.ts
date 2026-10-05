@@ -5,7 +5,7 @@
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { parseClassBody } from '@/lib/classes/body';
+import { parseClassBody, readStudents } from '@/lib/classes/body';
 import { createClass } from '@/lib/db/classes';
 
 export async function POST(request: Request) {
@@ -15,10 +15,11 @@ export async function POST(request: Request) {
   }
 
   const body = parseClassBody(await request.json().catch(() => null));
-  if (!body) {
+  const students = body && readStudents(body, []);
+  if (!body || !students) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const { id } = await createClass(teacher.id, body);
+  const { id } = await createClass(teacher.id, { title: body.title, grade: body.grade, students });
   return NextResponse.json({ id }, { status: 201 });
 }

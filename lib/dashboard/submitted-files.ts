@@ -13,6 +13,7 @@
 import type { ZipEntry } from './zip';
 
 export interface FileSubmissionRow {
+  studentId: string;
   studentName: string;
   taskId: string;
   taskTitle: string;
@@ -32,7 +33,7 @@ export function safeFileName(name: string): string {
 export function latestSubmissionFiles(rows: FileSubmissionRow[]): ZipEntry[] {
   const latest = new Map<string, FileSubmissionRow>();
   for (const row of rows) {
-    const key = `${row.taskId}\u0000${row.studentName}`;
+    const key = `${row.taskId}\u0000${row.studentId}`;
     const current = latest.get(key);
     if (!current || row.createdAt > current.createdAt) {
       latest.set(key, row);

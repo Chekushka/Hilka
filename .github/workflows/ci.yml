@@ -87,6 +87,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:migrate
+      # Migration 0009 rewrites data, not just shape: proven here on a scratch
+      # database built at 0008 with old-shape rows (scripts/db/check-student-ids-migration.ts).
+      - run: npm run db:check-migration
       - run: npm run db:seed
       - run: npm run db:seed:demo
       - run: npx playwright install --with-deps chromium

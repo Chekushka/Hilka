@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { latestSubmissionFiles, safeFileName } from './submitted-files';
 
 function row(studentName: string, code: string, createdAt: string, taskId = 't1', taskTitle = 'Привіт, IDLE') {
-  return { studentName, taskId, taskTitle, code, createdAt };
+  return { studentId: studentName, studentName, taskId, taskTitle, code, createdAt };
 }
 
 const decode = (data: Uint8Array) => new TextDecoder().decode(data);

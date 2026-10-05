@@ -2,13 +2,12 @@
  * Class edit and deletion (docs/TASKS.md, "Class + roster management").
  * Scoped to the owning teacher, same rule as session creation — a teacher
  * must not be able to rename, re-roster or delete a class it does not own.
- * An edit may carry renames, which move a student's results to the new
- * spelling of their name (lib/classes/roster.ts, `cleanRenames`).
+ * Students are sent with the ids they already have; a renamed student keeps
+ * theirs, so their results follow (lib/classes/roster.ts, `cleanStudents`).
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { parseClassBody } from '@/lib/classes/body';
-import { cleanRenames } from '@/lib/classes/roster';
+import { parseClassBody, readStudents } from '@/lib/classes/body';
 import { deleteClass, getClassWithRosterForTeacher, updateClass } from '@/lib/db/classes';
 import { isUuid } from '@/lib/lessons/authoring';
 
@@ -28,12 +27,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!current) {
     return NextResponse.json({ error: 'unknown_class' }, { status: 404 });
   }
-  const renames = cleanRenames(body.renames, current.roster, body.roster);
-  if (!renames) {
-    return NextResponse.json({ error: 'invalid_renames' }, { status: 400 });
+  const students = readStudents(body, current.students);
+  if (!students) {
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const updated = await updateClass(id, teacher.id, body, renames);
+  const updated = await updateClass(id, teacher.id, { title: body.title, grade: body.grade, students });
   if (!updated) {
     return NextResponse.json({ error: 'unknown_class' }, { status: 404 });
   }

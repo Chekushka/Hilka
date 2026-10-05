@@ -64,6 +64,13 @@
       "when": 1791187067979,
       "tag": "0008_add_class_grade_and_session_created",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791190234956,
+      "tag": "0009_add_student_ids",
+      "breakpoints": true
     }
   ]
 }

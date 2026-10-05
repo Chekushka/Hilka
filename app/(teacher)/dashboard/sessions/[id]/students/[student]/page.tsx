@@ -19,10 +19,11 @@ import { hasFacts, pastedWhole } from '@/lib/homework/facts';
 import type { SessionTaskSummary } from '@/lib/session/types';
 import { t } from '@/lib/i18n';
 import { assignedTo } from '@/lib/session/assigned';
+import { findStudent, type RosterStudent } from '@/lib/classes/roster';
 
 export const dynamic = 'force-dynamic';
 
-/** A roster name arrives percent-encoded in the path; tolerate either form. */
+/** The path segment arrives percent-encoded when it is a name (a link from before ids); tolerate either form. */
 function decodeName(raw: string): string {
   try {
     return decodeURIComponent(raw);
@@ -43,20 +44,29 @@ function Stat({ label, value }: { label: string; value: string }) {
 /**
  * Everything the card shows, read once per request. `now` is taken here, the
  * moment the data is read, so "last activity" and the stuck rule agree.
- * Null when the name is neither on the roster nor in the attempts.
+ * `ref` is a roster id — or a name, from a link made before ids. A student
+ * no longer on the roster is found by their attempts and shown under the
+ * name stored on them. Null when neither finds anyone.
  */
-async function loadStudentCard(session: TeacherSessionDetail, rawName: string) {
-  const studentName = session.roster.includes(rawName) ? rawName : decodeName(rawName);
-  const attempts = await listAttemptsForStudent(session.id, studentName);
-  if (!session.roster.includes(studentName) && attempts.length === 0) {
+async function loadStudentCard(session: TeacherSessionDetail, ref: string) {
+  const onRoster = findStudent(session.roster, ref) ?? findStudent(session.roster, decodeName(ref));
+  const attempts = await listAttemptsForStudent(session.id, onRoster?.id ?? ref);
+  if (!onRoster && attempts.length === 0) {
     return null;
   }
+  // Off the roster: the oldest attempt's name is what seeded their tasks then.
+  const student: RosterStudent = onRoster ?? {
+    id: ref,
+    name: attempts[0].studentName,
+    seed: attempts[attempts.length - 1].studentName
+  };
+  const studentName = student.name;
 
   const now = Date.now();
   // Voided attempts are shown, marked, but never counted.
   const counted = attempts.filter((attempt) => attempt.voidedAt === null);
-  const assigned = assignedTo(session)?.(studentName);
-  const [summary] = summarizeStudents([studentName], session.tasks, counted, {
+  const assigned = assignedTo(session)?.(student);
+  const [summary] = summarizeStudents([student], session.tasks, counted, {
     assignedTo: assigned ? () => assigned : undefined,
     mode: session.mode,
     kind: session.kind,
@@ -80,12 +90,13 @@ async function loadStudentCard(session: TeacherSessionDetail, rawName: string) {
   const checkResult = new Map<string, boolean>();
   if (session.kind === 'homework') {
     const own = (await listCheckAttempts(session.id))
-      .filter((check) => check.studentName === studentName)
+      .filter((check) => check.studentId === student.id)
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
     for (const check of own) if (!checkResult.has(check.taskId)) checkResult.set(check.taskId, check.passed);
   }
-  const facts = session.kind === 'homework' ? (await loadHomeworkFacts(session)).byStudent.get(studentName) : undefined;
+  const facts = session.kind === 'homework' ? (await loadHomeworkFacts(session)).byStudent.get(student.id) : undefined;
   return {
+    studentId: student.id,
     studentName,
     attempts,
     summary,
@@ -128,6 +139,7 @@ export default async function StudentCardPage({
     notFound();
   }
   const {
+    studentId,
     studentName,
     attempts,
     summary,
@@ -376,6 +388,7 @@ export default async function StudentCardPage({
                     {attempts.some((attempt) => attempt.deviceId === device.deviceId && attempt.voidedAt === null) && (
                       <VoidDeviceButton
                         sessionId={session.id}
+                        studentId={studentId}
                         studentName={studentName}
                         deviceId={device.deviceId}
                         number={device.number}

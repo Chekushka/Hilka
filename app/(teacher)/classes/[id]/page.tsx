@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { ClassForm } from '@/components/authoring/ClassForm';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { getClassWithRosterForTeacher, listNamesWithAttempts } from '@/lib/db/classes';
+import { getClassWithRosterForTeacher, listStudentIdsWithAttempts } from '@/lib/db/classes';
 import { isUuid } from '@/lib/lessons/authoring';
 import { t } from '@/lib/i18n';
 
@@ -19,7 +19,7 @@ export default async function EditClassPage({ params }: { params: Promise<{ id: 
   if (!klass) {
     notFound();
   }
-  const namesWithResults = await listNamesWithAttempts(klass.id);
+  const withResults = await listStudentIdsWithAttempts(klass.id);
 
   return (
     <main className="mx-auto max-w-2xl p-6">
@@ -32,8 +32,8 @@ export default async function EditClassPage({ params }: { params: Promise<{ id: 
         classId={klass.id}
         initialTitle={klass.title}
         initialGrade={klass.grade}
-        initialRoster={klass.roster}
-        namesWithResults={namesWithResults}
+        initialStudents={klass.students}
+        studentIdsWithResults={withResults}
       />
     </main>
   );

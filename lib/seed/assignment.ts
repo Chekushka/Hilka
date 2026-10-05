@@ -4,8 +4,8 @@
  * With a pool size K, each student gets K of the teacher's tasks, chosen by a
  * seeded RNG — neighbours can still help each other learn, but cannot hand
  * over a complete set. With shuffle, each student meets their tasks in their
- * own order. Both are derived from the session and the roster name, like a
- * variant's seed: the same student always gets the same tasks in the same
+ * own order. Both are derived from the session and the student's seed key
+ * (lib/classes/roster.ts, `seedKeyOf`), like a variant's seed: the same student always gets the same tasks in the same
  * order, on any device, and the teacher's report reproduces it.
  *
  * Pure, and shared by the room, `POST /api/attempts` and the dashboard, so the
@@ -36,19 +36,19 @@ function shuffled<T>(items: readonly T[], rng: Rng): T[] {
 export function assignTasks(
   taskIds: readonly string[],
   sessionId: string,
-  studentName: string,
+  seedKey: string,
   rule: AssignmentRule
 ): string[] {
   let assigned = [...taskIds];
   if (rule.poolSize !== null && rule.poolSize > 0 && rule.poolSize < taskIds.length) {
     const chosen = new Set(
-      shuffled(taskIds, createRng(deriveSeed(sessionId, studentName, POOL_KEY))).slice(0, rule.poolSize)
+      shuffled(taskIds, createRng(deriveSeed(sessionId, seedKey, POOL_KEY))).slice(0, rule.poolSize)
     );
     // Kept in the teacher's order: the pool decides which, not when.
     assigned = taskIds.filter((taskId) => chosen.has(taskId));
   }
   if (rule.shuffle) {
-    assigned = shuffled(assigned, createRng(deriveSeed(sessionId, studentName, ORDER_KEY)));
+    assigned = shuffled(assigned, createRng(deriveSeed(sessionId, seedKey, ORDER_KEY)));
   }
   return assigned;
 }

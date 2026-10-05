@@ -91,18 +91,82 @@ export function sortRoster(roster: readonly string[]): string[] {
   return [...roster].sort(compareNames);
 }
 
+/** A roster entry as everything outside the class form needs it. */
+export interface StudentRef {
+  id: string;
+  name: string;
+}
+
 /**
- * A roster from an untrusted request: every entry a non-empty string, stored
- * normalized, no repeats, within the size limits. Null when it is not one.
+ * A roster entry as stored (`classes.students`): a display name and a random
+ * id, nothing else (CLAUDE.md rule 8). `seed` exists only on students who were
+ * on a roster before ids did: their variants and task pools were seeded from
+ * the name, and keep being, so nothing moved under anyone mid-homework.
  */
-export function cleanRoster(input: unknown): string[] | null {
-  if (!Array.isArray(input) || input.length === 0) return null;
-  if (!input.every((name) => typeof name === 'string')) return null;
-  const names = (input as string[]).map(normalizeName);
-  if (names.some((name) => name === '')) return null;
-  const { roster, skipped } = addNames([], names);
-  if (skipped.length > 0 || roster.length > MAX_ROSTER_SIZE) return null;
-  return roster;
+export interface RosterStudent extends StudentRef {
+  seed?: string;
+}
+
+/** What a student's variants and task pool are seeded from (lib/seed/). Never changes, whatever the name becomes. */
+export function seedKeyOf(student: Pick<RosterStudent, 'id' | 'seed'>): string {
+  return student.seed ?? student.id;
+}
+
+/** 12 hex characters: unique enough inside one class, which is all an id has to be. Same shape migration 0009 mints. */
+export function newStudentId(random: () => string = () => crypto.randomUUID()): string {
+  return random().replace(/-/g, '').slice(0, 12).toLowerCase();
+}
+
+/**
+ * The students a class is saved with, from an untrusted request: a list of
+ * `{ id?, name }`. An entry with an id must be one already stored for this
+ * class, and keeps its seed; one without is new and gets an id here. Names
+ * are normalized and must differ — students pick themselves by name. Null
+ * when the list is not one.
+ */
+export function cleanStudents(
+  input: unknown,
+  stored: readonly RosterStudent[],
+  newId: () => string = newStudentId
+): RosterStudent[] | null {
+  if (!Array.isArray(input) || input.length === 0 || input.length > MAX_ROSTER_SIZE) return null;
+  const byId = new Map(stored.map((student) => [student.id, student]));
+  const takenIds = new Set(stored.map((student) => student.id));
+  const usedIds = new Set<string>();
+  const names = new Set<string>();
+  const result: RosterStudent[] = [];
+  for (const item of input) {
+    if (typeof item !== 'object' || item === null) return null;
+    const { id, name } = item as Record<string, unknown>;
+    if (typeof name !== 'string') return null;
+    const clean = normalizeName(name);
+    if (clean === '' || names.has(nameKey(clean))) return null;
+    names.add(nameKey(clean));
+    if (id !== undefined && id !== null) {
+      const existing = typeof id === 'string' ? byId.get(id) : undefined;
+      if (!existing || usedIds.has(existing.id)) return null;
+      usedIds.add(existing.id);
+      result.push({ ...existing, name: clean });
+      continue;
+    }
+    let minted = newId();
+    while (takenIds.has(minted)) minted = newId();
+    takenIds.add(minted);
+    result.push({ id: minted, name: clean });
+  }
+  return result;
+}
+
+/**
+ * A save from a class form opened before students had ids: a plain list of
+ * names. Each name already stored keeps its entry; the rest are new.
+ */
+export function studentsFromNames(names: unknown, stored: readonly RosterStudent[]): unknown {
+  if (!Array.isArray(names) || !names.every((name) => typeof name === 'string')) return null;
+  return (names as string[]).map((name) => {
+    const existing = stored.find((student) => student.name === normalizeName(name));
+    return existing ? { id: existing.id, name } : { name };
+  });
 }
 
 /** A class grade from an untrusted request: one of CLASS_GRADES, or null for none. Undefined when invalid. */
@@ -111,39 +175,11 @@ export function cleanGrade(input: unknown): number | null | undefined {
   return (CLASS_GRADES as readonly unknown[]).includes(input) ? (input as number) : undefined;
 }
 
-export interface Rename {
-  from: string;
-  to: string;
-}
-
 /**
- * Renames the server may carry out: each moves a student's results from a
- * name that was on the roster to one that is on it now. A name may not be
- * renamed into one the old roster already had — that would merge two
- * students' work — nor be renamed twice, nor stay on the roster under its old
- * spelling as well. Null when any rename breaks those rules.
+ * The roster student a request means: by id, or — from a page loaded before
+ * students had ids, still holding a name — by that name. Null when neither.
  */
-export function cleanRenames(input: unknown, before: readonly string[], after: readonly string[]): Rename[] | null {
-  if (input === undefined) return [];
-  if (!Array.isArray(input)) return null;
-  const beforeKeys = new Set(before);
-  const afterKeys = new Set(after);
-  const froms = new Set<string>();
-  const tos = new Set<string>();
-  const renames: Rename[] = [];
-  for (const item of input) {
-    if (typeof item !== 'object' || item === null) return null;
-    const { from, to } = item as Record<string, unknown>;
-    if (typeof from !== 'string' || typeof to !== 'string') return null;
-    const target = normalizeName(to);
-    if (from === target) continue;
-    if (!beforeKeys.has(from) || afterKeys.has(from)) return null;
-    if (!afterKeys.has(target)) return null;
-    if (before.some((name) => name !== from && nameKey(name) === nameKey(target))) return null;
-    if (froms.has(from) || tos.has(target)) return null;
-    froms.add(from);
-    tos.add(target);
-    renames.push({ from, to: target });
-  }
-  return renames;
+export function findStudent<T extends StudentRef>(roster: readonly T[], ref: string | null | undefined): T | null {
+  if (!ref) return null;
+  return roster.find((student) => student.id === ref) ?? roster.find((student) => student.name === ref) ?? null;
 }

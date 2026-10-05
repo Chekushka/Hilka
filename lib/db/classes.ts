@@ -3,10 +3,11 @@
  * their own classes and sessions, never another teacher's.
  */
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
-import type { Rename } from '@/lib/classes/roster';
+import type { RosterStudent } from '@/lib/classes/roster';
 import type { SessionKind, SessionMode } from '@/lib/session/types';
 import { getDb } from './client';
 import { attempts, classes, sessions } from './schema';
+import { attemptStudentId } from './students';
 
 export interface TeacherSessionSummary {
   id: string;
@@ -24,7 +25,7 @@ export interface TeacherClassSummary {
   id: string;
   title: string;
   grade: number | null;
-  roster: string[];
+  students: RosterStudent[];
   sessions: TeacherSessionSummary[];
 }
 
@@ -58,7 +59,7 @@ export interface ClassWithRoster {
   id: string;
   title: string;
   grade: number | null;
-  roster: string[];
+  students: RosterStudent[];
 }
 
 /** For the class edit form: same ownership check as getClassForTeacher, plus the roster to edit. */
@@ -67,7 +68,7 @@ export async function getClassWithRosterForTeacher(
   teacherId: string
 ): Promise<ClassWithRoster | null> {
   const [row] = await getDb()
-    .select({ id: classes.id, title: classes.title, grade: classes.grade, roster: classes.roster })
+    .select({ id: classes.id, title: classes.title, grade: classes.grade, students: classes.students })
     .from(classes)
     .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
     .limit(1);
@@ -77,51 +78,40 @@ export async function getClassWithRosterForTeacher(
 export interface ClassFields {
   title: string;
   grade: number | null;
-  roster: string[];
+  /** Already checked (lib/classes/roster.ts, `cleanStudents`): ids kept or minted, names distinct. */
+  students: RosterStudent[];
 }
+
+/** `classes.roster` mirrors the names until the migration after 0009 drops it — code from before 0009 still reads it. */
+const legacyRoster = (students: readonly RosterStudent[]) => students.map((student) => student.name);
 
 export async function createClass(teacherId: string, fields: ClassFields): Promise<{ id: string }> {
   const [row] = await getDb()
     .insert(classes)
-    .values({ teacherId, title: fields.title, grade: fields.grade, roster: fields.roster })
+    .values({
+      teacherId,
+      title: fields.title,
+      grade: fields.grade,
+      students: fields.students,
+      roster: legacyRoster(fields.students)
+    })
     .returning({ id: classes.id });
   return row;
 }
 
 /**
- * Saves a class. `renames` move each renamed student's results to the new
- * spelling in every session of the class, in the same transaction as the
- * roster, so a typo fixed in a name never leaves that student's work behind
- * under the old one (lib/classes/roster.ts's `cleanRenames` has already
- * checked they are safe against `before`). A removed name keeps its attempts:
- * the session pages still show them, and adding the name back reconnects them.
- * Returns null if the class does not exist or is not owned by this teacher —
- * same rule as getClassForTeacher.
+ * Saves a class. A renamed student keeps their id, so their results follow
+ * with nothing else to update; a removed one keeps their attempts, shown under
+ * the name stored on them. Returns null if the class does not exist or is not
+ * owned by this teacher — same rule as getClassForTeacher.
  */
-export async function updateClass(
-  classId: string,
-  teacherId: string,
-  fields: ClassFields,
-  renames: readonly Rename[] = []
-): Promise<{ id: string } | null> {
-  return getDb().transaction(async (tx) => {
-    const [row] = await tx
-      .update(classes)
-      .set({ title: fields.title, grade: fields.grade, roster: fields.roster })
-      .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
-      .returning({ id: classes.id });
-    if (!row) return null;
-    if (renames.length > 0) {
-      const classSessions = tx.select({ id: sessions.id }).from(sessions).where(eq(sessions.classId, classId));
-      for (const { from, to } of renames) {
-        await tx
-          .update(attempts)
-          .set({ studentName: to })
-          .where(and(inArray(attempts.sessionId, classSessions), eq(attempts.studentName, from)));
-      }
-    }
-    return row;
-  });
+export async function updateClass(classId: string, teacherId: string, fields: ClassFields): Promise<{ id: string } | null> {
+  const [row] = await getDb()
+    .update(classes)
+    .set({ title: fields.title, grade: fields.grade, students: fields.students, roster: legacyRoster(fields.students) })
+    .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
+    .returning({ id: classes.id });
+  return row ?? null;
 }
 
 /**
@@ -149,14 +139,14 @@ export async function deleteClass(classId: string, teacherId: string): Promise<b
   });
 }
 
-/** The roster names that have counted work in any of the class's sessions — the class form warns before removing one. */
-export async function listNamesWithAttempts(classId: string): Promise<string[]> {
+/** The students who have counted work in any of the class's sessions — the class form warns before removing one. */
+export async function listStudentIdsWithAttempts(classId: string): Promise<string[]> {
   const rows = await getDb()
-    .selectDistinct({ name: attempts.studentName })
+    .selectDistinct({ id: attemptStudentId })
     .from(attempts)
     .innerJoin(sessions, eq(attempts.sessionId, sessions.id))
     .where(and(eq(sessions.classId, classId), isNull(attempts.voidedAt)));
-  return rows.map((row) => row.name);
+  return rows.map((row) => row.id);
 }
 
 export async function listClassesForTeacher(teacherId: string): Promise<TeacherClassSummary[]> {
@@ -165,7 +155,7 @@ export async function listClassesForTeacher(teacherId: string): Promise<TeacherC
       classId: classes.id,
       classTitle: classes.title,
       classGrade: classes.grade,
-      roster: classes.roster,
+      students: classes.students,
       sessionId: sessions.id,
       sessionCode: sessions.code,
       sessionMode: sessions.mode,
@@ -184,7 +174,7 @@ export async function listClassesForTeacher(teacherId: string): Promise<TeacherC
   for (const row of rows) {
     let entry = byClass.get(row.classId);
     if (!entry) {
-      entry = { id: row.classId, title: row.classTitle, grade: row.classGrade, roster: row.roster, sessions: [] };
+      entry = { id: row.classId, title: row.classTitle, grade: row.classGrade, students: row.students, sessions: [] };
       byClass.set(row.classId, entry);
     }
     if (row.sessionId && row.sessionCode && row.sessionMode) {

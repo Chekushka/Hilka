@@ -1,18 +1,21 @@
 /**
- * The body of a class create or edit request, checked: a title, a grade or
- * none, and a roster (lib/classes/roster.ts). Pure, so both class routes read
- * a request the same way.
+ * The body of a class create or edit request: a title, a grade or none, and
+ * the students — checked here as far as they can be without the class's
+ * stored roster, which `readStudents` then checks them against
+ * (lib/classes/roster.ts). Pure, so both class routes read a request the
+ * same way.
  */
-import { cleanGrade, cleanRoster } from './roster';
+import { cleanGrade, cleanStudents, studentsFromNames, type RosterStudent } from './roster';
 
 export const MAX_TITLE_LENGTH = 80;
 
 export interface ClassBody {
   title: string;
   grade: number | null;
-  roster: string[];
-  /** Unchecked here: a rename can only be checked against the roster stored before it. */
-  renames: unknown;
+  /** `{ id?, name }[]`, unchecked until compared with what is stored. */
+  students: unknown;
+  /** A form opened before students had ids sends plain names instead. */
+  roster: unknown;
 }
 
 export function parseClassBody(body: unknown): ClassBody | null {
@@ -23,7 +26,15 @@ export function parseClassBody(body: unknown): ClassBody | null {
   if (title.length === 0 || title.length > MAX_TITLE_LENGTH) return null;
   const grade = cleanGrade(b.grade);
   if (grade === undefined) return null;
-  const roster = cleanRoster(b.roster);
-  if (!roster) return null;
-  return { title, grade, roster, renames: b.renames };
+  return { title, grade, students: b.students, roster: b.roster };
+}
+
+/** The class's students after this save, or null when the body's list is not acceptable. */
+export function readStudents(
+  body: ClassBody,
+  stored: readonly RosterStudent[],
+  newId?: () => string
+): RosterStudent[] | null {
+  const input = body.students !== undefined ? body.students : studentsFromNames(body.roster, stored);
+  return cleanStudents(input, stored, newId);
 }

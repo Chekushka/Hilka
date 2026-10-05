@@ -25,18 +25,18 @@ export interface SharedFileGroup {
 
 /** Groups sorted by task title, then by the first student name — stable across refreshes. */
 export function findSharedFiles(
-  attempts: Pick<SessionAttemptRow, 'studentName' | 'taskId' | 'taskTitle' | 'passed' | 'sourceHash'>[]
+  attempts: Pick<SessionAttemptRow, 'studentId' | 'studentName' | 'taskId' | 'taskTitle' | 'passed' | 'sourceHash'>[]
 ): SharedFileGroup[] {
-  const groups = new Map<string, { taskId: string; taskTitle: string; students: Set<string> }>();
+  const groups = new Map<string, { taskId: string; taskTitle: string; students: Map<string, string> }>();
   for (const attempt of attempts) {
     if (!attempt.passed || attempt.sourceHash === null) continue;
     const key = `${attempt.taskId}\u0000${attempt.sourceHash}`;
     let group = groups.get(key);
     if (!group) {
-      group = { taskId: attempt.taskId, taskTitle: attempt.taskTitle, students: new Set() };
+      group = { taskId: attempt.taskId, taskTitle: attempt.taskTitle, students: new Map() };
       groups.set(key, group);
     }
-    group.students.add(attempt.studentName);
+    group.students.set(attempt.studentId, attempt.studentName);
   }
 
   return [...groups.values()]
@@ -44,7 +44,7 @@ export function findSharedFiles(
     .map((group) => ({
       taskId: group.taskId,
       taskTitle: group.taskTitle,
-      studentNames: [...group.students].sort((a, b) => a.localeCompare(b, 'uk'))
+      studentNames: [...group.students.values()].sort((a, b) => a.localeCompare(b, 'uk'))
     }))
     .sort(
       (a, b) =>

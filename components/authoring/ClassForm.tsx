@@ -6,12 +6,13 @@
  * list: one field adds a name and keeps the focus for the next, and pasting a
  * whole class list into it — a spreadsheet column, names with commas, a
  * numbered journal list — adds every name at once (lib/classes/roster.ts).
- * Names can be sorted, removed, and renamed; a rename is sent to the server
- * with the save, which moves the student's results to the new spelling, so a
- * typo fixed in October does not orphan September's work.
+ * Names can be sorted, removed, and renamed. Each stored student keeps the
+ * random id the server gave them (lib/classes/roster.ts, `RosterStudent`) —
+ * sent back with every save, so a renamed student's results stay theirs; a
+ * new name goes up without one and gets its id on the server.
  *
- * It stays a plain array of names (CLAUDE.md rule 8): no accounts, no
- * per-name identifiers — the local ids below exist only while the form is open.
+ * Names and those ids, nothing else (CLAUDE.md rule 8): no accounts. The
+ * `key` below exists only while the form is open.
  */
 import { useRouter } from 'next/navigation';
 import { useRef, useState, type ClipboardEvent, type FormEvent } from 'react';
@@ -23,7 +24,8 @@ import {
   nameKey,
   normalizeName,
   parseNames,
-  readName
+  readName,
+  type StudentRef
 } from '@/lib/classes/roster';
 import { t } from '@/lib/i18n';
 
@@ -32,13 +34,15 @@ interface ClassFormProps {
   classId?: string;
   initialTitle?: string;
   initialGrade?: number | null;
-  initialRoster?: string[];
-  /** Edit only: roster names that already have work in the class's sessions. */
-  namesWithResults?: string[];
+  initialStudents?: StudentRef[];
+  /** Edit only: students who already have work in the class's sessions. */
+  studentIdsWithResults?: string[];
 }
 
 interface RosterItem {
   key: number;
+  /** The stored student's id; null for a name added now. */
+  id: string | null;
   name: string;
   /** The name as stored when the form opened; null for a name added now. */
   original: string | null;
@@ -51,17 +55,16 @@ export function ClassForm({
   classId,
   initialTitle = '',
   initialGrade = null,
-  initialRoster = [],
-  namesWithResults = []
+  initialStudents = [],
+  studentIdsWithResults = []
 }: ClassFormProps) {
   const router = useRouter();
-  const nextKey = useRef(initialRoster.length);
+  const nextKey = useRef(initialStudents.length);
   const addRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState(initialTitle);
   const [grade, setGrade] = useState<number | null>(initialGrade);
-  // A stored name with stray spaces is shown tidied and saved as a rename of itself, so its results follow.
   const [items, setItems] = useState<RosterItem[]>(() =>
-    initialRoster.map((name, key) => ({ key, name: normalizeName(name), original: name }))
+    initialStudents.map((student, key) => ({ key, id: student.id, name: normalizeName(student.name), original: student.name }))
   );
   const [draft, setDraft] = useState('');
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -72,18 +75,17 @@ export function ClassForm({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const withResults = new Set(namesWithResults);
+  const withResults = new Set(studentIdsWithResults);
   const names = items.map((item) => item.name);
   const keyCounts = new Map<string, number>();
   for (const name of names) keyCounts.set(nameKey(name), (keyCounts.get(nameKey(name)) ?? 0) + 1);
   const hasDuplicates = [...keyCounts.values()].some((count) => count > 1);
-  const renamed = items.some((item) => item.original !== null && item.original !== item.name);
 
   function add(newNames: string[]) {
     const result = addNames(names, newNames);
     setItems((previous) => [
       ...previous,
-      ...result.added.map((name) => ({ key: nextKey.current++, name, original: null }))
+      ...result.added.map((name) => ({ key: nextKey.current++, id: null, name, original: null }))
     ]);
     setFeedback({ added: result.added.length, skipped: result.skipped });
     setError(null);
@@ -106,8 +108,7 @@ export function ClassForm({
   }
 
   function remove(item: RosterItem) {
-    const stored = item.original ?? item.name;
-    if (withResults.has(stored) && !window.confirm(t('classForm.removeConfirm', { name: stored }))) return;
+    if (item.id && withResults.has(item.id) && !window.confirm(t('classForm.removeConfirm', { name: item.name }))) return;
     setItems((previous) => previous.filter((other) => other.key !== item.key));
     if (editing?.key === item.key) setEditing(null);
   }
@@ -153,15 +154,15 @@ export function ClassForm({
       return;
     }
 
-    const renames = items
-      .filter((item) => item.original !== null && item.original !== item.name)
-      .map((item) => ({ from: item.original, to: item.name }));
-
     setSaving(true);
     const response = await fetch(mode === 'create' ? '/api/classes' : `/api/classes/${classId}`, {
       method: mode === 'create' ? 'POST' : 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title.trim(), grade, roster: names, ...(mode === 'edit' ? { renames } : {}) })
+      body: JSON.stringify({
+        title: title.trim(),
+        grade,
+        students: items.map((item) => (item.id ? { id: item.id, name: item.name } : { name: item.name }))
+      })
     }).catch(() => null);
 
     if (!response?.ok) {
@@ -319,7 +320,6 @@ export function ClassForm({
           ) : (
             <ol className="divide-y divide-line rounded-md border border-line" data-testid="roster-list">
               {items.map((item, index) => {
-                const stored = item.original ?? item.name;
                 const duplicate = (keyCounts.get(nameKey(item.name)) ?? 0) > 1;
                 const isEditing = editing?.key === item.key;
                 return (
@@ -360,7 +360,7 @@ export function ClassForm({
                             </span>
                           )}
                         </span>
-                        {withResults.has(stored) && (
+                        {item.id && withResults.has(item.id) && (
                           <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent">
                             {t('classForm.hasResults')}
                           </span>
@@ -392,7 +392,7 @@ export function ClassForm({
               })}
             </ol>
           )}
-          {mode === 'edit' && (renamed || namesWithResults.length > 0) && (
+          {mode === 'edit' && studentIdsWithResults.length > 0 && (
             <p className="text-xs text-ink-muted">{t('classForm.renameNote')}</p>
           )}
         </section>

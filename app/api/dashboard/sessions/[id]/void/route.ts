@@ -1,5 +1,5 @@
 /**
- * Cancels the attempts one device made under one student's name
+ * Cancels the attempts one device made under one student
  * (docs/HOMEWORK.md, section 2): someone else worked as them. The tries those
  * attempts used are free again. Owner-scoped.
  */
@@ -13,12 +13,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const body: unknown = await request.json().catch(() => null);
   const b = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>;
-  if (typeof b.studentName !== 'string' || typeof b.deviceId !== 'string') {
+  if (typeof b.studentId !== 'string' || typeof b.deviceId !== 'string') {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
   const { id } = await params;
-  const voided = await voidDeviceAttempts(id, teacher.id, b.studentName, b.deviceId);
+  const voided = await voidDeviceAttempts(id, teacher.id, b.studentId, b.deviceId);
   if (voided === null) return NextResponse.json({ error: 'not_found' }, { status: 404 });
   return NextResponse.json({ voided });
 }

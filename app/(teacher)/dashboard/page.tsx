@@ -59,7 +59,8 @@ export default async function DashboardPage() {
                 </div>
               </div>
               <p className="mt-1 text-sm text-ink-muted">
-                {t('dashboard.classStudents', { n: klass.roster.length })}: {klass.roster.join(', ')}
+                {t('dashboard.classStudents', { n: klass.students.length })}:{' '}
+                {klass.students.map((student) => student.name).join(', ')}
               </p>
               <h3 className="mt-3 text-sm font-semibold text-ink-muted">{t('dashboard.sessionsTitle')}</h3>
               {klass.sessions.length === 0 ? (

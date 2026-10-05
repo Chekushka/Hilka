@@ -186,7 +186,8 @@ a verdict.
 **Against copying from a classmate (threat 1):**
 
 - **Individual variants — already built, extend them.** `tasks.params` gives every student a
-  different variant from `hash(session + name + task)`; a copied answer prints the wrong numbers
+  different variant from `hash(session + student + task)` (the student's seed key,
+  `lib/classes/roster.ts`); a copied answer prints the wrong numbers
   for the receiver. Today it covers `code` tasks only. For homework, extend to `fix`, `fill` and
   `predict` (TASKS.md lists them as not built), and show in the builder how many of the chosen
   tasks are parameterized ("3 з 5 завдань мають індивідуальні варіанти").
@@ -268,7 +269,7 @@ For any session, not only homework:
 
 - **A pool per student.** «Скільки завдань дістається кожному учню» in the builder: each student
   gets K of the N tasks (`sessions.pool_size`, `drizzle/0007_add_task_pool.sql`), drawn by
-  `lib/seed/assignment.ts` from a seed of the session and the roster name — the same student
+  `lib/seed/assignment.ts` from a seed of the session and the student's seed key — the same student
   always gets the same tasks, on any device. The room shows only those; `POST /api/attempts`
   refuses another task (403) and `GET /api/sessions/[code]/tasks/[taskId]` will not hand it out
   (404). The class table counts each student against their own tasks and marks the rest «не
