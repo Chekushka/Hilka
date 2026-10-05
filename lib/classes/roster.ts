@@ -157,29 +157,14 @@ export function cleanStudents(
   return result;
 }
 
-/**
- * A save from a class form opened before students had ids: a plain list of
- * names. Each name already stored keeps its entry; the rest are new.
- */
-export function studentsFromNames(names: unknown, stored: readonly RosterStudent[]): unknown {
-  if (!Array.isArray(names) || !names.every((name) => typeof name === 'string')) return null;
-  return (names as string[]).map((name) => {
-    const existing = stored.find((student) => student.name === normalizeName(name));
-    return existing ? { id: existing.id, name } : { name };
-  });
-}
-
 /** A class grade from an untrusted request: one of CLASS_GRADES, or null for none. Undefined when invalid. */
 export function cleanGrade(input: unknown): number | null | undefined {
   if (input === null || input === undefined || input === '') return null;
   return (CLASS_GRADES as readonly unknown[]).includes(input) ? (input as number) : undefined;
 }
 
-/**
- * The roster student a request means: by id, or — from a page loaded before
- * students had ids, still holding a name — by that name. Null when neither.
- */
-export function findStudent<T extends StudentRef>(roster: readonly T[], ref: string | null | undefined): T | null {
-  if (!ref) return null;
-  return roster.find((student) => student.id === ref) ?? roster.find((student) => student.name === ref) ?? null;
+/** The roster student a request names by id; null when there is none. */
+export function findStudent<T extends StudentRef>(roster: readonly T[], id: string | null | undefined): T | null {
+  if (!id) return null;
+  return roster.find((student) => student.id === id) ?? null;
 }

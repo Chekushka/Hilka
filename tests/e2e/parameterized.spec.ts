@@ -4,8 +4,8 @@ import { expect, test, type Page } from '@playwright/test';
  * `params` (docs/TASK_SCHEMA.md, "Parameterization") — a session-only
  * anti-copying mitigation (docs/AI_CONTEXT.md, "Cheating and Trust"):
  * `{name}` placeholders in a `code` task's prompt/starter/reference are
- * substituted server-side from `seed = hash(sessionId + studentName +
- * taskId)`, so the same student always sees the same variant and a
+ * substituted server-side from `seed = hash(sessionId + seedKey +
+ * taskId)` (the student's roster id, or their name before ids), so the same student always sees the same variant and a
  * neighbour sees a different one. Seeded by
  * content/seed-tasks/grade7-code-turtle-star-variant.json, picked up
  * automatically by the demo session (scripts/db/seed-demo-session.ts
@@ -15,6 +15,10 @@ import { expect, test, type Page } from '@playwright/test';
 const DEMO_CODE = 'demo01';
 const TASK_TITLE = 'Зірка (своя сторона)';
 const VALID_SIDES = ['60', '80', '100', '120'];
+
+/** The roster id the room stored when a name was picked on this page. */
+const pickedStudentId = (page: Page, code: string) =>
+  page.evaluate((sessionCode) => sessionStorage.getItem(`hilka:session:${sessionCode.toUpperCase()}:name`), code);
 
 async function fetchTask(page: Page, taskId: string, student: string | null) {
   return page.evaluate(
@@ -36,8 +40,10 @@ test('the same student sees the same variant every time, and an unlisted name is
   await expect(taskButton).toBeVisible();
   const taskId = await taskButton.getAttribute('data-task-id');
   expect(taskId).toBeTruthy();
+  const olena = await pickedStudentId(page, DEMO_CODE);
+  expect(olena).toMatch(/^[0-9a-f]{12}$/);
 
-  const first = await fetchTask(page, taskId!, 'Олена');
+  const first = await fetchTask(page, taskId!, olena);
   expect(first.status).toBe(200);
   const firstPrompt = (first.body as { payload: { prompt: string } }).payload.prompt;
   const side = firstPrompt.match(/зі стороною (\d+)/)?.[1];
@@ -46,7 +52,7 @@ test('the same student sees the same variant every time, and an unlisted name is
   expect(firstPrompt).not.toContain('{side}');
   expect((first.body as { params?: unknown }).params).toBeUndefined();
 
-  const second = await fetchTask(page, taskId!, 'Олена');
+  const second = await fetchTask(page, taskId!, olena);
   expect(second.status).toBe(200);
   expect((second.body as { payload: { prompt: string } }).payload.prompt).toBe(firstPrompt);
   expect((second.body as { reference: { code: string } }).reference.code).toBe(
@@ -55,6 +61,9 @@ test('the same student sees the same variant every time, and an unlisted name is
 
   const unlisted = await fetchTask(page, taskId!, 'Хтось Сторонній');
   expect(unlisted.status).toBe(400);
+  // A name is not an id: asking by name is turned away like a stranger.
+  const byName = await fetchTask(page, taskId!, 'Олена');
+  expect(byName.status).toBe(400);
 
   const noStudent = await fetchTask(page, taskId!, null);
   expect(noStudent.status).toBe(400);

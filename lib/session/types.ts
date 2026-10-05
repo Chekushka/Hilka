@@ -69,7 +69,7 @@ export interface OwnSessionState {
 /** What the workspace reports once a Check completes, for the attempts table. */
 export interface AttemptInput {
   sessionId: string;
-  /** The roster entry's id. A page loaded before ids sends `studentName` instead (lib/classes/roster.ts, `findStudent`). */
+  /** The roster entry's id (lib/classes/roster.ts). */
   studentId: string;
   taskId: string;
   taskVersion: number;

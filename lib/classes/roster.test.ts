@@ -12,7 +12,6 @@ import {
   readName,
   seedKeyOf,
   sortRoster,
-  studentsFromNames,
   type RosterStudent
 } from './roster';
 
@@ -159,23 +158,15 @@ describe('cleanStudents', () => {
   });
 });
 
-describe('studentsFromNames', () => {
-  it('matches names already stored to their entries and treats the rest as new', () => {
-    const stored: RosterStudent[] = [{ id: 'aaaaaaaaaaaa', name: 'Оля', seed: 'Оля' }];
-    expect(studentsFromNames(['Оля', 'Іван'], stored)).toEqual([{ id: 'aaaaaaaaaaaa', name: 'Оля' }, { name: 'Іван' }]);
-    expect(studentsFromNames('Оля', stored)).toBeNull();
-  });
-});
-
 describe('findStudent', () => {
   const roster = [
     { id: 'aaaaaaaaaaaa', name: 'Оля' },
     { id: 'bbbbbbbbbbbb', name: 'Марко' }
   ];
 
-  it('finds a student by id, or by name from a page loaded before ids', () => {
+  it('finds a student by id, never by name', () => {
     expect(findStudent(roster, 'bbbbbbbbbbbb')?.name).toBe('Марко');
-    expect(findStudent(roster, 'Оля')?.id).toBe('aaaaaaaaaaaa');
+    expect(findStudent(roster, 'Оля')).toBeNull();
   });
 
   it('finds no one for nothing or a stranger', () => {

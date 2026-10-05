@@ -85,7 +85,7 @@ test('a teacher builds a choice-mode predict task, and a student grades it by pi
 
   const klass = await api(page, '/api/classes', {
     method: 'POST',
-    body: { title: `E2E клас ${stamp}`, roster: ['Олена'] }
+    body: { title: `E2E клас ${stamp}`, students: [{ name: 'Олена' }] }
   });
   expect(klass.status).toBe(201);
   const { id: classId } = klass.body as { id: string };

@@ -20,6 +20,10 @@ const IMPROVEMENT_RIGHT = 'x1';
 const taskRow = (page: Page, title: string) =>
   page.getByRole('button', { name: new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) });
 
+/** The roster id the room stored when a name was picked on this page. */
+const pickedStudentId = (page: Page, code: string) =>
+  page.evaluate((sessionCode) => sessionStorage.getItem(`hilka:session:${sessionCode.toUpperCase()}:name`), code);
+
 async function loginAsTeacher(page: Page) {
   await page.goto('/login');
   await page.getByLabel('Електронна пошта').fill(TEACHER_EMAIL);
@@ -330,7 +334,7 @@ test('facts for the teacher: a whole paste, a renamed copy, a construct not taug
       fetch('/api/classes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, roster: ['Олена', 'Тарас', 'Соломія', 'Ігор'] })
+        body: JSON.stringify({ title, students: ['Олена', 'Тарас', 'Соломія', 'Ігор'].map((name) => ({ name })) })
       }).then((response) => response.status),
     classTitle
   );
@@ -373,6 +377,8 @@ print(sign(int(input())))
   // Ігор never solves it, but posts a "pass" for a program that does not pass — what devtools would do.
   const igor = await (await browser.newContext()).newPage();
   await igor.goto(`/s/${code.toLowerCase()}`);
+  await igor.getByRole('button', { name: 'Ігор', exact: true }).click();
+  const igorId = await pickedStudentId(igor, code);
   const forged = await igor.evaluate(
     (body) =>
       fetch('/api/attempts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).then(
@@ -380,7 +386,7 @@ print(sign(int(input())))
       ),
     JSON.stringify({
       sessionId,
-      studentName: 'Ігор',
+      studentId: igorId,
       taskId,
       taskVersion,
       submittedAnswer: { code: 'print("додатне")' },
@@ -461,15 +467,16 @@ test('a pool gives each student their own tasks in their own order, and the serv
   expect(all).toHaveLength(3);
   const notMine = all.find((taskId) => !mine.includes(taskId))!;
   const sessionId = sessionUrl.split('/').pop();
+  const olenaId = (await pickedStudentId(student, code))!;
   const statuses = await student.evaluate(
-    async ({ sessionCode, taskId, sessionId }) => {
-      const task = await fetch(`/api/sessions/${sessionCode}/tasks/${taskId}?student=${encodeURIComponent('Олена')}`);
+    async ({ sessionCode, taskId, sessionId, olenaId }) => {
+      const task = await fetch(`/api/sessions/${sessionCode}/tasks/${taskId}?student=${olenaId}`);
       const attempt = await fetch('/api/attempts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          studentName: 'Олена',
+          studentId: olenaId,
           taskId,
           taskVersion: 1,
           submittedAnswer: { choiceIndices: [0] },
@@ -480,7 +487,7 @@ test('a pool gives each student their own tasks in their own order, and the serv
       });
       return [task.status, attempt.status];
     },
-    { sessionCode: code, taskId: notMine, sessionId }
+    { sessionCode: code, taskId: notMine, sessionId, olenaId }
   );
   expect(statuses).toEqual([404, 403]);
   await student.context().close();

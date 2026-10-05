@@ -23,15 +23,6 @@ import { findStudent, type RosterStudent } from '@/lib/classes/roster';
 
 export const dynamic = 'force-dynamic';
 
-/** The path segment arrives percent-encoded when it is a name (a link from before ids); tolerate either form. */
-function decodeName(raw: string): string {
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
-}
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-line bg-surface p-4">
@@ -44,12 +35,11 @@ function Stat({ label, value }: { label: string; value: string }) {
 /**
  * Everything the card shows, read once per request. `now` is taken here, the
  * moment the data is read, so "last activity" and the stuck rule agree.
- * `ref` is a roster id — or a name, from a link made before ids. A student
- * no longer on the roster is found by their attempts and shown under the
+ * `ref` is a roster id. A student no longer on the roster is found by their attempts and shown under the
  * name stored on them. Null when neither finds anyone.
  */
 async function loadStudentCard(session: TeacherSessionDetail, ref: string) {
-  const onRoster = findStudent(session.roster, ref) ?? findStudent(session.roster, decodeName(ref));
+  const onRoster = findStudent(session.roster, ref);
   const attempts = await listAttemptsForStudent(session.id, onRoster?.id ?? ref);
   if (!onRoster && attempts.length === 0) {
     return null;

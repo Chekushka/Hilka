@@ -1,11 +1,16 @@
 /**
- * Proves migration 0009 (student ids) on data shaped the way production's is
- * before it: a scratch database is migrated to 0008, filled with a roster,
- * attempts under names on it and one under a name since removed, then taken
- * to the latest migration. Checks the backfill — every roster name gets an
- * id and keeps its name as the seed, every attempt gets a student id, the
- * removed name its own — and the two temporary triggers that keep code from
- * before 0009 working while a deploy rolls out.
+ * Proves the student-id migrations on data shaped the way production's was
+ * before them. A scratch database is migrated to 0008 and filled with a
+ * roster, attempts under names on it and one under a name since removed.
+ *
+ * Step 1 (0009): the backfill — every roster name gets an id and keeps its
+ * name as the seed, every attempt gets a student id, the removed name its own
+ * — and the two temporary triggers that kept code from before 0009 working
+ * while the deploy rolled out.
+ *
+ * Step 2 (0010): an attempt that reached the table without an id anyway is
+ * backfilled, the triggers and `classes.roster` are gone, and
+ * `attempts.student_id` is required.
  *
  * Needs `DATABASE_URL` pointing at a server where it may create and drop a
  * database (CI's throwaway Postgres, or a local one). Never point it at Neon
@@ -21,6 +26,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Client } from 'pg';
 
 const BEFORE = '0008_add_class_grade_and_session_created';
+const STEP_1 = '0009_add_student_ids';
 
 function withDatabase(url: string, name: string): string {
   const parsed = new URL(url);
@@ -51,6 +57,7 @@ async function main() {
   await admin.query(`create database ${scratch}`);
   const client = new Client({ connectionString: withDatabase(serverUrl, scratch) });
   const partial = migrationsUpTo(BEFORE);
+  const step1 = migrationsUpTo(STEP_1);
   try {
     await client.connect();
     const db = drizzle(client);
@@ -78,7 +85,7 @@ async function main() {
       );
     }
 
-    await migrate(db, { migrationsFolder: 'drizzle' });
+    await migrate(db, { migrationsFolder: step1 });
 
     // Every roster name: a 12-hex id, its name, and the name as its seed.
     const { rows: [{ students }] } = await client.query(`select students from classes where id = $1`, [klass.id]);
@@ -134,12 +141,48 @@ async function main() {
     const { rows: [{ students: given }] } = await client.query(`select students from classes where id = $1`, [klass.id]);
     assert.deepEqual(given, [{ id: 'aaaaaaaaaaaa', name: 'Х' }]);
 
-    console.log('migration 0009: backfill and transition triggers behave');
+    // An attempt the trigger could not place (a name on no roster) is left without an id at step 1.
+    await client.query(
+      `insert into attempts (session_id, student_name, task_id, task_version, passed) values ($1, 'Стефа', $2, 1, true)`,
+      [session.id, task.id]
+    );
+
+    await migrate(db, { migrationsFolder: 'drizzle' });
+
+    // Step 2: nothing left without an id, the stray one given its own.
+    const { rows: [stefa] } = await client.query(`select student_id from attempts where student_name = 'Стефа'`);
+    assert.match(stefa.student_id, /^[0-9a-f]{12}$/);
+    const { rows: [{ missing }] } = await client.query(`select count(*)::int as missing from attempts where student_id is null`);
+    assert.equal(missing, 0);
+    // The triggers, their functions and the old roster column are gone.
+    const { rows: [{ triggers }] } = await client.query(
+      `select count(*)::int as triggers from pg_trigger where tgname like 'hilka_0009_%'`
+    );
+    assert.equal(triggers, 0);
+    const { rows: [{ functions }] } = await client.query(
+      `select count(*)::int as functions from pg_proc where proname like 'hilka_0009_%'`
+    );
+    assert.equal(functions, 0);
+    const { rows: [{ roster }] } = await client.query(
+      `select count(*)::int as roster from information_schema.columns where table_name = 'classes' and column_name = 'roster'`
+    );
+    assert.equal(roster, 0);
+    // An attempt without an id is refused now.
+    await assert.rejects(
+      client.query(
+        `insert into attempts (session_id, student_name, task_id, task_version, passed) values ($1, 'Марко', $2, 1, true)`,
+        [session.id, task.id]
+      ),
+      /null value in column "student_id"/
+    );
+
+    console.log('student-id migrations: 0009 backfill and triggers, 0010 cleanup behave');
   } finally {
     await client.end().catch(() => undefined);
     await admin.query(`drop database if exists ${scratch}`);
     await admin.end();
     rmSync(partial, { recursive: true, force: true });
+    rmSync(step1, { recursive: true, force: true });
   }
 }
 
