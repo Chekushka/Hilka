@@ -19,6 +19,7 @@ import { resolveTaskSlugs, validateLessonImport } from '@/lib/lessons/content';
 import type { LessonContent } from '@/lib/lessons/types';
 import type { Check } from '@/lib/checker';
 import type { ParamSpec } from '@/lib/seed';
+import { isTaskTag, normalizeTags, type TaskTag } from '@/lib/task/tags';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { lessons, tasks, topics } from './schema';
@@ -46,6 +47,8 @@ export interface TaskContent {
   params?: ParamSpec;
   difficulty: number;
   gradeTags: number[];
+  /** lib/task/tags.ts; absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
 }
@@ -124,6 +127,7 @@ export async function exportContent(): Promise<ContentBundle> {
       params: task.params ?? undefined,
       difficulty: task.difficulty,
       gradeTags: task.gradeTags,
+      ...(task.tags.length > 0 ? { tags: task.tags } : {}),
       version: task.version,
       status: task.status
     })),
@@ -167,6 +171,9 @@ export async function importContent(bundle: ContentBundle): Promise<ImportResult
     });
     for (const error of errors) {
       issues.push({ taskSlug: task.slug, message: error.message });
+    }
+    for (const tag of task.tags ?? []) {
+      if (!isTaskTag(tag)) issues.push({ taskSlug: task.slug, message: `unknown tag "${String(tag)}"` });
     }
   }
 
@@ -216,6 +223,7 @@ export async function importContent(bundle: ContentBundle): Promise<ImportResult
       hints: task.hints ?? [],
       difficulty: task.difficulty,
       gradeTags: task.gradeTags,
+      tags: normalizeTags(task.tags),
       version: task.version,
       status: task.status
     };

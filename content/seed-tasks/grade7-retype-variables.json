@@ -1,0 +1,29 @@
+{
+  "slug": "g7-retype-variables",
+  "topicSlug": "variables",
+  "type": "code",
+  "title": "Набери код: змінні",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\nname = \"Оля\"\nage = 13\nprint(name, \"має\", age, \"років\")\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Оля має 13 років",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "Змінна — це ім’я для значення. name і age — імена, \"Оля\" і 13 — значення."],
+  "reference": {
+    "code": "name = \"Оля\"\nage = 13\nprint(name, \"має\", age, \"років\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

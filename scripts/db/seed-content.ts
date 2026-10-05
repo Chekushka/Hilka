@@ -21,6 +21,7 @@ import { resolveTaskSlugs, validateLessonImport } from '@/lib/lessons/content';
 import type { LessonContent } from '@/lib/lessons/types';
 import type { Check } from '@/lib/checker';
 import type { ParamSpec } from '@/lib/seed';
+import { isTaskTag, normalizeTags, type TaskTag } from '@/lib/task/tags';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 
 const root = path.join(process.cwd(), 'content');
@@ -48,6 +49,8 @@ interface TaskContent {
   params?: ParamSpec;
   difficulty: number;
   gradeTags: number[];
+  /** lib/task/tags.ts; absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
 }
@@ -106,6 +109,10 @@ async function main() {
     if (errors.length > 0) {
       throw new Error(`${file}: ${errors.map((error) => error.message).join('; ')}`);
     }
+    const unknownTags = (task.tags ?? []).filter((tag) => !isTaskTag(tag));
+    if (unknownTags.length > 0) {
+      throw new Error(`${file}: unknown tag ${unknownTags.map((tag) => `"${tag}"`).join(', ')} (lib/task/tags.ts)`);
+    }
 
     const values = {
       slug: task.slug,
@@ -120,6 +127,7 @@ async function main() {
       hints: task.hints ?? [],
       difficulty: task.difficulty,
       gradeTags: task.gradeTags,
+      tags: normalizeTags(task.tags),
       version: task.version,
       status: task.status
     };

@@ -83,6 +83,7 @@ The spike is answered (`docs/SPIKE.md`) and Skulpt stayed. Built so far: the ent
 shell, the runner, the check
 evaluator, error humanization, the database layer, practice mode, sessions, a read-only teacher
 dashboard, task authoring, all six task types end to end, the 8×8 grid robot (secondary to turtle), and lessons (mandatory/practice) with grade 7 content for lessons 25–42 and grade 8 content for lessons 43–61 (projects included), the practice meta layer
-(XP, the garden), and homework (deadline, late credit, fixes, improvement tasks, device marks,
-and the class check that confirms it). The authoring forms build checks, cases and hints visually. Grade 9 content does not exist yet. `docs/TASKS.md` is the map —
+(XP, the garden), homework (deadline, late credit, fixes, improvement tasks, device marks,
+and the class check that confirms it), task tags with a filterable catalog, and routes — extra
+support or extension tasks for particular students in one session, never a label on the roster. The authoring forms build checks, cases and hints visually. Grade 9 content does not exist yet. `docs/TASKS.md` is the map —
 read it rather than guessing from the folder tree.

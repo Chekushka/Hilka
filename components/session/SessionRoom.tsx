@@ -306,18 +306,25 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         session.assignment
       ).flatMap((taskId) => session.tasks.filter((task) => task.id === taskId))
     : session.tasks;
+  // The student's route tasks, if the teacher gave them a route (lib/session/routes.ts): read with their attempts.
+  const routeTasks: JoinedSessionTask[] = own?.routeTasks ?? [];
   const rules: SessionRules = {
     kind: session.kind,
     mode: session.mode,
     taskIds: myTasks.map((task) => task.id),
-    improvementTaskIds: session.improvementTasks.map((task) => task.id)
+    improvementTaskIds: session.improvementTasks.map((task) => task.id),
+    routeTaskIds: routeTasks.map((task) => task.id)
   };
   const attempts: OwnAttempt[] = own?.attempts ?? [];
   const stateOf = (taskId: string) => taskState(rules, taskId, attempts);
   const checksLeftOf = (taskId: string) => checksLeft(rules, taskId, attempts);
   const progress = sessionProgress(rules, attempts);
   const improvementVisible = improvementOpen(rules, attempts);
-  const visibleTasks: JoinedSessionTask[] = improvementVisible ? [...myTasks, ...session.improvementTasks] : myTasks;
+  const mainAndImprovement = improvementVisible ? [...myTasks, ...session.improvementTasks] : myTasks;
+  // A support route's tasks come first — something to finish before the main tasks; an extension route's last.
+  const visibleTasks: JoinedSessionTask[] = own?.routeTasksFirst
+    ? [...routeTasks, ...mainAndImprovement]
+    : [...mainAndImprovement, ...routeTasks];
 
   const hasTimeLimit = session.timeLimitS !== null;
   const examStart = useStoredExamStart(code);
@@ -345,7 +352,9 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         .then((response) => (response.ok ? (response.json() as Promise<OwnSessionState>) : Promise.reject()))
         .then(setOwn)
         // Unreachable server: the student can still work; the server keeps the count either way.
-        .catch(() => setOwn((previous) => previous ?? { attempts: [], usedElsewhere: false }));
+        .catch(() =>
+          setOwn((previous) => previous ?? { attempts: [], usedElsewhere: false, routeTasks: [], routeTasksFirst: false })
+        );
     },
     [code]
   );
@@ -404,6 +413,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     // only matters when it refuses, and then the room re-reads what counts.
     setOwn((previous) => ({
       usedElsewhere: previous?.usedElsewhere ?? false,
+      routeTasks: previous?.routeTasks ?? [],
+      routeTasksFirst: previous?.routeTasksFirst ?? false,
       attempts: [
         ...(previous?.attempts ?? []),
         {
@@ -525,11 +536,15 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   if (selectedTaskId) {
     const state = stateOf(selectedTaskId);
     const isImprovement = rules.improvementTaskIds.includes(selectedTaskId);
+    const isRouteTask = rules.routeTaskIds?.includes(selectedTaskId) ?? false;
     // A graded lesson locks a task at its first Check, as it always did. Homework
     // locks once no Check is left, and on reopening a task already counted.
-    const locked = homework
-      ? state.status === 'failed' || (state.status === 'passed' && openedAs === 'passed')
-      : graded && state.status !== 'new';
+    // A route task is never graded, so it never locks.
+    const locked = isRouteTask
+      ? false
+      : homework
+        ? state.status === 'failed' || (state.status === 'passed' && openedAs === 'passed')
+        : graded && state.status !== 'new';
     const lockedPassed = state.status === 'passed';
     // Offered only after a passed Check. A locked task is skipped rather than
     // reopened.
@@ -609,8 +624,10 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         </main>
       );
     }
+    const routeNotice = isRouteTask && graded && <Notice testId="route-task-notice">{t('session.routeTaskNotice')}</Notice>;
     const homeworkNotice =
       homework &&
+      !isRouteTask &&
       (isImprovement ? (
         <Notice>{t('session.improvementOneCheck')}</Notice>
       ) : state.status === 'new' ? (
@@ -648,9 +665,10 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               {timerBadge}
             </>
           ),
-          notice: (homeworkNotice || showPrerequisite) && (
+          notice: (homeworkNotice || routeNotice || showPrerequisite) && (
             <>
               {homeworkNotice && <div className="px-5 pt-4">{homeworkNotice}</div>}
+              {routeNotice && <div className="px-5 pt-4">{routeNotice}</div>}
               {showPrerequisite && (
                 <PrerequisiteNote
                   action={{
@@ -676,9 +694,25 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-left text-ink hover:border-accent"
       >
         <span>{task.title}</span>
-        <StatusMark state={stateOf(task.id)} graded={graded} homework={homework} left={checksLeftOf(task.id)} />
+        <StatusMark
+          state={stateOf(task.id)}
+          graded={graded && !rules.routeTaskIds?.includes(task.id)}
+          homework={homework && !rules.routeTaskIds?.includes(task.id)}
+          left={checksLeftOf(task.id)}
+        />
       </button>
     </li>
+  );
+
+  // One neutral heading for either route: nobody reads from the screen which one a classmate is on.
+  const routeSection = routeTasks.length > 0 && (
+    <section aria-labelledby="route-title" className="space-y-2 pt-2" data-testid="route-tasks">
+      <h2 id="route-title" className="text-lg font-semibold text-ink">
+        {t('session.routeTitle')}
+      </h2>
+      <p className="text-sm text-ink-muted">{t(graded ? 'session.routeNoteGraded' : 'session.routeNote')}</p>
+      <ul className="space-y-2">{routeTasks.map(taskButton)}</ul>
+    </section>
   );
 
   return (
@@ -696,6 +730,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       </div>
       {progress.complete && <ResultsSummary progress={progress} homework={homework} graded={graded} />}
       {myTasks.length > 0 && <SessionProgressBar progress={progress} />}
+      {own.routeTasksFirst && routeSection}
       <ul className="space-y-2">{myTasks.map(taskButton)}</ul>
       {improvementVisible && (
         <section aria-labelledby="improvement-title" className="space-y-2 pt-2">
@@ -706,6 +741,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
           <ul className="space-y-2">{session.improvementTasks.map(taskButton)}</ul>
         </section>
       )}
+      {!own.routeTasksFirst && routeSection}
     </main>
   );
 }

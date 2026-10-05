@@ -34,6 +34,9 @@ import { CasesField } from './CasesField';
 import { FillGridFields } from './FillGridFields';
 import { FormSection } from './FormSection';
 import { GradeTagsField, HintsField } from './HintsField';
+import { DifficultyMeter } from './TaskBadges';
+import { TaskTagsField } from './TaskTagsField';
+import type { TaskTag } from '@/lib/task/tags';
 import { checkKindsFor } from '@/lib/task/check-form';
 import { parseCasesJson, parseChecksJson, parseGradeTags, parseHints, hasCasesText } from './task-form-utils';
 
@@ -104,6 +107,7 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   const [hintsText, setHintsText] = useState('');
   const [difficulty, setDifficulty] = useState(2);
   const [gradeTagsText, setGradeTagsText] = useState('');
+  const [tags, setTags] = useState<TaskTag[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -203,7 +207,8 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
           : {}),
         hints: parseHints(hintsText),
         difficulty,
-        gradeTags: parseGradeTags(gradeTagsText)
+        gradeTags: parseGradeTags(gradeTagsText),
+        tags
       })
     });
 
@@ -307,9 +312,11 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
               onChange={(event) => setDifficulty(Number(event.target.value))}
               className="w-24 rounded-md border border-line bg-surface px-3 py-2 text-ink"
             />
+            <DifficultyMeter difficulty={Math.min(5, Math.max(1, Math.round(difficulty) || 1))} />
           </div>
           <GradeTagsField value={gradeTagsText} onChange={setGradeTagsText} />
         </div>
+        <TaskTagsField value={tags} onChange={setTags} />
       </FormSection>
 
       <FormSection title={t('authoring.sectionStudent')}>

@@ -55,6 +55,7 @@ const TASK_KEY_ORDER = [
   'reference',
   'difficulty',
   'gradeTags',
+  'tags',
   'version',
   'status'
 ] as const;

@@ -1,0 +1,28 @@
+{
+  "slug": "g8-easy-fill-countdown",
+  "topicSlug": "loops-while",
+  "type": "fill",
+  "title": "Легкий старт: зворотний відлік",
+  "payload": {
+    "type": "fill",
+    "prompt": "Заповни пропуски так, щоб програма вивела 3, 2, 1 (кожне в окремому рядку), а потім «Старт!».",
+    "template": "n = {{1}}\nwhile n > 0:\n    print(n)\n    n = n - {{2}}\nprint(\"Старт!\")\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "3\n2\n1\nСтарт!",
+      "trim": true,
+      "message": "Відлік має бути 3, 2, 1, а потім «Старт!»."
+    }
+  ],
+  "hints": ["З якого числа починається відлік?", "На скільки зменшується число на кожному кроці?"],
+  "reference": {
+    "code": "n = 3\nwhile n > 0:\n    print(n)\n    n = n - 1\nprint(\"Старт!\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

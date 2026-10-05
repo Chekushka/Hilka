@@ -1,39 +1,44 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ImportExportControls } from '@/components/authoring/ImportExportControls';
+import { TaskCatalog } from '@/components/authoring/TaskCatalog';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listTasksForAuthoring } from '@/lib/db/task-authoring';
 import { t } from '@/lib/i18n';
-import type { TaskStatus } from '@/lib/task/types';
+import { filterFromParams, type CatalogSort } from '@/lib/task/catalog-filter';
 
 /**
  * Every task, draft and published (docs/TASKS.md, "Task authoring UI") —
- * the entry point for creating one and for finding a draft to finish.
+ * the entry point for creating one, for finding a draft to finish, and for
+ * finding tasks by kind of work and difficulty (components/authoring/TaskCatalog.tsx).
+ * The filter comes from the URL, so a link opens the same list.
  */
 export const dynamic = 'force-dynamic';
 
-function statusLabel(status: TaskStatus): string {
-  if (status === 'published') return t('authoring.statusPublished');
-  if (status === 'archived') return t('authoring.statusArchived');
-  return t('authoring.statusDraft');
-}
+const SORTS: readonly CatalogSort[] = ['topic', 'difficulty', 'title'];
 
-export default async function TasksPage() {
+export default async function TasksPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const teacher = await getCurrentTeacher();
   if (!teacher) {
     redirect('/login');
   }
 
-  const tasks = await listTasksForAuthoring();
+  const [tasks, params] = await Promise.all([listTasksForAuthoring(), searchParams]);
+  const sortParam = Array.isArray(params.sort) ? params.sort[0] : params.sort;
+  const sort = SORTS.find((option) => option === sortParam) ?? 'topic';
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
+    <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
       <Link href="/dashboard" className="text-sm text-accent">
         {t('dashboard.title')}
       </Link>
-      <div className="mt-2 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink">{t('authoring.tasksTitle')}</h1>
-        <Link href="/tasks/new" className="rounded-md bg-accent px-4 py-2 text-sm text-surface">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-ink">{t('authoring.tasksTitle')}</h1>
+        <Link href="/tasks/new" className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-surface">
           {t('authoring.newTask')}
         </Link>
       </div>
@@ -43,30 +48,7 @@ export default async function TasksPage() {
       {tasks.length === 0 ? (
         <p className="mt-6 text-ink-muted">{t('authoring.empty')}</p>
       ) : (
-        <table className="mt-6 w-full text-left text-sm">
-          <thead>
-            <tr className="text-ink-muted">
-              <th className="pb-2 font-medium">{t('authoring.columnTitle')}</th>
-              <th className="pb-2 font-medium">{t('authoring.columnTopic')}</th>
-              <th className="pb-2 font-medium">{t('authoring.columnStatus')}</th>
-              <th className="pb-2 font-medium">{t('authoring.columnVersion')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((task) => (
-              <tr key={task.id} className="border-t border-line">
-                <td className="py-2">
-                  <Link href={`/tasks/${task.id}`} className="text-accent">
-                    {task.title}
-                  </Link>
-                </td>
-                <td className="py-2 text-ink-muted">{task.topicTitle}</td>
-                <td className="py-2 text-ink-muted">{statusLabel(task.status)}</td>
-                <td className="py-2 text-ink-muted">{task.version}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <TaskCatalog tasks={tasks} initialFilter={filterFromParams(params)} initialSort={sort} />
       )}
     </main>
   );

@@ -1,0 +1,62 @@
+{
+  "slug": "g7-challenge-reverse-number",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Виклик: число навпаки",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле додатне число і виведи його цифри у зворотному порядку як число. Наприклад, 1234 → 4321, а 1200 → 21.\nСпробуй без перетворення на рядок: тільки % 10, // 10 і цикл while.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1234",
+      "stdin": ["1234"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4321,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "нулі в кінці",
+      "stdin": ["1200"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 21,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "одна цифра",
+      "stdin": ["7"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 7,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": ["Остання цифра числа n — це n % 10, а n // 10 відкидає її.", "Заведи r = 0. На кожному кроці r = r * 10 + остання цифра n."],
+  "reference": {
+    "code": "n = int(input())\nr = 0\nwhile n > 0:\n    r = r * 10 + n % 10\n    n = n // 10\nprint(r)"
+  },
+  "difficulty": 5,
+  "gradeTags": [7],
+  "tags": ["challenge"],
+  "version": 1,
+  "status": "published"
+}

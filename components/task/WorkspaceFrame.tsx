@@ -98,7 +98,16 @@ export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, doc
         <section className="px-5 pb-5 pt-5">
           <p className="text-sm font-semibold text-accent">{t(`task.types.${task.type}`)}</p>
           <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-ink">{task.title}</h1>
-          <PromptText prompt={task.payload.prompt} className="mt-3 text-base leading-relaxed text-ink" />
+          <PromptText
+            prompt={task.payload.prompt}
+            className="mt-3 text-base leading-relaxed text-ink"
+            noCopy={task.tags?.includes('retype')}
+          />
+          {task.tags?.includes('retype') && (
+            <p className="mt-3 text-sm text-ink-muted" data-testid="retype-note">
+              {t('workspace.retypeNote')}
+            </p>
+          )}
         </section>
         {chrome?.theory && <Theory>{chrome.theory}</Theory>}
         <span className="flex-1" />

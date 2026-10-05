@@ -1,0 +1,33 @@
+{
+  "slug": "g7-challenge-turtle-stairs",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Виклик: сходинки",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй сходи з 6 сходинок, що піднімаються праворуч: кожна сходинка — 30 угору і 30 праворуч.",
+    "starter": "import turtle\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 12,
+      "message": "Шість сходинок — це 12 відрізків: угору й праворуч для кожної."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Сходи не такі, як на зразку. Почни з кроку вгору, потім праворуч."
+    }
+  ],
+  "hints": ["Черепашка спочатку дивиться праворуч. Щоб іти вгору, поверни ліворуч на 90°.", "Одна сходинка: left(90), forward(30), right(90), forward(30). Повтори це 6 разів."],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    turtle.left(90)\n    turtle.forward(30)\n    turtle.right(90)\n    turtle.forward(30)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "tags": ["challenge"],
+  "version": 1,
+  "status": "published"
+}

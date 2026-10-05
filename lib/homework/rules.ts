@@ -18,6 +18,11 @@ export interface SessionRules {
   taskIds: readonly string[];
   /** Homework only: offered once a point is lost, worth no more than what was lost. */
   improvementTaskIds: readonly string[];
+  /**
+   * This student's route tasks (lib/session/routes.ts), if any: never graded,
+   * so never limited — like a practice-mode lesson, whatever the session's mode.
+   */
+  routeTaskIds?: readonly string[];
 }
 
 /** Where one task stands for one student. */
@@ -40,6 +45,7 @@ function inOrder<T extends Attempt>(attempts: readonly T[]): T[] {
 
 /** How many Checks a task allows in total, or null for no limit. */
 function checksAllowed(rules: SessionRules, taskId: string, config: GradingConfig): number | null {
+  if (rules.routeTaskIds?.includes(taskId)) return null;
   if (rules.kind === 'homework') {
     return rules.improvementTaskIds.includes(taskId) ? 1 : 1 + config.maxFixes;
   }
@@ -58,7 +64,7 @@ export function taskState(
   const allowed = checksAllowed(rules, taskId, config);
   const counted = allowed === null ? mine : mine.slice(0, allowed);
   const pass = counted.findIndex((attempt) => attempt.passed);
-  if (pass !== -1) return { status: 'passed', viaFix: rules.kind === 'homework' && pass > 0 };
+  if (pass !== -1) return { status: 'passed', viaFix: rules.kind === 'homework' && allowed !== null && pass > 0 };
   if (allowed === null) return { status: 'retry' };
   if (counted.length >= allowed) return { status: 'failed' };
   return { status: 'fixable', fixesLeft: allowed - counted.length };

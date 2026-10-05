@@ -1,0 +1,62 @@
+{
+  "slug": "g8-challenge-gcd",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Виклик: найбільший спільний дільник",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два цілі додатні числа і виведи їхній найбільший спільний дільник (НСД). Наприклад, для 12 і 18 — це 6.\nСпробуй алгоритм Евкліда: поки числа різні, від більшого віднімай менше.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "12 і 18",
+      "stdin": ["12", "18"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 6,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "взаємно прості",
+      "stdin": ["17", "5"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "одне ділиться на інше",
+      "stdin": ["100", "25"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 25,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": ["Поки a != b: якщо a > b, то a = a - b, інакше b = b - a.", "Коли числа зрівнялися, будь-яке з них і є НСД."],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nwhile a != b:\n    if a > b:\n        a = a - b\n    else:\n        b = b - a\nprint(a)"
+  },
+  "difficulty": 5,
+  "gradeTags": [8],
+  "tags": ["challenge"],
+  "version": 1,
+  "status": "published"
+}

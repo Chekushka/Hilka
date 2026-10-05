@@ -11,6 +11,7 @@ import { createDraftTask, isUniqueViolation } from '@/lib/db/task-authoring';
 import { getTopicIdBySlug } from '@/lib/db/topics';
 import type { RunCase, TaskPayload } from '@/lib/task/types';
 import { isTaskPayload } from '@/lib/task/payload-guards';
+import { normalizeTags } from '@/lib/task/tags';
 
 interface CreateTaskBody {
   slug: string;
@@ -23,6 +24,8 @@ interface CreateTaskBody {
   hints?: string[];
   difficulty?: number;
   gradeTags?: number[];
+  /** lib/task/tags.ts; unknown values are dropped. */
+  tags?: string[];
 }
 
 // Structural only — a Check's kind decides its shape, and re-deriving the
@@ -62,7 +65,8 @@ function isValidBody(body: unknown): body is CreateTaskBody {
     (b.cases === undefined || (Array.isArray(b.cases) && b.cases.every(isCaseShaped))) &&
     (b.hints === undefined || (Array.isArray(b.hints) && b.hints.every((h) => typeof h === 'string'))) &&
     (b.difficulty === undefined || typeof b.difficulty === 'number') &&
-    (b.gradeTags === undefined || (Array.isArray(b.gradeTags) && b.gradeTags.every((g) => typeof g === 'number')))
+    (b.gradeTags === undefined || (Array.isArray(b.gradeTags) && b.gradeTags.every((g) => typeof g === 'number'))) &&
+    (b.tags === undefined || (Array.isArray(b.tags) && b.tags.every((tag) => typeof tag === 'string')))
   );
 }
 
@@ -103,7 +107,8 @@ export async function POST(request: Request) {
       cases: body.cases,
       hints: body.hints ?? [],
       difficulty: body.difficulty ?? 1,
-      gradeTags: body.gradeTags ?? []
+      gradeTags: body.gradeTags ?? [],
+      tags: normalizeTags(body.tags)
     });
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {

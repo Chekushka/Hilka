@@ -25,6 +25,7 @@ function row(overrides: Partial<TaskRow> = {}): TaskRow {
     params: null,
     difficulty: 2,
     gradeTags: [7],
+    tags: ['retype', 'unknown'] as TaskRow['tags'],
     version: 3,
     status: 'published',
     ...overrides
@@ -39,6 +40,10 @@ describe('toCodeTask', () => {
     expect(task?.payload.surface).toBe('turtle');
     expect(task?.reference.code).toBe('import turtle');
     expect(task?.version).toBe(3);
+  });
+
+  it('keeps only known tags', () => {
+    expect(toCodeTask(row())?.tags).toEqual(['retype']);
   });
 
   it('rejects a row whose type is not code', () => {

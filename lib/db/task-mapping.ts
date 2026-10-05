@@ -8,6 +8,7 @@
  * workspace.
  */
 import type { CodeTask, FillTask, FixTask, ParsonsTask, PredictTask, QuizTask, Task } from '@/lib/task/types';
+import { normalizeTags } from '@/lib/task/tags';
 import type { tasks } from './schema';
 
 export type TaskRow = typeof tasks.$inferSelect;
@@ -34,6 +35,7 @@ export function toCodeTask(row: TaskRow): CodeTask | null {
     reference: row.reference,
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
+    tags: normalizeTags(row.tags),
     version: row.version,
     status: row.status,
     params: row.params ?? undefined
@@ -56,6 +58,7 @@ export function toParsonsTask(row: TaskRow): ParsonsTask | null {
     hints: row.hints ?? [],
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
+    tags: normalizeTags(row.tags),
     version: row.version,
     status: row.status
   };
@@ -77,6 +80,7 @@ export function toQuizTask(row: TaskRow): QuizTask | null {
     hints: row.hints ?? [],
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
+    tags: normalizeTags(row.tags),
     version: row.version,
     status: row.status
   };
@@ -102,6 +106,7 @@ export function toPredictTask(row: TaskRow): PredictTask | null {
     reference: row.reference,
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
+    tags: normalizeTags(row.tags),
     version: row.version,
     status: row.status
   };
@@ -128,6 +133,7 @@ export function toFixTask(row: TaskRow): FixTask | null {
     reference: row.reference,
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
+    tags: normalizeTags(row.tags),
     version: row.version,
     status: row.status,
     params: row.params ?? undefined
@@ -154,6 +160,7 @@ export function toFillTask(row: TaskRow): FillTask | null {
     reference: row.reference,
     difficulty: clampDifficulty(row.difficulty),
     gradeTags: row.gradeTags ?? [],
+    tags: normalizeTags(row.tags),
     version: row.version,
     status: row.status,
     params: row.params ?? undefined

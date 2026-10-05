@@ -5,6 +5,7 @@ import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
 import { DeleteSessionButton } from '@/components/dashboard/DeleteSessionButton';
 import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
+import { ROUTE_KEYS, routeOf, type RouteKey } from '@/lib/session/routes';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
@@ -176,6 +177,12 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       )
     : null;
   const taskIndex = new Map(session.tasks.map((task, index) => [task.id, index]));
+  // Routes (lib/session/routes.ts): who got which extra tasks, and how many of them they solved.
+  const routeOfStudent = (studentId: string) => routeOf(session.routes.studentRoutes, studentId);
+  const routePassed = (studentId: string, route: RouteKey) => {
+    const ids = new Set(session.routes[route].map((task) => task.id));
+    return new Set(rows.filter((row) => row.studentId === studentId && row.passed && ids.has(row.taskId)).map((row) => row.taskId)).size;
+  };
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
@@ -301,6 +308,20 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                         >
                           {student.studentName}
                         </Link>
+                        {(() => {
+                          const route = routeOfStudent(student.studentId);
+                          return (
+                            route && (
+                              <span className="mt-1 block text-xs font-normal text-ink-muted" data-testid="student-route">
+                                {t('dashboard.routeMark', {
+                                  route: t(`routes.name.${route}`),
+                                  passed: routePassed(student.studentId, route),
+                                  total: session.routes[route].length
+                                })}
+                              </span>
+                            )
+                          );
+                        })()}
                       </td>
                       <td className={`py-3.5 pr-4 font-semibold ${STATE_TEXT_CLASS[student.state]}`}>
                         {stateLabel(student.state)}
@@ -400,6 +421,33 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           {grades && !sessionAllowsHighBand([...session.tasks, ...session.improvementTasks]) && (
             <p className="mt-1 text-sm text-attention">{t('dashboard.gradeNoHardTask')}</p>
           )}
+        </section>
+      )}
+
+      {ROUTE_KEYS.some((route) => session.routes[route].length > 0) && (
+        <section aria-labelledby="routes-title" className="mt-6 rounded-xl border border-line bg-surface p-5" data-testid="session-routes">
+          <h2 id="routes-title" className="text-lg font-semibold text-ink">
+            {t('dashboard.routesTitle')}
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">{t('dashboard.routesNote')}</p>
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            {ROUTE_KEYS.filter((route) => session.routes[route].length > 0).map((route) => {
+              const names = session.roster
+                .filter((student) => routeOfStudent(student.id) === route)
+                .map((student) => student.name);
+              return (
+                <div key={route} className="rounded-lg bg-shell p-4 text-sm text-ink">
+                  <h3 className="font-semibold">{t(`routes.name.${route}`)}</h3>
+                  <p className="mt-1">
+                    {names.length > 0 ? t('dashboard.routeStudents', { names: names.join(', ') }) : t('dashboard.routeNoStudents')}
+                  </p>
+                  <p className="mt-1 text-ink-muted">
+                    {t('dashboard.routeTasks', { titles: session.routes[route].map((task) => task.title).join(', ') })}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
 

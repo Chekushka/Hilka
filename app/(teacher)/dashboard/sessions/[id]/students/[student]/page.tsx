@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
+import { routeOf } from '@/lib/session/routes';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { SubmittedAnswer } from '@/components/dashboard/SubmittedAnswer';
 import { VoidDeviceButton } from '@/components/dashboard/VoidDeviceButton';
@@ -63,7 +64,10 @@ async function loadStudentCard(session: TeacherSessionDetail, ref: string) {
     open: session.open,
     now
   });
-  const allTasks = [...session.tasks, ...session.improvementTasks];
+  // The student's route (lib/session/routes.ts), if they had one: its tasks are shown, never counted.
+  const route = routeOf(session.routes.studentRoutes, student.id);
+  const routeTasks = route ? session.routes[route] : [];
+  const allTasks = [...session.tasks, ...session.improvementTasks, ...routeTasks];
   const content = new Map((await listTaskContent(allTasks.map((task) => task.id))).map((row) => [row.id, row]));
   const taskNumber = new Map(allTasks.map((task, index) => [task.id, index + 1]));
   // Numbered per task, oldest first, the way a student would count their tries.
@@ -97,6 +101,8 @@ async function loadStudentCard(session: TeacherSessionDetail, ref: string) {
     deviceNumber,
     checkResult,
     facts,
+    route,
+    routeTasks,
     now
   };
 }
@@ -140,6 +146,8 @@ export default async function StudentCardPage({
     deviceNumber,
     checkResult,
     facts,
+    route,
+    routeTasks,
     now
   } = card;
   const dueMs = session.dueAt ? Date.parse(session.dueAt) : null;
@@ -345,6 +353,22 @@ export default async function StudentCardPage({
                 {t('session.improvementTitle')}
               </h2>
               {session.improvementTasks.map((task) =>
+                taskArticle(
+                  task,
+                  task.title,
+                  cellFor(attempts.filter((attempt) => attempt.taskId === task.id))
+                )
+              )}
+            </section>
+          )}
+
+          {route && routeTasks.length > 0 && (
+            <section aria-labelledby="student-route" className="space-y-3" data-testid="student-card-route">
+              <h2 id="student-route" className="text-lg font-semibold text-ink">
+                {t('studentCard.routeTitle', { route: t(`routes.name.${route}`) })}
+              </h2>
+              <p className="text-sm text-ink-muted">{t('dashboard.routesNote')}</p>
+              {routeTasks.map((task) =>
                 taskArticle(
                   task,
                   task.title,

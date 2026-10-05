@@ -1,0 +1,47 @@
+{
+  "slug": "g8-retype-even-odd",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Набери код: парне чи непарне",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам і запусти. Введи кілька різних чисел.\n```\nn = int(input(\"Число: \"))\nif n % 2 == 0:\n    print(\"парне\")\nelse:\n    print(\"непарне\")\n```",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "парне число",
+      "stdin": ["4"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "парне",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "непарне число",
+      "stdin": ["7"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "непарне",
+          "normalize": "trim"
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "int(input()) перетворює введений текст на число, щоб із ним можна було рахувати."],
+  "reference": {
+    "code": "n = int(input(\"Число: \"))\nif n % 2 == 0:\n    print(\"парне\")\nelse:\n    print(\"непарне\")"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

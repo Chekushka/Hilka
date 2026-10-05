@@ -1,0 +1,29 @@
+{
+  "slug": "g8-retype-math",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Набери код: модуль math",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\nimport math\nprint(math.sqrt(49))\nprint(abs(-8))\nprint(round(3.14159, 2))\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "7.0\n8\n3.14",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "sqrt — квадратний корінь, abs — модуль числа, round(x, 2) — округлення до двох знаків."],
+  "reference": {
+    "code": "import math\nprint(math.sqrt(49))\nprint(abs(-8))\nprint(round(3.14159, 2))"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

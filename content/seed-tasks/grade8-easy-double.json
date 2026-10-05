@@ -1,0 +1,49 @@
+{
+  "slug": "g8-easy-double",
+  "topicSlug": "io",
+  "type": "code",
+  "title": "Легкий старт: подвоєння",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число і виведи його, помножене на 2.",
+    "starter": "n = int(input())\n"
+  },
+  "cases": [
+    {
+      "label": "число 21",
+      "stdin": ["21"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 42,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "від’ємне число",
+      "stdin": ["-5"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -10,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": ["Число вже прочитане в змінну n. Залишилося вивести n * 2."],
+  "reference": {
+    "code": "n = int(input())\nprint(n * 2)"
+  },
+  "difficulty": 1,
+  "gradeTags": [8],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

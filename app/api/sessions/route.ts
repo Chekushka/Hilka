@@ -6,7 +6,8 @@
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { getClassForTeacher } from '@/lib/db/classes';
+import { getClassWithRosterForTeacher } from '@/lib/db/classes';
+import { cleanStudentRoutes } from '@/lib/session/routes';
 import { createSession, filterToPublishedTaskIds } from '@/lib/db/session-authoring';
 import type { SessionKind, SessionMode } from '@/lib/session/types';
 
@@ -25,7 +26,13 @@ interface CreateSessionBody {
   dueAt?: string | null;
   /** Homework: tasks offered once a point is lost. */
   improvementTaskIds?: string[];
+  /** Routes (lib/session/routes.ts): extra tasks for the support and extension routes, and who is on which. */
+  supportTaskIds?: string[];
+  extensionTaskIds?: string[];
+  studentRoutes?: Record<string, unknown>;
 }
+
+const isIdList = (value: unknown) => Array.isArray(value) && value.every((id) => typeof id === 'string');
 
 function isValidBody(body: unknown): body is CreateSessionBody {
   if (typeof body !== 'object' || body === null) return false;
@@ -45,7 +52,10 @@ function isValidBody(body: unknown): body is CreateSessionBody {
       (typeof b.poolSize === 'number' && Number.isInteger(b.poolSize) && b.poolSize > 0)) &&
     (b.dueAt === undefined || b.dueAt === null || (typeof b.dueAt === 'string' && !Number.isNaN(Date.parse(b.dueAt)))) &&
     (b.improvementTaskIds === undefined ||
-      (Array.isArray(b.improvementTaskIds) && b.improvementTaskIds.every((id) => typeof id === 'string')))
+      (Array.isArray(b.improvementTaskIds) && b.improvementTaskIds.every((id) => typeof id === 'string'))) &&
+    (b.supportTaskIds === undefined || isIdList(b.supportTaskIds)) &&
+    (b.extensionTaskIds === undefined || isIdList(b.extensionTaskIds)) &&
+    (b.studentRoutes === undefined || (typeof b.studentRoutes === 'object' && b.studentRoutes !== null))
   );
 }
 
@@ -60,7 +70,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const klass = await getClassForTeacher(body.classId, teacher.id);
+  const klass = await getClassWithRosterForTeacher(body.classId, teacher.id);
   if (!klass) {
     return NextResponse.json({ error: 'unknown_class' }, { status: 400 });
   }
@@ -83,6 +93,17 @@ export async function POST(request: Request) {
     ? (await filterToPublishedTaskIds(body.improvementTaskIds ?? [])).filter((id) => !taskIds.includes(id))
     : [];
 
+  // A task sits in one place in a session: a route never repeats a main or improvement task, nor the other route's.
+  const taken = new Set([...taskIds, ...improvementTaskIds]);
+  const supportTaskIds = (await filterToPublishedTaskIds(body.supportTaskIds ?? [])).filter((id) => !taken.has(id));
+  supportTaskIds.forEach((id) => taken.add(id));
+  const extensionTaskIds = (await filterToPublishedTaskIds(body.extensionTaskIds ?? [])).filter((id) => !taken.has(id));
+  const studentRoutes = cleanStudentRoutes(
+    body.studentRoutes,
+    new Set(klass.students.map((student) => student.id)),
+    { support: supportTaskIds, extension: extensionTaskIds }
+  );
+
   const { id, code } = await createSession({
     classId: body.classId,
     mode: homework ? 'graded' : body.mode,
@@ -94,7 +115,10 @@ export async function POST(request: Request) {
     shuffle: body.shuffle,
     // A pool as large as the list is no pool at all.
     poolSize: body.poolSize && body.poolSize < taskIds.length ? body.poolSize : null,
-    dueAt: homework && body.dueAt ? new Date(body.dueAt) : null
+    dueAt: homework && body.dueAt ? new Date(body.dueAt) : null,
+    supportTaskIds,
+    extensionTaskIds,
+    studentRoutes
   });
   return NextResponse.json({ id, code }, { status: 201 });
 }

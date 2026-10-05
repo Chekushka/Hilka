@@ -1,0 +1,29 @@
+{
+  "slug": "g7-retype-arithmetic",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Набери код: дії з числами",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\na = 17\nb = 5\nprint(a + b)\nprint(a * b)\nprint(a // b)\nprint(a % b)\n```\nПодивись на результат: що роблять // і %?",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "22\n85\n3\n2",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": ["Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.", "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab).", "// — ціла частина від ділення, % — остача."],
+  "reference": {
+    "code": "a = 17\nb = 5\nprint(a + b)\nprint(a * b)\nprint(a // b)\nprint(a % b)"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["retype", "easy-start"],
+  "version": 1,
+  "status": "published"
+}

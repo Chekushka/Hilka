@@ -1,0 +1,75 @@
+{
+  "slug": "g8-challenge-coins",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Виклик: найменше монет",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Є монети по 10, 5, 2 і 1 гривні. Прочитай суму в гривнях і виведи, скільки найменше монет потрібно, щоб її видати. Наприклад, 18 = 10 + 5 + 2 + 1 — чотири монети.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "18 гривень",
+      "stdin": ["18"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "7 гривень",
+      "stdin": ["7"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "30 гривень",
+      "stdin": ["30"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "99 гривень",
+      "stdin": ["99"],
+      "hidden": true,
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 12,
+          "tol": 0,
+          "which": "last"
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": ["Почни з найбільшої монети: скільки разів 10 вміщається в суму? Це s // 10.", "Що лишилося — s % 10. З цим залишком повтори те саме для 5, потім для 2 і для 1."],
+  "reference": {
+    "code": "s = int(input())\ncoins = s // 10\ns = s % 10\ncoins = coins + s // 5\ns = s % 5\ncoins = coins + s // 2\ns = s % 2\ncoins = coins + s\nprint(coins)"
+  },
+  "difficulty": 4,
+  "gradeTags": [8],
+  "tags": ["challenge"],
+  "version": 1,
+  "status": "published"
+}

@@ -7,6 +7,7 @@ import type { EditorActivity } from './activity';
 import type { Check, ReferenceArtifacts } from '@/lib/checker';
 import type { GridWorld } from '@/lib/runner';
 import type { GridWorldSpec, ParamSpec } from '@/lib/seed';
+import type { TaskTag } from './tags';
 
 export type TaskType = 'quiz' | 'predict' | 'parsons' | 'fill' | 'code' | 'fix';
 export type TaskStatus = 'draft' | 'published' | 'archived';
@@ -169,6 +170,8 @@ export interface CodeTask {
   reference: Reference;
   difficulty: 1 | 2 | 3 | 4 | 5;
   gradeTags: number[];
+  /** What kind of work it is (lib/task/tags.ts); absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
   /**
@@ -200,6 +203,8 @@ export interface ParsonsTask {
   hints: string[];
   difficulty: 1 | 2 | 3 | 4 | 5;
   gradeTags: number[];
+  /** What kind of work it is (lib/task/tags.ts); absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
 }
@@ -223,6 +228,8 @@ export interface QuizTask {
   hints: string[];
   difficulty: 1 | 2 | 3 | 4 | 5;
   gradeTags: number[];
+  /** What kind of work it is (lib/task/tags.ts); absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
 }
@@ -248,6 +255,8 @@ export interface PredictTask {
   reference: Reference;
   difficulty: 1 | 2 | 3 | 4 | 5;
   gradeTags: number[];
+  /** What kind of work it is (lib/task/tags.ts); absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
 }
@@ -273,6 +282,8 @@ export interface FixTask {
   reference: Reference;
   difficulty: 1 | 2 | 3 | 4 | 5;
   gradeTags: number[];
+  /** What kind of work it is (lib/task/tags.ts); absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
   /** `{name}` placeholders in the prompt, the program, the cases and the reference, resolved per student (lib/task/params.ts). Session-only. */
@@ -299,6 +310,8 @@ export interface FillTask {
   reference: Reference;
   difficulty: 1 | 2 | 3 | 4 | 5;
   gradeTags: number[];
+  /** What kind of work it is (lib/task/tags.ts); absent reads as none. */
+  tags?: TaskTag[];
   version: number;
   status: TaskStatus;
   /** `{name}` placeholders in the prompt, the program, the cases and the reference, resolved per student (lib/task/params.ts). Session-only. */
