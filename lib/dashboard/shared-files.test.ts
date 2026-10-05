@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { findSharedFiles } from './shared-files';
 
 function attempt(studentName: string, taskId: string, sourceHash: string | null, passed = true) {
-  return { studentName, taskId, taskTitle: taskId === 't1' ? 'Привіт, IDLE' : 'Цикл', passed, sourceHash };
+  return { studentId: studentName, studentName, taskId, taskTitle: taskId === 't1' ? 'Привіт, IDLE' : 'Цикл', passed, sourceHash };
 }
 
 describe('findSharedFiles', () => {

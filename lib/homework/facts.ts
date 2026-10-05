@@ -5,6 +5,7 @@
  * observation to look at, never a verdict — the class table shows a word, the
  * student card the detail, and nothing changes a grade. Pure.
  */
+import type { StudentRef } from '@/lib/classes/roster';
 import type { EditorActivity } from '@/lib/task/activity';
 import type { TaskPayload } from '@/lib/task/types';
 import { taughtConstructs, untaughtConstructs } from './constructs';
@@ -74,6 +75,7 @@ export function taughtForHomework(homeworkTaskIds: readonly string[], content: r
 
 /** An attempt as the facts read it. */
 export interface FactAttempt {
+  studentId: string;
   studentName: string;
   taskId: string;
   taskTitle: string;
@@ -95,12 +97,12 @@ export function hasFacts(facts: StudentFacts): boolean {
 }
 
 /**
- * Every roster name's facts, plus the similar-code groups for the session's
+ * Every roster student's facts, keyed by id, plus the similar-code groups for the session's
  * own list. `fillTaskIds`: a fill program is mostly its template, the same
  * for everyone by design, so it is never compared for similarity.
  */
 export function homeworkFacts(
-  roster: readonly string[],
+  roster: readonly StudentRef[],
   attempts: readonly FactAttempt[],
   taught: ReadonlySet<string>,
   fillTaskIds: ReadonlySet<string>
@@ -111,8 +113,8 @@ export function homeworkFacts(
   const similarGroups = findSimilarCode(passingPrograms);
 
   const byStudent = new Map<string, StudentFacts>();
-  for (const name of roster) {
-    const own = attempts.filter((attempt) => attempt.studentName === name);
+  for (const student of roster) {
+    const own = attempts.filter((attempt) => attempt.studentId === student.id);
     const taskIds = [...new Set(own.map((attempt) => attempt.taskId))];
     const facts: StudentFacts = { pasted: [], similar: [], untaught: [] };
 
@@ -136,11 +138,14 @@ export function homeworkFacts(
     }
 
     for (const group of similarGroups) {
-      if (group.studentNames.includes(name)) {
-        facts.similar.push({ taskTitle: group.taskTitle, others: group.studentNames.filter((other) => other !== name) });
+      if (group.studentIds.includes(student.id)) {
+        facts.similar.push({
+          taskTitle: group.taskTitle,
+          others: group.studentNames.filter((_, index) => group.studentIds[index] !== student.id)
+        });
       }
     }
-    byStudent.set(name, facts);
+    byStudent.set(student.id, facts);
   }
   return { byStudent, similarGroups };
 }

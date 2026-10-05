@@ -534,7 +534,8 @@ Placeholders are written `{a}` in `payload` text, in `cases[].stdin`, and in `re
 — on `code` (`prompt`, `starter`, a grid world), `fix` (`prompt`, `broken`) and `fill` (`prompt`,
 `template`; a gap `{{1}}` is never a placeholder). Never in checks, hints or check messages: those
 are shown as written, so a message must not mention `{a}`.
-Values are derived from `seed = hash(sessionId + studentName + taskId)` via a seeded PRNG in
+Values are derived from `seed = hash(sessionId + seedKey + taskId)` (the student's roster id, or
+their name for a student on a roster before ids — `lib/classes/roster.ts`, `seedKeyOf`) via a seeded PRNG in
 `lib/seed/`, so the same student always sees the same variant and a teacher's report reproduces
 it exactly.
 

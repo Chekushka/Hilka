@@ -8,7 +8,9 @@
  * passed it — not merely "hasn't started", which just means they haven't
  * reached it yet and is not itself a signal anything is wrong.
  */
+import type { RosterStudent } from '@/lib/classes/roster';
 import type { SessionAttemptRow } from '@/lib/db/attempts';
+import type { AssignedTo } from '@/lib/session/assigned';
 import type { SessionTaskSummary } from '@/lib/session/types';
 
 /** 'not_assigned': outside the student's pool (lib/seed/assignment.ts) — not theirs to do. */
@@ -21,6 +23,7 @@ export interface RollupCell {
 }
 
 export interface RollupRow {
+  studentId: string;
   studentName: string;
   /** Same order as the `tasks` passed in. */
   cells: RollupCell[];
@@ -29,16 +32,16 @@ export interface RollupRow {
 
 /** Rows sorted by `stuckCount` descending, then name — the students needing attention float to the top. */
 export function buildRollup(
-  roster: string[],
+  roster: readonly RosterStudent[],
   tasks: SessionTaskSummary[],
-  attempts: Pick<SessionAttemptRow, 'studentName' | 'taskId' | 'passed'>[],
+  attempts: Pick<SessionAttemptRow, 'studentId' | 'taskId' | 'passed'>[],
   /** With a pool: the tasks each student was given. Absent means every task, for everyone. */
-  assignedTo?: (studentName: string) => ReadonlySet<string>
+  assignedTo?: AssignedTo
 ): RollupRow[] {
-  const rows = roster.map((studentName) => {
-    const assigned = assignedTo?.(studentName);
+  const rows = roster.map((student) => {
+    const assigned = assignedTo?.(student);
     const cells = tasks.map((task): RollupCell => {
-      const own = attempts.filter((a) => a.studentName === studentName && a.taskId === task.id);
+      const own = attempts.filter((a) => a.studentId === student.id && a.taskId === task.id);
       if (assigned && !assigned.has(task.id)) {
         return { status: 'not_assigned', attempts: own.length };
       }
@@ -48,7 +51,8 @@ export function buildRollup(
       return { status: own.some((a) => a.passed) ? 'passed' : 'stuck', attempts: own.length };
     });
     return {
-      studentName,
+      studentId: student.id,
+      studentName: student.name,
       cells,
       stuckCount: cells.filter((cell) => cell.status === 'stuck').length
     };

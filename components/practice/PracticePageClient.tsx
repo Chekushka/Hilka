@@ -14,7 +14,7 @@ import { ProgressPanel } from '@/components/practice/ProgressPanel';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
-import { stageGainedByPass, type PlantStage } from '@/lib/meta/garden';
+import { stageGainedByPass, type PlantSpecies, type PlantStage } from '@/lib/meta/garden';
 import { taskXp } from '@/lib/meta/progress';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { hasCompletedTask, markTaskCompleted } from '@/lib/practice/progress';
@@ -26,7 +26,7 @@ interface PracticePageClientProps {
   /** The lesson's next step after a passed Check, or back to the lesson after its last one. */
   next?: NextTaskAction;
   /** The task's topic in this grade — whose garden plant a first pass may grow. */
-  topic?: { title: string; taskSlugs: string[] };
+  topic?: { title: string; species: PlantSpecies; taskSlugs: string[] };
   /** For a file-delivery task: the in-browser task in this lesson it rests on (lib/task/prerequisite.ts). */
   prerequisite?: { slug: string; title: string; href: string };
   /** Top of the task panel: back to the lesson, position, the next step. */
@@ -65,7 +65,7 @@ export function PracticePageClient({ task, next, topic, prerequisite, context, t
     if (!next || !firstPass) return next;
     const growth =
       topic && grewTo !== null
-        ? { stage: grewTo, label: t('garden.grew', { topic: topic.title, stage: t(`garden.stage${grewTo}`) }) }
+        ? { stage: grewTo, species: topic.species, label: t('garden.grew', { topic: topic.title, stage: t(`garden.stage${grewTo}`) }) }
         : undefined;
     return { ...next, reward: { xp: t('meta.xpEarned', { xp: taskXp(task.difficulty) }), growth } };
   }, [next, firstPass, grewTo, topic, task.difficulty]);

@@ -22,13 +22,15 @@ function hashString(value: string): number {
 }
 
 /**
- * `seed = hash(sessionId + studentName + taskId)` (docs/AI_CONTEXT.md,
+ * `seed = hash(sessionId + seedKey + taskId)` (docs/AI_CONTEXT.md,
  * "Cheating and Trust") — deterministic per (session, student, task), so
  * different students at adjacent desks get different variants and the same
- * student reopening the task gets the same one.
+ * student reopening the task gets the same one. `seedKey` is the student's
+ * (lib/classes/roster.ts, `seedKeyOf`): their roster id, or the name they had
+ * when ids were introduced — never their current name, so a rename moves nothing.
  */
-export function deriveSeed(sessionId: string, studentName: string, taskId: string): number {
-  return hashString(`${sessionId}\u0000${studentName}\u0000${taskId}`);
+export function deriveSeed(sessionId: string, seedKey: string, taskId: string): number {
+  return hashString(`${sessionId}\u0000${seedKey}\u0000${taskId}`);
 }
 
 /** A seeded RNG returning floats in [0, 1) — call repeatedly for a reproducible sequence. */

@@ -61,8 +61,8 @@ describe('topicProgress', () => {
 
   it("lists a grade's topics in curriculum order with done and total counts", () => {
     expect(topicProgress(tasks, new Set(['loop-2']), 7)).toEqual([
-      { slug: 'intro', title: 'Вступ', done: 0, total: 1 },
-      { slug: 'loops', title: 'Цикли', done: 1, total: 2 }
+      { slug: 'intro', title: 'Вступ', order: 1, done: 0, total: 1 },
+      { slug: 'loops', title: 'Цикли', order: 2, done: 1, total: 2 }
     ]);
   });
 
@@ -72,7 +72,7 @@ describe('topicProgress', () => {
 
   it('counts a task that appears twice only once', () => {
     expect(topicProgress([task('a'), task('a')], new Set(['a']), 7)).toEqual([
-      { slug: 'loops', title: 'Цикли', done: 1, total: 1 }
+      { slug: 'loops', title: 'Цикли', order: 2, done: 1, total: 1 }
     ]);
   });
 });

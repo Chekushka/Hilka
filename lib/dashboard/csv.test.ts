@@ -5,6 +5,7 @@ import { attemptsToCsv, formatPoints, gradesToCsv } from './csv';
 function row(overrides: Partial<SessionAttemptRow> = {}): SessionAttemptRow {
   return {
     id: '1',
+    studentId: 'a1',
     studentName: 'Олена',
     taskId: 'task-1',
     taskTitle: 'Квадрат',

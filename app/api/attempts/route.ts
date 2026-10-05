@@ -7,7 +7,9 @@
  * documented trade-off of a client-side checker (CLAUDE.md, "Cheating and
  * Trust") — the fix is a server-side re-check on final submission, not built
  * yet. What this route does enforce is that the row cannot lie about which
- * session, task and roster name it belongs to.
+ * session, task and roster student it belongs to. The student is named by
+ * roster id; a page loaded before ids existed sends the name instead, and is
+ * matched to its entry the same way (lib/classes/roster.ts, `findStudent`).
  *
  * For a file-delivery task the source hash is computed here, from the task as
  * the database knows it — never taken from the body — so a client cannot opt
@@ -21,11 +23,13 @@
  * browser's device mark (lib/session/device-cookie.ts).
  */
 import { NextResponse } from 'next/server';
+import { seedKeyOf } from '@/lib/classes/roster';
 import { hashSource, recordAttempt } from '@/lib/db/attempts';
 import { getDb } from '@/lib/db/client';
 import { getAttemptContext, listOwnAttempts, lockStudentTask } from '@/lib/db/sessions';
 import { getPublishedTaskById } from '@/lib/db/tasks';
 import { canSubmit } from '@/lib/homework/rules';
+import { deriveSeed } from '@/lib/seed';
 import { deviceId } from '@/lib/session/device-cookie';
 import { parseActivity } from '@/lib/task/activity';
 import type { AttemptInput } from '@/lib/session/types';
@@ -33,9 +37,10 @@ import type { AttemptInput } from '@/lib/session/types';
 function isValidBody(body: unknown): body is AttemptInput {
   if (typeof body !== 'object' || body === null) return false;
   const b = body as Record<string, unknown>;
+  if (typeof b.studentId !== 'string' && typeof b.studentName === 'string') b.studentId = b.studentName;
   return (
     typeof b.sessionId === 'string' &&
-    typeof b.studentName === 'string' &&
+    typeof b.studentId === 'string' &&
     typeof b.taskId === 'string' &&
     typeof b.taskVersion === 'number' &&
     typeof b.submittedAnswer === 'object' &&
@@ -61,20 +66,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const context = await getAttemptContext(body.sessionId, body.taskId, body.studentName);
+  const context = await getAttemptContext(body.sessionId, body.taskId, body.studentId);
   if (!context) {
     return NextResponse.json({ error: 'invalid_session' }, { status: 403 });
   }
 
   const device = await deviceId();
   const sourceHash = await fileSourceHash(body);
+  const { student } = context;
+  // The variant this student was served (the task route derives the same), kept with the attempt.
+  const seed = deriveSeed(body.sessionId, seedKeyOf(student), body.taskId);
   const id = await getDb().transaction(async (tx) => {
-    await lockStudentTask(tx, body.sessionId, body.studentName, body.taskId);
-    const prior = await listOwnAttempts(body.sessionId, body.studentName, tx);
+    await lockStudentTask(tx, body.sessionId, student.id, body.taskId);
+    const prior = await listOwnAttempts(body.sessionId, student.id, tx);
     if (!canSubmit(context.rules, body.taskId, prior)) return null;
     // Paste and edit counts are kept for homework only (decided with the project owner, docs/HOMEWORK.md).
     const activity = context.rules.kind === 'homework' ? parseActivity(body.activity) : null;
-    return (await recordAttempt(body, { sourceHash, deviceId: device, activity }, tx)).id;
+    const recorded = await recordAttempt(
+      body,
+      { id: student.id, name: student.name, seed },
+      { sourceHash, deviceId: device, activity },
+      tx
+    );
+    return recorded.id;
   });
   if (id === null) {
     return NextResponse.json({ error: 'no_checks_left' }, { status: 409 });

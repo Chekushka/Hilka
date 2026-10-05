@@ -2,7 +2,9 @@
  * What the teacher's re-check needs (docs/HOMEWORK.md, section 5, threat 5):
  * every passed attempt in the session with what was submitted, and each task
  * exactly as that student saw it — a parameterized task resolved to their own
- * variant, as `GET /api/sessions/[code]/tasks/[taskId]` did for them. The
+ * variant, as `GET /api/sessions/[code]/tasks/[taskId]` did for them: from the
+ * seed stored on the attempt, or — on attempts from before seeds were stored —
+ * from the name on it, which is what seeded them then. The
  * re-running happens in the teacher's browser (components/dashboard/RecheckPanel.tsx);
  * there is no server-side Python. An attempt on an older version of a task
  * than the one published now is marked, not re-checked: its checks may have
@@ -37,7 +39,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const current = task !== null && task.version === answer.taskVersion ? task : null;
     const seen =
       current && isParameterized(current)
-        ? resolveTaskParams(current, deriveSeed(session.id, answer.studentName, current.id))
+        ? resolveTaskParams(current, answer.seed ?? deriveSeed(session.id, answer.studentNameThen, current.id))
         : current;
     return {
       attemptId: answer.id,

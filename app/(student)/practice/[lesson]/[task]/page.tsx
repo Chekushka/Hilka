@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Explanation } from '@/components/lesson/Explanation';
 import { PracticePageClient } from '@/components/practice/PracticePageClient';
 import { getLesson, getPublishedTaskInLesson, listPracticeTaskMeta } from '@/lib/db/lessons';
+import { plantSpecies } from '@/lib/meta/garden';
 import { t } from '@/lib/i18n';
 import type { Task } from '@/lib/task/types';
 import { stepAfter } from '@/lib/lessons/view';
@@ -38,7 +39,11 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
   const topicSlug = practiceTasks.find((meta) => meta.slug === task.slug)?.topicSlug;
   const topicTasks = practiceTasks.filter((meta) => meta.topicSlug === topicSlug && meta.grades.includes(lesson.grade));
   const topic = topicSlug
-    ? { title: topicTasks[0]?.topicTitle ?? '', taskSlugs: topicTasks.map((meta) => meta.slug) }
+    ? {
+        title: topicTasks[0]?.topicTitle ?? '',
+        species: plantSpecies(topicTasks[0]?.topicOrder ?? 0),
+        taskSlugs: topicTasks.map((meta) => meta.slug)
+      }
     : undefined;
 
   const position = lesson.steps.findIndex((step) => step.slug === task.slug) + 1;

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { TaskPayload } from '@/lib/task/types';
 import { hasFacts, homeworkFacts, pastedWhole, programsOf, taughtForHomework, type FactAttempt } from './facts';
 
+/** A test student's id is their name — enough to tell them apart here. */
+const roster = (...names: string[]) => names.map((name) => ({ id: name, name }));
+
 describe('pastedWhole', () => {
   it('reports a long paste with few edits, never a short paste or a worked-on one', () => {
     expect(pastedWhole({ edits: 2, largestPasteChars: 200, largestPasteLines: 9 })).toBe(true);
@@ -49,6 +52,7 @@ else:
     print("Периметр більший")
 `;
   const attempt = (studentName: string, extra: Partial<FactAttempt>): FactAttempt => ({
+    studentId: studentName,
     studentName,
     taskId: 't1',
     taskTitle: 'Площа',
@@ -61,8 +65,7 @@ else:
   const taught = new Set(['call:float', 'call:input', 'call:print', 'kw:if', 'kw:else']);
 
   it('gathers each student’s facts and the similar groups', () => {
-    const { byStudent, similarGroups } = homeworkFacts(
-      ['Олена', 'Марко', 'Ігор'],
+    const { byStudent, similarGroups } = homeworkFacts(roster('Олена', 'Марко', 'Ігор'),
       [
         attempt('Олена', { activity: { edits: 1, largestPasteChars: 300, largestPasteLines: 8 } }),
         attempt('Марко', { code: program.replace(/area/g, 's').replace(/perimeter/g, 'p') }),
@@ -71,7 +74,9 @@ else:
       taught,
       new Set()
     );
-    expect(similarGroups).toEqual([{ taskId: 't1', taskTitle: 'Площа', studentNames: ['Марко', 'Олена'] }]);
+    expect(similarGroups).toEqual([
+      { taskId: 't1', taskTitle: 'Площа', studentIds: ['Марко', 'Олена'], studentNames: ['Марко', 'Олена'] }
+    ]);
     expect(byStudent.get('Олена')).toEqual({
       pasted: [{ taskTitle: 'Площа', lines: 8, edits: 1 }],
       similar: [{ taskTitle: 'Площа', others: ['Марко'] }],
@@ -82,12 +87,12 @@ else:
   });
 
   it('never compares fill programs, which share their template by design', () => {
-    const { similarGroups } = homeworkFacts(['Олена', 'Марко'], [attempt('Олена', {}), attempt('Марко', {})], taught, new Set(['t1']));
+    const { similarGroups } = homeworkFacts(roster('Олена', 'Марко'), [attempt('Олена', {}), attempt('Марко', {})], taught, new Set(['t1']));
     expect(similarGroups).toEqual([]);
   });
 
   it('reports nothing for a student with nothing to report', () => {
-    const { byStudent } = homeworkFacts(['Соломія'], [], taught, new Set());
+    const { byStudent } = homeworkFacts(roster('Соломія'), [], taught, new Set());
     expect(hasFacts(byStudent.get('Соломія')!)).toBe(false);
   });
 });

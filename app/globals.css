@@ -24,6 +24,11 @@
   --growth: #6e9a5f;        /* progress, garden, completion */
   --honey: #c9922f;         /* XP, rewards, unlocks */
   --soil: #d8ccb2;          /* the garden's ground — the sand in green, sand and honey */
+  /* Garden petals only (components/meta/Plant.tsx) — never for meaning elsewhere. */
+  --bloom-rose: #d48a9c;
+  --bloom-violet: #9483c2;
+  --bloom-sky: #6c9cc9;
+  --bloom-core: #7c5b38;    /* a flower's centre */
   --attention: #a8763c;     /* "not correct yet" — never red */
   --failure: #a3352b;       /* system failure only: connection lost, session closed */
 
@@ -87,6 +92,10 @@
     --growth: #86b575;
     --honey: #dfae4e;
     --soil: #4d4536;
+    --bloom-rose: #e3a2b1;
+    --bloom-violet: #b2a3dd;
+    --bloom-sky: #8db7de;
+    --bloom-core: #a47e50;
     --attention: #c79358;
     --failure: #d4645a;
 
@@ -110,6 +119,10 @@
   --growth: #86b575;
   --honey: #dfae4e;
   --soil: #4d4536;
+  --bloom-rose: #e3a2b1;
+  --bloom-violet: #b2a3dd;
+  --bloom-sky: #8db7de;
+  --bloom-core: #a47e50;
   --attention: #c79358;
   --failure: #d4645a;
 
@@ -132,6 +145,10 @@
   --color-growth: var(--growth);
   --color-honey: var(--honey);
   --color-soil: var(--soil);
+  --color-bloom-rose: var(--bloom-rose);
+  --color-bloom-violet: var(--bloom-violet);
+  --color-bloom-sky: var(--bloom-sky);
+  --color-bloom-core: var(--bloom-core);
   --color-attention: var(--attention);
   --color-failure: var(--failure);
 

@@ -15,7 +15,7 @@
 import Link from 'next/link';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { Plant } from '@/components/meta/Plant';
-import { plantStage } from '@/lib/meta/garden';
+import { plantSpecies, plantStage } from '@/lib/meta/garden';
 import { totalXp, type PracticeTaskMeta } from '@/lib/meta/progress';
 import { topicMap, type MapLesson } from '@/lib/meta/topic-map';
 import { t } from '@/lib/i18n';
@@ -58,7 +58,7 @@ export function ProgressSummary({
               data-stage={stage}
               className="flex flex-col items-center gap-1 rounded-lg border border-line px-1 py-2 text-center hover:border-accent hover:bg-bg"
             >
-              <Plant stage={stage} size={40} />
+              <Plant stage={stage} species={plantSpecies(topic.order)} size={40} />
               <span className="text-xs leading-tight text-ink">{topic.title}</span>
               <span className={`text-xs ${complete ? 'text-growth' : 'text-ink-muted'}`}>
                 {complete ? '✓ ' : ''}

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
+import { DeleteSessionButton } from '@/components/dashboard/DeleteSessionButton';
 import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
@@ -164,14 +165,14 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
     : [[], []];
   const grades =
     graded && !check
-      ? new Map(suggestSessionGrades(session, rows, checkRows).map((row) => [row.studentName, row.suggestion]))
+      ? new Map(suggestSessionGrades(session, rows, checkRows).map((row) => [row.studentId, row.suggestion]))
       : null;
   // Facts for the teacher (docs/HOMEWORK.md, section 5): homework only, as decided.
   const facts = homework ? await loadHomeworkFacts(session) : null;
   // Device marks (docs/HOMEWORK.md, section 2): how many browsers worked under each name.
   const devices = homework
     ? new Map(
-        session.roster.map((name) => [name, summarizeDevices(rows.filter((row) => row.studentName === name)).length])
+        session.roster.map((student) => [student.id, summarizeDevices(rows.filter((row) => row.studentId === student.id)).length])
       )
     : null;
   const taskIndex = new Map(session.tasks.map((task, index) => [task.id, index]));
@@ -252,6 +253,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             {t('dashboard.exportCsv')}
           </a>
         )}
+        <DeleteSessionButton sessionId={session.id} code={session.code} homework={homework} leaveTo="/dashboard" />
       </div>
 
       {session.tasks.length > 0 && (
@@ -282,7 +284,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                   const current = student.currentTaskId !== null ? taskIndex.get(student.currentTaskId) : undefined;
                   return (
                     <tr
-                      key={student.studentName}
+                      key={student.studentId}
                       data-state={student.state}
                       className="border-b border-line last:border-b-0 even:bg-bg/50"
                     >
@@ -291,7 +293,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                       </td>
                       <td className="py-3.5 pr-4 font-medium">
                         <Link
-                          href={`/dashboard/sessions/${session.id}/students/${encodeURIComponent(student.studentName)}`}
+                          href={`/dashboard/sessions/${session.id}/students/${student.studentId}`}
                           className="text-ink underline-offset-4 hover:text-accent hover:underline"
                           aria-label={t('dashboard.openStudentCard', {
                             name: student.studentName
@@ -358,24 +360,24 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                       </td>
                       {devices && (
                         <td className="py-3.5 pr-5 text-right tabular-nums">
-                          {(devices.get(student.studentName) ?? 0) > 1 ? (
+                          {(devices.get(student.studentId) ?? 0) > 1 ? (
                             <span className="font-semibold text-attention" data-testid="devices-many">
-                              {devices.get(student.studentName)}
+                              {devices.get(student.studentId)}
                             </span>
                           ) : (
-                            <span className="text-ink">{devices.get(student.studentName) || '—'}</span>
+                            <span className="text-ink">{devices.get(student.studentId) || '—'}</span>
                           )}
                         </td>
                       )}
                       {facts && (
                         <td className="py-3.5 pr-5">
-                          <FactsCell facts={facts.byStudent.get(student.studentName)} />
+                          <FactsCell facts={facts.byStudent.get(student.studentId)} />
                         </td>
                       )}
                       {grades && (
                         <td className="py-3.5 pr-5 text-center">
                           {/* Every row comes from the roster, so every name has a suggestion. */}
-                          <GradeCell suggestion={grades.get(student.studentName)!} />
+                          <GradeCell suggestion={grades.get(student.studentId)!} />
                         </td>
                       )}
                     </tr>

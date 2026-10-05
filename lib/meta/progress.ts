@@ -29,6 +29,8 @@ export interface PracticeTaskMeta {
 export interface TopicProgress {
   slug: string;
   title: string;
+  /** `topics.order` — also what picks the topic's kind of plant (lib/meta/garden.ts). */
+  order: number;
   done: number;
   total: number;
 }
@@ -67,6 +69,7 @@ export function topicProgress(
     .map(([slug, topic]) => ({
       slug,
       title: topic.title,
+      order: topic.order,
       done: [...topic.slugs].filter((taskSlug) => completed.has(taskSlug)).length,
       total: topic.slugs.size
     }));

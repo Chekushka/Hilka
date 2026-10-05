@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canSubmit, improvementOpen, lateCredit, taskState, type SessionRules } from './rules';
+import { canSubmit, checksLeft, improvementOpen, lateCredit, taskState, type SessionRules } from './rules';
 
 const homework: SessionRules = { kind: 'homework', mode: 'graded', taskIds: ['a', 'b'], improvementTaskIds: ['x'] };
 const gradedLesson: SessionRules = { kind: 'lesson', mode: 'graded', taskIds: ['a', 'b'], improvementTaskIds: [] };
@@ -114,5 +114,29 @@ describe('lateCredit', () => {
     expect(lateCredit(hours(48), due)).toBe(0.7);
     expect(lateCredit(hours(48.1), due)).toBe(0.5);
     expect(lateCredit(hours(24 * 7), due)).toBe(0.5);
+  });
+});
+
+describe('checksLeft', () => {
+  it('counts a homework task down from a first Check and two fixes', () => {
+    expect(checksLeft(homework, 'a', [])).toBe(3);
+    const first = at('a', false);
+    expect(checksLeft(homework, 'a', [first])).toBe(2);
+    expect(checksLeft(homework, 'a', [first, at('a', false), at('a', false)])).toBe(0);
+  });
+
+  it('is zero once a task is passed', () => {
+    expect(checksLeft(homework, 'a', [at('a', true)])).toBe(0);
+    expect(checksLeft(gradedLesson, 'a', [at('a', true)])).toBe(0);
+  });
+
+  it('gives an improvement task and a graded lesson one Check', () => {
+    expect(checksLeft(homework, 'x', [])).toBe(1);
+    expect(checksLeft(gradedLesson, 'b', [])).toBe(1);
+    expect(checksLeft(gradedLesson, 'b', [at('b', false)])).toBe(0);
+  });
+
+  it('sets no limit in a practice-mode lesson', () => {
+    expect(checksLeft(practiceLesson, 'a', [at('a', false)])).toBeNull();
   });
 });

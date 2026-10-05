@@ -65,6 +65,24 @@ export function taskState(
 }
 
 /**
+ * How many more Checks this task allows the student, or null when a
+ * practice-mode lesson sets no limit — what the room shows beside each task.
+ * Zero once the task is passed or out of Checks.
+ */
+export function checksLeft(
+  rules: SessionRules,
+  taskId: string,
+  attempts: readonly Attempt[],
+  config: GradingConfig = DEFAULT_GRADING
+): number | null {
+  const allowed = checksAllowed(rules, taskId, config);
+  if (allowed === null) return null;
+  const state = taskState(rules, taskId, attempts, config);
+  if (state.status === 'new') return allowed;
+  return state.status === 'fixable' ? state.fixesLeft : 0;
+}
+
+/**
  * Homework's improvement tasks appear once the student has lost points: a
  * main task whose first Check did not pass. Before that the main tasks come
  * first, and there is nothing to improve.

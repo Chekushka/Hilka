@@ -2,9 +2,9 @@
  * The database schema, as specified in docs/AI_CONTEXT.md.
  *
  * Two things here are load-bearing and easy to erode:
- * `classes.roster` is a plain array of display names and must never become a
- * students table — the no-registration constraint depends on it staying
- * trivial — and `attempts` is append-only, so a retry is a new row and "best
+ * `classes.students` is a plain list of display names, each with a random id
+ * and nothing else, and must never become a students table — the
+ * no-registration constraint depends on it staying trivial — and `attempts` is append-only, so a retry is a new row and "best
  * attempt" is a query. (`attempts.voided_at` is the one exception, below.)
  *
  * Deviation from the doc, deliberate: `tasks.slug`. Task content lives in
@@ -32,6 +32,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { Check } from '@/lib/checker';
 import type { LessonKind } from '@/lib/lessons/types';
+import type { RosterStudent } from '@/lib/classes/roster';
 import type { PracticeProgress } from '@/lib/practice/progress';
 import type { SessionKind } from '@/lib/session/types';
 import type { ParamSpec } from '@/lib/seed';
@@ -146,8 +147,17 @@ export const classes = pgTable('classes', {
     .notNull()
     .references(() => teachers.id),
   title: text('title').notNull(),
-  // Display names the teacher typed. Not students, not accounts, nothing else.
-  roster: text('roster').array().notNull().default([])
+  // Display names the teacher typed, each with a random id (lib/classes/roster.ts).
+  // Not accounts, nothing else. Attempts key on the id, so a rename is one
+  // field here and never touches results.
+  students: jsonb('students').$type<RosterStudent[]>().notNull().default([]),
+  // Superseded by `students` and kept in step with it only while code from
+  // before migration 0009 may still be running. Nothing reads it; the next
+  // migration drops it.
+  roster: text('roster').array().notNull().default([]),
+  // 7, 8 or 9, or null when the teacher did not say: the session builder
+  // starts its task bank on this grade.
+  grade: smallint('grade')
 });
 
 export const sessions = pgTable(
@@ -177,7 +187,10 @@ export const sessions = pgTable(
     dueAt: timestamp('due_at', { withTimezone: true }),
     // A class check only: the homework it checks. Its results confirm or
     // lower that homework's credit (lib/homework/grade.ts), never a grade of their own.
-    checksSessionId: uuid('checks_session_id').references((): AnyPgColumn => sessions.id)
+    checksSessionId: uuid('checks_session_id').references((): AnyPgColumn => sessions.id),
+    // Orders a class's sessions on the dashboard, newest first. Sessions made
+    // before this column read as made when it was added.
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => [
     // Codes are recycled: a code is unique only among sessions that are still
@@ -206,6 +219,12 @@ export const attempts = pgTable(
     sessionId: uuid('session_id')
       .notNull()
       .references(() => sessions.id),
+    // The roster entry's id (classes.students): what every lookup keys on.
+    // Nullable only for the deploy that introduces it — a trigger fills it
+    // for an insert that leaves it out, and the next migration makes it NOT NULL.
+    studentId: text('student_id'),
+    // The name as it was when the attempt was made, never rewritten. Screens
+    // show the roster's current name, and this one for a student no longer on it.
     studentName: text('student_name').notNull(),
     taskId: uuid('task_id')
       .notNull()
@@ -230,7 +249,7 @@ export const attempts = pgTable(
     voidedAt: timestamp('voided_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
-  (table) => [index('attempts_session_idx').on(table.sessionId, table.studentName)]
+  (table) => [index('attempts_session_student_idx').on(table.sessionId, table.studentId)]
 );
 
 /**

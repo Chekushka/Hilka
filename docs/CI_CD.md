@@ -110,7 +110,7 @@ overwrite the UI edits with the older files.
 
 The workflows call these scripts, which `package.json` already defines:
 `typecheck`, `lint`, `test`, `test:browser`, `db:generate`, `db:migrate`,
-`db:seed`, `verify:references`.
+`db:check-migration`, `db:seed`, `verify:references`.
 
 `verify:references` runs against `playwright.references.config.ts`, not the
 shared `playwright.config.ts` — the shared one waits for `/practice`, which
@@ -133,6 +133,21 @@ Neon-specific — the app speaks plain Postgres.
 The migration-drift step regenerates migrations and fails if anything new
 appears. A schema edit committed without its migration is otherwise invisible
 until a deploy runs against the old tables.
+
+`db:check-migration` covers what the drift check cannot: a migration that
+rewrites data. It builds a scratch database at the migration before 0009
+(student ids), writes old-shape rows the way that code wrote them, applies the
+rest, and asserts the backfill and the temporary triggers
+(`scripts/db/check-student-ids-migration.ts`). It needs a server where it may
+create and drop a database — the browser job's Postgres, or a local one —
+never Neon.
+
+**A migration that changes what running code reads is rolled out in two
+steps.** `migrate.yml` and the Vercel deploy start on the same merge and race,
+so for a few minutes old code runs against the new schema or the other way
+round. Step one adds and backfills and drops nothing, keeping old code working
+(0009 keeps `classes.roster` in step and fills `attempts.student_id` with
+triggers); step two, a release later, removes what only old code needed.
 
 ### Working on the database locally
 

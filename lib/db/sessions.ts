@@ -5,6 +5,7 @@
  * state.
  */
 import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { findStudent, seedKeyOf, type RosterStudent } from '@/lib/classes/roster';
 import type { SessionRules } from '@/lib/homework/rules';
 import { assignTasks, type AssignmentRule } from '@/lib/seed';
 import type {
@@ -19,6 +20,7 @@ import { isFileDelivery } from '@/lib/task/prerequisite';
 import { getDb, type Database, type Executor } from './client';
 import { attempts, classes, sessions, tasks } from './schema';
 import { orderSessionTasks } from './session-mapping';
+import { attemptStudentId } from './students';
 
 export interface TeacherSessionDetail {
   id: string;
@@ -33,7 +35,7 @@ export interface TeacherSessionDetail {
   kind: SessionKind;
   /** Homework only, ISO. */
   dueAt: string | null;
-  roster: string[];
+  roster: RosterStudent[];
   /** The session's assigned tasks, in the order a student meets them — the "who is stuck" rollup's columns. */
   tasks: SessionTaskSummary[];
   /** Homework only. */
@@ -68,7 +70,7 @@ export async function getSessionForTeacher(
 ): Promise<TeacherSessionDetail | null> {
   const db = getDb();
   const [row] = await db
-    .select({ session: sessions, classTitle: classes.title, roster: classes.roster })
+    .select({ session: sessions, classTitle: classes.title, roster: classes.students })
     .from(sessions)
     .innerJoin(classes, eq(sessions.classId, classes.id))
     .where(and(eq(sessions.id, sessionId), eq(classes.teacherId, teacherId)))
@@ -112,7 +114,7 @@ export async function listClassChecks(homeworkId: string): Promise<ClassCheckSum
 
 /** One Check in a class check, for the homework's grade (lib/homework/grade.ts). */
 export interface CheckAttemptRow {
-  studentName: string;
+  studentId: string;
   taskId: string;
   passed: boolean;
   createdAt: string;
@@ -122,7 +124,7 @@ export interface CheckAttemptRow {
 export async function listCheckAttempts(homeworkId: string): Promise<CheckAttemptRow[]> {
   const rows = await getDb()
     .select({
-      studentName: attempts.studentName,
+      studentId: attemptStudentId,
       taskId: attempts.taskId,
       passed: attempts.passed,
       createdAt: attempts.createdAt
@@ -136,7 +138,7 @@ export async function listCheckAttempts(homeworkId: string): Promise<CheckAttemp
 export async function getOpenSessionByCode(code: string): Promise<JoinedSession | null> {
   const db = getDb();
   const [row] = await db
-    .select({ session: sessions, roster: classes.roster })
+    .select({ session: sessions, roster: classes.students })
     .from(sessions)
     .innerJoin(classes, eq(sessions.classId, classes.id))
     .where(and(eq(sessions.code, code.toUpperCase()), isNull(sessions.closesAt)))
@@ -180,6 +182,8 @@ export async function getOpenSessionByCode(code: string): Promise<JoinedSession 
 /** What an attempt is checked against: the open session's rules, if the task and the name belong to it. */
 export interface AttemptContext {
   rules: SessionRules;
+  /** The roster entry the attempt is for. */
+  student: RosterStudent;
 }
 
 /**
@@ -187,36 +191,38 @@ export interface AttemptContext {
  * the session is open, the student is on the class roster, and the task is
  * theirs — one of their assigned main tasks or an improvement task. A client can lie about all
  * three, so the API route re-derives this rather than trusting the request body.
+ * `studentRef` is the student's id, or their name from a page loaded before ids.
  */
 export async function getAttemptContext(
   sessionId: string,
   taskId: string,
-  studentName: string
+  studentRef: string
 ): Promise<AttemptContext | null> {
   const [row] = await getDb()
-    .select({ session: sessions, roster: classes.roster })
+    .select({ session: sessions, roster: classes.students })
     .from(sessions)
     .innerJoin(classes, eq(sessions.classId, classes.id))
     .where(and(eq(sessions.id, sessionId), isNull(sessions.closesAt)))
     .limit(1);
   if (!row) return null;
   const { improvementTaskIds, kind, mode } = row.session;
-  if (!row.roster.includes(studentName)) return null;
+  const student = findStudent(row.roster, studentRef);
+  if (!student) return null;
   // Only the student's own tasks: with a pool, another student's task is not theirs to answer.
-  const taskIds = assignTasks(row.session.taskIds, sessionId, studentName, {
+  const taskIds = assignTasks(row.session.taskIds, sessionId, seedKeyOf(student), {
     poolSize: row.session.poolSize,
     shuffle: false
   });
   if (!taskIds.includes(taskId) && !improvementTaskIds.includes(taskId)) return null;
-  return { rules: { kind, mode, taskIds, improvementTaskIds } };
+  return { rules: { kind, mode, taskIds, improvementTaskIds }, student };
 }
 
 export interface OwnAttemptRow extends OwnAttempt {
   deviceId: string | null;
 }
 
-/** One name's attempts in one session, voided ones left out, oldest first — what the rules read. */
-export async function listOwnAttempts(sessionId: string, studentName: string, db: Executor = getDb()): Promise<OwnAttemptRow[]> {
+/** One student's attempts in one session, voided ones left out, oldest first — what the rules read. */
+export async function listOwnAttempts(sessionId: string, studentId: string, db: Executor = getDb()): Promise<OwnAttemptRow[]> {
   const rows = await db
     .select({
       taskId: attempts.taskId,
@@ -228,7 +234,7 @@ export async function listOwnAttempts(sessionId: string, studentName: string, db
     })
     .from(attempts)
     .where(
-      and(eq(attempts.sessionId, sessionId), eq(attempts.studentName, studentName), isNull(attempts.voidedAt))
+      and(eq(attempts.sessionId, sessionId), eq(attemptStudentId, studentId), isNull(attempts.voidedAt))
     )
     .orderBy(asc(attempts.createdAt));
   return rows.map((row) => ({
@@ -239,12 +245,12 @@ export async function listOwnAttempts(sessionId: string, studentName: string, db
 }
 
 /**
- * Serializes attempts by one name on one task: two Checks sent at once (a
+ * Serializes attempts by one student on one task: two Checks sent at once (a
  * double click, two tabs) must not both count as the first. Held until the
  * surrounding transaction ends.
  */
-export async function lockStudentTask(db: Executor, sessionId: string, studentName: string, taskId: string) {
-  await db.execute(sql`select pg_advisory_xact_lock(hashtext(${`${sessionId}|${studentName}|${taskId}`}))`);
+export async function lockStudentTask(db: Executor, sessionId: string, studentId: string, taskId: string) {
+  await db.execute(sql`select pg_advisory_xact_lock(hashtext(${`${sessionId}|${studentId}|${taskId}`}))`);
 }
 
 /** The teacher's own session row, for the actions below; null when it is not theirs. */
@@ -285,7 +291,7 @@ export async function setSessionDueAt(sessionId: string, teacherId: string, dueA
 }
 
 /**
- * Cancels every attempt one device made under one name (docs/HOMEWORK.md,
+ * Cancels every attempt one device made under one student (docs/HOMEWORK.md,
  * section 2): someone else worked as this student. The attempts stay in the
  * table, marked, so the student card can still show what happened; they no
  * longer count, and the tries they used are free again.
@@ -293,7 +299,7 @@ export async function setSessionDueAt(sessionId: string, teacherId: string, dueA
 export async function voidDeviceAttempts(
   sessionId: string,
   teacherId: string,
-  studentName: string,
+  studentId: string,
   deviceId: string
 ): Promise<number | null> {
   const id = await ownedSessionId(sessionId, teacherId);
@@ -304,11 +310,35 @@ export async function voidDeviceAttempts(
     .where(
       and(
         eq(attempts.sessionId, id),
-        eq(attempts.studentName, studentName),
+        eq(attemptStudentId, studentId),
         eq(attempts.deviceId, deviceId),
         isNull(attempts.voidedAt)
       )
     )
     .returning({ id: attempts.id });
   return rows.length;
+}
+
+/**
+ * Deletes a session from its class, with everything recorded in it: its
+ * attempts and, for a homework, its class checks and theirs. The one place
+ * attempts are ever removed rather than appended to — a teacher withdrawing a
+ * whole assignment (one made by mistake, a test run, last term's), never a
+ * way to edit one student's results. Returns the number of sessions removed,
+ * or null when the session is not this teacher's.
+ */
+export async function deleteSession(sessionId: string, teacherId: string): Promise<number | null> {
+  const id = await ownedSessionId(sessionId, teacherId);
+  if (!id) return null;
+  return getDb().transaction(async (tx) => {
+    const checks = await tx.select({ id: sessions.id }).from(sessions).where(eq(sessions.checksSessionId, id));
+    const ids = [id, ...checks.map((check) => check.id)];
+    await tx.delete(attempts).where(inArray(attempts.sessionId, ids));
+    // Checks first: they point at the homework.
+    if (checks.length > 0) {
+      await tx.delete(sessions).where(inArray(sessions.id, checks.map((check) => check.id)));
+    }
+    await tx.delete(sessions).where(eq(sessions.id, id));
+    return ids.length;
+  });
 }

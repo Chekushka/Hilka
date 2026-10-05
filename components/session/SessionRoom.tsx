@@ -11,7 +11,12 @@
  * lib/homework/rules.ts derive everything shown from it; the server applies
  * the same rules and refuses what they do not allow.
  *
- * `studentName` is read from sessionStorage through `useSyncExternalStore`
+ * The student is kept by roster id (lib/classes/roster.ts), so a rename by the
+ * teacher mid-session changes nothing here. Before ids the same storage slot
+ * held the name; `findStudent` reads either, so a tab open across the deploy
+ * carries on without asking again.
+ *
+ * The stored value is read from sessionStorage through `useSyncExternalStore`
  * rather than an effect: the value only exists in the browser, so the server
  * render and the first client render must agree (null) and the real value
  * appears once React swaps in the client snapshot — the mismatch-free way to
@@ -38,10 +43,12 @@ import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
-import { improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
+import { checksLeft, improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
 import { t } from '@/lib/i18n';
+import { findStudent, seedKeyOf } from '@/lib/classes/roster';
 import { assignTasks } from '@/lib/seed';
 import { nextOpenTaskId } from '@/lib/session/next-task';
+import { sessionProgress, type SessionProgress } from '@/lib/session/progress';
 import { filePrerequisite } from '@/lib/task/prerequisite';
 import type { JoinedSession, JoinedSessionTask, OwnAttempt, OwnSessionState } from '@/lib/session/types';
 import type { Task } from '@/lib/task/types';
@@ -51,7 +58,8 @@ interface SessionRoomProps {
   session: JoinedSession;
 }
 
-function nameStorageKey(code: string) {
+/** Holds the student's roster id — or, written before ids, their name. The key kept its old name so such a tab carries on. */
+function studentStorageKey(code: string) {
   return `hilka:session:${code}:name`;
 }
 
@@ -61,12 +69,12 @@ function examStartStorageKey(code: string) {
 
 const noSubscription = () => () => {};
 
-function useStoredName(code: string): string | null {
+function useStoredStudent(code: string): string | null {
   return useSyncExternalStore(
     noSubscription,
     () => {
       try {
-        return sessionStorage.getItem(nameStorageKey(code));
+        return sessionStorage.getItem(studentStorageKey(code));
       } catch {
         return null;
       }
@@ -77,7 +85,7 @@ function useStoredName(code: string): string | null {
 
 /**
  * The countdown's anchor: the moment this student started the session, kept
- * in sessionStorage (alongside the name, minted in `pickName`) so a reload
+ * in sessionStorage (alongside the student, minted in `pickStudent`) so a reload
  * does not hand back extra time.
  */
 function useStoredExamStart(code: string): number | null {
@@ -128,8 +136,25 @@ function Notice({ tone = 'info', children, testId }: { tone?: 'info' | 'attentio
 }
 
 /** The task list's mark for one task, in words — never colour alone. */
-function StatusMark({ state, graded, homework }: { state: TaskState; graded: boolean; homework: boolean }) {
+function StatusMark({
+  state,
+  graded,
+  homework,
+  left
+}: {
+  state: TaskState;
+  graded: boolean;
+  homework: boolean;
+  /** Checks this task still allows; null when unlimited. */
+  left: number | null;
+}) {
   switch (state.status) {
+    case 'new':
+      return left === null ? null : (
+        <span className="text-sm text-ink-muted" data-testid="task-checks-left">
+          {t('session.taskChecksLeft', { n: left })}
+        </span>
+      );
     case 'passed':
       return (
         <span className="text-sm text-growth">
@@ -153,10 +178,109 @@ function StatusMark({ state, graded, homework }: { state: TaskState; graded: boo
   }
 }
 
+/** How far through the session the student is: a bar in growth, the count in words, and the Checks left. */
+function SessionProgressBar({ progress }: { progress: SessionProgress }) {
+  const { passed, total } = progress.main;
+  return (
+    <section aria-label={t('session.progressLabel')} className="rounded-lg border border-line bg-surface px-4 py-3" data-testid="session-progress">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+        <span className="font-semibold text-ink">{t('session.progressDone', { done: passed, total })}</span>
+        <span className="text-ink-muted" data-testid="checks-left-total">
+          {progress.checksLeft === null
+            ? t('session.progressUnlimited')
+            : t('session.progressChecksLeft', { n: progress.checksLeft })}
+        </span>
+      </div>
+      <div
+        className="mt-2 h-2 overflow-hidden rounded-full bg-shell"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={passed}
+        aria-label={t('session.progressDone', { done: passed, total })}
+      >
+        <div className="h-full rounded-full bg-growth" style={{ width: `${total > 0 ? (passed / total) * 100 : 0}%` }} />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * What the student takes away once nothing is left to do: how many tasks were
+ * solved and, for homework, how. Which tasks — never a grade (docs/AI_CONTEXT.md,
+ * "Grading"). The way it is said stays calm whatever the count.
+ */
+function ResultsSummary({
+  progress,
+  homework,
+  graded,
+  timeUp = false
+}: {
+  progress: SessionProgress;
+  homework: boolean;
+  graded: boolean;
+  timeUp?: boolean;
+}) {
+  const { main, improvement } = progress;
+  const all = main.passed === main.total;
+  const title = homework
+    ? all
+      ? t('session.resultsTitleHomeworkAll')
+      : t('session.resultsTitleHomework')
+    : all
+      ? t('session.resultsTitleAll')
+      : t('session.resultsTitle');
+  return (
+    <section
+      aria-labelledby="results-title"
+      aria-live="polite"
+      data-testid="session-results"
+      className={`rounded-lg border-l-4 bg-surface p-4 ${all ? 'border-growth' : 'border-accent'}`}
+    >
+      {!timeUp && (
+        <h2 id="results-title" className={`flex items-center gap-2 text-xl font-semibold ${all ? 'text-growth' : 'text-ink'}`}>
+          {all && <span aria-hidden="true">✓</span>}
+          {title}
+        </h2>
+      )}
+      <p id={timeUp ? 'results-title' : undefined} className={`text-base text-ink ${timeUp ? '' : 'mt-2'}`}>
+        {timeUp
+          ? t('session.timeUpResults', { passed: main.passed, total: main.total })
+          : t('session.resultsSolved', { passed: main.passed, total: main.total })}
+      </p>
+      {homework && (
+        <ul className="mt-2 space-y-0.5 text-sm text-ink">
+          <li>{t('session.resultsFirst', { n: main.passed - main.passedViaFix })}</li>
+          {main.passedViaFix > 0 && (
+            <li>{t('session.resultsFixed', { n: main.passedViaFix, credit: percent(DEFAULT_GRADING.fixCredit) })}</li>
+          )}
+          {main.failed > 0 && <li>{t('session.resultsFailed', { n: main.failed })}</li>}
+        </ul>
+      )}
+      {!homework && graded && main.failed > 0 && (
+        <p className="mt-1 text-sm text-ink">{t('session.resultsFailed', { n: main.failed })}</p>
+      )}
+      {improvement &&
+        (improvement.notStarted + improvement.inProgress > 0 ? (
+          <p className="mt-2 text-sm text-ink">{t('session.resultsImprovementOpen')}</p>
+        ) : (
+          <p className="mt-2 text-sm text-ink">
+            {t('session.resultsImprovement', { passed: improvement.passed, total: improvement.total })}
+          </p>
+        ))}
+      <p className="mt-2 text-sm text-ink-muted">
+        {graded ? t('session.resultsTeacherSees') : t('session.resultsPractice')}
+      </p>
+    </section>
+  );
+}
+
 export function SessionRoom({ code, session }: SessionRoomProps) {
-  const storedName = useStoredName(code);
-  const [pickedName, setPickedName] = useState<string | null>(null);
-  const studentName = pickedName ?? storedName;
+  const storedRef = useStoredStudent(code);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  // A stored student no longer on the roster (removed since) goes back to the name screen.
+  const student = findStudent(session.roster, pickedId ?? storedRef);
+  const studentId = student?.id ?? null;
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   // What the selected task looked like when it was opened: a homework task
@@ -176,11 +300,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   );
   // This student's own tasks, in their own order: all of them, or a pool drawn for them, maybe
   // shuffled (lib/seed/assignment.ts) — the server draws the same.
-  const myTasks: JoinedSessionTask[] = studentName
+  const myTasks: JoinedSessionTask[] = student
     ? assignTasks(
         session.tasks.map((task) => task.id),
         session.id,
-        studentName,
+        seedKeyOf(student),
         session.assignment
       ).flatMap((taskId) => session.tasks.filter((task) => task.id === taskId))
     : session.tasks;
@@ -192,6 +316,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   };
   const attempts: OwnAttempt[] = own?.attempts ?? [];
   const stateOf = (taskId: string) => taskState(rules, taskId, attempts);
+  const checksLeftOf = (taskId: string) => checksLeft(rules, taskId, attempts);
+  const progress = sessionProgress(rules, attempts);
   const improvementVisible = improvementOpen(rules, attempts);
   const visibleTasks: JoinedSessionTask[] = improvementVisible ? [...myTasks, ...session.improvementTasks] : myTasks;
 
@@ -216,8 +342,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   const timeUp = remainingS === 0;
 
   const loadOwnState = useCallback(
-    (name: string) => {
-      fetch(`/api/sessions/${code}/me?student=${encodeURIComponent(name)}`)
+    (id: string) => {
+      fetch(`/api/sessions/${code}/me?student=${encodeURIComponent(id)}`)
         .then((response) => (response.ok ? (response.json() as Promise<OwnSessionState>) : Promise.reject()))
         .then(setOwn)
         // Unreachable server: the student can still work; the server keeps the count either way.
@@ -227,16 +353,16 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   );
 
   useEffect(() => {
-    if (studentName) loadOwnState(studentName);
-  }, [studentName, loadOwnState]);
+    if (studentId) loadOwnState(studentId);
+  }, [studentId, loadOwnState]);
 
   useEffect(() => {
-    if (!selectedTaskId || !studentName || fetchedRef.current.has(selectedTaskId)) return;
+    if (!selectedTaskId || !studentId || fetchedRef.current.has(selectedTaskId)) return;
     fetchedRef.current.add(selectedTaskId);
     let cancelled = false;
     // `student` lets a parameterized task (docs/TASK_SCHEMA.md) resolve to
     // this student's own variant server-side; a task with no params ignores it.
-    fetch(`/api/sessions/${code}/tasks/${selectedTaskId}?student=${encodeURIComponent(studentName)}`)
+    fetch(`/api/sessions/${code}/tasks/${selectedTaskId}?student=${encodeURIComponent(studentId)}`)
       .then((response) => (response.ok ? (response.json() as Promise<Task>) : Promise.reject()))
       .then((task) => {
         if (!cancelled) setTaskCache((previous) => ({ ...previous, [selectedTaskId]: task }));
@@ -247,15 +373,15 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     return () => {
       cancelled = true;
     };
-  }, [code, selectedTaskId, studentName]);
+  }, [code, selectedTaskId, studentId]);
 
   const selectedTask = selectedTaskId ? (taskCache[selectedTaskId] ?? null) : null;
 
-  const pickName = useCallback(
-    (name: string) => {
-      setPickedName(name);
+  const pickStudent = useCallback(
+    (id: string) => {
+      setPickedId(id);
       try {
-        sessionStorage.setItem(nameStorageKey(code), name);
+        sessionStorage.setItem(studentStorageKey(code), id);
         // The exam clock starts the moment the student begins, and only here
         // — reading it back on a later reload never resets it.
         if (session.timeLimitS !== null && !sessionStorage.getItem(examStartStorageKey(code))) {
@@ -275,7 +401,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   }
 
   function submitAttempt(taskId: string, taskVersion: number, outcome: AttemptOutcome) {
-    if (!studentName) return;
+    if (!studentId) return;
     // Appended at once, so the room moves with the Check; the server's answer
     // only matters when it refuses, and then the room re-reads what counts.
     setOwn((previous) => ({
@@ -297,7 +423,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sessionId: session.id,
-        studentName,
+        studentId,
         taskId,
         taskVersion,
         submittedAnswer: outcome.submittedAnswer,
@@ -309,7 +435,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       })
     })
       .then((response) => {
-        if (response.status === 409) loadOwnState(studentName);
+        if (response.status === 409) loadOwnState(studentId);
       })
       .catch(() => undefined);
   }
@@ -331,7 +457,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     </div>
   );
 
-  if (!studentName) {
+  if (!student) {
     return (
       <main className="mx-auto w-full max-w-3xl p-6">
         <p className="text-sm text-ink-muted">{t('session.sessionCode', { code })}</p>
@@ -345,14 +471,14 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         {classCheck && <div className="mt-4">{classCheck}</div>}
         {/* Big targets in a grid: a class of 25 finds a name by scanning, not by reading a line. */}
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {session.roster.map((name) => (
-            <li key={name}>
+          {session.roster.map((entry) => (
+            <li key={entry.id}>
               <button
                 type="button"
-                onClick={() => pickName(name)}
+                onClick={() => pickStudent(entry.id)}
                 className="w-full rounded-lg border border-line bg-surface px-4 py-3 text-left text-lg text-ink hover:border-accent focus-visible:border-accent"
               >
-                {name}
+                {entry.name}
               </button>
             </li>
           ))}
@@ -381,6 +507,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
           </h1>
           <p className="mt-2 text-ink">{t('session.timeUpNote')}</p>
         </section>
+        {own && (
+          <div className="mt-4">
+            <ResultsSummary progress={progress} homework={homework} graded={graded} timeUp />
+          </div>
+        )}
       </main>
     );
   }
@@ -428,6 +559,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       onSelect: () => openTask(nextId)
     };
     const position = visibleTasks.findIndex((task) => task.id === selectedTaskId) + 1;
+    const selectedChecksLeft = checksLeftOf(selectedTaskId);
     const backToList = (
       <button type="button" onClick={() => openTask(null)} className="text-accent">
         ← {t('session.backToList')}
@@ -510,6 +642,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               {position > 0 && (
                 <span className="text-ink-muted">{t('task.position', { n: position, total: visibleTasks.length })}</span>
               )}
+              {selectedChecksLeft !== null && (
+                <span className="rounded-full bg-shell px-3 py-1 text-ink" data-testid="workspace-checks-left">
+                  {t('session.workspaceChecksLeft', { n: selectedChecksLeft })}
+                </span>
+              )}
               {timerBadge}
             </>
           ),
@@ -541,7 +678,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-left text-ink hover:border-accent"
       >
         <span>{task.title}</span>
-        <StatusMark state={stateOf(task.id)} graded={graded} homework={homework} />
+        <StatusMark state={stateOf(task.id)} graded={graded} homework={homework} left={checksLeftOf(task.id)} />
       </button>
     </li>
   );
@@ -559,6 +696,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         <h1 className="text-xl font-semibold text-ink">{t('session.taskListTitle')}</h1>
         {timerBadge}
       </div>
+      {progress.complete && <ResultsSummary progress={progress} homework={homework} graded={graded} />}
+      {myTasks.length > 0 && <SessionProgressBar progress={progress} />}
       <ul className="space-y-2">{myTasks.map(taskButton)}</ul>
       {improvementVisible && (
         <section aria-labelledby="improvement-title" className="space-y-2 pt-2">

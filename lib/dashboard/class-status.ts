@@ -13,8 +13,10 @@
  * running total. Reopening a task restarts both counts, so the totals are a
  * floor, never an overstatement.
  */
+import type { RosterStudent } from '@/lib/classes/roster';
 import type { SessionAttemptRow } from '@/lib/db/attempts';
 import { taskState } from '@/lib/homework/rules';
+import type { AssignedTo } from '@/lib/session/assigned';
 import type { SessionKind, SessionMode, SessionTaskSummary } from '@/lib/session/types';
 import { buildRollup, type RollupCell } from './rollup';
 
@@ -34,10 +36,11 @@ export const STUCK_RULES = {
 
 export type StudentAttempt = Pick<
   SessionAttemptRow,
-  'studentName' | 'taskId' | 'passed' | 'hintsUsed' | 'durationMs' | 'createdAt'
+  'studentId' | 'taskId' | 'passed' | 'hintsUsed' | 'durationMs' | 'createdAt'
 >;
 
 export interface StudentSummary {
+  studentId: string;
   studentName: string;
   state: StudentState;
   /** Same order as the session's tasks. */
@@ -64,7 +67,7 @@ export interface SessionContext {
   /** Absent means a lesson. Homework is graded, with fixes (docs/HOMEWORK.md). */
   kind?: SessionKind;
   /** With a pool: the tasks each student was given (lib/seed/assignment.ts). Absent means every task. */
-  assignedTo?: (studentName: string) => ReadonlySet<string>;
+  assignedTo?: AssignedTo;
   /** An open session can go idle; a closed one only has its final state. */
   open: boolean;
   /** Milliseconds since the epoch, passed in so the function stays pure. */
@@ -105,27 +108,27 @@ function stateOf(
 }
 
 /**
- * One summary per roster name, in roster order — sorting is the caller's
- * (see `sortForClassTable`). A name with attempts but no longer on the
+ * One summary per roster student, in roster order — sorting is the caller's
+ * (see `sortForClassTable`). A student with attempts but no longer on the
  * roster is left out, same as the rollup.
  */
 export function summarizeStudents(
-  roster: string[],
+  roster: readonly RosterStudent[],
   tasks: SessionTaskSummary[],
   attempts: StudentAttempt[],
   context: SessionContext
 ): StudentSummary[] {
   const rollup = new Map(
-    buildRollup(roster, tasks, attempts, context.assignedTo).map((row) => [row.studentName, row.cells])
+    buildRollup(roster, tasks, attempts, context.assignedTo).map((row) => [row.studentId, row.cells])
   );
   const taskIds = new Set(tasks.map((task) => task.id));
 
-  return roster.map((studentName) => {
+  return roster.map((student) => {
     const own = attempts
-      .filter((a) => a.studentName === studentName && taskIds.has(a.taskId))
+      .filter((a) => a.studentId === student.id && taskIds.has(a.taskId))
       .sort(newestFirst);
-    const cells = rollup.get(studentName) ?? [];
-    const assigned = context.assignedTo?.(studentName);
+    const cells = rollup.get(student.id) ?? [];
+    const assigned = context.assignedTo?.(student);
     const ownTasks = assigned ? tasks.filter((task) => assigned.has(task.id)) : tasks;
     const homeworkRules = {
       kind: 'homework' as const,
@@ -156,7 +159,8 @@ export function summarizeStudents(
     }
 
     return {
-      studentName,
+      studentId: student.id,
+      studentName: student.name,
       state: stateOf(
         cells.filter((cell) => cell.status !== 'not_assigned'),
         own,

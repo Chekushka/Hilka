@@ -13,9 +13,13 @@ import type { FactAttempt } from '@/lib/homework/facts';
 import { parseActivity, type EditorActivity } from '@/lib/task/activity';
 import { attempts, tasks } from './schema';
 import { getDb, type Executor } from './client';
+import { attemptStudentId, attemptStudentName } from './students';
 
 export interface SessionAttemptRow {
   id: string;
+  /** The roster entry's id — what everything groups by. */
+  studentId: string;
+  /** The student's current name (lib/db/students.ts). */
   studentName: string;
   taskId: string;
   taskTitle: string;
@@ -51,7 +55,8 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
   const rows = await getDb()
     .select({
       id: attempts.id,
-      studentName: attempts.studentName,
+      studentId: attemptStudentId,
+      studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
       passed: attempts.passed,
@@ -65,7 +70,7 @@ export async function listAttemptsForSession(sessionId: string): Promise<Session
     .from(attempts)
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
     .where(and(eq(attempts.sessionId, sessionId), isNull(attempts.voidedAt)))
-    .orderBy(asc(attempts.studentName), desc(attempts.createdAt));
+    .orderBy(asc(attempts.studentId), desc(attempts.createdAt));
   return rows.map(({ flags, score, ...row }) => ({
     ...row,
     score: score === null ? null : Number(score),
@@ -89,11 +94,12 @@ export interface StudentAttemptRow extends SessionAttemptRow {
  * can show what was cancelled; nothing that counts reads this. The caller has already checked that the
  * session is the teacher's own (`getSessionForTeacher`).
  */
-export async function listAttemptsForStudent(sessionId: string, studentName: string): Promise<StudentAttemptRow[]> {
+export async function listAttemptsForStudent(sessionId: string, studentId: string): Promise<StudentAttemptRow[]> {
   const rows = await getDb()
     .select({
       id: attempts.id,
-      studentName: attempts.studentName,
+      studentId: attemptStudentId,
+      studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
       taskVersion: attempts.taskVersion,
@@ -109,7 +115,7 @@ export async function listAttemptsForStudent(sessionId: string, studentName: str
     })
     .from(attempts)
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
-    .where(and(eq(attempts.sessionId, sessionId), eq(attempts.studentName, studentName)))
+    .where(and(eq(attempts.sessionId, sessionId), eq(attemptStudentId, studentId)))
     .orderBy(desc(attempts.createdAt));
   return rows.map(({ flags, score, voidedAt, ...row }) => ({
     ...row,
@@ -129,7 +135,8 @@ export async function listAttemptsForStudent(sessionId: string, studentName: str
 export async function listFileSubmissionsForSession(sessionId: string): Promise<FileSubmissionRow[]> {
   const rows = await getDb()
     .select({
-      studentName: attempts.studentName,
+      studentId: attemptStudentId,
+      studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
       submittedAnswer: attempts.submittedAnswer,
@@ -159,8 +166,15 @@ export interface AttemptExtras {
   activity?: EditorActivity | null;
 }
 
+/**
+ * `student`: the roster entry the route resolved — its name is stored as the
+ * name at the time, and the variant seed the task was served under
+ * (`deriveSeed` with the student's seed key) is stored beside it, so a later
+ * re-check rebuilds the same variant whatever happens to the roster.
+ */
 export async function recordAttempt(
   input: AttemptInput,
+  student: { id: string; name: string; seed: number },
   { sourceHash = null, deviceId = null, activity = null }: AttemptExtras = {},
   db: Executor = getDb()
 ): Promise<{ id: string }> {
@@ -172,7 +186,9 @@ export async function recordAttempt(
     .insert(attempts)
     .values({
       sessionId: input.sessionId,
-      studentName: input.studentName,
+      studentId: student.id,
+      studentName: student.name,
+      seed: BigInt(student.seed),
       taskId: input.taskId,
       taskVersion: input.taskVersion,
       submittedAnswer: input.submittedAnswer,
@@ -190,7 +206,12 @@ export async function recordAttempt(
 
 export interface PassedAnswerRow {
   id: string;
+  studentId: string;
   studentName: string;
+  /** The name stored on the attempt: the seed key of attempts from before seeds were stored. */
+  studentNameThen: string;
+  /** The variant seed the attempt was made under (lib/seed/); null on attempts from before it was stored. */
+  seed: number | null;
   taskId: string;
   taskTitle: string;
   taskVersion: number;
@@ -206,7 +227,10 @@ export async function listPassedAnswers(sessionId: string): Promise<PassedAnswer
   const rows = await getDb()
     .select({
       id: attempts.id,
-      studentName: attempts.studentName,
+      studentId: attemptStudentId,
+      studentName: attemptStudentName,
+      studentNameThen: attempts.studentName,
+      seed: attempts.seed,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
       taskVersion: attempts.taskVersion,
@@ -217,7 +241,11 @@ export async function listPassedAnswers(sessionId: string): Promise<PassedAnswer
     .innerJoin(tasks, eq(attempts.taskId, tasks.id))
     .where(and(eq(attempts.sessionId, sessionId), eq(attempts.passed, true), isNull(attempts.voidedAt)))
     .orderBy(asc(attempts.createdAt));
-  return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+  return rows.map(({ seed, ...row }) => ({
+    ...row,
+    seed: seed === null ? null : Number(seed),
+    createdAt: row.createdAt.toISOString()
+  }));
 }
 
 /**
@@ -228,7 +256,8 @@ export async function listPassedAnswers(sessionId: string): Promise<PassedAnswer
 export async function listFactAttempts(sessionId: string): Promise<FactAttempt[]> {
   const rows = await getDb()
     .select({
-      studentName: attempts.studentName,
+      studentId: attemptStudentId,
+      studentName: attemptStudentName,
       taskId: attempts.taskId,
       taskTitle: tasks.title,
       passed: attempts.passed,

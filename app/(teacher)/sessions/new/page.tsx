@@ -9,7 +9,7 @@ import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
-export default async function NewSessionPage() {
+export default async function NewSessionPage({ searchParams }: { searchParams: Promise<{ class?: string }> }) {
   const teacher = await getCurrentTeacher();
   if (!teacher) {
     redirect('/login');
@@ -27,7 +27,12 @@ export default async function NewSessionPage() {
         {t('dashboard.backToDashboard')}
       </Link>
       <h1 className="mt-2 text-2xl font-bold text-ink">{t('sessionBuilder.title')}</h1>
-      <SessionBuilderForm classes={classes} tasks={tasks} lessons={lessons} />
+      <SessionBuilderForm
+        classes={classes}
+        initialClassId={(await searchParams).class}
+        tasks={tasks}
+        lessons={lessons}
+      />
     </main>
   );
 }

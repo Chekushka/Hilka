@@ -4,6 +4,7 @@
  * produces.
  */
 
+import type { RosterStudent } from '@/lib/classes/roster';
 import type { AssignmentRule } from '@/lib/seed';
 import type { TaskType } from '@/lib/task/types';
 
@@ -36,7 +37,7 @@ export interface JoinedSession {
   id: string;
   mode: SessionMode;
   kind: SessionKind;
-  roster: string[];
+  roster: RosterStudent[];
   tasks: JoinedSessionTask[];
   /** Homework only: offered once a point is lost (lib/homework/rules.ts). */
   improvementTasks: JoinedSessionTask[];
@@ -68,7 +69,8 @@ export interface OwnSessionState {
 /** What the workspace reports once a Check completes, for the attempts table. */
 export interface AttemptInput {
   sessionId: string;
-  studentName: string;
+  /** The roster entry's id. A page loaded before ids sends `studentName` instead (lib/classes/roster.ts, `findStudent`). */
+  studentId: string;
   taskId: string;
   taskVersion: number;
   submittedAnswer: Record<string, unknown>;
