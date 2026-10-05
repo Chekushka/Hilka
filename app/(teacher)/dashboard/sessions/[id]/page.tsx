@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
+import { DeleteSessionButton } from '@/components/dashboard/DeleteSessionButton';
 import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
@@ -252,6 +253,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             {t('dashboard.exportCsv')}
           </a>
         )}
+        <DeleteSessionButton sessionId={session.id} code={session.code} homework={homework} leaveTo="/dashboard" />
       </div>
 
       {session.tasks.length > 0 && (

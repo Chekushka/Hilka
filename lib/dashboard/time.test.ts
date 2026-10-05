@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agoFrom, formatClock, formatDuration } from './time';
+import { agoFrom, formatClock, formatDay, formatDuration } from './time';
 
 describe('formatClock', () => {
   it('shows Kyiv time, summer and winter', () => {
@@ -23,5 +23,11 @@ describe('agoFrom', () => {
     expect(agoFrom('2026-09-29T10:59:30Z', now)).toEqual({ unit: 'now' });
     expect(agoFrom('2026-09-29T10:54:00Z', now)).toEqual({ unit: 'minutes', n: 6 });
     expect(agoFrom('2026-09-29T08:30:00Z', now)).toEqual({ unit: 'hours', n: 2 });
+  });
+});
+
+describe('formatDay', () => {
+  it('names the day in Kyiv, not UTC', () => {
+    expect(formatDay('2026-10-04T22:30:00Z')).toBe('5 жовтня');
   });
 });

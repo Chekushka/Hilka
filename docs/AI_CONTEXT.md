@@ -143,7 +143,8 @@ teacher_login_tokens
   id, teacher_id, token_hash, expires_at, used_at, created_at
 
 classes
-  id, teacher_id, title, roster text[]     -- plain display names, nothing more
+  id, teacher_id, title, roster text[],    -- plain display names, nothing more
+  grade smallint | null                    -- 7..9; the session builder opens on it
 
 sessions
   id, class_id, code char(6), mode ('practice' | 'graded'),
@@ -152,7 +153,7 @@ sessions
   task_ids uuid[], improvement_task_ids uuid[],
   time_limit_s int | null, hints_enabled bool,
   shuffle bool, pool_size int | null,      -- each student gets pool_size of task_ids
-  opens_at, closes_at, due_at
+  opens_at, closes_at, due_at, created_at
 
 progress_codes
   code char(8) primary key,   -- human-readable alphabet, no 0/O/1/I/l
@@ -186,6 +187,14 @@ Non-obvious invariants:
   The one exception is `voided_at`: a teacher cancels what one device did under a student's name
   (docs/HOMEWORK.md, section 2). A voided row keeps its content, is shown marked on the student
   card, and is left out of everything that counts — `listAttemptsForSession`, the rules and grades.
+  Two teacher actions reach past the row level, both decided as whole-assignment or whole-name
+  operations, never edits of one result: **deleting a session** (or a whole class) removes its
+  attempts with it, and a homework's class checks with theirs (`deleteSession`, `deleteClass`);
+  **renaming a roster name** moves that name's `student_name` in every session of the class, in
+  the same transaction as the roster (`updateClass`, checked by `lib/classes/roster.ts`'s
+  `cleanRenames` so two students are never merged). A rename also changes the seed
+  (`hash(session_id + student_name + task_id)`), so in an open session with variants or a pool
+  the renamed student gets a different variant or set from then on; the class form says so.
 - `sessions.code` is unique only among currently open sessions. Codes are recycled.
 - `tasks.version` is bumped on publish. Draft edits are invisible to students — this is what
   makes it safe to edit a task while a class is working.

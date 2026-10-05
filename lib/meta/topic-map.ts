@@ -15,6 +15,8 @@ export type TopicState = 'done' | 'current' | 'started' | 'ahead';
 export interface TopicMapNode {
   slug: string;
   title: string;
+  /** `topics.order`; picks the topic's kind of plant (lib/meta/garden.ts). */
+  order: number;
   done: number;
   total: number;
   state: TopicState;

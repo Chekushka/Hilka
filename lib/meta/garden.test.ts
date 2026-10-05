@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_PLANT_STAGE, plantStage, stageGainedByPass } from './garden';
+import { MAX_PLANT_STAGE, PLANT_SPECIES, plantSpecies, plantStage, stageGainedByPass } from './garden';
 
 describe('plantStage', () => {
   it('is a seed with nothing done', () => {
@@ -60,5 +60,25 @@ describe('stageGainedByPass', () => {
 
   it('reports the flower on the pass that completes the topic', () => {
     expect(stageGainedByPass(topic, new Set(['a', 'b', 'c', 'd', 'e']), 'f')).toBe(MAX_PLANT_STAGE);
+  });
+});
+
+describe('plantSpecies', () => {
+  it('gives neighbouring topics different plants', () => {
+    for (let order = 1; order < 40; order += 1) {
+      expect(plantSpecies(order)).not.toBe(plantSpecies(order + 1));
+    }
+  });
+
+  it('uses every kind before repeating one', () => {
+    const first = PLANT_SPECIES.map((_, index) => plantSpecies(index + 1));
+    expect(new Set(first).size).toBe(PLANT_SPECIES.length);
+  });
+
+  it('is the same for the same order, and copes with odd input', () => {
+    expect(plantSpecies(5)).toBe(plantSpecies(5));
+    expect(PLANT_SPECIES).toContain(plantSpecies(0));
+    expect(PLANT_SPECIES).toContain(plantSpecies(-3));
+    expect(PLANT_SPECIES).toContain(plantSpecies(Number.NaN));
   });
 });

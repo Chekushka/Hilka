@@ -39,6 +39,7 @@ import type { TaskType } from '@/lib/task/types';
 interface ClassOption {
   id: string;
   title: string;
+  grade: number | null;
 }
 
 interface TaskOption {
@@ -66,6 +67,8 @@ interface LessonOption {
 
 interface SessionBuilderFormProps {
   classes: ClassOption[];
+  /** The class to start on (`/sessions/new?class=`), when it is one of `classes`. */
+  initialClassId?: string;
   tasks: TaskOption[];
   lessons: LessonOption[];
 }
@@ -92,14 +95,22 @@ const DEADLINE_PRESETS = [
 
 const percent = (share: number) => Math.round(share * 100);
 
-export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFormProps) {
-  const [classId, setClassId] = useState(classes[0]?.id ?? '');
+/** The task bank's grade filter for a class: its grade, when it has one and some task carries it. */
+function gradeFilterFor(klass: ClassOption | undefined, gradeOptions: readonly number[]): string {
+  return klass?.grade && gradeOptions.includes(klass.grade) ? String(klass.grade) : ALL_GRADES;
+}
+
+export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: SessionBuilderFormProps) {
+  const startClass = classes.find((klass) => klass.id === initialClassId) ?? classes[0];
+  const [classId, setClassId] = useState(startClass?.id ?? '');
   const [mode, setMode] = useState<BuilderMode>('practice');
   // datetime-local, on the teacher's own clock; set when homework is chosen, so the server never renders a time.
   const [dueAt, setDueAt] = useState('');
   const [improvementIds, setImprovementIds] = useState<string[]>([]);
   const [topicFilter, setTopicFilter] = useState(ALL_TOPICS);
-  const [gradeFilter, setGradeFilter] = useState(ALL_GRADES);
+  const gradeOptions = [...new Set(tasks.flatMap((task) => task.gradeTags))].sort((a, b) => a - b);
+  // The bank opens on the class's grade (set on the class form); the teacher can widen it.
+  const [gradeFilter, setGradeFilter] = useState(() => gradeFilterFor(startClass, gradeOptions));
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
   const [hintsEnabled, setHintsEnabled] = useState(true);
@@ -113,7 +124,6 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
   const [search, setSearch] = useState('');
 
   const topicOptions = [...new Map(tasks.map((task) => [task.topicSlug, task.topicTitle])).entries()];
-  const gradeOptions = [...new Set(tasks.flatMap((task) => task.gradeTags))].sort((a, b) => a - b);
 
   const query = search.trim().toLocaleLowerCase('uk');
   const visibleTasks = tasks.filter(
@@ -269,7 +279,11 @@ export function SessionBuilderForm({ classes, tasks, lessons }: SessionBuilderFo
             id="class"
             required
             value={classId}
-            onChange={(event) => setClassId(event.target.value)}
+            onChange={(event) => {
+              setClassId(event.target.value);
+              const klass = classes.find((option) => option.id === event.target.value);
+              if (klass?.grade) setGradeFilter(gradeFilterFor(klass, gradeOptions));
+            }}
             className={fieldClass}
           >
             {classes.map((klass) => (

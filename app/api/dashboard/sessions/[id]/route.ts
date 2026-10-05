@@ -1,11 +1,13 @@
 /**
  * A teacher's actions on their own session: close it (its code stops working),
- * or move a homework's deadline (docs/HOMEWORK.md, section 1). Owner-scoped
- * like every dashboard route — another teacher's session reads as not found.
+ * move a homework's deadline (docs/HOMEWORK.md, section 1), or delete it with
+ * everything recorded in it. Owner-scoped like every dashboard route — another
+ * teacher's session reads as not found.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { closeSession, setSessionDueAt } from '@/lib/db/sessions';
+import { closeSession, deleteSession, setSessionDueAt } from '@/lib/db/sessions';
+import { isUuid } from '@/lib/lessons/authoring';
 
 type Body = { action: 'close' } | { action: 'due'; dueAt: string };
 
@@ -32,4 +34,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ? await closeSession(id, teacher.id)
       : await setSessionDueAt(id, teacher.id, new Date(body.dueAt));
   return done ? NextResponse.json({ ok: true }) : NextResponse.json({ error: 'not_found' }, { status: 404 });
+}
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const teacher = await getCurrentTeacher();
+  if (!teacher) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  const { id } = await params;
+  const removed = isUuid(id) ? await deleteSession(id, teacher.id) : null;
+  return removed === null
+    ? NextResponse.json({ error: 'not_found' }, { status: 404 })
+    : NextResponse.json({ ok: true, removed });
 }

@@ -38,10 +38,11 @@ import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { DEFAULT_GRADING } from '@/lib/grading/config';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
-import { improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
+import { checksLeft, improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
 import { t } from '@/lib/i18n';
 import { assignTasks } from '@/lib/seed';
 import { nextOpenTaskId } from '@/lib/session/next-task';
+import { sessionProgress, type SessionProgress } from '@/lib/session/progress';
 import { filePrerequisite } from '@/lib/task/prerequisite';
 import type { JoinedSession, JoinedSessionTask, OwnAttempt, OwnSessionState } from '@/lib/session/types';
 import type { Task } from '@/lib/task/types';
@@ -128,8 +129,25 @@ function Notice({ tone = 'info', children, testId }: { tone?: 'info' | 'attentio
 }
 
 /** The task list's mark for one task, in words — never colour alone. */
-function StatusMark({ state, graded, homework }: { state: TaskState; graded: boolean; homework: boolean }) {
+function StatusMark({
+  state,
+  graded,
+  homework,
+  left
+}: {
+  state: TaskState;
+  graded: boolean;
+  homework: boolean;
+  /** Checks this task still allows; null when unlimited. */
+  left: number | null;
+}) {
   switch (state.status) {
+    case 'new':
+      return left === null ? null : (
+        <span className="text-sm text-ink-muted" data-testid="task-checks-left">
+          {t('session.taskChecksLeft', { n: left })}
+        </span>
+      );
     case 'passed':
       return (
         <span className="text-sm text-growth">
@@ -151,6 +169,103 @@ function StatusMark({ state, graded, homework }: { state: TaskState; graded: boo
     default:
       return null;
   }
+}
+
+/** How far through the session the student is: a bar in growth, the count in words, and the Checks left. */
+function SessionProgressBar({ progress }: { progress: SessionProgress }) {
+  const { passed, total } = progress.main;
+  return (
+    <section aria-label={t('session.progressLabel')} className="rounded-lg border border-line bg-surface px-4 py-3" data-testid="session-progress">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+        <span className="font-semibold text-ink">{t('session.progressDone', { done: passed, total })}</span>
+        <span className="text-ink-muted" data-testid="checks-left-total">
+          {progress.checksLeft === null
+            ? t('session.progressUnlimited')
+            : t('session.progressChecksLeft', { n: progress.checksLeft })}
+        </span>
+      </div>
+      <div
+        className="mt-2 h-2 overflow-hidden rounded-full bg-shell"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={passed}
+        aria-label={t('session.progressDone', { done: passed, total })}
+      >
+        <div className="h-full rounded-full bg-growth" style={{ width: `${total > 0 ? (passed / total) * 100 : 0}%` }} />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * What the student takes away once nothing is left to do: how many tasks were
+ * solved and, for homework, how. Which tasks — never a grade (docs/AI_CONTEXT.md,
+ * "Grading"). The way it is said stays calm whatever the count.
+ */
+function ResultsSummary({
+  progress,
+  homework,
+  graded,
+  timeUp = false
+}: {
+  progress: SessionProgress;
+  homework: boolean;
+  graded: boolean;
+  timeUp?: boolean;
+}) {
+  const { main, improvement } = progress;
+  const all = main.passed === main.total;
+  const title = homework
+    ? all
+      ? t('session.resultsTitleHomeworkAll')
+      : t('session.resultsTitleHomework')
+    : all
+      ? t('session.resultsTitleAll')
+      : t('session.resultsTitle');
+  return (
+    <section
+      aria-labelledby="results-title"
+      aria-live="polite"
+      data-testid="session-results"
+      className={`rounded-lg border-l-4 bg-surface p-4 ${all ? 'border-growth' : 'border-accent'}`}
+    >
+      {!timeUp && (
+        <h2 id="results-title" className={`flex items-center gap-2 text-xl font-semibold ${all ? 'text-growth' : 'text-ink'}`}>
+          {all && <span aria-hidden="true">✓</span>}
+          {title}
+        </h2>
+      )}
+      <p id={timeUp ? 'results-title' : undefined} className={`text-base text-ink ${timeUp ? '' : 'mt-2'}`}>
+        {timeUp
+          ? t('session.timeUpResults', { passed: main.passed, total: main.total })
+          : t('session.resultsSolved', { passed: main.passed, total: main.total })}
+      </p>
+      {homework && (
+        <ul className="mt-2 space-y-0.5 text-sm text-ink">
+          <li>{t('session.resultsFirst', { n: main.passed - main.passedViaFix })}</li>
+          {main.passedViaFix > 0 && (
+            <li>{t('session.resultsFixed', { n: main.passedViaFix, credit: percent(DEFAULT_GRADING.fixCredit) })}</li>
+          )}
+          {main.failed > 0 && <li>{t('session.resultsFailed', { n: main.failed })}</li>}
+        </ul>
+      )}
+      {!homework && graded && main.failed > 0 && (
+        <p className="mt-1 text-sm text-ink">{t('session.resultsFailed', { n: main.failed })}</p>
+      )}
+      {improvement &&
+        (improvement.notStarted + improvement.inProgress > 0 ? (
+          <p className="mt-2 text-sm text-ink">{t('session.resultsImprovementOpen')}</p>
+        ) : (
+          <p className="mt-2 text-sm text-ink">
+            {t('session.resultsImprovement', { passed: improvement.passed, total: improvement.total })}
+          </p>
+        ))}
+      <p className="mt-2 text-sm text-ink-muted">
+        {graded ? t('session.resultsTeacherSees') : t('session.resultsPractice')}
+      </p>
+    </section>
+  );
 }
 
 export function SessionRoom({ code, session }: SessionRoomProps) {
@@ -192,6 +307,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   };
   const attempts: OwnAttempt[] = own?.attempts ?? [];
   const stateOf = (taskId: string) => taskState(rules, taskId, attempts);
+  const checksLeftOf = (taskId: string) => checksLeft(rules, taskId, attempts);
+  const progress = sessionProgress(rules, attempts);
   const improvementVisible = improvementOpen(rules, attempts);
   const visibleTasks: JoinedSessionTask[] = improvementVisible ? [...myTasks, ...session.improvementTasks] : myTasks;
 
@@ -381,6 +498,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
           </h1>
           <p className="mt-2 text-ink">{t('session.timeUpNote')}</p>
         </section>
+        {own && (
+          <div className="mt-4">
+            <ResultsSummary progress={progress} homework={homework} graded={graded} timeUp />
+          </div>
+        )}
       </main>
     );
   }
@@ -428,6 +550,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       onSelect: () => openTask(nextId)
     };
     const position = visibleTasks.findIndex((task) => task.id === selectedTaskId) + 1;
+    const selectedChecksLeft = checksLeftOf(selectedTaskId);
     const backToList = (
       <button type="button" onClick={() => openTask(null)} className="text-accent">
         ← {t('session.backToList')}
@@ -510,6 +633,11 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
               {position > 0 && (
                 <span className="text-ink-muted">{t('task.position', { n: position, total: visibleTasks.length })}</span>
               )}
+              {selectedChecksLeft !== null && (
+                <span className="rounded-full bg-shell px-3 py-1 text-ink" data-testid="workspace-checks-left">
+                  {t('session.workspaceChecksLeft', { n: selectedChecksLeft })}
+                </span>
+              )}
               {timerBadge}
             </>
           ),
@@ -541,7 +669,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-left text-ink hover:border-accent"
       >
         <span>{task.title}</span>
-        <StatusMark state={stateOf(task.id)} graded={graded} homework={homework} />
+        <StatusMark state={stateOf(task.id)} graded={graded} homework={homework} left={checksLeftOf(task.id)} />
       </button>
     </li>
   );
@@ -559,6 +687,8 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         <h1 className="text-xl font-semibold text-ink">{t('session.taskListTitle')}</h1>
         {timerBadge}
       </div>
+      {progress.complete && <ResultsSummary progress={progress} homework={homework} graded={graded} />}
+      {myTasks.length > 0 && <SessionProgressBar progress={progress} />}
       <ul className="space-y-2">{myTasks.map(taskButton)}</ul>
       {improvementVisible && (
         <section aria-labelledby="improvement-title" className="space-y-2 pt-2">

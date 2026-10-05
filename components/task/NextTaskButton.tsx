@@ -10,7 +10,7 @@
  */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { PlantStage } from '@/lib/meta/garden';
+import type { PlantSpecies, PlantStage } from '@/lib/meta/garden';
 
 export type NextTaskAction = (
   | { kind: 'link'; href: string; label: string }
@@ -23,7 +23,7 @@ export type NextTaskAction = (
     /** e.g. "+30 XP". */
     xp: string;
     /** Set when the pass made the topic's plant grow: its new stage, and that said in words. */
-    growth?: { stage: PlantStage; label: string };
+    growth?: { stage: PlantStage; species: PlantSpecies; label: string };
   };
 };
 

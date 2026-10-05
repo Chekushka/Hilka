@@ -57,6 +57,13 @@
       "when": 1790936272219,
       "tag": "0007_add_task_pool",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791187067979,
+      "tag": "0008_add_class_grade_and_session_created",
+      "breakpoints": true
     }
   ]
 }

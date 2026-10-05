@@ -40,3 +40,30 @@ export function stageGainedByPass(
   const after = plantStage(done + 1, unique.size);
   return after > before ? after : null;
 }
+
+/**
+ * Every topic grows its own kind of plant, so a garden of finished topics is
+ * a bed of different flowers rather than one flower repeated. The kind comes
+ * from the topic's curriculum order (`topics.order`), not its slug: topics
+ * next to each other in a grade always differ, the garden and the reward
+ * moment agree without passing anything else around, and a kind never
+ * changes under a student while they work.
+ */
+export const PLANT_SPECIES = [
+  'daisy',
+  'tulip',
+  'sunflower',
+  'lavender',
+  'cornflower',
+  'bluebell',
+  'rose',
+  'clematis'
+] as const;
+
+export type PlantSpecies = (typeof PLANT_SPECIES)[number];
+
+export function plantSpecies(topicOrder: number): PlantSpecies {
+  const n = PLANT_SPECIES.length;
+  const index = Number.isFinite(topicOrder) ? Math.trunc(topicOrder) - 1 : 0;
+  return PLANT_SPECIES[((index % n) + n) % n];
+}

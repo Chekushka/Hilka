@@ -18,6 +18,13 @@ export function formatClock(iso: string): string {
   return clock.format(new Date(iso));
 }
 
+const day = new Intl.DateTimeFormat('uk-UA', { timeZone: SCHOOL_TIME_ZONE, day: 'numeric', month: 'long' });
+
+/** "5 жовтня" in Kyiv time. */
+export function formatDay(iso: string): string {
+  return day.format(new Date(iso));
+}
+
 /** "6:12", or "1:02:05" past an hour. Rounds down to whole seconds. */
 export function formatDuration(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));

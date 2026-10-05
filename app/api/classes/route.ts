@@ -5,23 +5,8 @@
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
+import { parseClassBody } from '@/lib/classes/body';
 import { createClass } from '@/lib/db/classes';
-
-interface CreateClassBody {
-  title: string;
-  roster: string[];
-}
-
-function isValidBody(body: unknown): body is CreateClassBody {
-  if (typeof body !== 'object' || body === null) return false;
-  const b = body as Record<string, unknown>;
-  return (
-    typeof b.title === 'string' &&
-    b.title.trim().length > 0 &&
-    Array.isArray(b.roster) &&
-    b.roster.every((name) => typeof name === 'string' && name.trim().length > 0)
-  );
-}
 
 export async function POST(request: Request) {
   const teacher = await getCurrentTeacher();
@@ -29,11 +14,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const body: unknown = await request.json().catch(() => null);
-  if (!isValidBody(body)) {
+  const body = parseClassBody(await request.json().catch(() => null));
+  if (!body) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const { id } = await createClass(teacher.id, body.title.trim(), body.roster);
+  const { id } = await createClass(teacher.id, body);
   return NextResponse.json({ id }, { status: 201 });
 }

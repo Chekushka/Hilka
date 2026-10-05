@@ -147,7 +147,10 @@ export const classes = pgTable('classes', {
     .references(() => teachers.id),
   title: text('title').notNull(),
   // Display names the teacher typed. Not students, not accounts, nothing else.
-  roster: text('roster').array().notNull().default([])
+  roster: text('roster').array().notNull().default([]),
+  // 7, 8 or 9, or null when the teacher did not say: the session builder
+  // starts its task bank on this grade.
+  grade: smallint('grade')
 });
 
 export const sessions = pgTable(
@@ -177,7 +180,10 @@ export const sessions = pgTable(
     dueAt: timestamp('due_at', { withTimezone: true }),
     // A class check only: the homework it checks. Its results confirm or
     // lower that homework's credit (lib/homework/grade.ts), never a grade of their own.
-    checksSessionId: uuid('checks_session_id').references((): AnyPgColumn => sessions.id)
+    checksSessionId: uuid('checks_session_id').references((): AnyPgColumn => sessions.id),
+    // Orders a class's sessions on the dashboard, newest first. Sessions made
+    // before this column read as made when it was added.
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => [
     // Codes are recycled: a code is unique only among sessions that are still

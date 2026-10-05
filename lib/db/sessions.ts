@@ -312,3 +312,27 @@ export async function voidDeviceAttempts(
     .returning({ id: attempts.id });
   return rows.length;
 }
+
+/**
+ * Deletes a session from its class, with everything recorded in it: its
+ * attempts and, for a homework, its class checks and theirs. The one place
+ * attempts are ever removed rather than appended to — a teacher withdrawing a
+ * whole assignment (one made by mistake, a test run, last term's), never a
+ * way to edit one student's results. Returns the number of sessions removed,
+ * or null when the session is not this teacher's.
+ */
+export async function deleteSession(sessionId: string, teacherId: string): Promise<number | null> {
+  const id = await ownedSessionId(sessionId, teacherId);
+  if (!id) return null;
+  return getDb().transaction(async (tx) => {
+    const checks = await tx.select({ id: sessions.id }).from(sessions).where(eq(sessions.checksSessionId, id));
+    const ids = [id, ...checks.map((check) => check.id)];
+    await tx.delete(attempts).where(inArray(attempts.sessionId, ids));
+    // Checks first: they point at the homework.
+    if (checks.length > 0) {
+      await tx.delete(sessions).where(inArray(sessions.id, checks.map((check) => check.id)));
+    }
+    await tx.delete(sessions).where(eq(sessions.id, id));
+    return ids.length;
+  });
+}

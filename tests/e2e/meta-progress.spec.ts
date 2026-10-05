@@ -18,6 +18,12 @@ test('passing a task for the first time earns XP and grows its plant, shown on t
   await expect(intro).toContainText('0 з');
   // Each plant opens where its topic carries on — tapping a flower must lead somewhere.
   await expect(intro).toHaveAttribute('href', /^\/practice\/g7-25-intro\//);
+  // Every topic grows its own kind of plant, and neighbours always differ (lib/meta/garden.ts).
+  const species = await page.getByTestId('garden').locator('svg[data-species]').evaluateAll((plants) =>
+    plants.map((plant) => plant.getAttribute('data-species'))
+  );
+  expect(new Set(species).size).toBeGreaterThan(4);
+  species.slice(1).forEach((kind, index) => expect(kind).not.toBe(species[index]));
 
   await page.goto(QUIZ);
   await page.getByLabel('Виводить текст або значення на екран').check();
@@ -27,6 +33,8 @@ test('passing a task for the first time earns XP and grows its plant, shown on t
   await expect(page.getByTestId('xp-earned')).toHaveText('+10 XP');
   // The first solved task always sprouts its topic's plant (lib/meta/garden.ts).
   await expect(page.getByTestId('garden-growth')).toHaveText('Тема «Середовище програмування» у твоєму саду: паросток');
+  // The reward shows the same kind of plant as the garden.
+  await expect(page.locator('svg[data-species]')).toHaveAttribute('data-species', species[0] ?? '');
 
   await page.goto('/practice');
   await expect(page.getByTestId('xp-total')).toHaveText('10 XP');

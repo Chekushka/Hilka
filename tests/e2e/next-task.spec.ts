@@ -150,7 +150,8 @@ test('in a practice session, a passed Check leads to the next task, and the last
 test('in a graded session, the next-task button moves on without reopening a locked task', async ({ page }) => {
   await buildSession(page, 'graded');
 
-  await page.getByRole('button', { name: 'Квадрат', exact: true }).click();
+  // The task's row also says how many Checks it allows.
+  await page.getByRole('button', { name: /^Квадрат перевірок: 1$/ }).click();
   await waitForEngine(page);
   await typeSolution(page, SQUARE);
   await page.getByRole('button', { name: 'Перевірити' }).click();

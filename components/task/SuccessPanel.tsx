@@ -71,7 +71,7 @@ export function SuccessPanel({ next }: { next?: NextTaskAction }) {
           </div>
           {reward.growth && (
             <div className="flex items-center gap-3 rounded-lg bg-bg px-4 py-3">
-              <Plant stage={reward.growth.stage} size={36} />
+              <Plant stage={reward.growth.stage} species={reward.growth.species} size={36} />
               <div className="min-w-0">
                 <p className="text-xs text-ink-muted">{t('result.garden')}</p>
                 <p className="mt-0.5 text-sm font-medium text-growth" data-testid="garden-growth">
