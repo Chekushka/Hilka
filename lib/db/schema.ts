@@ -34,8 +34,10 @@ import type { Check } from '@/lib/checker';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { RosterStudent } from '@/lib/classes/roster';
 import type { PracticeProgress } from '@/lib/practice/progress';
+import type { StudentRoutes } from '@/lib/session/routes';
 import type { SessionKind } from '@/lib/session/types';
 import type { ParamSpec } from '@/lib/seed';
+import type { TaskTag } from '@/lib/task/tags';
 import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 
 export const topics = pgTable('topics', {
@@ -70,6 +72,10 @@ export const tasks = pgTable(
     params: jsonb('params').$type<ParamSpec>(),
     difficulty: smallint('difficulty').notNull(),
     gradeTags: integer('grade_tags').array().notNull().default([]),
+    // What kind of work the task is (lib/task/tags.ts): 'retype', 'easy-start',
+    // 'challenge'. Metadata for choosing tasks, not content — editable on a
+    // published task without a version bump, since no answer depends on it.
+    tags: text('tags').array().$type<TaskTag[]>().notNull().default([]),
     // Bumped on publish, never on save: that is what makes it safe to edit a
     // task while a class is working on it.
     version: integer('version').notNull().default(1),
@@ -172,6 +178,15 @@ export const sessions = pgTable(
     // Homework only: tasks offered once a student has lost points, which can
     // recover lost points and never more (lib/homework/).
     improvementTaskIds: uuid('improvement_task_ids').array().notNull().default([]),
+    // Routes (lib/session/routes.ts): extra tasks for the students the teacher
+    // put on each route in this session — never graded, never limited. A
+    // support route's tasks come before the main ones, an extension route's
+    // after. The route belongs to the session, never to the roster: it says
+    // what work someone was given today, not what kind of student they are.
+    supportTaskIds: uuid('support_task_ids').array().notNull().default([]),
+    extensionTaskIds: uuid('extension_task_ids').array().notNull().default([]),
+    // { [roster id]: 'support' | 'extension' }; a student not in it has no route.
+    studentRoutes: jsonb('student_routes').$type<StudentRoutes>().notNull().default({}),
     timeLimitS: integer('time_limit_s'),
     hintsEnabled: boolean('hints_enabled').notNull().default(true),
     shuffle: boolean('shuffle').notNull().default(false),

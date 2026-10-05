@@ -12,6 +12,9 @@ import { getTaskForAuthoring } from '@/lib/db/task-authoring';
 import { t } from '@/lib/i18n';
 import type { TaskRow } from '@/lib/db/task-mapping';
 import { PromptText } from '@/components/task/PromptText';
+import { DifficultyMeter, TaskTypeChip } from '@/components/authoring/TaskBadges';
+import { TaskTagsEditor } from '@/components/authoring/TaskTagsField';
+import { normalizeTags } from '@/lib/task/tags';
 
 export const dynamic = 'force-dynamic';
 
@@ -297,6 +300,12 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         {task.status === 'draft' ? t('authoring.editTaskTitle') : t('authoring.viewTaskTitle')}
       </h1>
       <p className="mt-1 text-ink">{task.title}</p>
+      <p className="mt-2 flex flex-wrap items-center gap-2">
+        <TaskTypeChip type={payload.type} />
+        <DifficultyMeter difficulty={task.difficulty} />
+      </p>
+
+      <TaskTagsEditor taskId={task.id} initialTags={normalizeTags(task.tags)} />
 
       {task.status !== 'draft' ? (
         payload.type === 'code' ? (

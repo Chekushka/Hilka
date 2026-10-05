@@ -133,6 +133,8 @@ tasks
   params jsonb,           -- ParamSpec | null (parameterized variants)
   difficulty smallint,    -- 1..5
   grade_tags int[],
+  tags text[],            -- 'retype' | 'easy-start' | 'challenge' (lib/task/tags.ts); metadata,
+                          --   editable on a published task without a version bump
   version int,            -- bumped on publish, not on save
   status text             -- 'draft' | 'published' | 'archived'
 
@@ -155,6 +157,8 @@ sessions
   task_ids uuid[], improvement_task_ids uuid[],
   time_limit_s int | null, hints_enabled bool,
   shuffle bool, pool_size int | null,      -- each student gets pool_size of task_ids
+  support_task_ids uuid[], extension_task_ids uuid[],
+  student_routes jsonb,                    -- { [roster id]: 'support' | 'extension' } — see "Routes"
   opens_at, closes_at, due_at, created_at
 
 progress_codes
@@ -609,6 +613,33 @@ than a join table for the same reason as `sessions.task_ids`: order is the point
 appear in more than one lesson. Content lives in `content/lessons/` and is imported by slug like
 tasks. Explanations show static code only — nothing on the explanation screen runs Python.
 `topics.theory_md` is superseded by the lesson explanation and unused by students.
+
+## Routes
+
+Requested by the teacher: a student who is lost in the topic or not engaging needs something to
+do that they can finish; one who finished early needs more. Decided as **routes in one session**,
+not a label on the student:
+
+- A session may carry two extra task lists — the **support** route («Крок за кроком»: retype and
+  easy-start tasks, placed *before* the main tasks) and the **extension** route («Глибше»:
+  challenges, *after* them) — and `student_routes`, which roster ids are on which. Everyone else
+  sees the main tasks only. Same topics as the lesson, so this is not an advanced track.
+- **Never on the roster.** A persistent "needs support" or "advanced" mark on a roster entry would
+  be a judgement about a child that follows them from lesson to lesson — personal data in the
+  sense of CLAUDE.md rule 8, and the first step of `classes.students` growing into a students
+  table. A route records what work was handed out today; the builder can copy the class's last
+  routes («Як минулого разу»), which is a choice made again each time. If a teacher later asks for
+  a standing mark, that is a rule-8 decision for the project owner, not an extension of this.
+- **Never graded, never limited.** Route tasks are free practice inside any session
+  (`lib/homework/rules.ts`, `routeTaskIds`): unlimited Checks even in a graded lesson or homework,
+  left out of progress, results and grades, like additional tasks (see "Grading").
+- **Neutral to the class.** Students never see a route's name; the room shows one heading for
+  either («Ще завдання для тебе»). Only the student's own route tasks reach their browser
+  (`GET /api/sessions/[code]/me`), never the session's whole route map; `POST /api/attempts` and
+  the task route accept a route task only from a student on that route.
+- The builder fills routes from the bank, or suggests tasks by tag on the main tasks' topics
+  (`suggestRouteTasks`). The class table marks each routed student with the route and how many of
+  its tasks they solved; the student card lists them.
 
 ## Homework
 

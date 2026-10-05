@@ -8,6 +8,13 @@ import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { findStudent, seedKeyOf, type RosterStudent } from '@/lib/classes/roster';
 import type { SessionRules } from '@/lib/homework/rules';
 import { assignTasks, type AssignmentRule } from '@/lib/seed';
+import {
+  routeOf,
+  routeTaskIdsFor,
+  routeTasksFirst,
+  type RouteTaskIds,
+  type StudentRoutes
+} from '@/lib/session/routes';
 import type {
   JoinedSession,
   JoinedSessionTask,
@@ -43,6 +50,8 @@ export interface TeacherSessionDetail {
   checks: { id: string; code: string } | null;
   /** Which of `tasks` each student gets, and in what order (lib/seed/assignment.ts). */
   assignment: AssignmentRule;
+  /** Routes (lib/session/routes.ts): each route's tasks, and who is on which. Never graded. */
+  routes: { support: SessionTaskSummary[]; extension: SessionTaskSummary[]; studentRoutes: StudentRoutes };
 }
 
 /** A class check of a homework, as the homework's page lists it. */
@@ -97,7 +106,12 @@ export async function getSessionForTeacher(
     tasks: await taskSummaries(db, row.session.taskIds),
     improvementTasks: await taskSummaries(db, row.session.improvementTaskIds),
     checks: checked ?? null,
-    assignment: { poolSize: row.session.poolSize, shuffle: row.session.shuffle }
+    assignment: { poolSize: row.session.poolSize, shuffle: row.session.shuffle },
+    routes: {
+      support: await taskSummaries(db, row.session.supportTaskIds),
+      extension: await taskSummaries(db, row.session.extensionTaskIds),
+      studentRoutes: row.session.studentRoutes
+    }
   };
 }
 
@@ -134,6 +148,57 @@ export async function listCheckAttempts(homeworkId: string): Promise<CheckAttemp
   return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
 }
 
+/** Session tasks as the room lists them, in no particular order (`orderSessionTasks` restores it). */
+async function joinedTasks(db: Database, ids: string[]): Promise<JoinedSessionTask[]> {
+  if (ids.length === 0) return [];
+  const rows = await db
+    .select({
+      id: tasks.id,
+      slug: tasks.slug,
+      title: tasks.title,
+      difficulty: tasks.difficulty,
+      type: tasks.type,
+      topicId: tasks.topicId,
+      payload: tasks.payload
+    })
+    .from(tasks)
+    .where(inArray(tasks.id, ids));
+  return rows.map(({ payload, ...task }) => ({ ...task, fileDelivery: isFileDelivery(payload) }));
+}
+
+/** A session's routes as stored (lib/session/routes.ts): server-side only, never sent to the room whole. */
+export interface SessionRoutes {
+  routeTasks: RouteTaskIds;
+  studentRoutes: StudentRoutes;
+}
+
+function routesOf(session: typeof sessions.$inferSelect): SessionRoutes {
+  return {
+    routeTasks: { support: session.supportTaskIds, extension: session.extensionTaskIds },
+    studentRoutes: session.studentRoutes
+  };
+}
+
+/**
+ * One student's route tasks in an open session, in the teacher's order, and
+ * whether they come before the main tasks. Only this student's: which
+ * classmates are on which route never reaches a browser.
+ */
+export async function getStudentRouteTasks(
+  sessionId: string,
+  studentId: string
+): Promise<{ tasks: JoinedSessionTask[]; first: boolean }> {
+  const db = getDb();
+  const [row] = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
+  if (!row) return { tasks: [], first: false };
+  const { routeTasks, studentRoutes } = routesOf(row);
+  const ids = [...routeTaskIdsFor(studentRoutes, routeTasks, studentId)];
+  return {
+    tasks: orderSessionTasks(ids, await joinedTasks(db, ids)),
+    first: routeTasksFirst(routeOf(studentRoutes, studentId))
+  };
+}
+
 export async function getOpenSessionByCode(code: string): Promise<JoinedSession | null> {
   const db = getDb();
   const [row] = await db
@@ -144,25 +209,7 @@ export async function getOpenSessionByCode(code: string): Promise<JoinedSession 
     .limit(1);
   if (!row) return null;
 
-  const allIds = [...row.session.taskIds, ...row.session.improvementTaskIds];
-  const taskRows = allIds.length
-    ? await db
-        .select({
-          id: tasks.id,
-          slug: tasks.slug,
-          title: tasks.title,
-          difficulty: tasks.difficulty,
-          type: tasks.type,
-          topicId: tasks.topicId,
-          payload: tasks.payload
-        })
-        .from(tasks)
-        .where(inArray(tasks.id, allIds))
-    : [];
-  const joined: JoinedSessionTask[] = taskRows.map(({ payload, ...task }) => ({
-    ...task,
-    fileDelivery: isFileDelivery(payload)
-  }));
+  const joined = await joinedTasks(db, [...row.session.taskIds, ...row.session.improvementTaskIds]);
 
   return {
     id: row.session.id,
@@ -188,7 +235,7 @@ export interface AttemptContext {
 /**
  * Everything an attempt submission must be checked against, in one query:
  * the session is open, the student is on the class roster, and the task is
- * theirs — one of their assigned main tasks or an improvement task. A client can lie about all
+ * theirs — one of their assigned main tasks, an improvement task, or a task of their route. A client can lie about all
  * three, so the API route re-derives this rather than trusting the request body.
  */
 export async function getAttemptContext(
@@ -211,8 +258,10 @@ export async function getAttemptContext(
     poolSize: row.session.poolSize,
     shuffle: false
   });
-  if (!taskIds.includes(taskId) && !improvementTaskIds.includes(taskId)) return null;
-  return { rules: { kind, mode, taskIds, improvementTaskIds }, student };
+  const { routeTasks, studentRoutes } = routesOf(row.session);
+  const routeTaskIds = routeTaskIdsFor(studentRoutes, routeTasks, student.id);
+  if (!taskIds.includes(taskId) && !improvementTaskIds.includes(taskId) && !routeTaskIds.includes(taskId)) return null;
+  return { rules: { kind, mode, taskIds, improvementTaskIds, routeTaskIds }, student };
 }
 
 export interface OwnAttemptRow extends OwnAttempt {

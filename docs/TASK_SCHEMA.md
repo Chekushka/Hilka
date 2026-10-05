@@ -21,6 +21,7 @@ interface Task {
   params?: ParamSpec;          // parameterized variants
   difficulty: 1 | 2 | 3 | 4 | 5;
   gradeTags: number[];         // e.g. [7, 8]
+  tags?: TaskTag[];            // kind of work, for choosing tasks; see "Tags"
   version: number;
   status: 'draft' | 'published' | 'archived';
 }
@@ -38,6 +39,30 @@ imports it. A content file carries `slug` and `topicSlug` instead of `id` and `t
 belong to one database and mean nothing in another — and the importer resolves the topic and
 rejects a file whose checks fail `validateTaskChecks`. Topics themselves are in
 `content/topics.json`.
+
+### Tags
+
+```ts
+type TaskTag = 'retype' | 'easy-start' | 'challenge';   // lib/task/tags.ts
+```
+
+What kind of work a task is, for the teacher choosing tasks for a particular student — beside
+`difficulty`, which weighs a task in a grade and says nothing about the kind of work. A closed
+vocabulary: the seed and the JSON import reject an unknown tag, and a reader drops one.
+
+| Tag | Shown as | Meaning |
+|---|---|---|
+| `retype` | «Набери код» | The prompt carries a fenced program; the student types it out and runs it. For a student who is lost in the topic or not engaging: busy with something finishable, real Python under their fingers. The workspace shows a note and makes the sample unselectable — a nudge, not a lock |
+| `easy-start` | «Легкий старт» | One idea, one step, a sure first success |
+| `challenge` | «Виклик» | Beyond the lesson's core, for a student who finished early |
+
+A retype task is an ordinary `code` task: `stdout_equals` (no input), cases with
+`last_line_equals` (input), or `shape_equals` (turtle) against the reference, which is the very
+program in the prompt. Retype tasks also carry `easy-start`.
+
+Tags are metadata, not content: no answer depends on them, so they change on a draft and on a
+published task alike (`PUT /api/tasks/[id]/tags`), without a new version. Students never see a
+tag as such. Session routes are filled from them (docs/AI_CONTEXT.md, "Routes").
 
 ## Payloads
 

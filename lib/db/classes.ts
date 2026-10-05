@@ -28,32 +28,6 @@ export interface TeacherClassSummary {
   sessions: TeacherSessionSummary[];
 }
 
-export interface ClassOption {
-  id: string;
-  title: string;
-  /** Starts the session builder's task bank on this grade. */
-  grade: number | null;
-}
-
-/** For the session builder's class picker — no roster or session join needed there. */
-export async function listClassOptionsForTeacher(teacherId: string): Promise<ClassOption[]> {
-  return getDb()
-    .select({ id: classes.id, title: classes.title, grade: classes.grade })
-    .from(classes)
-    .where(eq(classes.teacherId, teacherId))
-    .orderBy(asc(classes.title));
-}
-
-/** Ownership check: a session builder must not create a session under a class the caller does not own. */
-export async function getClassForTeacher(classId: string, teacherId: string): Promise<ClassOption | null> {
-  const [row] = await getDb()
-    .select({ id: classes.id, title: classes.title, grade: classes.grade })
-    .from(classes)
-    .where(and(eq(classes.id, classId), eq(classes.teacherId, teacherId)))
-    .limit(1);
-  return row ?? null;
-}
-
 export interface ClassWithRoster {
   id: string;
   title: string;

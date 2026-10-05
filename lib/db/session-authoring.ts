@@ -5,13 +5,15 @@
  * lib/db/tasks.ts.
  */
 import { randomInt } from 'node:crypto';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { SESSION_CODE_ALPHABET, SESSION_CODE_LENGTH } from '@/lib/session/code';
+import type { StudentRoutes } from '@/lib/session/routes';
 import type { SessionKind, SessionMode } from '@/lib/session/types';
 import { isFileDelivery } from '@/lib/task/prerequisite';
+import { normalizeTags, type TaskTag } from '@/lib/task/tags';
 import type { TaskType } from '@/lib/task/types';
 import { getDb } from './client';
-import { sessions, tasks, topics } from './schema';
+import { classes, sessions, tasks, topics } from './schema';
 
 const MAX_MINT_ATTEMPTS = 5;
 
@@ -36,6 +38,8 @@ export interface TaskPickerOption {
   fileDelivery: boolean;
   /** Each student gets their own variant (`tasks.params`, lib/task/params.ts). */
   parameterized: boolean;
+  /** What kind of work it is (lib/task/tags.ts) — what the routes are filled from. */
+  tags: TaskTag[];
 }
 
 /** Every published task, for the builder's own client-side topic/grade filtering — the catalog is small enough not to need a filtered query. */
@@ -51,7 +55,8 @@ export async function listPublishedTasksForPicker(): Promise<TaskPickerOption[]>
       difficulty: tasks.difficulty,
       type: tasks.type,
       payload: tasks.payload,
-      params: tasks.params
+      params: tasks.params,
+      tags: tasks.tags
     })
     .from(tasks)
     .innerJoin(topics, eq(tasks.topicId, topics.id))
@@ -60,8 +65,61 @@ export async function listPublishedTasksForPicker(): Promise<TaskPickerOption[]>
   return rows.map(({ payload, params, ...row }) => ({
     ...row,
     fileDelivery: isFileDelivery(payload),
-    parameterized: params !== null
+    parameterized: params !== null,
+    tags: normalizeTags(row.tags)
   }));
+}
+
+export interface BuilderClassOption {
+  id: string;
+  title: string;
+  grade: number | null;
+  /** Ids and names only — who can be put on a route. */
+  students: { id: string; name: string }[];
+  /** The routes of this class's latest session that had any, for «як минулого разу»; empty when none did. */
+  lastRoutes: StudentRoutes;
+}
+
+/**
+ * The teacher's classes for the session builder, each with its roster and the
+ * routes its latest session used. Routes are read from that session, never
+ * stored on the class: a teacher repeats a choice, the class carries no label.
+ */
+export async function listClassesForBuilder(teacherId: string): Promise<BuilderClassOption[]> {
+  const db = getDb();
+  const rows = await db
+    .select({ id: classes.id, title: classes.title, grade: classes.grade, students: classes.students })
+    .from(classes)
+    .where(eq(classes.teacherId, teacherId))
+    .orderBy(asc(classes.title));
+  if (rows.length === 0) return [];
+  const routed = await db
+    .select({ classId: sessions.classId, studentRoutes: sessions.studentRoutes })
+    .from(sessions)
+    .where(
+      and(
+        inArray(
+          sessions.classId,
+          rows.map((row) => row.id)
+        ),
+        sql`${sessions.studentRoutes} <> '{}'::jsonb`
+      )
+    )
+    .orderBy(desc(sessions.createdAt));
+  const latest = new Map<string, StudentRoutes>();
+  for (const row of routed) if (!latest.has(row.classId)) latest.set(row.classId, row.studentRoutes);
+  return rows.map((row) => {
+    const onRoster = new Set(row.students.map((student) => student.id));
+    const last = latest.get(row.id) ?? {};
+    return {
+      id: row.id,
+      title: row.title,
+      grade: row.grade,
+      students: row.students.map(({ id, name }) => ({ id, name })),
+      // A student removed from the roster since is left out.
+      lastRoutes: Object.fromEntries(Object.entries(last).filter(([id]) => onRoster.has(id)))
+    };
+  });
 }
 
 /** Narrows a teacher-submitted task id list down to ones that are actually published, in the order given. */
@@ -89,6 +147,10 @@ export interface CreateSessionInput {
   dueAt: Date | null;
   /** A class check only: the homework it checks. */
   checksSessionId?: string | null;
+  /** Routes (lib/session/routes.ts): extra tasks per route, and who is on which. */
+  supportTaskIds?: string[];
+  extensionTaskIds?: string[];
+  studentRoutes?: StudentRoutes;
 }
 
 /**
@@ -117,7 +179,10 @@ export async function createSession(input: CreateSessionInput): Promise<{ id: st
         shuffle: input.shuffle,
         poolSize: input.poolSize ?? null,
         dueAt: input.dueAt,
-        checksSessionId: input.checksSessionId ?? null
+        checksSessionId: input.checksSessionId ?? null,
+        supportTaskIds: input.supportTaskIds ?? [],
+        extensionTaskIds: input.extensionTaskIds ?? [],
+        studentRoutes: input.studentRoutes ?? {}
       })
       .onConflictDoNothing()
       .returning({ id: sessions.id, code: sessions.code });

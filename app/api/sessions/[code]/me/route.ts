@@ -2,7 +2,8 @@
  * What the room restores on entry (docs/HOMEWORK.md, section 3): the student's
  * own attempts in this session, so done marks, locked tasks and fixes left
  * survive a reload, another tab, another device and another day. Answers only
- * pass/fail and when — never what anyone submitted.
+ * pass/fail and when — never what anyone submitted. Also the student's own
+ * route tasks (lib/session/routes.ts), if the teacher gave them a route.
  *
  * `?student=` is the roster id the name screen picked. There is no secret behind a roster
  * name (option D: entry stays free), so anyone with the code could read this
@@ -11,7 +12,7 @@
  */
 import { NextResponse } from 'next/server';
 import { findStudent } from '@/lib/classes/roster';
-import { getOpenSessionByCode, listOwnAttempts } from '@/lib/db/sessions';
+import { getOpenSessionByCode, getStudentRouteTasks, listOwnAttempts } from '@/lib/db/sessions';
 import { usedElsewhere } from '@/lib/homework/devices';
 import { deviceId } from '@/lib/session/device-cookie';
 import type { OwnSessionState } from '@/lib/session/types';
@@ -29,7 +30,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   }
 
   const device = await deviceId();
-  const rows = await listOwnAttempts(session.id, student.id);
+  const [rows, route] = await Promise.all([
+    listOwnAttempts(session.id, student.id),
+    getStudentRouteTasks(session.id, student.id)
+  ]);
   const state: OwnSessionState = {
     attempts: rows.map(({ taskId, passed, score, hintsUsed, createdAt }) => ({
       taskId,
@@ -38,7 +42,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
       hintsUsed,
       createdAt
     })),
-    usedElsewhere: usedElsewhere(rows, device)
+    usedElsewhere: usedElsewhere(rows, device),
+    routeTasks: route.tasks,
+    routeTasksFirst: route.first
   };
   return NextResponse.json(state, { headers: { 'Cache-Control': 'no-store' } });
 }

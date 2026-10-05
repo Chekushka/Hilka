@@ -14,7 +14,7 @@
  */
 import { NextResponse } from 'next/server';
 import { findStudent, seedKeyOf } from '@/lib/classes/roster';
-import { getOpenSessionByCode } from '@/lib/db/sessions';
+import { getOpenSessionByCode, getStudentRouteTasks } from '@/lib/db/sessions';
 import { getPublishedTaskById } from '@/lib/db/tasks';
 import { isParameterized, resolveTaskParams } from '@/lib/task/params';
 import { assignTasks, deriveSeed } from '@/lib/seed';
@@ -29,11 +29,16 @@ export async function GET(
   // The task must belong to this open session — not just exist and be
   // published — so a student cannot reach tasks outside what was assigned.
   const session = await getOpenSessionByCode(code);
-  const assigned = [...(session?.tasks ?? []), ...(session?.improvementTasks ?? [])];
-  if (!session || !assigned.some((task) => task.id === taskId)) {
+  if (!session) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
   const student = findStudent(session.roster, ref);
+  const assigned = [...session.tasks, ...session.improvementTasks];
+  // A route task is only for the students on that route (lib/session/routes.ts).
+  const routed = student ? (await getStudentRouteTasks(session.id, student.id)).tasks : [];
+  if (!assigned.some((task) => task.id === taskId) && !routed.some((task) => task.id === taskId)) {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
   // With a pool, a main task is only for the students it was drawn for (lib/seed/assignment.ts).
   if (session.assignment.poolSize !== null && session.tasks.some((task) => task.id === taskId)) {
     const own = student

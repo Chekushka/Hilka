@@ -16,7 +16,8 @@
  */
 import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Check } from '@/lib/checker';
-import type { Reference, RunCase, TaskPayload, TaskStatus } from '@/lib/task/types';
+import { normalizeTags, type TaskTag } from '@/lib/task/tags';
+import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { tasks, topics } from './schema';
 import type { TaskRow } from './task-mapping';
@@ -38,6 +39,8 @@ export interface DraftTaskInput {
   hints: string[];
   difficulty: number;
   gradeTags: number[];
+  /** lib/task/tags.ts. Absent on a draft edit: tags have their own route (`setTaskTags`). */
+  tags?: TaskTag[];
 }
 
 /** True for a Postgres unique-violation — the slug is already taken. */
@@ -59,6 +62,7 @@ export async function createDraftTask(input: DraftTaskInput): Promise<{ id: stri
       hints: input.hints,
       difficulty: input.difficulty,
       gradeTags: input.gradeTags,
+      tags: normalizeTags(input.tags),
       version: 0,
       status: 'draft'
     })
@@ -77,7 +81,12 @@ export interface TaskListRow {
   title: string;
   status: TaskStatus;
   version: number;
+  topicSlug: string;
   topicTitle: string;
+  type: TaskType;
+  difficulty: number;
+  gradeTags: number[];
+  tags: TaskTag[];
 }
 
 /** Every task, draft and published, for the authoring list — never filtered by status like the student-facing queries. */
@@ -89,12 +98,17 @@ export async function listTasksForAuthoring(): Promise<TaskListRow[]> {
       title: tasks.title,
       status: tasks.status,
       version: tasks.version,
-      topicTitle: topics.title
+      topicSlug: topics.slug,
+      topicTitle: topics.title,
+      type: tasks.type,
+      difficulty: tasks.difficulty,
+      gradeTags: tasks.gradeTags,
+      tags: tasks.tags
     })
     .from(tasks)
     .innerJoin(topics, eq(tasks.topicId, topics.id))
     .orderBy(asc(topics.order), asc(tasks.slug));
-  return rows;
+  return rows.map((row) => ({ ...row, tags: normalizeTags(row.tags) }));
 }
 
 /** `null` when the task does not exist or is no longer a draft — a published task is not editable here. */
@@ -126,4 +140,19 @@ export async function publishTask(id: string, reference: Reference | null): Prom
     .where(and(eq(tasks.id, id), eq(tasks.status, 'draft')))
     .returning();
   return row ?? null;
+}
+
+/**
+ * Sets a task's tags, whatever its status. Tags say what kind of work a task
+ * is, for choosing it — nothing a student answers depends on them — so a
+ * published task takes the change at once, with no new version. `false` when
+ * the task does not exist.
+ */
+export async function setTaskTags(id: string, tags: TaskTag[]): Promise<boolean> {
+  const rows = await getDb()
+    .update(tasks)
+    .set({ tags: normalizeTags(tags) })
+    .where(eq(tasks.id, id))
+    .returning({ id: tasks.id });
+  return rows.length > 0;
 }

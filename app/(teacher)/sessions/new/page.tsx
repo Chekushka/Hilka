@@ -2,9 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { SessionBuilderForm } from '@/components/authoring/SessionBuilderForm';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
-import { listClassOptionsForTeacher } from '@/lib/db/classes';
 import { listLessonsForPicker } from '@/lib/db/lessons';
-import { listPublishedTasksForPicker } from '@/lib/db/session-authoring';
+import { listClassesForBuilder, listPublishedTasksForPicker } from '@/lib/db/session-authoring';
 import { t } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +15,7 @@ export default async function NewSessionPage({ searchParams }: { searchParams: P
   }
 
   const [classes, tasks, lessons] = await Promise.all([
-    listClassOptionsForTeacher(teacher.id),
+    listClassesForBuilder(teacher.id),
     listPublishedTasksForPicker(),
     listLessonsForPicker()
   ]);

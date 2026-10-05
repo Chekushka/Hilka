@@ -64,6 +64,13 @@ export interface OwnSessionState {
   attempts: OwnAttempt[];
   /** Someone worked under this name from another browser (lib/homework/devices.ts). */
   usedElsewhere: boolean;
+  /**
+   * This student's route tasks (lib/session/routes.ts), in the teacher's order;
+   * empty without a route. Sent per student, so no browser learns another's route.
+   */
+  routeTasks: JoinedSessionTask[];
+  /** Whether the route tasks come before the main ones (a support route). */
+  routeTasksFirst: boolean;
 }
 
 /** What the workspace reports once a Check completes, for the attempts table. */

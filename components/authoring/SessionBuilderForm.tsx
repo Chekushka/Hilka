@@ -29,8 +29,14 @@ import { formatDeadline } from '@/lib/homework/deadline';
 import { t } from '@/lib/i18n';
 import { addLessonToSelection, findNonGradedTasks } from '@/lib/lessons/graded-warnings';
 import { unsequencedFileTasks } from '@/lib/task/prerequisite';
+import { DifficultyMeter, TaskTagChip, TaskTypeChip } from '@/components/authoring/TaskBadges';
+import { TaskFilterBar } from '@/components/authoring/TaskFilterBar';
+import { RoutesPanel, type RouteTarget } from '@/components/authoring/RoutesPanel';
+import { EMPTY_FILTER, filterCatalog, type CatalogFilter } from '@/lib/task/catalog-filter';
+import { ROUTE_KEYS, type RouteKey, type StudentRoutes } from '@/lib/session/routes';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { SessionMode } from '@/lib/session/types';
+import type { TaskTag } from '@/lib/task/tags';
 import type { TaskType } from '@/lib/task/types';
 
 // Mirrors the database layer's shapes rather than importing them — the
@@ -40,6 +46,9 @@ interface ClassOption {
   id: string;
   title: string;
   grade: number | null;
+  students: { id: string; name: string }[];
+  /** The routes of this class's latest session that had any — for copying them as last time. */
+  lastRoutes: StudentRoutes;
 }
 
 interface TaskOption {
@@ -53,6 +62,7 @@ interface TaskOption {
   type: TaskType;
   fileDelivery: boolean;
   parameterized: boolean;
+  tags: TaskTag[];
 }
 
 interface LessonOption {
@@ -73,8 +83,6 @@ interface SessionBuilderFormProps {
   lessons: LessonOption[];
 }
 
-const ALL_TOPICS = '';
-const ALL_GRADES = '';
 
 type BuilderMode = SessionMode | 'homework';
 
@@ -96,9 +104,11 @@ const DEADLINE_PRESETS = [
 const percent = (share: number) => Math.round(share * 100);
 
 /** The task bank's grade filter for a class: its grade, when it has one and some task carries it. */
-function gradeFilterFor(klass: ClassOption | undefined, gradeOptions: readonly number[]): string {
-  return klass?.grade && gradeOptions.includes(klass.grade) ? String(klass.grade) : ALL_GRADES;
+function gradeFilterFor(klass: ClassOption | undefined, gradeOptions: readonly number[]): number | null {
+  return klass?.grade && gradeOptions.includes(klass.grade) ? klass.grade : null;
 }
+
+const NO_ROUTE_TASKS: Record<RouteKey, string[]> = { support: [], extension: [] };
 
 export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: SessionBuilderFormProps) {
   const startClass = classes.find((klass) => klass.id === initialClassId) ?? classes[0];
@@ -107,11 +117,17 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   // datetime-local, on the teacher's own clock; set when homework is chosen, so the server never renders a time.
   const [dueAt, setDueAt] = useState('');
   const [improvementIds, setImprovementIds] = useState<string[]>([]);
-  const [topicFilter, setTopicFilter] = useState(ALL_TOPICS);
   const gradeOptions = [...new Set(tasks.flatMap((task) => task.gradeTags))].sort((a, b) => a - b);
   // The bank opens on the class's grade (set on the class form); the teacher can widen it.
-  const [gradeFilter, setGradeFilter] = useState(() => gradeFilterFor(startClass, gradeOptions));
+  const [filter, setFilter] = useState<CatalogFilter>(() => ({
+    ...EMPTY_FILTER,
+    grade: gradeFilterFor(startClass, gradeOptions)
+  }));
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  // Routes (lib/session/routes.ts): where a click in the bank puts a task, each route's tasks, and who is on which.
+  const [target, setTarget] = useState<RouteTarget>('main');
+  const [routeTaskIds, setRouteTaskIds] = useState<Record<RouteKey, string[]>>(NO_ROUTE_TASKS);
+  const [studentRoutes, setStudentRoutes] = useState<StudentRoutes>({});
   const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [shuffle, setShuffle] = useState(false);
@@ -121,22 +137,31 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ id: string; code: string } | null>(null);
   const [lessonToAdd, setLessonToAdd] = useState('');
-  const [search, setSearch] = useState('');
 
-  const topicOptions = [...new Map(tasks.map((task) => [task.topicSlug, task.topicTitle])).entries()];
+  const visibleTasks = filterCatalog(tasks, filter);
+  const klass = classes.find((option) => option.id === classId);
 
-  const query = search.trim().toLocaleLowerCase('uk');
-  const visibleTasks = tasks.filter(
-    (task) =>
-      (topicFilter === ALL_TOPICS || task.topicSlug === topicFilter) &&
-      (gradeFilter === ALL_GRADES || task.gradeTags.includes(Number(gradeFilter))) &&
-      (query === '' || task.title.toLocaleLowerCase('uk').includes(query))
-  );
+  /** Where a task sits in this session: the main list, a route, or nowhere. */
+  function placeOf(id: string): RouteTarget | null {
+    if (selectedTaskIds.includes(id)) return 'main';
+    return ROUTE_KEYS.find((route) => routeTaskIds[route].includes(id)) ?? null;
+  }
 
-  function toggleTask(id: string) {
-    setSelectedTaskIds((previous) =>
-      previous.includes(id) ? previous.filter((existing) => existing !== id) : [...previous, id]
-    );
+  function removeEverywhere(id: string) {
+    setSelectedTaskIds((previous) => previous.filter((existing) => existing !== id));
+    setRouteTaskIds((previous) => ({
+      support: previous.support.filter((existing) => existing !== id),
+      extension: previous.extension.filter((existing) => existing !== id)
+    }));
+  }
+
+  /** A click in the bank: into the list being filled, or out of it; a task is only ever in one list. */
+  function toggleTask(id: string, into: RouteTarget = target) {
+    const place = placeOf(id);
+    removeEverywhere(id);
+    if (place === into) return;
+    if (into === 'main') setSelectedTaskIds((previous) => [...previous, id]);
+    else setRouteTaskIds((previous) => ({ ...previous, [into]: [...previous[into], id] }));
   }
 
   function moveTask(id: string, step: -1 | 1) {
@@ -153,7 +178,8 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   function addLesson() {
     const lesson = lessons.find((candidate) => candidate.id === lessonToAdd);
     if (!lesson) return;
-    const assignable = new Set(tasks.map((task) => task.id));
+    const routed = new Set([...routeTaskIds.support, ...routeTaskIds.extension]);
+    const assignable = new Set(tasks.map((task) => task.id).filter((id) => !routed.has(id)));
     setSelectedTaskIds((previous) => addLessonToSelection(previous, lesson, assignable));
   }
 
@@ -210,7 +236,10 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
         hintsEnabled,
         shuffle,
         poolSize: poolSize && Number(poolSize) < main.length ? Number(poolSize) : null,
-        dueAt: due ? due.toISOString() : null
+        dueAt: due ? due.toISOString() : null,
+        supportTaskIds: routeTaskIds.support,
+        extensionTaskIds: routeTaskIds.extension,
+        studentRoutes
       })
     });
 
@@ -281,8 +310,10 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
             value={classId}
             onChange={(event) => {
               setClassId(event.target.value);
-              const klass = classes.find((option) => option.id === event.target.value);
-              if (klass?.grade) setGradeFilter(gradeFilterFor(klass, gradeOptions));
+              const next = classes.find((option) => option.id === event.target.value);
+              if (next?.grade) setFilter((previous) => ({ ...previous, grade: gradeFilterFor(next, gradeOptions) }));
+              // Another class, other students: nobody carries a route across.
+              setStudentRoutes({});
             }}
             className={fieldClass}
           >
@@ -456,73 +487,47 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
       </div>
 
       <div className="flex min-w-0 flex-col gap-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <h2 className="mr-auto text-lg font-semibold text-ink">{t('sessionBuilder.filtersTitle')}</h2>
-          <div className="flex flex-col gap-1">
-            <label className={labelClass} htmlFor="taskSearch">
-              {t('sessionBuilder.searchLabel')}
-            </label>
-            <input
-              id="taskSearch"
-              type="search"
-              value={search}
-              placeholder={t('sessionBuilder.searchPlaceholder')}
-              onChange={(event) => setSearch(event.target.value)}
-              className={`w-44 ${fieldClass}`}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className={labelClass} htmlFor="topicFilter">
-              {t('sessionBuilder.topicFilterLabel')}
-            </label>
-            <select
-              id="topicFilter"
-              value={topicFilter}
-              onChange={(event) => setTopicFilter(event.target.value)}
-              className={`max-w-[14rem] ${fieldClass}`}
-            >
-              <option value={ALL_TOPICS}>{t('sessionBuilder.filterAll')}</option>
-              {topicOptions.map(([slug, title]) => (
-                <option key={slug} value={slug}>
-                  {title}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className={labelClass} htmlFor="gradeFilter">
-              {t('sessionBuilder.gradeFilterLabel')}
-            </label>
-            <select
-              id="gradeFilter"
-              value={gradeFilter}
-              onChange={(event) => setGradeFilter(event.target.value)}
-              className={fieldClass}
-            >
-              <option value={ALL_GRADES}>{t('sessionBuilder.filterAll')}</option>
-              {gradeOptions.map((grade) => (
-                <option key={grade} value={grade}>
-                  {grade}
-                </option>
-              ))}
-            </select>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-ink">{t('sessionBuilder.filtersTitle')}</h2>
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('routes.targetLabel')}>
+            <span className="text-sm text-ink-muted" aria-hidden="true">
+              {t('routes.targetLabel')}
+            </span>
+            {(['main', ...ROUTE_KEYS] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                aria-pressed={target === option}
+                onClick={() => setTarget(option)}
+                className={`rounded-lg border px-3 py-1.5 text-sm ${
+                  target === option ? 'border-accent bg-accent text-surface' : 'border-line text-ink hover:border-accent'
+                }`}
+              >
+                {option === 'main' ? t('routes.targetMain') : t(`routes.name.${option}`)}
+              </button>
+            ))}
           </div>
         </div>
-        <p className="text-xs text-ink-muted">
-          {t('sessionBuilder.bankShown', { shown: visibleTasks.length, total: tasks.length })}
-        </p>
+        <TaskFilterBar
+          tasks={tasks}
+          filter={filter}
+          onChange={setFilter}
+          shown={visibleTasks.length}
+          ids={{ search: 'taskSearch', topic: 'topicFilter', grade: 'gradeFilter' }}
+        />
 
         {visibleTasks.length === 0 ? (
           <p className="text-sm text-ink-muted">{t('sessionBuilder.noMatchingTasks')}</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {visibleTasks.map((task) => {
-              const checked = selectedTaskIds.includes(task.id);
+              const place = placeOf(task.id);
+              const checked = place === target;
               return (
                 <li key={task.id}>
                   <label
                     className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-surface px-4 py-3 ${
-                      checked ? 'border-accent' : 'border-line hover:border-ink-muted'
+                      checked ? 'border-accent' : place ? 'border-dashed border-ink-muted' : 'border-line hover:border-ink-muted'
                     }`}
                   >
                     <input
@@ -533,19 +538,27 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium text-ink">{task.title}</span>
-                      <span className="mt-0.5 block text-xs text-ink-muted">
-                        {t('sessionBuilder.taskMeta', {
-                          grades: task.gradeTags.join(', '),
-                          topic: task.topicTitle,
-                          difficulty: task.difficulty
-                        })}
-                        {task.fileDelivery && ` · ${t('sessionBuilder.fileTask')}`}
-                        {task.parameterized && ` · ${t('sessionBuilder.variantTask')}`}
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
+                        <span>
+                          {t('sessionBuilder.taskMetaShort', {
+                            grades: task.gradeTags.join(', '),
+                            topic: task.topicTitle
+                          })}
+                          {task.fileDelivery && ` · ${t('sessionBuilder.fileTask')}`}
+                          {task.parameterized && ` · ${t('sessionBuilder.variantTask')}`}
+                        </span>
+                        <DifficultyMeter difficulty={task.difficulty} />
+                        {task.tags.map((tag) => (
+                          <TaskTagChip key={tag} tag={tag} />
+                        ))}
+                        {place && place !== target && (
+                          <span className="rounded-full border border-dashed border-ink-muted px-2 py-0.5" data-testid="task-place">
+                            {place === 'main' ? t('routes.inMain') : t('routes.inRoute', { route: t(`routes.name.${place}`) })}
+                          </span>
+                        )}
                       </span>
                     </span>
-                    <span className="shrink-0 rounded-full bg-shell px-2.5 py-1 text-xs text-ink-muted">
-                      {t(`task.types.${task.type}`)}
-                    </span>
+                    <TaskTypeChip type={task.type} />
                   </label>
                 </li>
               );
@@ -609,7 +622,7 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
                   </button>
                   <button
                     type="button"
-                    onClick={() => toggleTask(task.id)}
+                    onClick={() => removeEverywhere(task.id)}
                     aria-label={t('sessionBuilder.remove', { title: task.title })}
                     className="h-7 w-7 rounded text-ink-muted hover:text-attention"
                   >
@@ -631,6 +644,21 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
               n: selected.length
             })}
           </p>
+        )}
+
+        {klass && (
+          <RoutesPanel
+            students={klass.students}
+            lastRoutes={klass.lastRoutes}
+            tasks={tasks}
+            mainTaskIds={selectedTaskIds}
+            routeTaskIds={routeTaskIds}
+            onRouteTaskIds={setRouteTaskIds}
+            studentRoutes={studentRoutes}
+            onStudentRoutes={setStudentRoutes}
+            target={target}
+            onTarget={setTarget}
+          />
         )}
 
         {nonGraded.length > 0 && (

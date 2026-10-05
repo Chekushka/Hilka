@@ -140,3 +140,24 @@ describe('checksLeft', () => {
     expect(checksLeft(practiceLesson, 'a', [at('a', false)])).toBeNull();
   });
 });
+
+describe('route tasks', () => {
+  const routed = (rules: SessionRules): SessionRules => ({ ...rules, routeTaskIds: ['r'] });
+
+  it('never limit Checks, in a graded lesson and in homework alike', () => {
+    for (const rules of [routed(gradedLesson), routed(homework)]) {
+      const attempts = [at('r', false), at('r', false), at('r', false), at('r', false)];
+      expect(taskState(rules, 'r', attempts)).toEqual({ status: 'retry' });
+      expect(canSubmit(rules, 'r', attempts)).toBe(true);
+      expect(checksLeft(rules, 'r', attempts)).toBeNull();
+    }
+  });
+
+  it('pass without counting as a fix in homework', () => {
+    expect(taskState(routed(homework), 'r', [at('r', false), at('r', true)])).toEqual({ status: 'passed', viaFix: false });
+  });
+
+  it('leave the main tasks’ limits as they were', () => {
+    expect(canSubmit(routed(gradedLesson), 'a', [at('a', false)])).toBe(false);
+  });
+});
