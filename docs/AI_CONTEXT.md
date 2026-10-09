@@ -872,3 +872,12 @@ different origin from the `localhost` it serves dev resources for, so a browser 
 blank, localStorage progress never shows and buttons do nothing, with nothing in the page to say
 why. Production (`next start`, which Playwright uses) is unaffected. Open dev on `localhost`.
 `next dev` also appends an agent-rules block to `CLAUDE.md` on start — not part of any change.
+
+**A card in the task panel shrank and clipped its own text.** From `lg` the task panel is a flex
+column with `overflow-y: auto`. A flex item's automatic minimum height is its content height —
+unless the item itself has `overflow` other than visible, when it drops to zero. The statement
+card has `overflow: hidden` (for its rounded header), so on a short screen the column shrank the
+card instead of scrolling, and the statement's last lines disappeared under the hint block. The
+panel's children are `shrink-0` now; anything added to a scrolling flex column with its own
+`overflow` needs the same.
+

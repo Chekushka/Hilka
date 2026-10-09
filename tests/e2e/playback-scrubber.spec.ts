@@ -17,7 +17,7 @@ async function typeSolution(page: Page, code: string) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/practice/g7-29-turtle/g7-turtle-square');
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 });
 
 test('no scrubber controls before anything has been drawn', async ({ page }) => {
@@ -26,7 +26,7 @@ test('no scrubber controls before anything has been drawn', async ({ page }) => 
 
 test('a completed run shows the scrubber at the final step', async ({ page }) => {
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 
   const slider = page.getByRole('slider', { name: 'Перемотка малювання' });
@@ -37,7 +37,7 @@ test('a completed run shows the scrubber at the final step', async ({ page }) =>
 
 test('the previous-step button rewinds one segment at a time', async ({ page }) => {
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByText('Крок 4 з 4')).toBeVisible({ timeout: 20_000 });
 
   await page.getByRole('button', { name: 'Попередній крок' }).click();
@@ -51,7 +51,7 @@ test('the previous-step button rewinds one segment at a time', async ({ page }) 
 
 test('dragging the slider to the start hides the undrawn segments', async ({ page }) => {
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByText('Крок 4 з 4')).toBeVisible({ timeout: 20_000 });
 
   const slider = page.getByRole('slider', { name: 'Перемотка малювання' });
@@ -63,7 +63,7 @@ test('dragging the slider to the start hides the undrawn segments', async ({ pag
 
 test('play steps through automatically and stops at the end', async ({ page }) => {
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByText('Крок 4 з 4')).toBeVisible({ timeout: 20_000 });
 
   const slider = page.getByRole('slider', { name: 'Перемотка малювання' });

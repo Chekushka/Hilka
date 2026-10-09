@@ -21,7 +21,7 @@ test('downloaded starter carries the header; an edited upload is checked', async
   await openFileTask(page, 'Олена');
 
   // Nothing to run until a file arrives.
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeDisabled();
 
   const [download] = await Promise.all([
     page.waitForEvent('download'),
@@ -41,11 +41,11 @@ test('downloaded starter carries the header; an edited upload is checked', async
 
   await input.setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: Buffer.from(edited, 'utf8') });
   await expect(page.getByText('Отримано файл hello_idle.py')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   const body = attemptResponse.request().postDataJSON() as { submittedAnswer: { code: string } };
@@ -60,7 +60,7 @@ test('a renamed document is rejected with an instruction, not a verdict', async 
   const zip = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]);
   await page.locator('input[type="file"]').setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: zip });
   await expect(page.getByRole('alert').filter({ hasText: /./ })).toContainText('Збережи код в IDLE');
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeDisabled();
 });
 
 test('a wrong extension is rejected before anything else', async ({ page }) => {
@@ -85,14 +85,14 @@ test('valid Python Hilka cannot run is FILE_UNSUPPORTED, named, with a replaceme
   await expect(notice).toContainText('Рядок 1: модуль os');
   await expect(notice).toContainText('Рядок 2: конструкція with');
   await expect(notice).toContainText('читай через input()');
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeDisabled();
 
   // Fixing it and sending it again clears the notice and lets Check through.
   await page
     .locator('input[type="file"]')
     .setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: Buffer.from('print("Привіт, IDLE!")\n', 'utf8') });
   await expect(notice).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 });
 
 /**
@@ -105,10 +105,10 @@ test('two students passing with the same file are listed for the teacher', async
   for (const name of ['Олена', 'Соломія']) {
     await openFileTask(page, name);
     await page.locator('input[type="file"]').setInputFiles({ name: 'hello_idle.py', mimeType: 'text/x-python', buffer: shared });
-    await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
     const [attemptResponse] = await Promise.all([
       page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-      page.getByRole('button', { name: 'Перевірити' }).click()
+      page.getByRole('button', { name: 'Здати' }).click()
     ]);
     expect(attemptResponse.status()).toBe(201);
     await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });

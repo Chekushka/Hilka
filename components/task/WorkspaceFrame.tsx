@@ -97,8 +97,8 @@ function Theory({ children }: { children: ReactNode }) {
 export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, dock, children }: WorkspaceFrameProps) {
   const retype = task.tags?.includes('retype');
   return (
-    <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:min-h-[36rem] lg:flex-row">
-      <aside className="flex flex-col gap-3 border-b border-line bg-shell pb-4 lg:w-[23rem] lg:flex-none lg:overflow-y-auto lg:border-b-0 lg:border-r xl:w-[25rem]">
+    <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:min-h-[26rem] lg:flex-row">
+      <aside className="flex flex-col gap-3 border-b [&>*]:shrink-0 border-line bg-shell pb-4 lg:w-[23rem] lg:flex-none lg:overflow-y-auto lg:border-b-0 lg:border-r xl:w-[25rem]">
         {chrome?.context && (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-5 py-2.5 text-sm">
             {chrome.context}
@@ -111,7 +111,7 @@ export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, doc
         <section
           aria-labelledby="task-card-title"
           data-testid="task-card"
-          className="mx-4 overflow-hidden rounded-xl border-2 border-accent bg-surface shadow-[var(--shadow-raised)]"
+          className="mx-4 flex-none overflow-hidden rounded-xl border-2 border-accent bg-surface shadow-[var(--shadow-raised)]"
         >
           <div className="flex items-center gap-2 bg-accent px-4 py-2 text-surface">
             <StepBadge n={1} inverted />
@@ -133,7 +133,7 @@ export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, doc
             to the bottom of the panel, where nobody found it. */}
         {/* Once the task is solved, a phone drops the hint and the theory: the panel must stay
             short enough that the work column — and the way on stuck to its bottom — is on screen. */}
-        <div className={`flex flex-col gap-3 ${success ? 'max-lg:hidden' : ''}`}>
+        <div className={`flex flex-none flex-col gap-3 ${success ? 'max-lg:hidden' : ''}`}>
           {hints.length > 0 && (
             <div className="mx-4">
               <Hints hints={hints} onReveal={onRevealHint} />

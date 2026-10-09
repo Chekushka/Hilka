@@ -65,6 +65,7 @@ export function QuizTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock
+          scrollKey={report ?? undefined}
           actions={<CheckAction disabled={selected.length === 0} passed={report?.passed} onCheck={check} />}
           next={report?.passed ? next : undefined}
         >

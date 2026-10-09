@@ -25,7 +25,7 @@ test('picking the correct option passes and records the attempt', async ({ page 
 
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
@@ -35,11 +35,11 @@ test('a wrong option does not pass, but picking the right one after does', async
   await openQuizTask(page, 'Тарас');
 
   await page.getByLabel('1x', { exact: true }).check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible();
 
   // A radio group: picking the correct one replaces the wrong selection.
   await page.getByLabel('x1', { exact: true }).check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
 });

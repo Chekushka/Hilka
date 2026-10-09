@@ -68,7 +68,7 @@ export function Hints({ hints, onReveal }: HintsProps) {
             setShown(shown + 1);
             onReveal?.();
           }}
-          className="flex w-full items-center gap-2.5 rounded-lg bg-honey px-3.5 py-2.5 text-left text-sm font-bold text-on-honey hover:brightness-105"
+          className="flex w-full items-center gap-2.5 rounded-lg bg-honey px-3.5 py-2.5 text-left text-sm font-bold text-on-bright hover:brightness-105"
         >
           {shown === 0 ? t('hints.show') : t('hints.next')}
           <span className="flex-1" />

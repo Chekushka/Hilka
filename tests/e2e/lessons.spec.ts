@@ -67,34 +67,50 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
   ]);
   await expect(tasks.last()).toContainText('лише на занятті з учителем');
 
-  // The next-task link walks core into additional.
+  // The next-task button walks core into additional.
+  const nav = page.getByTestId('practice-nav');
   await page.getByRole('link', { name: /Площа прямокутника/ }).click();
-  await page.getByRole('link', { name: 'Наступне завдання →' }).click();
+  await expect(nav).toContainText('Урок 4: Лінійний алгоритм');
+  await expect(nav).toContainText('Завдання 2 з 7');
+  await expect(nav.getByRole('link', { name: 'Завдання 2: Площа прямокутника' })).toHaveAttribute('aria-current', 'step');
+  await nav.getByRole('link', { name: 'Наступне завдання' }).click();
   await expect(page.getByRole('heading', { name: 'Середнє трьох чисел' })).toBeVisible();
-  await page.getByRole('link', { name: 'Наступне завдання →' }).click();
+  await nav.getByRole('link', { name: 'Наступне завдання' }).click();
   await expect(page.getByRole('heading', { name: 'Вартість поїздки' })).toBeVisible();
   for (const title of ['Робот: прямо до мети', 'Робот: поворот за ріг', 'Робот: обійти каміння']) {
-    await page.getByRole('link', { name: 'Наступне завдання →' }).click();
+    await nav.getByRole('link', { name: 'Наступне завдання' }).click();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
   }
-  await expect(page.getByText('Це останнє завдання уроку.')).toBeVisible();
+  // Back goes one task back; after the last task the way on is the next lesson, never a dead end.
+  await nav.getByRole('link', { name: 'Попереднє' }).click();
+  await expect(page.getByRole('heading', { name: 'Робот: поворот за ріг' })).toBeVisible();
+  await nav.getByRole('link', { name: 'Завдання 7: Робот: обійти каміння' }).click();
+  await expect(page.getByRole('heading', { name: 'Робот: обійти каміння' })).toBeVisible();
+  await nav.getByRole('link', { name: 'Наступний урок' }).click();
+  await expect(page.getByRole('heading', { name: 'Черепашка малює', level: 1 })).toBeVisible();
+  await expect(page.getByText(/^Урок 5 з \d+$/)).toBeVisible();
+  await expect(page.getByTestId('lesson-start')).toHaveText(/Почати урок/);
+  await page.getByRole('link', { name: /Попередній урок/ }).click();
+  await expect(page.getByRole('heading', { name: 'Лінійний алгоритм', level: 1 })).toBeVisible();
 });
 
 test('solving a task marks it done in the lesson and on the lesson list', async ({ page }) => {
   await page.goto('/practice/g7-29-turtle');
   await page.getByRole('link', { name: /^1\.\s*Квадрат/ }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 
   const editor = page.locator('.cm-content');
   await editor.click();
   await page.keyboard.press('ControlOrMeta+a');
   await page.keyboard.press('Delete');
   await page.keyboard.insertText('import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 
-  await page.getByRole('link', { name: /До уроку/ }).click();
+  await page.getByTestId('practice-nav').getByRole('link', { name: /Урок \d+: Черепашка малює/ }).click();
   await expect(page.getByRole('listitem').filter({ hasText: /^1\.\s*Квадрат/ })).toContainText('виконано');
+  // The way into the lesson now continues from the first unsolved task.
+  await expect(page.getByTestId('lesson-start')).toHaveText(/Продовжити: завдання 2/);
   await page.getByRole('link', { name: 'Усі уроки' }).click();
   await expect(page.getByRole('listitem').filter({ hasText: 'Черепашка малює' })).toContainText('1 з 5');
 });

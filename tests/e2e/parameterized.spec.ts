@@ -82,10 +82,10 @@ test('the rendered task shows a concrete side length, never the raw placeholder,
   expect(side).toBeDefined();
   expect(VALID_SIDES).toContain(side);
 
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   const editor = page.locator('.cm-content');
   await editor.click();
   await page.keyboard.insertText(`import turtle\nfor i in range(5):\n    turtle.forward(${side})\n    turtle.right(144)`);
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 15_000 });
 });

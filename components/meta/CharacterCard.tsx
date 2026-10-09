@@ -44,7 +44,7 @@ export function CharacterCard({ tasks }: { tasks: readonly XpTask[] }) {
       {next && <p className="mt-3 text-sm text-ink">{next}</p>}
       <Link
         href="/practice/character"
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-honey px-4 py-2 text-sm font-bold text-on-honey hover:brightness-105"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-honey px-4 py-2 text-sm font-bold text-on-bright hover:brightness-105"
       >
         {t('character.customize')}
         <span aria-hidden="true">→</span>

@@ -27,7 +27,7 @@ test('passing a task for the first time earns XP and grows its plant, shown on t
 
   await page.goto(QUIZ);
   await page.getByLabel('Виводить текст або значення на екран').check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
   // Difficulty 1 is worth 10 XP (lib/meta/progress.ts).
   await expect(page.getByTestId('xp-earned')).toHaveText('+10 XP');
@@ -45,12 +45,12 @@ test('passing a task for the first time earns XP and grows its plant, shown on t
 test('passing an already completed task again earns nothing new', async ({ page }) => {
   await page.goto(QUIZ);
   await page.getByLabel('Виводить текст або значення на екран').check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByTestId('xp-earned')).toHaveText('+10 XP');
 
   await page.reload();
   await page.getByLabel('Виводить текст або значення на екран').check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
   await expect(page.getByTestId('xp-earned')).toHaveCount(0);
   await expect(page.getByTestId('garden-growth')).toHaveCount(0);

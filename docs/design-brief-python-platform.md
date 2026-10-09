@@ -95,6 +95,12 @@ must act on stands out: the statement is a bordered accent card, the hint a
 honey block right under it, Check an outlined accent button, the three zones
 of the workspace numbered 1–3. Everything else stays as calm as before.
 
+**And the buttons** (project owner, later): Check is called «Здати» — "check"
+did not tell students what would happen — and Run and Hand in are the
+largest, most contrasting controls on the screen, told apart by colour, icon
+and place. The output must always be on screen at 1366×768 with the
+browser's own bars, not below the fold.
+
 ## Hard constraints
 
 - Design canvas **1366×768**. School monitors, often washed out, often viewed at
@@ -202,7 +208,7 @@ spends their preparation time.
 Write real Ukrainian copy, not lorem ipsum — the tone of the messages is half the
 design here.
 
-Buttons say what happens: "Запустити", "Перевірити", "Спробувати ще". Sentence
+Buttons say what happens: "Запустити", "Здати", "Спробувати ще". Sentence
 case throughout, no all-caps labels. Errors do not apologize and are never vague.
 Empty states invite an action rather than describing emptiness.
 

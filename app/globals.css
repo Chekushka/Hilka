@@ -25,7 +25,7 @@
   --honey: #c9922f;         /* XP, rewards, unlocks */
   --honey-soft: #f7ecd6;    /* behind a hint: help on offer, easy to spot */
   --honey-ink: #855a10;     /* honey as text — the plain honey is too light to read */
-  --on-honey: #262c27;      /* text on a honey fill: dark in both themes */
+  --on-bright: #262c27;    /* text on a honey or growth fill: dark in both themes */
   --soil: #d8ccb2;          /* the garden's ground — the sand in green, sand and honey */
   /* Garden petals and the character's colours (components/meta/Plant.tsx, Character.tsx) — never for meaning elsewhere. */
   --bloom-rose: #d48a9c;
@@ -101,7 +101,7 @@
     --honey: #dfae4e;
     --honey-soft: #3a3020;
     --honey-ink: #ebc274;
-    --on-honey: #1a201d;
+    --on-bright: #1a201d;
     --soil: #4d4536;
     --bloom-rose: #e3a2b1;
     --bloom-violet: #b2a3dd;
@@ -135,7 +135,7 @@
   --honey: #dfae4e;
   --honey-soft: #3a3020;
   --honey-ink: #ebc274;
-  --on-honey: #1a201d;
+  --on-bright: #1a201d;
   --soil: #4d4536;
   --bloom-rose: #e3a2b1;
   --bloom-violet: #b2a3dd;
@@ -168,7 +168,7 @@
   --color-honey: var(--honey);
   --color-honey-soft: var(--honey-soft);
   --color-honey-ink: var(--honey-ink);
-  --color-on-honey: var(--on-honey);
+  --color-on-bright: var(--on-bright);
   --color-soil: var(--soil);
   --color-bloom-rose: var(--bloom-rose);
   --color-bloom-violet: var(--bloom-violet);

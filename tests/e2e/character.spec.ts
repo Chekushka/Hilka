@@ -26,7 +26,7 @@ test('a pass that reaches a new level says so and names what it unlocked', async
 
   await page.goto(QUIZ);
   await page.getByLabel('Виводить текст або значення на екран').check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByTestId('xp-earned')).toHaveText('+10 XP');
   const levelUp = page.getByTestId('level-up');
   await expect(levelUp).toContainText('Новий рівень: 2!');

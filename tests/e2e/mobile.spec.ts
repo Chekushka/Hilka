@@ -14,7 +14,7 @@ test.use(pixel);
 
 test('a turtle task is solvable with a phone keyboard and the key bar', async ({ page }) => {
   await page.goto('/practice/g7-29-turtle/g7-turtle-square');
-  const check = page.getByRole('button', { name: 'Перевірити' });
+  const check = page.getByRole('button', { name: 'Здати' });
   await expect(check).toBeEnabled({ timeout: 30_000 });
 
   // The drawing scales down to the screen rather than overflowing it.

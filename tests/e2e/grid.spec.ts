@@ -24,18 +24,18 @@ test('the robot bumps into a rock, then a path around it passes', async ({ page 
   const field = page.getByRole('img', { name: /Поле 8×8/ });
   await expect(field).toBeVisible();
   await expect(field).toHaveAccessibleName(/стовпці 1, рядку 6, дивиться праворуч/);
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 
   await typeIntoEditor(page, 0, 'import robot\nrobot.forward(4)');
   await page.getByRole('button', { name: 'Запустити' }).click();
   await expect(page.getByText('Робот уперся в перешкоду в стовпці 3, рядку 6')).toBeVisible({ timeout: 20_000 });
   await expect(field).toHaveAccessibleName(/уперся в перешкоду/);
 
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
 
   await typeIntoEditor(page, 0, AROUND);
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
   await expect(field).toHaveAccessibleName(/стовпці 8, рядку 6/);
 });
@@ -85,7 +85,7 @@ test('a fill task drives the robot: the gaps are the conditions of two while loo
   await page.goto('/practice/g7-35-while-practice/g7-grid-fill-wall-then-up');
   const field = page.getByRole('img', { name: /Поле 8×8/ });
   await expect(field).toHaveAccessibleName(/Акумулятор у стовпці 6, рядку 2/);
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 
   // The wrong question in the second loop: the way is free after the turn, so it never runs.
   await page.getByLabel('Пропуск 1').fill('can_move');
@@ -97,7 +97,7 @@ test('a fill task drives the robot: the gaps are the conditions of two while loo
   });
 
   await page.getByLabel('Пропуск 3').fill('at_goal');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
   await expect(field).toHaveAccessibleName(/робот у стовпці 6, рядку 2/);
 });
@@ -128,9 +128,9 @@ test('a parameterized world puts each student\'s battery where their seed says, 
   );
 
   // The robot starts in column 2, row 7, facing up: climb to the row, turn, walk to the column.
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   await typeIntoEditor(page, 0, `import robot\nrobot.forward(${7 - Number(row)})\nrobot.right()\nrobot.forward(${Number(column) - 2})\n`);
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 });
 

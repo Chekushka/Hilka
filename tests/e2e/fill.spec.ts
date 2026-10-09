@@ -22,7 +22,7 @@ async function openFillTask(page: Page, name: string) {
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name }).click();
   await page.getByRole('button', { name: TASK_TITLE }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 }
 
 test('wrong gap values fail, and the correct ones then pass', async ({ page }) => {
@@ -32,7 +32,7 @@ test('wrong gap values fail, and the correct ones then pass', async ({ page }) =
   await fillGap(page, 2, '80');
   await fillGap(page, 3, '90');
 
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
 
   await fillGap(page, 1, '5');
@@ -40,7 +40,7 @@ test('wrong gap values fail, and the correct ones then pass', async ({ page }) =
 
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
