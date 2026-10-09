@@ -32,7 +32,10 @@ export function LessonTaskList({ lessonSlug, tasks }: LessonTaskListProps) {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block font-medium text-ink">{task.title}</span>
-              <span className="block text-xs text-ink-muted">{t(`task.types.${task.type}`)}</span>
+              {/* Visual only: the row's name stays the task's title, which is how it is announced and found. */}
+            <span aria-hidden="true" className="block text-xs text-ink-muted">
+              {t(`task.types.${task.type}`)}
+            </span>
             </span>
             {task.sessionOnly ? (
               <span className="text-xs text-ink-muted">{t('lessons.sessionOnly')}</span>
