@@ -26,6 +26,9 @@ export interface PracticeTaskMeta {
   grades: number[];
 }
 
+/** What XP needs of a task — the client gets this much, not the whole meta. */
+export type XpTask = Pick<PracticeTaskMeta, 'slug' | 'difficulty'>;
+
 export interface TopicProgress {
   slug: string;
   title: string;
@@ -40,7 +43,7 @@ export function taskXp(difficulty: Difficulty): number {
 }
 
 /** Every task counted once, however many lessons list it; slugs with no matching task earn nothing. */
-export function totalXp(tasks: readonly PracticeTaskMeta[], completed: ReadonlySet<string>): number {
+export function totalXp(tasks: readonly XpTask[], completed: ReadonlySet<string>): number {
   const counted = new Set<string>();
   let xp = 0;
   for (const task of tasks) {

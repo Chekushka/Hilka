@@ -106,13 +106,14 @@ lib/
   checker/               declarative checker evaluator (isomorphic: client + server)
   errors/                Python error → Ukrainian humanized message
   seed/                  deterministic PRNG + task parameterization
-  meta/                  XP, topic progress and garden stages, derived from completed tasks
+  meta/                  XP, levels, topic progress and garden stages, derived from completed tasks;
+                         the character's unlocks (character.ts)
   db/                    Drizzle schema, migrations, queries
 components/
   task-types/            one component per task type
   editor/                CodeMirror wrapper, error line marking
   canvas/                turtle canvas renderer + playback; the 8×8 grid view (GridView.tsx)
-  meta/                  XP, topic progress, garden
+  meta/                  XP, topic progress, garden, the character
 content/
   seed-tasks/            JSON export of tasks, checked into git as backup + handoff format
 ```
@@ -163,7 +164,8 @@ sessions
 
 progress_codes
   code char(8) primary key,   -- human-readable alphabet, no 0/O/1/I/l
-  state jsonb,                -- { completedTaskSlugs }; XP is derived from it, never stored
+  state jsonb,                -- { completedTaskSlugs, look? }; XP and the level are derived from the
+                              --   slugs, never stored; look is the character's chosen items
   created_at, updated_at, last_seen_at
 
 attempts
@@ -231,7 +233,8 @@ writes a `progress_codes` row; entering that code on any machine restores the st
   (`ABCD-EFGH`), accepted case-insensitively, dashes and spaces stripped on input.
 - Codes are random, never sequential, and the entry endpoint is rate-limited — an 8-character
   code is a bearer credential for someone else's progress.
-- Restoring **merges** rather than replaces: union of completed tasks. XP is derived from that
+- Restoring **merges** rather than replaces: union of completed tasks; the character's look has
+  no union, so this device's wins and a device that never changed it takes the code's. XP is derived from that
   set by task difficulty (`lib/meta/progress.ts`), so it needs no merge rule of its own. A student
   who practised on two machines must not lose one by entering a code in the wrong order.
 - `last_seen_at` exists so abandoned rows can be pruned later. Nothing prunes them yet.
@@ -862,3 +865,10 @@ visible area — viewport ratio 0, not merely off by a little. That is how stude
 (`scrollIntoView({ block: 'nearest' })`), and the way on is also on the dock bar now;
 `tests/e2e/workspace.spec.ts` reproduces the scrolled case. Anything else that appears at the
 top of a scrolling region in response to an action needs the same treatment.
+
+**`next dev` does not hydrate pages opened on `127.0.0.1`.** Next 16 treats `127.0.0.1` as a
+different origin from the `localhost` it serves dev resources for, so a browser pointed at
+`http://127.0.0.1:3000` under `npm run dev` gets server HTML that never hydrates: the editor stays
+blank, localStorage progress never shows and buttons do nothing, with nothing in the page to say
+why. Production (`next start`, which Playwright uses) is unaffected. Open dev on `localhost`.
+`next dev` also appends an agent-rules block to `CLAUDE.md` on start — not part of any change.

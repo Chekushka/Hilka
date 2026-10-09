@@ -7,6 +7,11 @@ describe('markTaskCompleted', () => {
     expect(progress.completedTaskSlugs).toEqual(['a', 'b']);
   });
 
+  it('keeps the character look', () => {
+    const progress = markTaskCompleted({ completedTaskSlugs: [], look: { body: 'sky' } }, 'a');
+    expect(progress.look).toEqual({ body: 'sky' });
+  });
+
   it('is idempotent — marking the same task twice does not duplicate it', () => {
     const once = markTaskCompleted({ completedTaskSlugs: [] }, 'a');
     const twice = markTaskCompleted(once, 'a');
@@ -27,6 +32,14 @@ describe('mergeProgress', () => {
     const twoFirst = new Set(mergeProgress(machineTwo, machineOne).completedTaskSlugs);
     expect(oneFirst).toEqual(twoFirst);
   });
+
+  it("keeps this device's look over the code's, and takes the code's when this device has none", () => {
+    const here = { completedTaskSlugs: [], look: { body: 'sky' } };
+    const code = { completedTaskSlugs: ['a'], look: { body: 'rose' } };
+    expect(mergeProgress(here, code).look).toEqual({ body: 'sky' });
+    expect(mergeProgress({ completedTaskSlugs: [] }, code).look).toEqual({ body: 'rose' });
+    expect(mergeProgress({ completedTaskSlugs: [] }, { completedTaskSlugs: [] })).toEqual({ completedTaskSlugs: [] });
+  });
 });
 
 describe('hasCompletedTask', () => {
@@ -42,6 +55,11 @@ describe('hasCompletedTask', () => {
 describe('isValidPracticeProgress', () => {
   it('accepts a well-formed progress object', () => {
     expect(isValidPracticeProgress({ completedTaskSlugs: ['g7-turtle-square'] })).toBe(true);
+  });
+
+  it('accepts a stored look and rejects a malformed one', () => {
+    expect(isValidPracticeProgress({ completedTaskSlugs: [], look: { body: 'sky' } })).toBe(true);
+    expect(isValidPracticeProgress({ completedTaskSlugs: [], look: { body: 1 } })).toBe(false);
   });
 
   it('accepts an empty list', () => {

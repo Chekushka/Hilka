@@ -685,24 +685,43 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     );
   }
 
-  const taskButton = (task: JoinedSessionTask) => (
-    <li key={task.id}>
-      <button
-        type="button"
-        data-task-id={task.id}
-        onClick={() => openTask(task.id)}
-        className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 text-left text-ink hover:border-accent"
-      >
-        <span>{task.title}</span>
-        <StatusMark
-          state={stateOf(task.id)}
-          graded={graded && !rules.routeTaskIds?.includes(task.id)}
-          homework={homework && !rules.routeTaskIds?.includes(task.id)}
-          left={checksLeftOf(task.id)}
-        />
-      </button>
-    </li>
-  );
+  // Numbered, with the kind of work under the title and a solved task ticked,
+  // so the list is not a column of identical grey rows.
+  const taskButton = (task: JoinedSessionTask, index: number) => {
+    const state = stateOf(task.id);
+    const passed = state.status === 'passed';
+    return (
+      <li key={task.id}>
+        <button
+          type="button"
+          data-task-id={task.id}
+          onClick={() => openTask(task.id)}
+          className={`flex w-full items-center gap-3.5 rounded-xl border-2 bg-surface px-4 py-3 text-left text-ink hover:border-accent ${
+            passed ? 'border-growth/60' : 'border-line'
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`flex h-8 w-8 flex-none items-center justify-center rounded-full text-sm font-bold ${
+              passed ? 'bg-growth text-surface' : 'bg-accent-soft text-accent'
+            }`}
+          >
+            {passed ? '✓' : index + 1}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">{task.title}</span>
+            <span className="block text-xs text-ink-muted">{t(`task.types.${task.type}`)}</span>
+          </span>
+          <StatusMark
+            state={state}
+            graded={graded && !rules.routeTaskIds?.includes(task.id)}
+            homework={homework && !rules.routeTaskIds?.includes(task.id)}
+            left={checksLeftOf(task.id)}
+          />
+        </button>
+      </li>
+    );
+  };
 
   // One neutral heading for either route: nobody reads from the screen which one a classmate is on.
   const routeSection = routeTasks.length > 0 && (

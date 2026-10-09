@@ -53,6 +53,7 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
       key={task.slug}
       task={task}
       topic={topic}
+      xpTasks={practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty }))}
       prerequisite={
         prerequisite
           ? { slug: prerequisite.slug, title: prerequisite.title, href: `/practice/${lesson.slug}/${prerequisite.slug}` }

@@ -87,6 +87,14 @@ Spend the visual boldness in one place: the moment a task is completed. Keep
 everything else quiet. No decorative gradients, no shadow on every card, no
 hover animation on every surface.
 
+**Revised after classroom use (project owner).** Quiet turned out to read as
+flat: everything blended together, students did not see what the task asked
+and read the theory instead, and nobody found the hint at the bottom of the
+panel. So "quiet" now means no decoration, not low contrast. What a student
+must act on stands out: the statement is a bordered accent card, the hint a
+honey block right under it, Check an outlined accent button, the three zones
+of the workspace numbered 1–3. Everything else stays as calm as before.
+
 ## Hard constraints
 
 - Design canvas **1366×768**. School monitors, often washed out, often viewed at
@@ -165,6 +173,11 @@ wait. Without it the student sees a blank panel and presses F5.
 Topic progress, XP, the reward moment, and the growing thing itself at several
 stages across a term. Warm, illustrative, gender-neutral, unhurried. This is the
 only place in the product that is allowed to look like a game.
+
+XP buys nothing and is never spent: it levels up a small character, and each
+level unlocks something it can wear (lib/meta/character.ts). The character
+belongs to this layer — the practice page, its own page, the success moment —
+never to the workspace.
 
 ### Entry
 

@@ -16,6 +16,7 @@
 import type { ReactNode } from 'react';
 import { EngineLoading } from './EngineLoading';
 import { NextTaskButton, type NextTaskAction } from './NextTaskButton';
+import { StepBadge } from './StepBadge';
 import { t } from '@/lib/i18n';
 import type { EngineState } from '@/lib/task/use-task-runner';
 
@@ -41,7 +42,11 @@ export function WorkspaceDock({
       <div className="sticky bottom-0 z-10 flex flex-none flex-wrap items-center gap-3 border-y border-line bg-surface px-5 py-2.5 lg:static lg:border-t-0">
         {/* On a phone the bar must fit Run, Check and the way on in one row, so after a pass
             the label and the status give way — the success panel says it already. */}
-        <h2 id="workspace-dock-title" className={`text-sm font-semibold text-ink ${next ? 'max-sm:sr-only' : ''}`}>
+        <h2
+          id="workspace-dock-title"
+          className={`flex items-center gap-2.5 text-sm font-bold text-ink ${next ? 'max-sm:sr-only' : ''}`}
+        >
+          <StepBadge n={3} />
           {t('workspace.result')}
         </h2>
         {next && (
@@ -80,6 +85,9 @@ function Spinner() {
 
 const secondary =
   'rounded-lg border border-line bg-shell px-4 py-2.5 text-sm font-medium text-ink hover:border-accent disabled:opacity-50 disabled:hover:border-line';
+/** Check before a pass: outlined in the accent, so it reads as the second thing to press, not a grey afterthought. */
+const checkClass =
+  'rounded-lg border-2 border-accent bg-surface px-4 py-2 text-sm font-semibold text-accent hover:bg-accent-soft disabled:opacity-50 disabled:hover:bg-surface';
 const primary =
   'inline-flex items-center gap-2 rounded-lg border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-surface disabled:opacity-50';
 /** The way on after a pass: the primary look, a step larger, and the success moment's one opening movement. */
@@ -108,7 +116,7 @@ export function RunCheckActions({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <button type="button" onClick={onCheck} disabled={disabled} className={secondary}>
+      <button type="button" onClick={onCheck} disabled={disabled} className={passed ? secondary : checkClass}>
         {busy ? t('workspace.checking') : t('workspace.check')}
       </button>
       <button type="button" onClick={onRun} disabled={disabled} className={passed ? `${secondary} inline-flex items-center gap-2` : primary}>
