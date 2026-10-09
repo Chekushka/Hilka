@@ -22,14 +22,16 @@ export function LessonTaskList({ lessonSlug, tasks }: LessonTaskListProps) {
         // Numbered and typed, a done task ticked — the same row as a session's task list.
         const label = (
           <>
+            {/* The number is read as "1." and stays the row's text; the badge draws its
+                digit (or the tick) through CSS, so it adds nothing to either. */}
+            <span className="sr-only">{i + 1}.</span>
             <span
               aria-hidden="true"
-              className={`flex h-7 w-7 flex-none items-center justify-center rounded-full text-sm font-bold ${
+              data-badge={isDone ? '✓' : i + 1}
+              className={`flex h-7 w-7 flex-none items-center justify-center rounded-full text-sm font-bold before:content-[attr(data-badge)] ${
                 isDone ? 'bg-growth text-surface' : 'bg-accent-soft text-accent'
               }`}
-            >
-              {isDone ? '✓' : i + 1}
-            </span>
+            />
             <span className="min-w-0 flex-1">
               <span className="block font-medium text-ink" data-testid="lesson-task-title">
                 {task.title}
