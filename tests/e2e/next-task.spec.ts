@@ -74,7 +74,7 @@ test('turtle code and fill tasks show the canvas before anything runs', async ({
   await expect(drawing(page)).toBeVisible();
 });
 
-test('in practice, a passed Check leads to the lesson\'s next task, and the last one back to the lesson', async ({
+test('in practice, a passed Check leads to the lesson\'s next task, and the last one on to the next lesson', async ({
   page
 }) => {
   await page.goto('/practice/g7-29-turtle/g7-turtle-square');
@@ -95,8 +95,9 @@ test('in practice, a passed Check leads to the lesson\'s next task, and the last
   );
   await checkAndPass(page);
   await expect(page.getByRole('link', { name: NEXT, exact: true })).toHaveCount(0);
-  await page.getByRole('link', { name: 'Повернутися до уроку', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Лінійний алгоритм', level: 1 })).toBeVisible();
+  // Never a dead end: the lesson's last task leads on to the next lesson.
+  await page.getByRole('link', { name: 'Перейти до наступного уроку', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Черепашка малює', level: 1 })).toBeVisible();
 });
 
 async function buildSession(page: Page, mode: 'practice' | 'graded'): Promise<string> {
