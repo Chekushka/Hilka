@@ -53,8 +53,8 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
   const headings = await page.getByRole('heading', { level: 2 }).allTextContents();
   expect(headings).toEqual(['Основні завдання', 'Додаткові завдання']);
 
-  const taskLinks = await page.getByRole('main').getByRole('listitem').allTextContents();
-  expect(taskLinks.map((text) => text.replace(/^\d+\./, '').trim())).toEqual([
+  const tasks = page.getByRole('main').getByRole('listitem');
+  expect(await tasks.getByTestId('lesson-task-title').allTextContents()).toEqual([
     'Периметр прямокутника',
     'Площа прямокутника',
     'Середнє трьох чисел',
@@ -63,8 +63,9 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
     'Робот: поворот за ріг',
     'Робот: обійти каміння',
     // Parameterized: listed with its session-only note, and skipped by the next-task walk below.
-    expect.stringMatching(/^Робот: свій акумулятор.*лише на занятті з учителем/)
+    'Робот: свій акумулятор'
   ]);
+  await expect(tasks.last()).toContainText('лише на занятті з учителем');
 
   // The next-task link walks core into additional.
   await page.getByRole('link', { name: /Площа прямокутника/ }).click();
