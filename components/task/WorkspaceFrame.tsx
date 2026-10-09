@@ -131,12 +131,16 @@ export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, doc
         </section>
         {/* Right under the statement, where a stuck student's eyes already are — not pinned
             to the bottom of the panel, where nobody found it. */}
-        {hints.length > 0 && (
-          <div className="mx-4">
-            <Hints hints={hints} onReveal={onRevealHint} />
-          </div>
-        )}
-        {chrome?.theory && <Theory>{chrome.theory}</Theory>}
+        {/* Once the task is solved, a phone drops the hint and the theory: the panel must stay
+            short enough that the work column — and the way on stuck to its bottom — is on screen. */}
+        <div className={`flex flex-col gap-3 ${success ? 'max-lg:hidden' : ''}`}>
+          {hints.length > 0 && (
+            <div className="mx-4">
+              <Hints hints={hints} onReveal={onRevealHint} />
+            </div>
+          )}
+          {chrome?.theory && <Theory>{chrome.theory}</Theory>}
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
