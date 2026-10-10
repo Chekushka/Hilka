@@ -18,7 +18,7 @@ async function typeSolution(page: Page, code: string) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/practice/g7-29-turtle/g7-turtle-square');
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 });
 
 test('the progress panel starts with nothing saved and no code', async ({ page }) => {
@@ -29,7 +29,7 @@ test('the progress panel starts with nothing saved and no code', async ({ page }
 
 test('passing the task marks it completed locally', async ({ page }) => {
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 
   await expect(page.getByText('Виконано завдань: 1')).toBeVisible();
@@ -55,7 +55,7 @@ test('saving mints a code, and saving again reuses it', async ({ page }) => {
 test('a code saved on one browser restores on another and merges progress', async ({ page, browser }) => {
   // "Machine one": pass the task and save a code.
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
   await page.getByRole('button', { name: 'Зберегти код прогресу' }).click();
   const codeText = page.locator('p.font-mono.text-lg');
@@ -67,7 +67,7 @@ test('a code saved on one browser restores on another and merges progress', asyn
   const otherContext = await browser.newContext();
   const other = await otherContext.newPage();
   await other.goto('/practice/g7-29-turtle/g7-turtle-square');
-  await expect(other.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(other.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   await expect(other.getByText('Виконано завдань: 0')).toBeVisible();
 
   await other.getByLabel('Код прогресу з іншого пристрою').fill(code);

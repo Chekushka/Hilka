@@ -98,14 +98,14 @@ test('a teacher gives two students their own routes; each sees only theirs', asy
   await expect(taras.getByTestId('retype-note')).toBeVisible();
   await expect(taras.locator('pre[data-no-copy]')).toBeVisible();
   await expect(taras.getByTestId('route-task-notice')).toBeVisible();
-  await expect(taras.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(taras.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   await typeSolution(taras, 'import turtle\nturtle.forward(100)');
-  await taras.getByRole('button', { name: 'Перевірити' }).click();
+  await taras.getByRole('button', { name: 'Здати' }).click();
   await expect(taras.getByRole('heading', { name: 'Готово!' })).toHaveCount(0);
-  await expect(taras.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 20_000 });
+  await expect(taras.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 20_000 });
   await typeSolution(taras, SQUARE_BY_HAND);
   const recorded = taras.waitForResponse((response) => response.url().endsWith('/api/attempts'));
-  await taras.getByRole('button', { name: 'Перевірити' }).click();
+  await taras.getByRole('button', { name: 'Здати' }).click();
   await expect(taras.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
   expect((await recorded).status()).toBe(201);
   await taras.close();

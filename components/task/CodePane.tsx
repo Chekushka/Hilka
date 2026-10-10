@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * The work area for the task types that execute: a code surface under a thin
- * bar that names it, and — when the task draws or moves the grid robot — that
+ * The work area for the task types that execute: a code surface (named by
+ * the work area's bar in WorkspaceFrame), and — when the task draws or moves the grid robot — that
  * picture beside it rather than under it, so the picture and the code that
  * made it are on screen together at 1366×768.
  */
@@ -25,11 +25,6 @@ export function CodePane({ before, children, visual }: CodePaneProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-code-bg">
-        <div className="flex h-10 flex-none items-center gap-3 border-b border-line px-5">
-          <span className="text-sm font-semibold text-ink">{t('workspace.editorLabel')}</span>
-          <span className="flex-1" />
-          <span className="text-xs text-ink-muted">{t('workspace.editorEngine')}</span>
-        </div>
         {before && <div className="flex-none border-b border-line bg-surface p-4">{before}</div>}
         <div className="flex min-h-[16rem] flex-1 flex-col lg:min-h-0">{children}</div>
       </div>

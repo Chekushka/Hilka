@@ -126,7 +126,7 @@ async function solveAs(browser: Browser, code: string, name: string) {
   await student.getByRole('button', { name, exact: true }).click();
   await student.getByRole('button', { name: new RegExp(`^${QUIZ.replace(/[()]/g, '\\$&')}`) }).click();
   await student.getByLabel(QUIZ_RIGHT, { exact: true }).check();
-  await student.getByRole('button', { name: 'Перевірити' }).click();
+  await student.getByRole('button', { name: 'Здати' }).click();
   await expect(student.getByRole('heading', { name: 'Готово!' })).toBeVisible();
   await student.context().close();
 }
@@ -227,7 +227,7 @@ test("a student renamed mid-session keeps their order, their variant and their w
   await student.getByRole('button', { name: '← До списку завдань' }).first().click();
   await student.getByRole('button', { name: new RegExp(`^${QUIZ.replace(/[()]/g, '\\$&')}`) }).click();
   await student.getByLabel(QUIZ_RIGHT, { exact: true }).check();
-  await student.getByRole('button', { name: 'Перевірити' }).click();
+  await student.getByRole('button', { name: 'Здати' }).click();
   await expect(student.getByRole('heading', { name: 'Завдання здано' })).toBeVisible();
 
   // The teacher fixes the name while the session is open.

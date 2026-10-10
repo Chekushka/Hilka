@@ -14,7 +14,10 @@
  * reduced motion), then stillness. No confetti, no sound, no counter
  * ticking up.
  */
+import Link from 'next/link';
 import { useEffect, useRef } from 'react';
+import { Character } from '@/components/meta/Character';
+import { LevelBar } from '@/components/meta/LevelBar';
 import { Plant } from '@/components/meta/Plant';
 import { NextTaskButton, type NextTaskAction } from './NextTaskButton';
 import { t } from '@/lib/i18n';
@@ -62,13 +65,31 @@ export function SuccessPanel({ next }: { next?: NextTaskAction }) {
 
       {reward && (
         <div className="mt-5 flex flex-col gap-2.5">
-          <div className="rounded-lg bg-bg px-4 py-3">
-            <p className="text-xs text-ink-muted">{t('result.earned')}</p>
-            <p className="mt-1 flex items-center gap-2.5 text-xl font-bold text-ink">
-              <span aria-hidden="true" className="h-3.5 w-3.5 rounded bg-honey" />
-              <span data-testid="xp-earned">{reward.xp}</span>
-            </p>
+          <div className="flex items-center gap-3 rounded-lg bg-bg px-4 py-3">
+            {reward.character && <Character look={reward.character.look} size={64} />}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-ink-muted">{t('result.earned')}</p>
+              <p className="mt-1 flex items-center gap-2.5 text-xl font-bold text-ink">
+                <span aria-hidden="true" className="h-3.5 w-3.5 rounded bg-honey" />
+                <span data-testid="xp-earned">{reward.xp}</span>
+              </p>
+              {reward.character && (
+                <div className="mt-1.5">
+                  <p className="mb-1 text-xs font-semibold text-honey-ink">{reward.character.label}</p>
+                  <LevelBar xp={reward.character.xp} />
+                </div>
+              )}
+            </div>
           </div>
+          {reward.character?.levelUp && (
+            <div className="rounded-lg border-2 border-honey bg-honey-soft px-4 py-3" data-testid="level-up">
+              <p className="text-base font-bold text-honey-ink">{reward.character.levelUp.title}</p>
+              <p className="mt-0.5 text-sm text-ink">{reward.character.levelUp.unlocked}</p>
+              <Link href="/practice/character" className="mt-1.5 inline-block text-sm font-semibold text-accent">
+                {t('character.dressUp')} →
+              </Link>
+            </div>
+          )}
           {reward.growth && (
             <div className="flex items-center gap-3 rounded-lg bg-bg px-4 py-3">
               <Plant stage={reward.growth.stage} species={reward.growth.species} size={36} />

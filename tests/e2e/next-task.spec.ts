@@ -29,11 +29,11 @@ async function typeSolution(page: Page, code: string) {
 }
 
 async function waitForEngine(page: Page) {
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 }
 
 async function checkAndPass(page: Page) {
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 }
 
@@ -74,7 +74,7 @@ test('turtle code and fill tasks show the canvas before anything runs', async ({
   await expect(drawing(page)).toBeVisible();
 });
 
-test('in practice, a passed Check leads to the lesson\'s next task, and the last one back to the lesson', async ({
+test('in practice, a passed Check leads to the lesson\'s next task, and the last one on to the next lesson', async ({
   page
 }) => {
   await page.goto('/practice/g7-29-turtle/g7-turtle-square');
@@ -95,8 +95,9 @@ test('in practice, a passed Check leads to the lesson\'s next task, and the last
   );
   await checkAndPass(page);
   await expect(page.getByRole('link', { name: NEXT, exact: true })).toHaveCount(0);
-  await page.getByRole('link', { name: 'Повернутися до уроку', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Лінійний алгоритм', level: 1 })).toBeVisible();
+  // Never a dead end: the lesson's last task leads on to the next lesson.
+  await page.getByRole('link', { name: 'Перейти до наступного уроку', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Черепашка малює', level: 1 })).toBeVisible();
 });
 
 async function buildSession(page: Page, mode: 'practice' | 'graded'): Promise<string> {
@@ -151,10 +152,10 @@ test('in a graded session, the next-task button moves on without reopening a loc
   await buildSession(page, 'graded');
 
   // The task's row also says how many Checks it allows.
-  await page.getByRole('button', { name: /^Квадрат перевірок: 1$/ }).click();
+  await page.getByRole('button', { name: /^Квадрат спроб: 1$/ }).click();
   await waitForEngine(page);
   await typeSolution(page, SQUARE);
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
 
   // The first Check locks the task; the locked screen carries the way on.
   await expect(page.getByRole('heading', { name: 'Завдання здано' })).toBeVisible({ timeout: 20_000 });
@@ -164,7 +165,7 @@ test('in a graded session, the next-task button moves on without reopening a loc
   // A failed first Check locks too, and offers no next task.
   await waitForEngine(page);
   await typeSolution(page, 'import turtle\nturtle.forward(100)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Завдання здано' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('button', { name: NEXT, exact: true })).toHaveCount(0);
 

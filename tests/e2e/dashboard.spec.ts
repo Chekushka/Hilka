@@ -62,13 +62,13 @@ test('a teacher logs in and sees a student\'s attempt on the dashboard', async (
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name: STUDENT_NAME }).click();
   await page.getByRole('button', { name: SQUARE_ROW }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
   await Promise.all([
     page.waitForResponse(
       (response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'
     ),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 
@@ -118,7 +118,7 @@ test('the class table shows a student who has tried a task but never passed it',
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name: STUCK_STUDENT }).click();
   await page.getByRole('button', { name: SQUARE_ROW }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   // A rectangle, not a square — fails on purpose.
   await typeSolution(
     page,
@@ -128,7 +128,7 @@ test('the class table shows a student who has tried a task but never passed it',
     page.waitForResponse(
       (response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'
     ),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
 

@@ -26,7 +26,7 @@ test('the correct prediction passes and records the attempt', async ({ page }) =
 
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
@@ -36,10 +36,10 @@ test('a wrong prediction does not pass, but the right one after does', async ({ 
   await openPredictTask(page, 'Тарас');
 
   await page.getByLabel('Що виведе ця програма?').fill('20');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible();
 
   await page.getByLabel('Що виведе ця програма?').fill('14');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
 });

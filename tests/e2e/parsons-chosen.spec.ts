@@ -110,7 +110,7 @@ test('a teacher builds a chosen-indent parsons task, and a student grades it by 
   await addLine(page, 'turtle.right(120)');
 
   // Right order, wrong (flat) indent — must not pass yet.
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible();
 
   await indentIn(page, 'turtle.forward(100)');
@@ -118,7 +118,7 @@ test('a teacher builds a chosen-indent parsons task, and a student grades it by 
 
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();

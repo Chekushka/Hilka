@@ -19,10 +19,28 @@ export function LessonTaskList({ lessonSlug, tasks }: LessonTaskListProps) {
     <ol className="flex flex-col gap-1.5">
       {tasks.map((task, i) => {
         const isDone = done.has(task.slug);
+        // Numbered and typed, a done task ticked — the same row as a session's task list.
         const label = (
           <>
-            <span className="w-6 shrink-0 text-sm text-ink-muted">{i + 1}.</span>
-            <span className="flex-1 text-ink">{task.title}</span>
+            {/* The number is read as "1." and stays the row's text; the badge draws its
+                digit (or the tick) through CSS, so it adds nothing to either. */}
+            <span className="sr-only">{i + 1}.</span>
+            <span
+              aria-hidden="true"
+              data-badge={isDone ? '✓' : i + 1}
+              className={`flex h-7 w-7 flex-none items-center justify-center rounded-full text-sm font-bold before:content-[attr(data-badge)] ${
+                isDone ? 'bg-growth text-surface' : 'bg-accent-soft text-accent'
+              }`}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium text-ink" data-testid="lesson-task-title">
+                {task.title}
+              </span>
+              {/* Visual only: the row's name stays the task's title, which is how it is announced and found. */}
+            <span aria-hidden="true" className="block text-xs text-ink-muted">
+              {t(`task.types.${task.type}`)}
+            </span>
+            </span>
             {task.sessionOnly ? (
               <span className="text-xs text-ink-muted">{t('lessons.sessionOnly')}</span>
             ) : isDone ? (
@@ -33,11 +51,13 @@ export function LessonTaskList({ lessonSlug, tasks }: LessonTaskListProps) {
         return (
           <li key={task.slug}>
             {task.sessionOnly ? (
-              <div className="flex items-center gap-3 rounded-md border border-line px-3 py-2 opacity-70">{label}</div>
+              <div className="flex items-center gap-3 rounded-lg border-2 border-line px-3 py-2 opacity-70">{label}</div>
             ) : (
               <Link
                 href={`/practice/${lessonSlug}/${task.slug}`}
-                className="flex items-center gap-3 rounded-md border border-line bg-surface px-3 py-2 hover:border-accent"
+                className={`flex items-center gap-3 rounded-lg border-2 bg-surface px-3 py-2 hover:border-accent ${
+                  isDone ? 'border-growth/60' : 'border-line'
+                }`}
               >
                 {label}
               </Link>

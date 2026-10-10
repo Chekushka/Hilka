@@ -87,6 +87,20 @@ Spend the visual boldness in one place: the moment a task is completed. Keep
 everything else quiet. No decorative gradients, no shadow on every card, no
 hover animation on every surface.
 
+**Revised after classroom use (project owner).** Quiet turned out to read as
+flat: everything blended together, students did not see what the task asked
+and read the theory instead, and nobody found the hint at the bottom of the
+panel. So "quiet" now means no decoration, not low contrast. What a student
+must act on stands out: the statement is a bordered accent card, the hint a
+honey block right under it, Check an outlined accent button, the three zones
+of the workspace numbered 1–3. Everything else stays as calm as before.
+
+**And the buttons** (project owner, later): Check is called «Здати» — "check"
+did not tell students what would happen — and Run and Hand in are the
+largest, most contrasting controls on the screen, told apart by colour, icon
+and place. The output must always be on screen at 1366×768 with the
+browser's own bars, not below the fold.
+
 ## Hard constraints
 
 - Design canvas **1366×768**. School monitors, often washed out, often viewed at
@@ -166,6 +180,11 @@ Topic progress, XP, the reward moment, and the growing thing itself at several
 stages across a term. Warm, illustrative, gender-neutral, unhurried. This is the
 only place in the product that is allowed to look like a game.
 
+XP buys nothing and is never spent: it levels up a small character, and each
+level unlocks something it can wear (lib/meta/character.ts). The character
+belongs to this layer — the practice page, its own page, the success moment —
+never to the workspace.
+
 ### Entry
 
 Join-by-code screen: the teacher puts a six-character code on the projector and
@@ -189,7 +208,7 @@ spends their preparation time.
 Write real Ukrainian copy, not lorem ipsum — the tone of the messages is half the
 design here.
 
-Buttons say what happens: "Запустити", "Перевірити", "Спробувати ще". Sentence
+Buttons say what happens: "Запустити", "Здати", "Спробувати ще". Sentence
 case throughout, no all-caps labels. Errors do not apologize and are never vague.
 Empty states invite an action rather than describing emptiness.
 

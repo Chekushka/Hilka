@@ -10,6 +10,7 @@
  */
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import type { CharacterLook } from '@/lib/meta/character';
 import type { PlantSpecies, PlantStage } from '@/lib/meta/garden';
 
 export type NextTaskAction = (
@@ -24,6 +25,14 @@ export type NextTaskAction = (
     xp: string;
     /** Set when the pass made the topic's plant grow: its new stage, and that said in words. */
     growth?: { stage: PlantStage; species: PlantSpecies; label: string };
+    /** The character after this pass: total XP, the look it wears, its level in words. */
+    character?: {
+      xp: number;
+      look: CharacterLook;
+      label: string;
+      /** Set when this pass reached a new level: that said, and what it unlocked. */
+      levelUp?: { title: string; unlocked: string };
+    };
   };
 };
 

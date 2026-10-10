@@ -13,7 +13,7 @@ import { t } from '@/lib/i18n';
 
 export function ResultFrame({ icon, title, children }: { icon: string; title: string; children?: ReactNode }) {
   return (
-    <section className="rounded-lg border border-line bg-surface p-4" aria-live="polite">
+    <section className="rounded-lg border border-attention/50 border-l-4 border-l-attention bg-surface p-4" aria-live="polite">
       <div className="flex items-start gap-3.5">
         <span
           aria-hidden="true"

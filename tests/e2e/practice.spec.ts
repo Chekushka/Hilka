@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/practice/g7-29-turtle/g7-turtle-square');
   // The engine takes a moment; the workspace says so rather than showing a
   // dead button, and the button becomes usable when it is ready.
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 });
 
 test('shows the task and the target drawing before anything is run', async ({ page }) => {
@@ -32,7 +32,7 @@ test('shows the task and the target drawing before anything is run', async ({ pa
 
 test('a correct square passes', async ({ page }) => {
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 });
 
@@ -40,13 +40,13 @@ test('the same square turned the other way also passes', async ({ page }) => {
   // right(90) and left(270) draw the same picture. Failing this student is the
   // event the whole comparison design exists to prevent.
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.left(270)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 });
 
 test('a rectangle does not pass, and says why without shouting', async ({ page }) => {
   await typeSolution(page, 'import turtle\nfor i in range(2):\n    turtle.forward(150)\n    turtle.right(90)\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText('Нічого не втрачено.')).toBeVisible();
   // Never the word "Помилка" as a heading, and never a traceback.

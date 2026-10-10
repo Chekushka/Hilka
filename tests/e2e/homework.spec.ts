@@ -75,7 +75,7 @@ async function joinAs(browser: Browser, code: string, name: string): Promise<Pag
 
 async function answer(page: Page, option: string) {
   await page.getByLabel(option, { exact: true }).check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
 }
 
 test('a failed first Check can be fixed twice for 70%, then the improvement task appears and the state survives a reload', async ({
@@ -89,9 +89,9 @@ test('a failed first Check can be fixed twice for 70%, then the improvement task
   await expect(student.getByRole('heading', { name: 'Завдання для покращення оцінки' })).toHaveCount(0);
 
   await taskRow(student, MAIN).click();
-  await expect(student.getByText(/Зараховується перша перевірка/)).toBeVisible();
+  await expect(student.getByText(/Зараховується перша спроба/)).toBeVisible();
   await answer(student, MAIN_WRONG);
-  await expect(student.getByTestId('fixes-left')).toContainText('залишилось перевірок — 2');
+  await expect(student.getByTestId('fixes-left')).toContainText('залишилось спроб — 2');
 
   // The pass is kept to be replayed below: the server must refuse it a second time.
   const passing = student.waitForRequest((request) => request.url().endsWith('/api/attempts'));
@@ -109,7 +109,7 @@ test('a failed first Check can be fixed twice for 70%, then the improvement task
   await student.reload();
   await expect(student.getByRole('heading', { name: 'Завдання для покращення оцінки' })).toBeVisible();
   await taskRow(student, IMPROVEMENT).click();
-  await expect(student.getByText(/зараховується лише перша перевірка/)).toBeVisible();
+  await expect(student.getByText(/зараховується лише перша спроба/)).toBeVisible();
   await answer(student, IMPROVEMENT_RIGHT);
   await expect(student.getByRole('heading', { name: 'Готово!' })).toBeVisible();
 
@@ -153,7 +153,7 @@ test('a second device under the same name is shown to the student and the teache
   // He makes one Check of his own, so both devices have worked under his name.
   await mainButton.click();
   await answer(taras, MAIN_WRONG);
-  await expect(taras.getByTestId('fixes-left')).toContainText('залишилось перевірок — 1');
+  await expect(taras.getByTestId('fixes-left')).toContainText('залишилось спроб — 1');
 
   // The teacher sees two devices, and cancels the first one's attempts on the card.
   // In-page, not page.goto: the teacher's cookie lives on the origin the login landed on
@@ -226,7 +226,7 @@ test('a graded lesson keeps a task locked to its first Check across a reload', a
   await student.reload();
   await taskRow(student, MAIN).click();
   await expect(student.getByRole('heading', { name: 'Завдання здано' })).toBeVisible();
-  await expect(student.getByRole('button', { name: 'Перевірити' })).toHaveCount(0);
+  await expect(student.getByRole('button', { name: 'Здати' })).toHaveCount(0);
   await student.context().close();
 });
 
@@ -295,7 +295,7 @@ else:
 
 async function openSign(page: Page) {
   await taskRow(page, SIGN).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 }
 
 async function typeProgram(page: Page, code: string) {
@@ -318,7 +318,7 @@ async function pasteProgram(page: Page, code: string) {
 }
 
 async function checkAndPass(page: Page) {
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 }
 
@@ -528,11 +528,11 @@ test('fix and fill tasks give each student their own variant, checked against th
   const prompt = (await student.getByText(/зі знижкою \d+%/).first().textContent()) ?? '';
   const percent = /зі знижкою (\d+)%/.exec(prompt)![1];
   await expect(student.locator('.cm-content')).toContainText(`discount = price * ${percent}`);
-  await expect(student.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(student.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 
   // A wrong fix fails; the right one — for her percentage — passes.
   await typeProgram(student, `price = float(input())\ndiscount = price * ${percent} / 10\nprint(price - discount)\n`);
-  await student.getByRole('button', { name: 'Перевірити' }).click();
+  await student.getByRole('button', { name: 'Здати' }).click();
   await expect(student.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
   await typeProgram(student, `price = float(input())\ndiscount = price * ${percent} / 100\nprint(price - discount)\n`);
   await checkAndPass(student);
@@ -542,7 +542,7 @@ test('fix and fill tasks give each student their own variant, checked against th
   await taskRow(student, POLYGON).click();
   const sides = Number(/правильний (\d+)-кутник/.exec((await student.getByText(/-кутник/).first().textContent()) ?? '')![1]);
   expect([5, 6, 8]).toContain(sides);
-  await expect(student.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(student.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   await student.getByLabel('Пропуск 1').fill(String(sides));
   await student.getByLabel('Пропуск 2').fill(String(360 / sides));
   await checkAndPass(student);

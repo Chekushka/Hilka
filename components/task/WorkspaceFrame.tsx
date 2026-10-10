@@ -7,10 +7,11 @@
  *
  *   ┌ task panel ──────┬ work area (editor, options, lines…) ─┐
  *   │ where you are    │                                      │
- *   │ type · title     │                                      │
- *   │ statement        ├ result dock ─────────── actions ─────┤
- *   │ how it works     │ output, then the result              │
- *   │ hint (pinned)    │                                      │
+ *   │ ┏ what to do ━━┓ │                                      │
+ *   │ ┃ title, text  ┃ ├ result dock ─────────── actions ─────┤
+ *   │ ┗━━━━━━━━━━━━━━┛ │ output, then the result              │
+ *   │ hint (honey)     │                                      │
+ *   │ how it works     │                                      │
  *   └──────────────────┴──────────────────────────────────────┘
  *
  * From `lg` up it fills the viewport under the app bar and each zone scrolls
@@ -23,6 +24,12 @@
  * beside the editor, not under it. Calm, adult and quiet — the reward layer
  * lives between tasks, and none of it is allowed in here.
  *
+ * Quiet is not flat, though (decided with the project owner after classroom
+ * use): students did not see what was asked of them and read the theory
+ * instead, and missed the hint at the bottom of the panel. So the statement
+ * is a bordered card in the accent colour on a darker panel, the hint sits
+ * right under it in honey, and the theory is the quietest thing here.
+ *
  * Layout only: each task-type view still owns its state and its Check
  * (docs/AI_CONTEXT.md, "Every task type implements one shared component
  * interface").
@@ -32,6 +39,10 @@ import { Hints } from './Hints';
 import { t } from '@/lib/i18n';
 import type { Task } from '@/lib/task/types';
 import { PromptText } from './PromptText';
+import { StepBadge } from './StepBadge';
+
+/** The task types whose answer is a program the engine runs. */
+const RUNNABLE: ReadonlySet<Task['type']> = new Set(['code', 'fix', 'fill']);
 
 /** What the page around a task adds to the task panel. The task-type views pass it through untouched. */
 export interface WorkspaceChrome {
@@ -60,65 +71,85 @@ interface WorkspaceFrameProps {
 function Theory({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-t border-line px-5 py-3">
+    <div className="mx-4 rounded-lg border border-line bg-surface/60 px-4 py-2.5">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2.5 text-left text-sm font-semibold text-ink"
+        className="flex w-full items-center gap-2.5 text-left text-sm font-medium text-ink-muted hover:text-ink"
       >
         <span
           aria-hidden="true"
-          className="flex h-5 w-5 flex-none items-center justify-center rounded bg-accent-soft text-xs font-bold text-accent"
+          className="flex h-5 w-5 flex-none items-center justify-center rounded border border-line text-xs font-bold"
         >
           {open ? '−' : '+'}
         </span>
         {t('workspace.theory')}
         <span className="flex-1" />
-        <span className="text-xs font-normal text-ink-muted">
-          {open ? t('workspace.theoryHide') : t('workspace.theoryShow')}
-        </span>
+        <span className="text-xs font-normal">{open ? t('workspace.theoryHide') : t('workspace.theoryShow')}</span>
       </button>
-      {open && <div className="mt-3 text-sm">{children}</div>}
+      {!open && <p className="mt-1 pl-7.5 text-xs text-ink-muted">{t('workspace.theoryNote')}</p>}
+      {open && <div className="mt-3 text-sm text-ink">{children}</div>}
     </div>
   );
 }
 
 export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, dock, children }: WorkspaceFrameProps) {
+  const retype = task.tags?.includes('retype');
   return (
-    <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:min-h-[36rem] lg:flex-row">
-      <aside className="flex flex-col border-b border-line bg-surface lg:w-[23rem] lg:flex-none lg:overflow-y-auto lg:border-b-0 lg:border-r xl:w-[24.5rem]">
+    <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:min-h-[26rem] lg:flex-row">
+      <aside className="flex flex-col gap-3 border-b [&>*]:shrink-0 border-line bg-shell pb-4 lg:w-[23rem] lg:flex-none lg:overflow-y-auto lg:border-b-0 lg:border-r xl:w-[25rem]">
         {chrome?.context && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-5 py-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-line px-5 py-2.5 text-sm">
             {chrome.context}
           </div>
         )}
         {success}
         {chrome?.notice}
-        <section className="px-5 pb-5 pt-5">
-          <p className="text-sm font-semibold text-accent">{t(`task.types.${task.type}`)}</p>
-          <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-ink">{task.title}</h1>
-          <PromptText
-            prompt={task.payload.prompt}
-            className="mt-3 text-base leading-relaxed text-ink"
-            noCopy={task.tags?.includes('retype')}
-          />
-          {task.tags?.includes('retype') && (
-            <p className="mt-3 text-sm text-ink-muted" data-testid="retype-note">
-              {t('workspace.retypeNote')}
-            </p>
-          )}
-        </section>
-        {chrome?.theory && <Theory>{chrome.theory}</Theory>}
-        <span className="flex-1" />
-        {hints.length > 0 && (
-          <div className="border-t border-line px-5 py-4">
-            <Hints hints={hints} onReveal={onRevealHint} />
+        {/* What to do comes first and loudest: students read whatever stands out, and
+            when the statement was plain text among plain text they read the theory instead. */}
+        <section
+          aria-labelledby="task-card-title"
+          data-testid="task-card"
+          className="mx-4 flex-none overflow-hidden rounded-xl border-2 border-accent bg-surface shadow-[var(--shadow-raised)]"
+        >
+          <div className="flex items-center gap-2 bg-accent px-4 py-2 text-surface">
+            <StepBadge n={1} inverted />
+            <span className="text-sm font-bold">{t('workspace.taskLabel')}</span>
           </div>
-        )}
+          <div className="px-4 pb-5 pt-3.5">
+            <h1 id="task-card-title" className="text-2xl font-bold leading-tight text-ink">
+              {task.title}
+            </h1>
+            <PromptText prompt={task.payload.prompt} className="mt-3 text-lg leading-relaxed text-ink" noCopy={retype} />
+            {retype && (
+              <p className="mt-3 text-sm text-ink-muted" data-testid="retype-note">
+                {t('workspace.retypeNote')}
+              </p>
+            )}
+          </div>
+        </section>
+        {/* Right under the statement, where a stuck student's eyes already are — not pinned
+            to the bottom of the panel, where nobody found it. */}
+        {/* Once the task is solved, a phone drops the hint and the theory: the panel must stay
+            short enough that the work column — and the way on stuck to its bottom — is on screen. */}
+        <div className={`flex flex-none flex-col gap-3 ${success ? 'max-lg:hidden' : ''}`}>
+          {hints.length > 0 && (
+            <div className="mx-4">
+              <Hints hints={hints} onReveal={onRevealHint} />
+            </div>
+          )}
+          {chrome?.theory && <Theory>{chrome.theory}</Theory>}
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex h-11 flex-none items-center gap-2.5 border-b border-line bg-surface px-5">
+          <StepBadge n={2} />
+          <h2 className="text-sm font-bold text-ink">{t(`workspace.work.${task.type}`)}</h2>
+          <span className="flex-1" />
+          {RUNNABLE.has(task.type) && <span className="text-xs text-ink-muted">{t('workspace.editorEngine')}</span>}
+        </div>
         <div className="flex min-h-0 flex-1 flex-col lg:overflow-y-auto">{children}</div>
         {dock}
       </div>

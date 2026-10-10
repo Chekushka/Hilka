@@ -4,7 +4,7 @@
  * shows one task fewer until it is published.
  */
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import { lessonSteps, resolveLessonTasks, type LessonTaskStep, type LessonTaskSummary } from '@/lib/lessons/view';
+import { lessonSteps, resolveLessonTasks, type LessonOutlineItem, type LessonTaskStep, type LessonTaskSummary } from '@/lib/lessons/view';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { PracticeTaskMeta } from '@/lib/meta/progress';
 import { isFileDelivery } from '@/lib/task/prerequisite';
@@ -83,6 +83,15 @@ export async function listLessons(grade: number): Promise<LessonListItem[]> {
       (step) => step.slug
     )
   }));
+}
+
+/** A grade's lessons in order, slug and title only — what the practice navigation needs for "next lesson". */
+export async function listLessonOutline(grade: number): Promise<LessonOutlineItem[]> {
+  return getDb()
+    .select({ slug: lessons.slug, title: lessons.title })
+    .from(lessons)
+    .where(eq(lessons.grade, grade))
+    .orderBy(asc(lessons.order));
 }
 
 export async function getLesson(slug: string): Promise<LessonDetail | null> {

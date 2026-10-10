@@ -13,9 +13,9 @@
   --bg: #f1f3ec;            /* pale green-grey, not cream */
   --surface: #fafaf6;
   --shell: #e7eae1;
-  --line: #dce2d6;
+  --line: #d3dacb;
   --ink: #262c27;
-  --ink-muted: #636d64;
+  --ink-muted: #586259;
   --code-bg: #f6f7f1;
 
   /* Meaning. Never carried by colour alone — shape and icon carry it too. */
@@ -23,14 +23,22 @@
   --accent-soft: #e2ebe7;
   --growth: #6e9a5f;        /* progress, garden, completion */
   --honey: #c9922f;         /* XP, rewards, unlocks */
+  --honey-soft: #f7ecd6;    /* behind a hint: help on offer, easy to spot */
+  --honey-ink: #855a10;     /* honey as text — the plain honey is too light to read */
+  --on-bright: #262c27;    /* text on a honey or growth fill: dark in both themes */
   --soil: #d8ccb2;          /* the garden's ground — the sand in green, sand and honey */
-  /* Garden petals only (components/meta/Plant.tsx) — never for meaning elsewhere. */
+  /* Garden petals and the character's colours (components/meta/Plant.tsx, Character.tsx) — never for meaning elsewhere. */
   --bloom-rose: #d48a9c;
   --bloom-violet: #9483c2;
   --bloom-sky: #6c9cc9;
   --bloom-core: #7c5b38;    /* a flower's centre */
   --attention: #a8763c;     /* "not correct yet" — never red */
   --failure: #a3352b;       /* system failure only: connection lost, session closed */
+  /* The practice character only (components/meta/Character.tsx) — never for meaning elsewhere. */
+  --char-eye: #262c27;
+  --char-night: #4a5675;
+  --char-shade: rgb(38 44 39 / 0.16);
+  --char-glint: #ffffff;
 
   /* Spacing: 4 px base */
   --space-1: 0.25rem;
@@ -82,15 +90,18 @@
     --bg: #1a201d;          /* green-tinted, not neutral charcoal */
     --surface: #242b27;
     --shell: #12160f;
-    --line: #333c36;
+    --line: #3b453e;
     --ink: #e3e7de;
-    --ink-muted: #9aa69b;
+    --ink-muted: #a3aea4;
     --code-bg: #1e2521;
 
     --accent: #6fa79c;
     --accent-soft: #2a3b37;
     --growth: #86b575;
     --honey: #dfae4e;
+    --honey-soft: #3a3020;
+    --honey-ink: #ebc274;
+    --on-bright: #1a201d;
     --soil: #4d4536;
     --bloom-rose: #e3a2b1;
     --bloom-violet: #b2a3dd;
@@ -98,6 +109,10 @@
     --bloom-core: #a47e50;
     --attention: #c79358;
     --failure: #d4645a;
+    --char-eye: #1a201d;
+    --char-night: #6f7fa8;
+    --char-shade: rgb(0 0 0 / 0.25);
+    --char-glint: #ffffff;
 
     --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
 
@@ -109,15 +124,18 @@
   --bg: #1a201d;          /* green-tinted, not neutral charcoal */
   --surface: #242b27;
   --shell: #12160f;
-  --line: #333c36;
+  --line: #3b453e;
   --ink: #e3e7de;
-  --ink-muted: #9aa69b;
+  --ink-muted: #a3aea4;
   --code-bg: #1e2521;
 
   --accent: #6fa79c;
   --accent-soft: #2a3b37;
   --growth: #86b575;
   --honey: #dfae4e;
+  --honey-soft: #3a3020;
+  --honey-ink: #ebc274;
+  --on-bright: #1a201d;
   --soil: #4d4536;
   --bloom-rose: #e3a2b1;
   --bloom-violet: #b2a3dd;
@@ -125,6 +143,10 @@
   --bloom-core: #a47e50;
   --attention: #c79358;
   --failure: #d4645a;
+  --char-eye: #1a201d;
+  --char-night: #6f7fa8;
+  --char-shade: rgb(0 0 0 / 0.25);
+  --char-glint: #ffffff;
 
   --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
 
@@ -144,6 +166,9 @@
   --color-accent-soft: var(--accent-soft);
   --color-growth: var(--growth);
   --color-honey: var(--honey);
+  --color-honey-soft: var(--honey-soft);
+  --color-honey-ink: var(--honey-ink);
+  --color-on-bright: var(--on-bright);
   --color-soil: var(--soil);
   --color-bloom-rose: var(--bloom-rose);
   --color-bloom-violet: var(--bloom-violet);
@@ -151,6 +176,10 @@
   --color-bloom-core: var(--bloom-core);
   --color-attention: var(--attention);
   --color-failure: var(--failure);
+  --color-char-eye: var(--char-eye);
+  --color-char-night: var(--char-night);
+  --color-char-shade: var(--char-shade);
+  --color-char-glint: var(--char-glint);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);

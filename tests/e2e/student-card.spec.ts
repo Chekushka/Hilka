@@ -33,7 +33,7 @@ async function typeSolution(page: Page, code: string) {
 async function check(page: Page) {
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
 }
 
@@ -63,7 +63,7 @@ test('the student card shows each attempt with what was submitted', async ({ pag
 
   await page.goto(`/s/${code.toLowerCase()}`);
   await page.getByRole('button', { name: CODE_TITLE }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   await typeSolution(page, 'a = int(input())\nb = int(input())\nprint(b)');
   await check(page);
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });

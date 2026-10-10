@@ -76,6 +76,8 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
   };
   const showsOutput = (result?.stdout ?? '').length > 0 || pendingInput !== null;
 
+  const hasVisual = Boolean(world) || showsTurtleCanvas(task, result?.drawing ?? []);
+
   return (
     <WorkspaceFrame
       task={task}
@@ -85,6 +87,9 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock
+          // A console task's result is its output, which needs room; a drawing's is the picture beside the code.
+          tall={!hasVisual}
+          scrollKey={result ?? undefined}
           actions={
             <RunCheckActions
               busy={busy}
@@ -110,7 +115,7 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
     >
       <CodePane
         visual={
-          world || showsTurtleCanvas(task, result?.drawing ?? []) ? (
+          hasVisual ? (
             <CodeVisual world={world} grid={result?.grid ?? null} drawing={result?.drawing ?? []} target={target} />
           ) : undefined
         }

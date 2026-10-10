@@ -25,7 +25,7 @@ async function openFixTask(page: Page, name: string) {
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name }).click();
   await page.getByRole('button', { name: TASK_TITLE }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 }
 
 test('the editor starts from the broken code, which fails until fixed', async ({ page }) => {
@@ -34,12 +34,12 @@ test('the editor starts from the broken code, which fails until fixed', async ({
   // Unmodified broken code (right(80) instead of right(90)) must not pass.
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
 
   await typeSolution(page, 'import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 });

@@ -107,10 +107,10 @@ test('a teacher builds a choice-mode predict task, and a student grades it by pi
   await expect(page.locator('input[type=text], input#predict-answer')).toHaveCount(0);
 
   await page.getByRole('radio').nth(0).check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible();
 
   await page.getByRole('radio').nth(1).check();
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
 });

@@ -1,5 +1,6 @@
 import { LessonList } from '@/components/lesson/LessonList';
 import { PracticeNav } from '@/components/lesson/PracticeNav';
+import { CharacterCard } from '@/components/meta/CharacterCard';
 import { ProgressSummary } from '@/components/meta/ProgressSummary';
 import { listLessonGrades, listLessons, listPracticeTaskMeta } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
@@ -29,7 +30,8 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
           not on top. Narrow screens stack it first, as before. */}
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         {grade !== undefined && (
-          <aside className="lg:order-2">
+          <aside className="flex flex-col gap-4 lg:order-2">
+            <CharacterCard tasks={practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty }))} />
             <ProgressSummary
               lessons={lessons.map((lesson) => ({ slug: lesson.slug, taskSlugs: lesson.taskSlugs }))}
               tasks={practiceTasks}

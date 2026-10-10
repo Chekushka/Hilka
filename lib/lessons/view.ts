@@ -55,3 +55,32 @@ export function stepAfter(steps: readonly LessonTaskStep[], slug: string): Lesso
   const index = steps.findIndex((step) => step.slug === slug);
   return index >= 0 && index + 1 < steps.length ? steps[index + 1] : null;
 }
+
+export function stepBefore(steps: readonly LessonTaskStep[], slug: string): LessonTaskStep | null {
+  const index = steps.findIndex((step) => step.slug === slug);
+  return index > 0 ? steps[index - 1] : null;
+}
+
+export interface LessonOutlineItem {
+  slug: string;
+  title: string;
+}
+
+/**
+ * Where a lesson sits in its grade's list (already in order): its number as the
+ * student sees it — counted from 1 in list order, like the lesson list — and the
+ * lessons on either side. Null when the slug is not in the list.
+ */
+export function lessonNeighbours(
+  outline: readonly LessonOutlineItem[],
+  slug: string
+): { number: number; total: number; previous: LessonOutlineItem | null; next: LessonOutlineItem | null } | null {
+  const index = outline.findIndex((lesson) => lesson.slug === slug);
+  if (index < 0) return null;
+  return {
+    number: index + 1,
+    total: outline.length,
+    previous: outline[index - 1] ?? null,
+    next: outline[index + 1] ?? null
+  };
+}

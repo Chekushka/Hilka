@@ -24,7 +24,7 @@ async function checkOption(page: Page, option: string, expected: 'Готово!'
   await page.getByLabel(option, { exact: true }).check();
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   await expect(page.getByRole('heading', { name: expected })).toBeVisible();
 }

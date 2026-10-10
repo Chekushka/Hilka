@@ -44,11 +44,11 @@ test('partial credit in a graded session becomes a suggested grade', async ({ pa
   await page.goto(`/s/${code.toLowerCase()}`);
   await page.getByRole('button', { name: 'Олена' }).click();
   await page.getByRole('button', { name: TASK_TITLE }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
   await typeSolution(page, 'a = int(input())\nb = int(input())\nprint(b)');
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   const body = attemptResponse.request().postDataJSON() as { passed: boolean; score: number };

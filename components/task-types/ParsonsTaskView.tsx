@@ -254,6 +254,7 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock
+          scrollKey={report ?? undefined}
           actions={<CheckAction disabled={answer.length === 0} passed={report?.passed} onCheck={check} />}
           next={report?.passed ? next : undefined}
         >

@@ -25,13 +25,13 @@ async function openTask(page: Page, name: string) {
   await page.goto(`/s/${DEMO_CODE}`);
   await page.getByRole('button', { name }).click();
   await page.getByRole('button', { name: TASK_TITLE }).click();
-  await expect(page.getByRole('button', { name: 'Перевірити' })).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 }
 
 test('a solution that works for every case passes', async ({ page }) => {
   await openTask(page, 'Олена');
   await typeSolution(page, 'a = float(input())\nb = float(input())\nprint(2 * (a + b))');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
 });
 
@@ -41,7 +41,7 @@ test('a solution hardcoded to the visible case fails on the hidden one', async (
   // input entirely — exactly what the hidden case (10, 4 -> 28) exists to
   // catch.
   await typeSolution(page, 'input()\ninput()\nprint(16)');
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible({ timeout: 20_000 });
   // The failing case's own label names it, proving both cases actually ran.
   await expect(page.getByText('більший прямокутник', { exact: false })).toBeVisible();

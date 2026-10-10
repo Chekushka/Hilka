@@ -39,7 +39,7 @@ test('assembling the lines in the right order passes and records the attempt', a
 
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Перевірити' }).click()
+    page.getByRole('button', { name: 'Здати' }).click()
   ]);
   expect(attemptResponse.status()).toBe(201);
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
@@ -54,7 +54,7 @@ test('a distractor or a wrong order does not pass, but fixing it then does', asy
   await addLine(page, 'import turtle');
   await addLine(page, 'turtle.right(90)');
 
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Ще не те' })).toBeVisible();
 
   // Fix it: drop the distractor, re-add the real lines in order.
@@ -68,6 +68,6 @@ test('a distractor or a wrong order does not pass, but fixing it then does', asy
   await addLine(page, 'turtle.forward(100)');
   await addLine(page, 'turtle.right(120)');
 
-  await page.getByRole('button', { name: 'Перевірити' }).click();
+  await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible();
 });
