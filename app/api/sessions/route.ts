@@ -1,18 +1,28 @@
 /**
  * Session creation — the session builder (docs/TASKS.md, "Session builder").
- * Teacher-only, and scoped to a class the caller actually owns; unlike task
+ * Teacher-only, and scoped to classes the caller actually owns; unlike task
  * content (shared curriculum, any teacher may author it), a class and its
  * sessions belong to one teacher.
+ *
+ * Several classes at once make one session per class, all or none: the same
+ * tasks and settings, each class with its own code, roster and results.
+ * Routes name students of one roster, so they are kept only for a single class.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { getClassWithRosterForTeacher } from '@/lib/db/classes';
 import { cleanStudentRoutes } from '@/lib/session/routes';
-import { createSession, filterToPublishedTaskIds } from '@/lib/db/session-authoring';
+import { createSessions, filterToPublishedTaskIds, type CreateSessionInput } from '@/lib/db/session-authoring';
 import type { SessionKind, SessionMode } from '@/lib/session/types';
 
+/** More classes than any teacher has; a bound on the work one request can ask for. */
+const MAX_CLASSES = 20;
+
 interface CreateSessionBody {
-  classId: string;
+  /** Older clients: the one class. */
+  classId?: string;
+  /** Every class to create the session for, the first one leading. */
+  classIds?: string[];
   mode: SessionMode;
   /** Absent from older clients: a lesson. */
   kind?: SessionKind;
@@ -38,8 +48,11 @@ function isValidBody(body: unknown): body is CreateSessionBody {
   if (typeof body !== 'object' || body === null) return false;
   const b = body as Record<string, unknown>;
   return (
-    typeof b.classId === 'string' &&
-    b.classId.length > 0 &&
+    ((typeof b.classId === 'string' && b.classId.length > 0) ||
+      (isIdList(b.classIds) &&
+        (b.classIds as string[]).length > 0 &&
+        (b.classIds as string[]).length <= MAX_CLASSES &&
+        (b.classIds as string[]).every((id) => id.length > 0))) &&
     (b.mode === 'practice' || b.mode === 'graded') &&
     Array.isArray(b.taskIds) &&
     b.taskIds.every((id) => typeof id === 'string') &&
@@ -70,10 +83,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const klass = await getClassWithRosterForTeacher(body.classId, teacher.id);
-  if (!klass) {
+  const classIds = [...new Set(body.classIds ?? (body.classId ? [body.classId] : []))];
+  const ownClasses = await Promise.all(classIds.map((id) => getClassWithRosterForTeacher(id, teacher.id)));
+  if (ownClasses.some((klass) => klass === null)) {
     return NextResponse.json({ error: 'unknown_class' }, { status: 400 });
   }
+  const single = ownClasses.length === 1 ? ownClasses[0] : null;
 
   // The request body is untrusted (CLAUDE.md, "Cheating and Trust") — a task
   // id that is not actually published (deleted, unpublished, typo'd) is
@@ -94,18 +109,23 @@ export async function POST(request: Request) {
     : [];
 
   // A task sits in one place in a session: a route never repeats a main or improvement task, nor the other route's.
+  // Routes name students of one roster: with several classes there are none.
   const taken = new Set([...taskIds, ...improvementTaskIds]);
-  const supportTaskIds = (await filterToPublishedTaskIds(body.supportTaskIds ?? [])).filter((id) => !taken.has(id));
+  const supportTaskIds = single
+    ? (await filterToPublishedTaskIds(body.supportTaskIds ?? [])).filter((id) => !taken.has(id))
+    : [];
   supportTaskIds.forEach((id) => taken.add(id));
-  const extensionTaskIds = (await filterToPublishedTaskIds(body.extensionTaskIds ?? [])).filter((id) => !taken.has(id));
-  const studentRoutes = cleanStudentRoutes(
-    body.studentRoutes,
-    new Set(klass.students.map((student) => student.id)),
-    { support: supportTaskIds, extension: extensionTaskIds }
-  );
+  const extensionTaskIds = single
+    ? (await filterToPublishedTaskIds(body.extensionTaskIds ?? [])).filter((id) => !taken.has(id))
+    : [];
+  const studentRoutes = single
+    ? cleanStudentRoutes(body.studentRoutes, new Set(single.students.map((student) => student.id)), {
+        support: supportTaskIds,
+        extension: extensionTaskIds
+      })
+    : {};
 
-  const { id, code } = await createSession({
-    classId: body.classId,
+  const settings: Omit<CreateSessionInput, 'classId'> = {
     mode: homework ? 'graded' : body.mode,
     kind: homework ? 'homework' : 'lesson',
     taskIds,
@@ -119,6 +139,14 @@ export async function POST(request: Request) {
     supportTaskIds,
     extensionTaskIds,
     studentRoutes
-  });
-  return NextResponse.json({ id, code }, { status: 201 });
+  };
+  const created = await createSessions(classIds.map((classId) => ({ classId, ...settings })));
+  // `id` and `code` are the first class's, as before; `sessions` has every one, in the order asked.
+  return NextResponse.json(
+    {
+      ...created[0],
+      sessions: created.map((session, index) => ({ ...session, classId: classIds[index] }))
+    },
+    { status: 201 }
+  );
 }

@@ -21,6 +21,10 @@
  * The third mode is homework (docs/HOMEWORK.md): graded, with a deadline in
  * place of a time limit, and any chosen task can be marked as an improvement
  * task — offered only to students who lost points.
+ *
+ * The same session can go to several classes at once (the "also for classes" boxes):
+ * one session per class, each with its own code, roster and results. Routes
+ * name students of one roster, so they exist only when one class is chosen.
  */
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
@@ -86,6 +90,13 @@ interface SessionBuilderFormProps {
 
 type BuilderMode = SessionMode | 'homework';
 
+/** One session the builder made — one per chosen class. */
+interface CreatedSession {
+  id: string;
+  code: string;
+  classId: string;
+}
+
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** `days` from today at 18:00 on this computer's clock, as a datetime-local value. */
@@ -113,6 +124,8 @@ const NO_ROUTE_TASKS: Record<RouteKey, string[]> = { support: [], extension: [] 
 export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: SessionBuilderFormProps) {
   const startClass = classes.find((klass) => klass.id === initialClassId) ?? classes[0];
   const [classId, setClassId] = useState(startClass?.id ?? '');
+  // Further classes that get the same session, each its own (lib: `createSessions`).
+  const [extraClassIds, setExtraClassIds] = useState<string[]>([]);
   const [mode, setMode] = useState<BuilderMode>('practice');
   // datetime-local, on the teacher's own clock; set when homework is chosen, so the server never renders a time.
   const [dueAt, setDueAt] = useState('');
@@ -135,11 +148,23 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   const [poolSize, setPoolSize] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState<{ id: string; code: string } | null>(null);
+  const [created, setCreated] = useState<CreatedSession[] | null>(null);
   const [lessonToAdd, setLessonToAdd] = useState('');
 
   const visibleTasks = filterCatalog(tasks, filter);
   const klass = classes.find((option) => option.id === classId);
+  const multiClass = extraClassIds.length > 0;
+
+  function toggleExtraClass(id: string) {
+    const adding = !extraClassIds.includes(id);
+    setExtraClassIds((previous) => (adding ? [...previous, id] : previous.filter((existing) => existing !== id)));
+    if (adding) {
+      // Routes name one roster's students; with a second class they would mean nothing.
+      setRouteTaskIds(NO_ROUTE_TASKS);
+      setStudentRoutes({});
+      setTarget('main');
+    }
+  }
 
   /** Where a task sits in this session: the main list, a route, or nowhere. */
   function placeOf(id: string): RouteTarget | null {
@@ -227,7 +252,7 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        classId,
+        classIds: [classId, ...extraClassIds],
         mode: homework ? 'graded' : mode,
         kind: homework ? 'homework' : 'lesson',
         taskIds: main,
@@ -237,9 +262,9 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
         shuffle,
         poolSize: poolSize && Number(poolSize) < main.length ? Number(poolSize) : null,
         dueAt: due ? due.toISOString() : null,
-        supportTaskIds: routeTaskIds.support,
-        extensionTaskIds: routeTaskIds.extension,
-        studentRoutes
+        supportTaskIds: multiClass ? [] : routeTaskIds.support,
+        extensionTaskIds: multiClass ? [] : routeTaskIds.extension,
+        studentRoutes: multiClass ? {} : studentRoutes
       })
     });
 
@@ -249,16 +274,44 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
       return;
     }
 
-    const data: { id: string; code: string } = await response.json();
+    const data: { id: string; code: string; sessions?: CreatedSession[] } = await response.json();
     setSaving(false);
-    setCreated(data);
+    setCreated(data.sessions ?? [{ ...data, classId }]);
+  }
+
+  if (created && created.length > 1) {
+    return (
+      <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-line bg-surface p-8">
+        <p className="text-center text-ink">{t('sessionBuilder.createdMany')}</p>
+        {homework && dueAt && (
+          <p className="mt-3 text-center text-ink">
+            {t('sessionBuilder.createdDue', { date: formatDeadline(new Date(dueAt).toISOString()) })}
+          </p>
+        )}
+        <ul className="mt-5 flex flex-col gap-2" data-testid="created-sessions">
+          {created.map((session) => (
+            <li key={session.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-shell px-4 py-3">
+              <span className="min-w-0 flex-1 font-medium text-ink">
+                {classes.find((option) => option.id === session.classId)?.title}
+              </span>
+              <span className="font-mono text-2xl font-semibold tracking-[0.2em] text-ink">{session.code}</span>
+              <a href={`/dashboard/sessions/${session.id}`} className="text-sm text-accent">
+                {t('sessionBuilder.viewSession')}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-sm text-ink-muted">{t('sessionBuilder.createdManyHint')}</p>
+      </div>
+    );
   }
 
   if (created) {
+    const [session] = created;
     return (
       <div className="mx-auto mt-10 max-w-md rounded-2xl border border-line bg-surface p-8 text-center">
         <p className="text-ink">{t('sessionBuilder.created')}</p>
-        <p className="mt-3 font-mono text-2xl font-semibold tracking-[0.2em] text-ink md:text-5xl">{created.code}</p>
+        <p className="mt-3 font-mono text-2xl font-semibold tracking-[0.2em] text-ink md:text-5xl">{session.code}</p>
         {homework && dueAt && (
           <p className="mt-3 text-ink">
             {t('sessionBuilder.createdDue', { date: formatDeadline(new Date(dueAt).toISOString()) })}
@@ -266,7 +319,7 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
         )}
         <p className="mt-4 text-sm text-ink-muted">{t('sessionBuilder.createdHint')}</p>
         <a
-          href={`/dashboard/sessions/${created.id}`}
+          href={`/dashboard/sessions/${session.id}`}
           className="mt-6 inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-surface"
         >
           {t('sessionBuilder.viewSession')}
@@ -310,6 +363,7 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
             value={classId}
             onChange={(event) => {
               setClassId(event.target.value);
+              setExtraClassIds((previous) => previous.filter((id) => id !== event.target.value));
               const next = classes.find((option) => option.id === event.target.value);
               if (next?.grade) setFilter((previous) => ({ ...previous, grade: gradeFilterFor(next, gradeOptions) }));
               // Another class, other students: nobody carries a route across.
@@ -323,6 +377,28 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
               </option>
             ))}
           </select>
+          {classes.length > 1 && (
+            <fieldset className="mt-1 flex flex-col gap-1.5">
+              <legend className={labelClass}>{t('sessionBuilder.alsoClassesLabel')}</legend>
+              {classes
+                .filter((option) => option.id !== classId)
+                .map((option) => (
+                  <label key={option.id} className="flex items-center gap-2 text-sm text-ink">
+                    <input
+                      type="checkbox"
+                      checked={extraClassIds.includes(option.id)}
+                      onChange={() => toggleExtraClass(option.id)}
+                    />
+                    {option.title}
+                  </label>
+                ))}
+              {multiClass && (
+                <p className="text-xs leading-relaxed text-ink-muted" data-testid="multi-class-note">
+                  {t('sessionBuilder.alsoClassesNote', { n: extraClassIds.length + 1 })}
+                </p>
+              )}
+            </fieldset>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -489,7 +565,11 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-ink">{t('sessionBuilder.filtersTitle')}</h2>
-          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('routes.targetLabel')}>
+          <div
+            className={`flex flex-wrap items-center gap-1.5 ${multiClass ? 'hidden' : ''}`}
+            role="group"
+            aria-label={t('routes.targetLabel')}
+          >
             <span className="text-sm text-ink-muted" aria-hidden="true">
               {t('routes.targetLabel')}
             </span>
@@ -646,7 +726,8 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
           </p>
         )}
 
-        {klass && (
+        {multiClass && <p className="text-xs leading-relaxed text-ink-muted">{t('routes.multiClassNote')}</p>}
+        {klass && !multiClass && (
           <RoutesPanel
             students={klass.students}
             lastRoutes={klass.lastRoutes}

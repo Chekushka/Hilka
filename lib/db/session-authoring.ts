@@ -12,7 +12,7 @@ import type { SessionKind, SessionMode } from '@/lib/session/types';
 import { isFileDelivery } from '@/lib/task/prerequisite';
 import { normalizeTags, type TaskTag } from '@/lib/task/tags';
 import type { TaskType } from '@/lib/task/types';
-import { getDb } from './client';
+import { getDb, type Executor } from './client';
 import { classes, sessions, tasks, topics } from './schema';
 
 const MAX_MINT_ATTEMPTS = 5;
@@ -161,8 +161,10 @@ export interface CreateSessionInput {
  * practice code's, hence the same bounded-retry shape as
  * `lib/db/progress-codes.ts`'s `mintProgressCode`.
  */
-export async function createSession(input: CreateSessionInput): Promise<{ id: string; code: string }> {
-  const db = getDb();
+export async function createSession(
+  input: CreateSessionInput,
+  db: Executor = getDb()
+): Promise<{ id: string; code: string }> {
   for (let attempt = 0; attempt < MAX_MINT_ATTEMPTS; attempt++) {
     const code = generateSessionCode();
     const [row] = await db
@@ -189,4 +191,17 @@ export async function createSession(input: CreateSessionInput): Promise<{ id: st
     if (row) return row;
   }
   throw new Error('createSession: exhausted retries — too many currently open sessions share this code space');
+}
+
+/**
+ * One session per input, all or none — the builder's «також для класів»: the
+ * same tasks and settings handed to several classes at once, each its own
+ * session with its own code, roster and results.
+ */
+export async function createSessions(inputs: CreateSessionInput[]): Promise<{ id: string; code: string }[]> {
+  return getDb().transaction(async (tx) => {
+    const created: { id: string; code: string }[] = [];
+    for (const input of inputs) created.push(await createSession(input, tx));
+    return created;
+  });
 }
