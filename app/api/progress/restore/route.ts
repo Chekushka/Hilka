@@ -9,10 +9,10 @@
 import { NextResponse } from 'next/server';
 import { getProgressCodeStateAndTouch } from '@/lib/db/progress-codes';
 import { isValidProgressCode, normalizeProgressCode } from '@/lib/practice/code';
-import { progressClientKey, progressCodeLimiter } from '@/lib/practice/progress-rate-limiter';
+import { progressClientKey, progressRestoreLimiter } from '@/lib/practice/progress-rate-limiter';
 
 export async function POST(request: Request) {
-  if (!progressCodeLimiter.attempt(progressClientKey(request))) {
+  if (!progressRestoreLimiter.attempt(progressClientKey(request))) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
 

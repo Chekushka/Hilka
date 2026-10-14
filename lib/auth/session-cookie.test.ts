@@ -34,6 +34,17 @@ describe('createTeacherCookie / readTeacherId', () => {
     vi.useRealTimers();
   });
 
+  it('on a school computer, ends with the browser and after a school day', () => {
+    vi.useFakeTimers();
+    const cookie = createTeacherCookie(TEACHER_ID, { schoolComputer: true });
+    expect(cookie.maxAgeS).toBeNull();
+    vi.advanceTimersByTime(7 * 60 * 60 * 1000);
+    expect(readTeacherId(cookie.value)).toBe(TEACHER_ID);
+    vi.advanceTimersByTime(2 * 60 * 60 * 1000); // past 8 hours
+    expect(readTeacherId(cookie.value)).toBeNull();
+    vi.useRealTimers();
+  });
+
   it('rejects missing, empty, or malformed values', () => {
     expect(readTeacherId(undefined)).toBeNull();
     expect(readTeacherId(null)).toBeNull();
