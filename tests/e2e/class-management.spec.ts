@@ -126,8 +126,13 @@ async function solveAs(browser: Browser, code: string, name: string) {
   await student.getByRole('button', { name, exact: true }).click();
   await student.getByRole('button', { name: new RegExp(`^${QUIZ.replace(/[()]/g, '\\$&')}`) }).click();
   await student.getByLabel(QUIZ_RIGHT, { exact: true }).check();
+  // The room shows the result without waiting for the attempt to be stored; closing first could cancel it.
+  const recorded = student.waitForResponse(
+    (response) => response.url().endsWith('/api/attempts') && response.request().method() === 'POST'
+  );
   await student.getByRole('button', { name: 'Здати' }).click();
   await expect(student.getByRole('heading', { name: 'Готово!' })).toBeVisible();
+  expect((await recorded).status()).toBe(201);
   await student.context().close();
 }
 

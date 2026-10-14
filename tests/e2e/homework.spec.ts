@@ -63,6 +63,17 @@ async function buildHomework(
   return { code, sessionUrl };
 }
 
+/**
+ * The response to the next attempt the room posts. The room shows a result
+ * without waiting for it, so a spec that closes a student's browser and then
+ * reads the stored attempts waits for this first (AI_CONTEXT.md, Gotchas).
+ */
+function attemptStored(page: Page) {
+  return page.waitForResponse(
+    (response) => response.url().endsWith('/api/attempts') && response.request().method() === 'POST'
+  );
+}
+
 async function joinAs(browser: Browser, code: string, name: string): Promise<Page> {
   const page = await (await browser.newContext()).newPage();
   await page.goto(`/s/${code.toLowerCase()}`);
@@ -195,8 +206,10 @@ test('a deadline moved into the past tells students their work now counts for 70
   const student = await joinAs(browser, code, 'Соломія');
   await expect(student.getByTestId('homework-late')).toContainText('70%');
   await taskRow(student, MAIN).click();
+  const recorded = attemptStored(student);
   await answer(student, MAIN_RIGHT);
   await expect(student.getByRole('heading', { name: 'Готово!' })).toBeVisible();
+  expect((await recorded).status()).toBe(201);
   await student.context().close();
 
   await page.reload();
@@ -240,8 +253,10 @@ test('a class check that the student fails lowers that homework task to 70%; one
   for (const name of ['Олена', 'Соломія']) {
     const student = await joinAs(browser, code, name);
     await taskRow(student, MAIN).click();
+    const recorded = attemptStored(student);
     await answer(student, MAIN_RIGHT);
     await expect(student.getByRole('heading', { name: 'Готово!' })).toBeVisible();
+    expect((await recorded).status()).toBe(201);
     await student.context().close();
   }
 
@@ -317,9 +332,16 @@ async function pasteProgram(page: Page, code: string) {
   await expect(page.locator('.cm-content')).toContainText('elif n < 0:');
 }
 
+/**
+ * A passed Check, and its attempt stored. The room shows «Готово!» without
+ * waiting for `POST /api/attempts`, so a spec that closes the browser right
+ * after could cancel the request — and lose the attempt it then asserts on.
+ */
 async function checkAndPass(page: Page) {
+  const recorded = attemptStored(page);
   await page.getByRole('button', { name: 'Здати' }).click();
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
+  expect((await recorded).status()).toBe(201);
 }
 
 test('facts for the teacher: a whole paste, a renamed copy, a construct not taught yet, and a forged pass caught by the re-check', async ({

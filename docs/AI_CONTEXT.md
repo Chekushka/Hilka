@@ -912,3 +912,10 @@ card instead of scrolling, and the statement's last lines disappeared under the 
 panel's children are `shrink-0` now; anything added to a scrolling flex column with its own
 `overflow` needs the same.
 
+**The room shows a result before the attempt is stored.** `SessionRoom` posts `POST /api/attempts`
+in the background, best-effort, and shows «Готово!» from the browser's own Check. A spec that closes
+a student's browser right after the result can cancel that request on a slow runner, and whatever it
+then asserts about stored attempts (similar code, grades, late marks) silently has one student
+fewer — `homework.spec.ts`'s facts test failed in CI exactly so, with Тарас's renamed copy never
+stored and nobody's code «схожий». Wait for the `/api/attempts` response before closing the page
+(`attemptStored` and `checkAndPass` in `tests/e2e/homework.spec.ts`).
