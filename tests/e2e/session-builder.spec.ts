@@ -141,3 +141,35 @@ test('one session for several classes: each class gets its own code and only its
   await expect(page.getByRole('button', { name: 'Олена' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Остап' })).toHaveCount(0);
 });
+
+test('graded and homework sessions explain the grade, and warn when 10–12 is out of reach', async ({ page }) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Нове заняття' }).first().click();
+  // Practice is never graded: nothing to explain.
+  await expect(page.getByTestId('grade-band-note')).toHaveCount(0);
+
+  await page.locator('#mode').selectOption('graded');
+  const note = page.getByTestId('grade-band-note');
+  await expect(note).toBeVisible();
+  // Nothing chosen yet: the explanation, no warning.
+  await expect(page.getByTestId('grade-band-warning')).toHaveCount(0);
+
+  // Only an easy task: the best grade is 9, and the builder says so.
+  await page.getByLabel('Пошук').fill('квадрат');
+  await page.getByRole('listitem').filter({ has: page.getByText('Квадрат', { exact: true }) }).getByRole('checkbox').check();
+  await expect(page.getByTestId('grade-band-warning')).toContainText('найвища можлива оцінка — 9');
+
+  await note.locator('summary').click();
+  await expect(note).toContainText('Оцінки 10–12 — лише для учня, який повністю розв\'язав хоча б одне завдання складності 4–5');
+  await expect(note).not.toContainText('Перевірка в класі');
+
+  // Homework adds the first-Check rule, improvement tasks and the class check.
+  await page.locator('#mode').selectOption('homework');
+  await expect(note).toContainText('Виправлення (друга чи третя перевірка) приносить 70% балів, але 10–12 не відкриває');
+  await expect(note).toContainText('Перевірка в класі оцінку не підвищує');
+
+  // A difficulty 5 task opens the band: the warning goes.
+  await page.getByLabel('Пошук').fill('вид трикутника');
+  await page.getByRole('listitem').filter({ has: page.getByText('Вид трикутника', { exact: true }) }).getByRole('checkbox').check();
+  await expect(page.getByTestId('grade-band-warning')).toHaveCount(0);
+});

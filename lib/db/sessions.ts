@@ -4,7 +4,7 @@
  * so every lookup here filters on it rather than trusting a client-supplied
  * state.
  */
-import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { findStudent, seedKeyOf, type RosterStudent } from '@/lib/classes/roster';
 import type { SessionRules } from '@/lib/homework/rules';
 import { assignTasks, type AssignmentRule } from '@/lib/seed';
@@ -335,6 +335,27 @@ export async function setSessionDueAt(sessionId: string, teacherId: string, dueA
     .set({ dueAt })
     .where(and(eq(sessions.id, id), eq(sessions.kind, 'homework')));
   return true;
+}
+
+/**
+ * Replaces a session's routes after it was created (lib/session/routes.ts):
+ * the teacher sees in class who needs another route. The caller has already
+ * cleaned them against the roster and the session's own tasks. Only an open
+ * lesson or homework — a class check has no routes.
+ */
+export async function setSessionRoutes(
+  sessionId: string,
+  teacherId: string,
+  routes: { supportTaskIds: string[]; extensionTaskIds: string[]; studentRoutes: StudentRoutes }
+): Promise<boolean> {
+  const id = await ownedSessionId(sessionId, teacherId);
+  if (!id) return false;
+  const updated = await getDb()
+    .update(sessions)
+    .set(routes)
+    .where(and(eq(sessions.id, id), ne(sessions.kind, 'check'), isNull(sessions.closesAt)))
+    .returning({ id: sessions.id });
+  return updated.length > 0;
 }
 
 /**

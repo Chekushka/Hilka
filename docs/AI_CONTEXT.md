@@ -671,7 +671,8 @@ not a label on the student:
   (`GET /api/sessions/[code]/me`), never the session's whole route map; `POST /api/attempts` and
   the task route accept a route task only from a student on that route.
 - The builder fills routes from the bank, or suggests tasks by tag on the main tasks' topics
-  (`suggestRouteTasks`). The class table marks each routed student with the route and how many of
+  (`suggestRouteTasks`). Routes can also change on an open session's page, since a teacher
+  often sees only in class who needs one; the server cleans them the same way. The class table marks each routed student with the route and how many of
   its tasks they solved; the student card lists them.
 
 ## Homework

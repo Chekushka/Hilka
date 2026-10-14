@@ -33,7 +33,9 @@ import { formatDeadline } from '@/lib/homework/deadline';
 import { t } from '@/lib/i18n';
 import { addLessonToSelection, findNonGradedTasks } from '@/lib/lessons/graded-warnings';
 import { unsequencedFileTasks } from '@/lib/task/prerequisite';
+import { GradeBandNote } from '@/components/authoring/GradeBandNote';
 import { DifficultyMeter, TaskTagChip, TaskTypeChip } from '@/components/authoring/TaskBadges';
+import { sessionAllowsHighBand } from '@/lib/grading/grade';
 import { TaskFilterBar } from '@/components/authoring/TaskFilterBar';
 import { RoutesPanel, type RouteTarget } from '@/components/authoring/RoutesPanel';
 import { EMPTY_FILTER, filterCatalog, type CatalogFilter } from '@/lib/task/catalog-filter';
@@ -739,6 +741,15 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
             onStudentRoutes={setStudentRoutes}
             target={target}
             onTarget={setTarget}
+          />
+        )}
+
+        {(mode === 'graded' || homework) && (
+          <GradeBandNote
+            homework={homework}
+            hasTasks={mainCount > 0}
+            // Homework counts its improvement tasks too, as the session page does.
+            highBandReachable={sessionAllowsHighBand(selected)}
           />
         )}
 
