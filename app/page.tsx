@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ContinueWithCodeForm } from '@/components/entry/ContinueWithCodeForm';
 import { JoinByCodeForm } from '@/components/entry/JoinByCodeForm';
 import { AppHeader } from '@/components/layout/AppHeader';
+import { SchoolComputerBar } from '@/components/school/SchoolComputerBar';
 import { Plant } from '@/components/meta/Plant';
 import type { PlantStage } from '@/lib/meta/garden';
 import { t } from '@/lib/i18n';
@@ -27,6 +28,7 @@ export default function Home() {
           </Link>
         }
       />
+      <SchoolComputerBar />
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-6 px-6 py-10">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-ink">{t('home.title')}</h1>

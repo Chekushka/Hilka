@@ -96,3 +96,48 @@ test('search narrows the bank, and the chosen order is the order students meet',
   const triangle = await page.getByRole('button', { name: 'Трикутник', exact: true }).boundingBox();
   expect(square && triangle && square.y < triangle.y).toBe(true);
 });
+
+test('one session for several classes: each class gets its own code and only its own roster', async ({ page }) => {
+  await loginAsTeacher(page);
+  // A second class of the demo teacher's, made through the UI.
+  const otherClass = `Паралельний клас ${Date.now()}`;
+  await page.getByRole('link', { name: 'Новий клас' }).click();
+  await page.getByLabel('Назва класу').fill(otherClass);
+  await page.getByLabel('Додати учня').fill('Остап');
+  await page.getByLabel('Додати учня').press('Enter');
+  await page.getByRole('button', { name: 'Створити клас' }).click();
+  await expect(page.getByRole('heading', { name: 'Мої класи' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Нове заняття' }).first().click();
+  await page.locator('#class').selectOption({ label: 'Демонстраційний клас' });
+  await expect(page.getByTestId('routes-panel')).toBeVisible();
+  await page.getByRole('group', { name: 'Також для класів' }).getByLabel(otherClass).check();
+  // Routes name one roster's students, so they step aside.
+  await expect(page.getByTestId('multi-class-note')).toContainText('Класів: 2');
+  await expect(page.getByTestId('routes-panel')).toHaveCount(0);
+
+  await page.getByLabel('Пошук').fill('квадрат');
+  await page.getByRole('listitem').filter({ has: page.getByText('Квадрат', { exact: true }) }).getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Створити заняття' }).click();
+  await expect(page.getByText('Заняття створено. У кожного класу свій код:')).toBeVisible({ timeout: 10_000 });
+
+  const rows = page.getByTestId('created-sessions').getByRole('listitem');
+  await expect(rows).toHaveCount(2);
+  const codeOf = async (title: string) =>
+    ((await rows.filter({ hasText: title }).locator('.font-mono').textContent()) ?? '').trim();
+  const demoCode = await codeOf('Демонстраційний клас');
+  const otherCode = await codeOf(otherClass);
+  expect(demoCode).toMatch(/^[A-Z2-9]{6}$/);
+  expect(otherCode).toMatch(/^[A-Z2-9]{6}$/);
+  expect(otherCode).not.toBe(demoCode);
+
+  await page.goto(`/s/${otherCode.toLowerCase()}`);
+  await expect(page.getByRole('button', { name: 'Остап' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Олена' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Остап' }).click();
+  await expect(page.getByRole('button', { name: 'Квадрат', exact: true })).toBeVisible();
+
+  await page.goto(`/s/${demoCode.toLowerCase()}`);
+  await expect(page.getByRole('button', { name: 'Олена' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Остап' })).toHaveCount(0);
+});

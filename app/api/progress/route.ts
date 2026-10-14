@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { mintProgressCode, updateProgressCodeState } from '@/lib/db/progress-codes';
 import { formatProgressCode, isValidProgressCode, normalizeProgressCode } from '@/lib/practice/code';
 import { isValidPracticeProgress, type PracticeProgress } from '@/lib/practice/progress';
-import { progressClientKey, progressCodeLimiter } from '@/lib/practice/progress-rate-limiter';
+import { progressClientKey, progressSaveLimiter } from '@/lib/practice/progress-rate-limiter';
 
 interface RequestBody {
   code?: string;
@@ -24,7 +24,7 @@ function isValidBody(body: unknown): body is RequestBody {
 }
 
 export async function POST(request: Request) {
-  if (!progressCodeLimiter.attempt(progressClientKey(request))) {
+  if (!progressSaveLimiter.attempt(progressClientKey(request))) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
 

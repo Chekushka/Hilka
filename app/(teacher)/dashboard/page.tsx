@@ -34,6 +34,13 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      <p className="mt-2 text-sm text-ink-muted">
+        {t('dashboard.schoolComputersHint')}{' '}
+        <Link href="/school" className="text-accent">
+          {t('dashboard.schoolComputersLink')}
+        </Link>
+      </p>
+
       {classes.length === 0 ? (
         <p className="mt-4 text-ink-muted">{t('dashboard.empty')}</p>
       ) : (

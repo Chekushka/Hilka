@@ -106,6 +106,7 @@ lib/
   checker/               declarative checker evaluator (isomorphic: client + server)
   errors/                Python error → Ukrainian humanized message
   seed/                  deterministic PRNG + task parameterization
+  device/                the school-computer mark (school.ts pure, school-client.ts browser)
   meta/                  XP, levels, topic progress and garden stages, derived from completed tasks;
                          the character's unlocks (character.ts)
   db/                    Drizzle schema, migrations, queries
@@ -239,10 +240,39 @@ writes a `progress_codes` row; entering that code on any machine restores the st
   who practised on two machines must not lose one by entering a code in the wrong order.
 - `last_seen_at` exists so abandoned rows can be pruned later. Nothing prunes them yet.
 
+On a school computer none of this stays in `localStorage` — see "School Computers".
+
 Known weakness, accepted: a lost code is unrecoverable and students in this age group will lose
 them. Mitigate in the UI — show the code again on every save, make it copyable, and let a
 teacher attach a code to a roster name in the dashboard. The eventual fix is roster-linked
 practice progress, after which codes become a fallback rather than the mechanism.
+
+## School Computers
+
+Decided with the project owner: classroom PCs are shared, and the next student must not see,
+continue or overwrite the last one's practice. A browser **marked as a school computer** leaves
+nothing about a student behind; every other browser behaves as before.
+
+- **The mark** is the cookie `hilka_school=1` (`lib/device/school.ts`), set or cleared at `/school`
+  — a teacher opens it once on each classroom PC; the dashboard links it. A cookie rather than
+  `localStorage` so the server sees it too. It describes the machine, never a student (rule 8),
+  and marking or unmarking clears practice data from both storages.
+- **Practice progress** and its code live in `sessionStorage` (`lib/practice/local-progress.ts`),
+  so they end with the browser. A browser left open between lessons is the common case, so they
+  are also dropped after `SCHOOL_IDLE_MS` (20 min) with no key press or click — checked on every
+  read, every key press or click, and once a minute (`SchoolComputerBar`).
+- **Every change is saved to the progress code at once** (debounced, minting a code on the first
+  change). Dropping the local copy therefore loses nothing the code cannot bring back. The bar
+  under the app bar shows the code; «Завершити» saves, shows it once more, wipes and goes home.
+- **Teacher login** on a marked PC is a browser-session cookie, signed for 8 hours instead of
+  30 days, for browsers that restore session cookies (`createTeacherCookie`).
+- **What stays, on purpose:** the device mark (`hilka_device`, "Homework") is a random id for the
+  PC, not the student, and is what lets a teacher see that two names worked on one machine; the
+  theme choice; and the session room's chosen name in `sessionStorage`, which is per tab and per
+  session code.
+- The progress endpoints' rate limits are a classroom's worth per IP, since a class sits behind
+  one school address and every student now saves and restores through them
+  (`lib/practice/progress-rate-limiter.ts`).
 
 ## Teacher Auth
 

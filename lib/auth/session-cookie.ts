@@ -10,6 +10,12 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 export const TEACHER_COOKIE_NAME = 'hilka_teacher';
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+/**
+ * On a school computer (lib/device/school.ts) the cookie has no Max-Age, so it
+ * ends with the browser, and the signed expiry is a school day, for a browser
+ * that is never closed or restores its session cookies.
+ */
+const SCHOOL_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
 /** AUTH_SECRET, or null when unset or blank. For callers that fail gracefully (the superuser's area). */
 export function readAuthSecret(env: Record<string, string | undefined> = process.env): string | null {
@@ -37,16 +43,18 @@ function sign(payload: string): string {
 export interface TeacherCookie {
   name: string;
   value: string;
-  maxAgeS: number;
+  /** Null: a browser-session cookie, gone when the browser closes. */
+  maxAgeS: number | null;
 }
 
-export function createTeacherCookie(teacherId: string): TeacherCookie {
-  const expiresAt = Date.now() + SESSION_TTL_MS;
+export function createTeacherCookie(teacherId: string, options: { schoolComputer?: boolean } = {}): TeacherCookie {
+  const ttl = options.schoolComputer ? SCHOOL_SESSION_TTL_MS : SESSION_TTL_MS;
+  const expiresAt = Date.now() + ttl;
   const payload = `${teacherId}.${expiresAt}`;
   return {
     name: TEACHER_COOKIE_NAME,
     value: `${payload}.${sign(payload)}`,
-    maxAgeS: Math.floor(SESSION_TTL_MS / 1000)
+    maxAgeS: options.schoolComputer ? null : Math.floor(ttl / 1000)
   };
 }
 
