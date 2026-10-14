@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { RoutesPanel, type RouteTarget } from '@/components/authoring/RoutesPanel';
 import { DifficultyMeter, TaskTagChip, TaskTypeChip } from '@/components/authoring/TaskBadges';
 import { TaskFilterBar } from '@/components/authoring/TaskFilterBar';
+import { TaskPreviewLink } from '@/components/authoring/TaskPreviewLink';
 import { t } from '@/lib/i18n';
 import { EMPTY_FILTER, filterCatalog, type CatalogFilter, type CatalogTask } from '@/lib/task/catalog-filter';
 import type { RouteKey, StudentRoutes } from '@/lib/session/routes';
@@ -158,6 +159,7 @@ export function SessionRoutesEditor({
                       </span>
                     </span>
                     <TaskTypeChip type={task.type} />
+                    <TaskPreviewLink id={task.id} title={task.title} />
                   </label>
                 </li>
               ))}

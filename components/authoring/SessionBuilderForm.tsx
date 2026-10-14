@@ -37,6 +37,7 @@ import { GradeBandNote } from '@/components/authoring/GradeBandNote';
 import { DifficultyMeter, TaskTagChip, TaskTypeChip } from '@/components/authoring/TaskBadges';
 import { sessionAllowsHighBand } from '@/lib/grading/grade';
 import { TaskFilterBar } from '@/components/authoring/TaskFilterBar';
+import { TaskPreviewLink } from '@/components/authoring/TaskPreviewLink';
 import { RoutesPanel, type RouteTarget } from '@/components/authoring/RoutesPanel';
 import { EMPTY_FILTER, filterCatalog, type CatalogFilter } from '@/lib/task/catalog-filter';
 import { ROUTE_KEYS, type RouteKey, type StudentRoutes } from '@/lib/session/routes';
@@ -641,6 +642,7 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
                       </span>
                     </span>
                     <TaskTypeChip type={task.type} />
+                    <TaskPreviewLink id={task.id} title={task.title} />
                   </label>
                 </li>
               );

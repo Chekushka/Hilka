@@ -173,3 +173,40 @@ test('graded and homework sessions explain the grade, and warn when 10–12 is o
   await page.getByRole('listitem').filter({ has: page.getByText('Вид трикутника', { exact: true }) }).getByRole('checkbox').check();
   await expect(page.getByTestId('grade-band-warning')).toHaveCount(0);
 });
+
+test('a task in the bank opens as the student sees it, in a new tab, recording nothing', async ({ page, context }) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Нове заняття' }).first().click();
+  await page.getByLabel('Пошук').fill('квадрат');
+  const row = page.getByRole('listitem').filter({ has: page.getByText('Квадрат', { exact: true }) });
+
+  const [preview] = await Promise.all([
+    context.waitForEvent('page'),
+    row.getByRole('link', { name: 'Переглянути завдання «Квадрат» у новій вкладці' }).click()
+  ]);
+  // The click opened the preview; it did not tick the task.
+  await expect(row.getByRole('checkbox')).not.toBeChecked();
+
+  await expect(preview.getByTestId('task-preview')).toBeVisible();
+  await expect(preview.getByText('Перегляд для вчителя')).toBeVisible();
+  await expect(preview.getByRole('heading', { name: 'Квадрат' })).toBeVisible();
+
+  // The real workspace: Check works, and no attempt goes anywhere.
+  const posted: string[] = [];
+  preview.on('request', (request) => {
+    if (request.method() === 'POST') posted.push(request.url());
+  });
+  await expect(preview.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
+  await preview.locator('.cm-content').click();
+  await preview.keyboard.press('ControlOrMeta+a');
+  await preview.keyboard.press('Delete');
+  await preview.keyboard.insertText('import turtle\nfor i in range(4):\n    turtle.forward(100)\n    turtle.right(90)');
+  await preview.getByRole('button', { name: 'Здати' }).click();
+  await expect(preview.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
+  expect(posted.filter((url) => url.includes('/api/attempts'))).toEqual([]);
+});
+
+test('the task preview is for logged-in teachers only', async ({ page }) => {
+  await page.goto('/tasks/00000000-0000-4000-8000-000000000000/preview');
+  await expect(page.getByRole('heading', { name: 'Вхід для вчителя' })).toBeVisible();
+});
