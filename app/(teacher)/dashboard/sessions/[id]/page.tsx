@@ -5,6 +5,8 @@ import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
 import { DeleteSessionButton } from '@/components/dashboard/DeleteSessionButton';
 import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
+import { SessionRoutesEditor } from '@/components/dashboard/SessionRoutesEditor';
+import { listPublishedTasksForPicker } from '@/lib/db/session-authoring';
 import { ROUTE_KEYS, routeOf, type RouteKey } from '@/lib/session/routes';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
@@ -177,6 +179,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
       )
     : null;
   const taskIndex = new Map(session.tasks.map((task, index) => [task.id, index]));
+  // Routes can change while the session is open; a class check has none.
+  const routesEditable = session.open && !check;
+  const routeBank = routesEditable ? await listPublishedTasksForPicker() : [];
   // Routes (lib/session/routes.ts): who got which extra tasks, and how many of them they solved.
   const routeOfStudent = (studentId: string) => routeOf(session.routes.studentRoutes, studentId);
   const routePassed = (studentId: string, route: RouteKey) => {
@@ -424,7 +429,21 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         </section>
       )}
 
-      {ROUTE_KEYS.some((route) => session.routes[route].length > 0) && (
+      {routesEditable && (
+        <SessionRoutesEditor
+          sessionId={session.id}
+          students={session.roster.map(({ id: studentId, name }) => ({ id: studentId, name }))}
+          tasks={routeBank}
+          mainTaskIds={[...session.tasks, ...session.improvementTasks].map((task) => task.id)}
+          routeTaskIds={{
+            support: session.routes.support.map((task) => task.id),
+            extension: session.routes.extension.map((task) => task.id)
+          }}
+          studentRoutes={session.routes.studentRoutes}
+        />
+      )}
+
+      {!routesEditable && ROUTE_KEYS.some((route) => session.routes[route].length > 0) && (
         <section aria-labelledby="routes-title" className="mt-6 rounded-xl border border-line bg-surface p-5" data-testid="session-routes">
           <h2 id="routes-title" className="text-lg font-semibold text-ink">
             {t('dashboard.routesTitle')}

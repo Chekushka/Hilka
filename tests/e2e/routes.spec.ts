@@ -131,9 +131,62 @@ test('a teacher gives two students their own routes; each sees only theirs', asy
   await page.goto(sessionUrl);
   const tarasRow = page.getByRole('row').filter({ has: page.getByRole('link', { name: /Тарас/ }) });
   await expect(tarasRow.getByTestId('student-route')).toHaveText('Крок за кроком: додатково 1 з 1');
-  await expect(page.getByTestId('session-routes')).toContainText('Учні: Соломія');
+  // While the session is open, its routes are on the page as the editor, as they were saved.
+  await expect(
+    page.getByTestId('routes-editor').getByTestId('route-extension').getByRole('button', { name: 'Соломія' })
+  ).toHaveAttribute('aria-pressed', 'true');
   // A route task never touches the grade: one main task, not attempted, no grade beyond «н».
   await expect(tarasRow.getByTestId('student-route')).toBeVisible();
+});
+
+test('routes set after the session was created reach the student, and only that student', async ({ page, browser }) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Нове заняття' }).click();
+  await page.locator('#class').selectOption({ label: 'Демонстраційний клас' });
+  await pick(page, 'квадрат', MAIN);
+  await page.getByRole('button', { name: 'Створити заняття' }).click();
+  await expect(page.getByText('Заняття створено. Код для учнів:')).toBeVisible({ timeout: 10_000 });
+  const code = ((await page.locator('p.font-mono.text-2xl').textContent()) ?? '').trim();
+  await page.getByRole('link', { name: 'Переглянути заняття' }).click();
+
+  // Before: Олена has no route.
+  const olena = await browser.newPage();
+  await join(olena, code, 'Олена');
+  await expect(olena.getByTestId('route-tasks')).toHaveCount(0);
+
+  // In class, the teacher puts Олена on the extension route from the session page.
+  const editor = page.getByTestId('routes-editor');
+  await editor.getByTestId('routes-panel').locator('summary').click();
+  const extension = editor.getByTestId('route-extension');
+  await extension.getByRole('button', { name: 'Додавати з банку' }).click();
+  const bank = editor.getByTestId('routes-bank');
+  await bank.locator('#routeTaskSearch').fill('ряд трикутників');
+  // The session's main task is never offered for a route.
+  await bank.locator('#routeTaskSearch').fill('квадрат');
+  await expect(bank.getByText(MAIN, { exact: true })).toHaveCount(0);
+  await bank.locator('#routeTaskSearch').fill('ряд трикутників');
+  await bankItem(page, EXTENSION).getByRole('checkbox').check();
+  await expect(extension.getByText(EXTENSION)).toBeVisible();
+  await extension.getByRole('button', { name: 'Олена' }).click();
+  await editor.getByRole('button', { name: 'Зберегти маршрути' }).click();
+  await expect(editor.getByText('Маршрути збережено.')).toBeVisible();
+
+  // Saved: still there after a reload, and the class table marks her.
+  await page.reload();
+  await expect(
+    page.getByTestId('routes-editor').getByTestId('route-extension').getByRole('button', { name: 'Олена' })
+  ).toHaveAttribute('aria-pressed', 'true');
+  const olenaRow = page.getByRole('row').filter({ has: page.getByRole('link', { name: /Олена/ }) });
+  await expect(olenaRow.getByTestId('student-route')).toHaveText('Глибше: додатково 0 з 1');
+
+  // Олена sees it on reload; Тарас does not.
+  await olena.reload();
+  await expect(olena.getByTestId('route-tasks').getByRole('button', { name: EXTENSION })).toBeVisible();
+  await olena.close();
+  const taras = await browser.newPage();
+  await join(taras, code, 'Тарас');
+  await expect(taras.getByTestId('route-tasks')).toHaveCount(0);
+  await taras.close();
 });
 
 test('the task list filters by kind of work and keeps the filter in the URL', async ({ page }) => {

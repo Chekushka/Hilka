@@ -671,7 +671,8 @@ not a label on the student:
   (`GET /api/sessions/[code]/me`), never the session's whole route map; `POST /api/attempts` and
   the task route accept a route task only from a student on that route.
 - The builder fills routes from the bank, or suggests tasks by tag on the main tasks' topics
-  (`suggestRouteTasks`). The class table marks each routed student with the route and how many of
+  (`suggestRouteTasks`). Routes can also change on an open session's page, since a teacher
+  often sees only in class who needs one; the server cleans them the same way. The class table marks each routed student with the route and how many of
   its tasks they solved; the student card lists them.
 
 ## Homework
@@ -911,3 +912,10 @@ card instead of scrolling, and the statement's last lines disappeared under the 
 panel's children are `shrink-0` now; anything added to a scrolling flex column with its own
 `overflow` needs the same.
 
+**The room shows a result before the attempt is stored.** `SessionRoom` posts `POST /api/attempts`
+in the background, best-effort, and shows «Готово!» from the browser's own Check. A spec that closes
+a student's browser right after the result can cancel that request on a slow runner, and whatever it
+then asserts about stored attempts (similar code, grades, late marks) silently has one student
+fewer — `homework.spec.ts`'s facts test failed in CI exactly so, with Тарас's renamed copy never
+stored and nobody's code «схожий». Wait for the `/api/attempts` response before closing the page
+(`attemptStored` and `checkAndPass` in `tests/e2e/homework.spec.ts`).
