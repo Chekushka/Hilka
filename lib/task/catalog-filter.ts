@@ -153,17 +153,27 @@ export function filterToParams(filter: CatalogFilter): URLSearchParams {
   return params;
 }
 
-export type CatalogSort = 'topic' | 'difficulty' | 'title';
+export const CATALOG_SORTS = ['topic', 'difficulty', 'difficulty-desc', 'title'] as const;
+export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
-/** `topic` keeps the catalog's own order (curriculum order, then slug). */
+/** A sort a URL names, or `topic` for anything else. */
+export function sortFromParam(raw: string | undefined): CatalogSort {
+  return CATALOG_SORTS.find((option) => option === raw) ?? 'topic';
+}
+
+/**
+ * `topic` keeps the catalog's own order (curriculum order, then slug).
+ * `difficulty` puts the easiest first, `difficulty-desc` the hardest; a tie
+ * keeps the catalog's order, so a level stays grouped by topic and lesson.
+ */
 export function sortCatalog<T extends CatalogTask>(tasks: readonly T[], sort: CatalogSort): T[] {
   if (sort === 'topic') return [...tasks];
-  const collator = new Intl.Collator('uk');
-  return [...tasks].sort((a, b) =>
-    sort === 'difficulty'
-      ? a.difficulty - b.difficulty || collator.compare(a.title, b.title)
-      : collator.compare(a.title, b.title)
-  );
+  if (sort === 'title') {
+    const collator = new Intl.Collator('uk');
+    return [...tasks].sort((a, b) => collator.compare(a.title, b.title));
+  }
+  const direction = sort === 'difficulty' ? 1 : -1;
+  return [...tasks].sort((a, b) => direction * (a.difficulty - b.difficulty));
 }
 
 /** A word for a difficulty, for the meter's label: 1–2 easy, 3 medium, 4–5 hard. */

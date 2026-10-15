@@ -1,0 +1,28 @@
+{
+  "slug": "g7-l27-quiz-remainder",
+  "topicSlug": "arithmetic",
+  "type": "quiz",
+  "title": "Остача від ділення",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Скільки буде 17 % 5 у Python?",
+    "options": ["3", "2", "3.4", "12"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [1],
+      "message": "% — остача від ділення: 17 = 5 · 3 + 2, тож остача 2."
+    }
+  ],
+  "hints": [
+    "% не ділить, а знаходить остачу.",
+    "Скільки разів 5 вміщується в 17 і скільки лишається?"
+  ],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

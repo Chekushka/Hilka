@@ -9,6 +9,7 @@ import {
   isFilterEmpty,
   matchesQuery,
   sortCatalog,
+  sortFromParam,
   toggleValue,
   type CatalogTask
 } from './catalog-filter';
@@ -106,10 +107,28 @@ describe('filter in the URL', () => {
 });
 
 describe('sorting and bands', () => {
-  it('sorts by difficulty, then title', () => {
+  it('sorts by difficulty either way, and by title', () => {
     expect(sortCatalog(catalog, 'difficulty').map((entry) => entry.difficulty)).toEqual([1, 3, 4, 5]);
-    expect(sortCatalog(catalog, 'title')[0].title).toBe('Зірка з п’яти променів');
+    expect(sortCatalog(catalog, 'difficulty-desc').map((entry) => entry.difficulty)).toEqual([5, 4, 3, 1]);
+    expect(sortCatalog(catalog, 'title').map((entry) => entry.title)).toEqual([
+      'Зірка з п’яти променів',
+      'Індекс маси тіла',
+      'Квадрат',
+      'Сума до нуля'
+    ]);
     expect(sortCatalog(catalog, 'topic')).toEqual(catalog);
+  });
+
+  it('keeps the catalog order within one difficulty, so a level stays grouped by topic', () => {
+    const tied = [task({ slug: 'b', title: 'Б', difficulty: 2 }), task({ slug: 'a', title: 'А', difficulty: 2 }), task({ slug: 'c', difficulty: 1 })];
+    expect(sortCatalog(tied, 'difficulty').map((entry) => entry.slug)).toEqual(['c', 'b', 'a']);
+    expect(sortCatalog(tied, 'difficulty-desc').map((entry) => entry.slug)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('reads a sort from the URL, topic for anything unknown', () => {
+    expect(sortFromParam('difficulty-desc')).toBe('difficulty-desc');
+    expect(sortFromParam('hardest')).toBe('topic');
+    expect(sortFromParam(undefined)).toBe('topic');
   });
 
   it('names a difficulty band', () => {

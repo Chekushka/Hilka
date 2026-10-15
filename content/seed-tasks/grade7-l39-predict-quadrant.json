@@ -1,0 +1,31 @@
+{
+  "slug": "g7-l39-predict-quadrant",
+  "topicSlug": "conditions-nested",
+  "type": "predict",
+  "title": "Яка чверть?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = -3\ny = 4\nif x > 0:\n    if y > 0:\n        print(\"I\")\n    else:\n        print(\"IV\")\nelse:\n    if y > 0:\n        print(\"II\")\n    else:\n        print(\"III\")",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "II",
+      "normalize": "trim",
+      "message": "x > 0 — неправда, тож виконується зовнішній else. Там y > 0 — правда: «II»."
+    }
+  ],
+  "hints": [
+    "Спершу перевіряється зовнішня умова x > 0.",
+    "Внутрішня умова перевіряється лише в тій гілці, яка виконується."
+  ],
+  "reference": {
+    "code": "x = -3\ny = 4\nif x > 0:\n    if y > 0:\n        print(\"I\")\n    else:\n        print(\"IV\")\nelse:\n    if y > 0:\n        print(\"II\")\n    else:\n        print(\"III\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

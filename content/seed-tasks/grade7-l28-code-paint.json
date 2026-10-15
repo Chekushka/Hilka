@@ -1,0 +1,45 @@
+{
+  "slug": "g7-l28-code-paint",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Фарба для кімнати",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай п'ять чисел: довжину, ширину і висоту кімнати (у метрах), скільки літрів фарби йде на 1 м² і ціну одного літра. Обчисли, скільки коштуватиме фарба для чотирьох стін (вікна й двері не враховуй), і виведи це число.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "кімната 5 × 4 × 2,5",
+      "stdin": ["5", "4", "2.5", "0.2", "150"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1350,
+          "tol": 0.01,
+          "message": "Для кімнати 5 × 4 × 2,5 стіни мають 45 м², фарби треба 9 л, а коштує вона 1350."
+        }
+      ]
+    },
+    {
+      "label": "кімната 3 × 3 × 3",
+      "stdin": ["3", "3", "3", "0.1", "200"],
+      "checks": [{ "kind": "number_close", "value": 720, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Площа чотирьох стін — периметр підлоги, помножений на висоту: 2 * (довжина + ширина) * висота.",
+    "Літри фарби — площа стін, помножена на витрату на 1 м².",
+    "Вартість — літри, помножені на ціну одного літра."
+  ],
+  "reference": {
+    "code": "length = float(input())\nwidth = float(input())\nheight = float(input())\nper_m2 = float(input())\nprice = float(input())\nwalls = 2 * (length + width) * height\nliters = walls * per_m2\nprint(liters * price)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

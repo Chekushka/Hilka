@@ -1,0 +1,27 @@
+{
+  "slug": "g7-l31-quiz-outside-range",
+  "topicSlug": "conditions",
+  "type": "quiz",
+  "title": "Умова «поза межами»",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яка умова перевіряє, що число x лежить поза межами від 1 до 10 — тобто менше за 1 або більше за 10?",
+    "options": ["x < 1 or x > 10", "x < 1 and x > 10", "1 > x > 10", "x != 1 or x != 10"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [0],
+      "message": "x < 1 or x > 10: досить, щоб виконалася одна з двох умов. З and вийде умова, яка ніколи не буває правдивою."
+    }
+  ],
+  "hints": [
+    "Чи може число бути одночасно меншим за 1 і більшим за 10?",
+    "or означає «хоча б одне з двох»."
+  ],
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

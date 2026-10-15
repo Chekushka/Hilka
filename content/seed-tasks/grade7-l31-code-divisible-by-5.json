@@ -1,0 +1,56 @@
+{
+  "slug": "g7-l31-code-divisible-by-5",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Чи ділиться на 5",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число. Якщо воно ділиться на 5 без остачі, виведи «так», інакше — «ні».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "25",
+      "stdin": ["25"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose",
+          "message": "25 ділиться на 5 без остачі — має бути «так»."
+        }
+      ]
+    },
+    {
+      "label": "7",
+      "stdin": ["7"],
+      "checks": [{ "kind": "last_line_equals", "value": "ні", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "нуль",
+      "stdin": ["0"],
+      "checks": [{ "kind": "last_line_equals", "value": "так", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "від'ємне",
+      "stdin": ["-10"],
+      "checks": [{ "kind": "last_line_equals", "value": "так", "normalize": "loose" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Число ділиться на 5 без остачі, коли n % 5 дорівнює 0.",
+    "Порівняння пишеться двома знаками: ==."
+  ],
+  "reference": {
+    "code": "n = int(input())\nif n % 5 == 0:\n    print(\"так\")\nelse:\n    print(\"ні\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

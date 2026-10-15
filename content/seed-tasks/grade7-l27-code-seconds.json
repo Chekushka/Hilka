@@ -1,0 +1,57 @@
+{
+  "slug": "g7-l27-code-seconds",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Години, хвилини, секунди",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай кількість секунд. Виведи, скільки це повних годин, хвилин і секунд, — три числа через пробіл.\nНаприклад, для 3725 програма виводить: 1 2 5",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3725 секунд",
+      "stdin": ["3725"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [1, 2, 5],
+          "tol": 0.01,
+          "message": "Мають бути три числа: години, хвилини і секунди."
+        }
+      ]
+    },
+    {
+      "label": "менше хвилини",
+      "stdin": ["59"],
+      "checks": [{ "kind": "numbers_equal", "values": [0, 0, 59], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "рівно дві години",
+      "stdin": ["7200"],
+      "checks": [{ "kind": "numbers_equal", "values": [2, 0, 0], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "4000 секунд",
+      "stdin": ["4000"],
+      "checks": [{ "kind": "numbers_equal", "values": [1, 6, 40], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "В одній годині 3600 секунд, в одній хвилині — 60.",
+    "Повні години: total // 3600. Що залишилося після годин: total % 3600.",
+    "З того, що залишилося, хвилини — це // 60, а секунди — % 60."
+  ],
+  "reference": {
+    "code": "total = int(input())\nhours = total // 3600\nminutes = total % 3600 // 60\nseconds = total % 60\nprint(hours, minutes, seconds)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

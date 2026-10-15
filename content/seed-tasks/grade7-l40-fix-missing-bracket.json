@@ -1,0 +1,27 @@
+{
+  "slug": "g7-l40-fix-missing-bracket",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Забута дужка",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала вивести «Привіт, світ!», але Python її навіть не запускає. Знайди синтаксичну помилку.",
+    "broken": "print(\"Привіт, світ!\"\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Привіт, світ!",
+      "trim": true,
+      "message": "Програма має вивести рівно «Привіт, світ!»."
+    }
+  ],
+  "hints": ["Подивись, чи кожна відкрита дужка закрита.", "Після лапок має стояти закривна дужка."],
+  "reference": { "code": "print(\"Привіт, світ!\")\n" },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

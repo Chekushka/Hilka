@@ -1,0 +1,47 @@
+{
+  "slug": "g7-l40-fix-two-bugs-factorial",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Дві помилки у факторіалі",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала виводити n! — добуток усіх чисел від 1 до n (для 5: 1 · 2 · 3 · 4 · 5 = 120). У ній дві логічні помилки. Знайди обидві.",
+    "broken": "n = int(input())\nresult = 0\nfor i in range(1, n):\n    result *= i\nprint(result)\n"
+  },
+  "cases": [
+    {
+      "label": "n = 5",
+      "stdin": ["5"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 120,
+          "tol": 0.01,
+          "message": "5! = 120. Перевір, з чого починається добуток і чи входить n у цикл."
+        }
+      ]
+    },
+    {
+      "label": "n = 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "number_close", "value": 1, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 4",
+      "stdin": ["4"],
+      "checks": [{ "kind": "number_close", "value": 24, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": ["Що буде, якщо множити на нуль?", "Чи входить саме n у range(1, n)?"],
+  "reference": {
+    "code": "n = int(input())\nresult = 1\nfor i in range(1, n + 1):\n    result *= i\nprint(result)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

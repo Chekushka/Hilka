@@ -1,0 +1,36 @@
+{
+  "slug": "g7-l30-turtle-long-rectangle",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Довгий прямокутник",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй прямокутник зі сторонами 160 і 40.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 4,
+      "message": "Фігура має складатися з чотирьох сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Сторони не такі, як на зразку. Прямокутник має дві сторони по 160 і дві по 40."
+    }
+  ],
+  "hints": [
+    "У прямокутника дві сторони по 160 і дві по 40.",
+    "Після кожної сторони поворот на 90°."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(2):\n    turtle.forward(160)\n    turtle.right(90)\n    turtle.forward(40)\n    turtle.right(90)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

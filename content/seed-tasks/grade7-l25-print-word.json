@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l25-print-word",
+  "topicSlug": "intro",
+  "type": "code",
+  "title": "Одне слово на екрані",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Виведи на екран слово Привіт за допомогою функції print().",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Привіт",
+      "trim": true,
+      "message": "Програма має вивести рівно одне слово: Привіт."
+    }
+  ],
+  "hints": [
+    "Функція print() виводить на екран те, що в дужках.",
+    "Текст пишуть у лапках: print(\"Привіт\")."
+  ],
+  "reference": { "code": "print(\"Привіт\")" },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

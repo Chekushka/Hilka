@@ -1,0 +1,50 @@
+{
+  "slug": "g7-l32-code-equal-or-not",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Рівні чи різні",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два цілих числа. Виведи «рівні», якщо вони однакові, інакше — «різні».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "5 і 5",
+      "stdin": ["5", "5"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "рівні",
+          "normalize": "loose",
+          "message": "5 і 5 однакові — має бути «рівні»."
+        }
+      ]
+    },
+    {
+      "label": "3 і 8",
+      "stdin": ["3", "8"],
+      "checks": [{ "kind": "last_line_equals", "value": "різні", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "-2 і 2",
+      "stdin": ["-2", "2"],
+      "checks": [{ "kind": "last_line_equals", "value": "різні", "normalize": "loose" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Рівність перевіряють двома знаками: ==.",
+    "Один знак = — це присвоєння, а не порівняння."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nif a == b:\n    print(\"рівні\")\nelse:\n    print(\"різні\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

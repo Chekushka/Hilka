@@ -1,0 +1,50 @@
+{
+  "slug": "g7-l35-code-bacteria",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Бактерії подвоюються",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Щогодини кількість бактерій подвоюється. Прочитай, скільки їх на початку і скільки потрібно. Виведи, через скільки годин бактерій уперше стане не менше, ніж потрібно.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "100 → 1000",
+      "stdin": ["100", "1000"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0.01,
+          "message": "100 → 200 → 400 → 800 → 1600: потрібно 4 години."
+        }
+      ]
+    },
+    {
+      "label": "уже досить",
+      "stdin": ["5", "5"],
+      "checks": [{ "kind": "number_close", "value": 0, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "3 → 7",
+      "stdin": ["3", "7"],
+      "checks": [{ "kind": "number_close", "value": 2, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Заведи лічильник годин, спочатку 0.",
+    "Поки бактерій менше, ніж потрібно, подвоюй їх і додавай годину."
+  ],
+  "reference": {
+    "code": "count = int(input())\ntarget = int(input())\nhours = 0\nwhile count < target:\n    count = count * 2\n    hours += 1\nprint(hours)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,48 @@
+{
+  "slug": "g7-l27-code-first-last-digit",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Перша й остання цифри",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай тризначне число. Виведи в першому рядку його першу цифру, а в другому — останню.\nНаприклад, для 586: 5 і 6.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "586",
+      "stdin": ["586"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [5, 6],
+          "tol": 0.01,
+          "message": "Для 586 мають бути два числа: 5 і 6."
+        }
+      ]
+    },
+    {
+      "label": "907",
+      "stdin": ["907"],
+      "checks": [{ "kind": "numbers_equal", "values": [9, 7], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "100",
+      "stdin": ["100"],
+      "checks": [{ "kind": "numbers_equal", "values": [1, 0], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Остання цифра — це остача від ділення на 10.",
+    "Перша цифра тризначного числа — скільки в ньому повних сотень: // 100."
+  ],
+  "reference": { "code": "n = int(input())\nprint(n // 100)\nprint(n % 10)" },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

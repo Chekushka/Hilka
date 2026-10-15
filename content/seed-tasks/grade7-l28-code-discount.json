@@ -1,0 +1,50 @@
+{
+  "slug": "g7-l28-code-discount",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Ціна зі знижкою",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціну товару і знижку у відсотках. Виведи ціну зі знижкою.\nНаприклад, 200 грн зі знижкою 15% — це 170 грн.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "200 грн, 15%",
+      "stdin": ["200", "15"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 170,
+          "tol": 0.01,
+          "message": "200 грн зі знижкою 15% — це 170 грн."
+        }
+      ]
+    },
+    {
+      "label": "половина ціни",
+      "stdin": ["80", "50"],
+      "checks": [{ "kind": "number_close", "value": 40, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "без знижки",
+      "stdin": ["99.9", "0"],
+      "checks": [{ "kind": "number_close", "value": 99.9, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Знижка в гривнях — це ціна * відсоток / 100.",
+    "Ціна зі знижкою — ціна мінус знижка в гривнях."
+  ],
+  "reference": {
+    "code": "price = float(input())\npercent = float(input())\nprint(price - price * percent / 100)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

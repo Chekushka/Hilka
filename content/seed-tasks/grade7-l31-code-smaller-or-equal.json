@@ -1,0 +1,56 @@
+{
+  "slug": "g7-l31-code-smaller-or-equal",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Менше з двох або «рівні»",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два цілих числа. Виведи менше з них, а якщо числа рівні — виведи слово «рівні».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "друге менше",
+      "stdin": ["8", "3"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "3",
+          "normalize": "loose",
+          "message": "Для 8 і 3 має бути виведено менше число — 3."
+        }
+      ]
+    },
+    {
+      "label": "перше менше",
+      "stdin": ["2", "9"],
+      "checks": [{ "kind": "last_line_equals", "value": "2", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "числа рівні",
+      "stdin": ["4", "4"],
+      "checks": [{ "kind": "last_line_equals", "value": "рівні", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "від'ємні",
+      "stdin": ["-1", "-6"],
+      "checks": [{ "kind": "last_line_equals", "value": "-6", "normalize": "loose" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Тут три можливості: a менше, b менше або вони рівні.",
+    "Для трьох гілок знадобляться if, elif і else."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nif a < b:\n    print(a)\nelif b < a:\n    print(b)\nelse:\n    print(\"рівні\")"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,62 @@
+{
+  "slug": "g7-l32-code-season",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Пора року за місяцем",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай номер місяця від 1 до 12. Виведи пору року: «зима» (12, 1, 2), «весна» (3–5), «літо» (6–8) або «осінь» (9–11).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "січень",
+      "stdin": ["1"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "зима",
+          "normalize": "loose",
+          "message": "Перший місяць — січень, це «зима»."
+        }
+      ]
+    },
+    {
+      "label": "грудень",
+      "stdin": ["12"],
+      "checks": [{ "kind": "last_line_equals", "value": "зима", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "квітень",
+      "stdin": ["4"],
+      "checks": [{ "kind": "last_line_equals", "value": "весна", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "серпень",
+      "stdin": ["8"],
+      "checks": [{ "kind": "last_line_equals", "value": "літо", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "вересень",
+      "stdin": ["9"],
+      "checks": [{ "kind": "last_line_equals", "value": "осінь", "normalize": "loose" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Зима — особлива: це 12, а також 1 і 2. Перевір її першою.",
+    "Після зими досить порівнювати з кінцем кожної пори: month <= 5, month <= 8."
+  ],
+  "reference": {
+    "code": "month = int(input())\nif month == 12 or month <= 2:\n    print(\"зима\")\nelif month <= 5:\n    print(\"весна\")\nelif month <= 8:\n    print(\"літо\")\nelse:\n    print(\"осінь\")"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

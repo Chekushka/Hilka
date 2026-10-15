@@ -1,0 +1,50 @@
+{
+  "slug": "g7-l37-code-digit-ladder",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Драбинка з цифр",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n і виведи n рядків: у рядку з номером i — цифру i, повторену i разів.\nНаприклад, для 4:\n```\n1\n22\n333\n4444\n```",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 4",
+      "stdin": ["4"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [1, 22, 333, 4444],
+          "tol": 0.01,
+          "message": "Для n = 4 мають бути рядки 1, 22, 333 і 4444."
+        }
+      ]
+    },
+    {
+      "label": "n = 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "numbers_equal", "values": [1], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 6",
+      "stdin": ["6"],
+      "checks": [
+        { "kind": "numbers_equal", "values": [1, 22, 333, 4444, 55555, 666666], "tol": 0.01 }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Рядок можна повторити множенням: \"7\" * 3 дає \"777\".",
+    "Число i спершу перетвори на рядок: str(i)."
+  ],
+  "reference": { "code": "n = int(input())\nfor i in range(1, n + 1):\n    print(str(i) * i)" },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

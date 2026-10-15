@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l26-predict-reassign",
+  "topicSlug": "variables",
+  "type": "predict",
+  "title": "Нове значення змінної",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 10\nx = x - 4\nprint(x)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "6",
+      "normalize": "trim",
+      "message": "Другий рядок бере поточне значення x (10), віднімає 4 і записує результат назад у x."
+    }
+  ],
+  "hints": [
+    "Праву частину рядка x = x - 4 Python обчислює першою.",
+    "Після цього рядка x більше не дорівнює 10."
+  ],
+  "reference": { "code": "x = 10\nx = x - 4\nprint(x)" },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

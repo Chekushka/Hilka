@@ -1,0 +1,50 @@
+{
+  "slug": "g7-l27-code-candies",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Цукерки порівну",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай кількість цукерок і кількість дітей. Поділи цукерки порівну: виведи, скільки цукерок отримає кожна дитина і скільки залишиться, — два числа через пробіл.\nНаприклад, для 17 цукерок і 5 дітей: 3 2",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "17 цукерок, 5 дітей",
+      "stdin": ["17", "5"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [3, 2],
+          "tol": 0.01,
+          "message": "Мають бути два числа: скільки кожному і скільки залишилося."
+        }
+      ]
+    },
+    {
+      "label": "ділиться без остачі",
+      "stdin": ["20", "4"],
+      "checks": [{ "kind": "numbers_equal", "values": [5, 0], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "цукерок менше, ніж дітей",
+      "stdin": ["3", "7"],
+      "checks": [{ "kind": "numbers_equal", "values": [0, 3], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Скільки отримає кожна дитина, показує ділення націло: //.",
+    "Скільки залишиться, показує остача: %."
+  ],
+  "reference": {
+    "code": "candies = int(input())\nkids = int(input())\nprint(candies // kids, candies % kids)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

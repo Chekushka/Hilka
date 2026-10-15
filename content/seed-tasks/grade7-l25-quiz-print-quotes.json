@@ -1,0 +1,28 @@
+{
+  "slug": "g7-l25-quiz-print-quotes",
+  "topicSlug": "intro",
+  "type": "quiz",
+  "title": "Як вивести слово",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Який рядок правильно виведе на екран слово Кіт?",
+    "options": ["print(Кіт)", "print(\"Кіт\")", "Print(\"Кіт\")", "print \"Кіт\""],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [1],
+      "message": "Текст беруть у лапки, print пишуть з малої літери, а те, що треба вивести, — у дужках."
+    }
+  ],
+  "hints": [
+    "Текст у Python завжди береться в лапки.",
+    "Python розрізняє великі й малі літери: Print і print — різні імена."
+  ],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

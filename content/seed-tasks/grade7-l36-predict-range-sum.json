@@ -1,0 +1,26 @@
+{
+  "slug": "g7-l36-predict-range-sum",
+  "topicSlug": "loops-for",
+  "type": "predict",
+  "title": "Сума в циклі for",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "total = 0\nfor i in range(2, 6):\n    total += i\nprint(total)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "14",
+      "normalize": "trim",
+      "message": "range(2, 6) дає числа 2, 3, 4, 5 — їхня сума дорівнює 14."
+    }
+  ],
+  "hints": ["Випиши всі числа, які дає range(2, 6).", "Число 6 у діапазон не входить."],
+  "reference": { "code": "total = 0\nfor i in range(2, 6):\n    total += i\nprint(total)" },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

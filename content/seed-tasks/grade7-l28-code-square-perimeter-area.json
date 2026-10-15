@@ -1,0 +1,42 @@
+{
+  "slug": "g7-l28-code-square-perimeter-area",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Периметр і площа квадрата",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай сторону квадрата. Виведи його периметр і площу — два числа через пробіл.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "сторона 5",
+      "stdin": ["5"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [20, 25],
+          "tol": 0.01,
+          "message": "Для сторони 5 мають бути два числа: 20 і 25."
+        }
+      ]
+    },
+    {
+      "label": "дробова сторона",
+      "stdin": ["1.5"],
+      "checks": [{ "kind": "numbers_equal", "values": [6, 2.25], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "У квадрата чотири однакові сторони.",
+    "Площа квадрата — сторона, помножена сама на себе."
+  ],
+  "reference": { "code": "a = float(input())\nprint(4 * a, a * a)" },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

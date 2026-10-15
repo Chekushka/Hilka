@@ -1,0 +1,48 @@
+{
+  "slug": "g7-l37-code-multiples-of-three",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Кратні трьом",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n і виведи всі числа від 1 до n, що діляться на 3, — кожне в новому рядку.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 10",
+      "stdin": ["10"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [3, 6, 9],
+          "tol": 0.01,
+          "message": "Для n = 10 мають бути 3, 6 і 9."
+        }
+      ]
+    },
+    {
+      "label": "n = 12",
+      "stdin": ["12"],
+      "checks": [{ "kind": "numbers_equal", "values": [3, 6, 9, 12], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 3",
+      "stdin": ["3"],
+      "checks": [{ "kind": "numbers_equal", "values": [3], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Можна перебрати всі числа й перевіряти i % 3 == 0.",
+    "А можна одразу йти з кроком 3: range(3, n + 1, 3)."
+  ],
+  "reference": { "code": "n = int(input())\nfor i in range(3, n + 1, 3):\n    print(i)" },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

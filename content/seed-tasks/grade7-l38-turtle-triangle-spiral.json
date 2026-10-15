@@ -1,0 +1,35 @@
+{
+  "slug": "g7-l38-turtle-triangle-spiral",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Трикутна спіраль",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй спіраль із 12 відрізків: перший — 10 кроків, кожен наступний на 10 довший (10, 20, …, 120). Після кожного відрізка поворот ліворуч на 120°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 12,
+      "message": "Спіраль має складатися з дванадцяти відрізків."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Спіраль відрізняється від зразка. Перевір довжини відрізків і напрям повороту."
+    }
+  ],
+  "hints": [
+    "Довжина відрізка залежить від номера кроку: i * 10.",
+    "range(1, 13) дає числа від 1 до 12."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(1, 13):\n    turtle.forward(i * 10)\n    turtle.left(120)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

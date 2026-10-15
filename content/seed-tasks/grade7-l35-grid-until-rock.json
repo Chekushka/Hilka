@@ -1,0 +1,37 @@
+{
+  "slug": "g7-l35-grid-until-rock",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Робот: до каменя й угору",
+  "payload": {
+    "type": "code",
+    "surface": "grid",
+    "prompt": "Робот не знає, скільки клітинок до каменя. robot.can_move() відповідає True, коли попереду вільно. Веди робота вперед циклом while, поки можна, а потім поверни ліворуч і пройди дві клітинки до акумулятора.",
+    "starter": "import robot\n\n",
+    "grid": {
+      "start": { "x": 1, "y": 3, "dir": "E" },
+      "goal": { "x": 5, "y": 1 },
+      "rocks": [{ "x": 6, "y": 3 }]
+    }
+  },
+  "checks": [
+    { "kind": "grid_goal", "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись." },
+    {
+      "kind": "uses",
+      "all": ["while"],
+      "message": "Скористайся циклом while — він сам зупиниться перед каменем."
+    }
+  ],
+  "hints": [
+    "Цикл while повторює тіло, поки умова правдива.",
+    "Умова «попереду вільно» — це robot.can_move().",
+    "Після циклу робот стоїть перед каменем: поверни ліворуч і зроби два кроки."
+  ],
+  "reference": {
+    "code": "import robot\nwhile robot.can_move():\n    robot.forward()\nrobot.left()\nrobot.forward(2)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

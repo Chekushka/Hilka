@@ -1,0 +1,29 @@
+{
+  "slug": "g7-l37-code-star-triangle-down",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Перевернутий трикутник",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Виведи перевернутий трикутник із зірочок висотою 4: у першому рядку чотири зірочки, у другому три і так далі.\n```\n****\n***\n**\n*\n```",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "****\n***\n**\n*",
+      "trim": true,
+      "message": "У першому рядку має бути чотири зірочки, в останньому — одна, без пробілів."
+    }
+  ],
+  "hints": [
+    "Рядок із i зірочок: \"*\" * i.",
+    "Щоб i зменшувалося від 4 до 1, використай range(4, 0, -1)."
+  ],
+  "reference": { "code": "for i in range(4, 0, -1):\n    print(\"*\" * i)" },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

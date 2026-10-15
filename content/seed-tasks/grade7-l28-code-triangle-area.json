@@ -1,0 +1,44 @@
+{
+  "slug": "g7-l28-code-triangle-area",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Площа трикутника",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай основу і висоту трикутника. Обчисли його площу — половину добутку основи на висоту — і виведи її.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "основа 6, висота 4",
+      "stdin": ["6", "4"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 12,
+          "tol": 0.01,
+          "message": "Для основи 6 і висоти 4 площа — 12."
+        }
+      ]
+    },
+    {
+      "label": "основа 5, висота 3",
+      "stdin": ["5", "3"],
+      "checks": [{ "kind": "number_close", "value": 7.5, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Числа можуть бути дробовими, тому читай їх через float(input()).",
+    "Площа = основа * висота / 2."
+  ],
+  "reference": {
+    "code": "base = float(input())\nheight = float(input())\nprint(base * height / 2)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,31 @@
+{
+  "slug": "g7-l34-predict-thirds",
+  "topicSlug": "loops-while",
+  "type": "predict",
+  "title": "Ділимо на три",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "count = 0\nn = 81\nwhile n > 1:\n    n = n // 3\n    count += 1\nprint(count)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "4",
+      "normalize": "trim",
+      "message": "81 → 27 → 9 → 3 → 1 — це чотири кроки, поки n не стане рівним 1."
+    }
+  ],
+  "hints": [
+    "Записуй значення n після кожного проходу циклу.",
+    "Цикл зупиняється, щойно умова n > 1 стає неправдивою."
+  ],
+  "reference": {
+    "code": "count = 0\nn = 81\nwhile n > 1:\n    n = n // 3\n    count += 1\nprint(count)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

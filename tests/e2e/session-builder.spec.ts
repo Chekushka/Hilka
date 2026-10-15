@@ -97,6 +97,30 @@ test('search narrows the bank, and the chosen order is the order students meet',
   expect(square && triangle && square.y < triangle.y).toBe(true);
 });
 
+test('the bank sorts by difficulty either way and by title', async ({ page }) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Нове заняття' }).click();
+  await page.getByLabel('Тема', { exact: true }).selectOption({ label: 'Черепашача графіка' });
+  const bank = page.getByTestId('task-bank');
+  const difficulties = async () =>
+    (await bank.getByTestId('difficulty-meter').evaluateAll((meters) => meters.map((meter) => meter.getAttribute('title'))))
+      .map((title) => Number(/\d/.exec(title ?? '')?.[0]));
+
+  const sort = page.getByLabel('Упорядкувати');
+  await sort.selectOption({ label: 'Складність: від складних' });
+  const hardFirst = await difficulties();
+  expect(hardFirst.length).toBeGreaterThan(3);
+  expect(hardFirst).toEqual([...hardFirst].sort((a, b) => b - a));
+
+  await sort.selectOption({ label: 'Складність: від легких' });
+  const easyFirst = await difficulties();
+  expect(easyFirst).toEqual([...easyFirst].sort((a, b) => a - b));
+
+  await sort.selectOption({ label: 'За назвою' });
+  const titles = await bank.locator(':scope > li span.block.font-medium').allTextContents();
+  expect(titles).toEqual([...titles].sort(new Intl.Collator('uk').compare));
+});
+
 test('one session for several classes: each class gets its own code and only its own roster', async ({ page }) => {
   await loginAsTeacher(page);
   // A second class of the demo teacher's, made through the UI.

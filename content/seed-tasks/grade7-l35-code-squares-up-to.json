@@ -1,0 +1,50 @@
+{
+  "slug": "g7-l35-code-squares-up-to",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Квадрати до n",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n. Виведи квадрати чисел 1, 4, 9, 16, … — кожен у новому рядку, поки квадрат не більший за n.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 30",
+      "stdin": ["30"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [1, 4, 9, 16, 25],
+          "tol": 0.01,
+          "message": "Для 30 мають бути 1, 4, 9, 16 і 25."
+        }
+      ]
+    },
+    {
+      "label": "n — точний квадрат",
+      "stdin": ["16"],
+      "checks": [{ "kind": "numbers_equal", "values": [1, 4, 9, 16], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "numbers_equal", "values": [1], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Квадрат числа i — це i * i.",
+    "Поки i * i <= n, виводь квадрат і переходь до наступного i."
+  ],
+  "reference": {
+    "code": "n = int(input())\ni = 1\nwhile i * i <= n:\n    print(i * i)\n    i = i + 1"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

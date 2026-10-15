@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l27-predict-brackets",
+  "topicSlug": "arithmetic",
+  "type": "predict",
+  "title": "Дужки і ділення націло",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = 2\nb = 3\nprint((a + b) * 4 - 10 // 3)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "17",
+      "normalize": "trim",
+      "message": "Спершу дужки: 2 + 3 = 5, потім 5 * 4 = 20 і 10 // 3 = 3, а тоді 20 - 3 = 17."
+    }
+  ],
+  "hints": [
+    "Спочатку обчислюється те, що в дужках.",
+    "// — ділення націло: 10 // 3 дорівнює 3.",
+    "Множення і ділення виконуються раніше за віднімання."
+  ],
+  "reference": { "code": "a = 2\nb = 3\nprint((a + b) * 4 - 10 // 3)" },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

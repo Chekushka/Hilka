@@ -1,0 +1,41 @@
+{
+  "slug": "g7-l42-turtle-rotating-triangle",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Трикутник обертається",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Зроби анімацію з 6 кадрів. У кадрі номер i (від 0 до 5) очисти поле, постав черепашку в точку (0, 0), поверни її на кут i · 20° (turtle.setheading(i * 20)) і намалюй рівносторонній трикутник зі стороною 70, повертаючи ліворуч.\nУ Hilka видно останній кадр — трикутник, повернутий на 100°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 3,
+      "message": "Після останнього кадру на полі має лишитися один трикутник."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [],
+      "message": "Останній кадр не такий, як треба: трикутник зі стороною 70 з точки (0, 0), повернутий на 100°."
+    },
+    {
+      "kind": "uses",
+      "all": ["clear"],
+      "message": "Анімація — це кадри: на початку кожного очищай поле turtle.clear()."
+    }
+  ],
+  "hints": [
+    "Кадр: clear(), перехід у (0, 0) з піднятим олівцем, setheading(i * 20), трикутник.",
+    "Трикутник — внутрішній цикл for side in range(3) з поворотом ліворуч на 120°."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    turtle.clear()\n    turtle.penup()\n    turtle.goto(0, 0)\n    turtle.pendown()\n    turtle.setheading(i * 20)\n    for side in range(3):\n        turtle.forward(70)\n        turtle.left(120)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

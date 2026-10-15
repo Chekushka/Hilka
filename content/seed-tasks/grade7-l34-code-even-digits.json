@@ -1,0 +1,63 @@
+{
+  "slug": "g7-l34-code-even-digits",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Скільки парних цифр",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле додатне число і виведи, скільки в ньому парних цифр (0, 2, 4, 6, 8). Розв'яжи через цикл while, відкидаючи по одній цифрі: n = n // 10.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "12345",
+      "stdin": ["12345"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "message": "У 12345 дві парні цифри: 2 і 4."
+        }
+      ]
+    },
+    {
+      "label": "одна непарна цифра",
+      "stdin": ["7"],
+      "checks": [{ "kind": "number_close", "value": 0, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "з нулями",
+      "stdin": ["2000"],
+      "checks": [{ "kind": "number_close", "value": 4, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "усі парні",
+      "stdin": ["8642"],
+      "checks": [{ "kind": "number_close", "value": 4, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "forbids",
+      "names": ["len", "str"],
+      "message": "Тут потрібен цикл while з % 10 і // 10, без len() і str()."
+    }
+  ],
+  "hints": [
+    "Остання цифра числа — n % 10.",
+    "Цифра парна, коли вона ділиться на 2 без остачі.",
+    "Після перевірки відкинь останню цифру: n = n // 10."
+  ],
+  "reference": {
+    "code": "n = int(input())\ncount = 0\nwhile n > 0:\n    if n % 10 % 2 == 0:\n        count += 1\n    n = n // 10\nprint(count)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

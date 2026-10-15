@@ -1,0 +1,31 @@
+{
+  "slug": "g7-l42-turtle-notebook-lines",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Лінії, як у зошиті",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй п'ять горизонтальних ліній довжиною 100, одну над одною: початок кожної — у точці (0, y), де y = 0, 20, 40, 60, 80. Переходь між лініями за допомогою turtle.goto() з піднятим олівцем.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    { "kind": "shape_props", "segmentCount": 5, "message": "Має бути п'ять ліній." },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Лінії не такі, як на зразку: п'ять ліній по 100, відстань між ними 20."
+    }
+  ],
+  "hints": [
+    "Значення y дає range(0, 100, 20).",
+    "Перед кожною лінією: penup(), goto(0, y), pendown(), а потім forward(100)."
+  ],
+  "reference": {
+    "code": "import turtle\nfor y in range(0, 100, 20):\n    turtle.penup()\n    turtle.goto(0, y)\n    turtle.pendown()\n    turtle.forward(100)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

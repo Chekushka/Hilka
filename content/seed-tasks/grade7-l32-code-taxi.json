@@ -1,0 +1,63 @@
+{
+  "slug": "g7-l32-code-taxi",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Ціна таксі",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Поїздка на таксі коштує 40 грн за посадку, і перші 5 км уже входять у цю ціну. Кожен наступний кілометр — 12 грн. Уночі вся поїздка коштує вдвічі дорожче.\nПрочитай кількість кілометрів (ціле число) і число 1, якщо поїздка вночі, або 0 — якщо вдень. Виведи ціну.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3 км удень",
+      "stdin": ["3", "0"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 40,
+          "tol": 0.01,
+          "message": "3 км удень входять у ціну посадки — 40 грн."
+        }
+      ]
+    },
+    {
+      "label": "10 км удень",
+      "stdin": ["10", "0"],
+      "checks": [{ "kind": "number_close", "value": 100, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "10 км уночі",
+      "stdin": ["10", "1"],
+      "checks": [{ "kind": "number_close", "value": 200, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "рівно 5 км уночі",
+      "stdin": ["5", "1"],
+      "checks": [{ "kind": "number_close", "value": 80, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "6 км удень",
+      "stdin": ["6", "0"],
+      "checks": [{ "kind": "number_close", "value": 52, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Почни з ціни 40 — вона є завжди.",
+    "Доплата лише за кілометри понад 5: (km - 5) * 12.",
+    "Подвоєння вночі — окрема перевірка після підрахунку ціни."
+  ],
+  "reference": {
+    "code": "km = int(input())\nnight = int(input())\nprice = 40\nif km > 5:\n    price = price + (km - 5) * 12\nif night == 1:\n    price = price * 2\nprint(price)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,63 @@
+{
+  "slug": "g7-l31-code-triangle-angles",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Трикутник за кутами",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай три кути (у градусах). Трикутник із такими кутами існує, якщо кожен кут більший за 0, а їхня сума дорівнює 180. Виведи «так», якщо він існує, і «ні» — якщо ні.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "60, 60, 60",
+      "stdin": ["60", "60", "60"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose",
+          "message": "Кути 60, 60 і 60 у сумі дають 180 — такий трикутник існує."
+        }
+      ]
+    },
+    {
+      "label": "90, 45, 45",
+      "stdin": ["90", "45", "45"],
+      "checks": [{ "kind": "last_line_equals", "value": "так", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "сума 190",
+      "stdin": ["100", "50", "40"],
+      "checks": [{ "kind": "last_line_equals", "value": "ні", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "нульовий кут",
+      "stdin": ["0", "90", "90"],
+      "checks": [{ "kind": "last_line_equals", "value": "ні", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "від'ємний кут",
+      "stdin": ["120", "70", "-10"],
+      "checks": [{ "kind": "last_line_equals", "value": "ні", "normalize": "loose" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Потрібно, щоб виконалися чотири умови одночасно — з'єднай їх через and.",
+    "Сума кутів: a + b + c == 180.",
+    "Не забудь перевірити, що кожен кут більший за нуль."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\nif a > 0 and b > 0 and c > 0 and a + b + c == 180:\n    print(\"так\")\nelse:\n    print(\"ні\")"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,38 @@
+{
+  "slug": "g7-l28-grid-detour-below",
+  "topicSlug": "linear",
+  "type": "code",
+  "title": "Робот: обійти знизу",
+  "payload": {
+    "type": "code",
+    "surface": "grid",
+    "prompt": "На шляху до акумулятора лежить каміння, і згори його не обійти. Обійди каміння знизу — і не вдарся.",
+    "starter": "import robot\n\n",
+    "grid": {
+      "start": { "x": 0, "y": 2, "dir": "E" },
+      "goal": { "x": 7, "y": 2 },
+      "rocks": [
+        { "x": 3, "y": 2 },
+        { "x": 4, "y": 2 },
+        { "x": 5, "y": 2 },
+        { "x": 4, "y": 1 },
+        { "x": 4, "y": 0 }
+      ]
+    }
+  },
+  "checks": [
+    { "kind": "grid_goal", "message": "Робот має зупинитися на акумуляторі, ніде не вдарившись." }
+  ],
+  "hints": [
+    "Підійди до каміння впритул, але не врізайся в нього.",
+    "Щоб обійти знизу: праворуч, крок, ліворуч — і далі вздовж каміння.",
+    "Після каміння піднімися назад: ліворуч, крок, праворуч."
+  ],
+  "reference": {
+    "code": "import robot\nrobot.forward(2)\nrobot.right()\nrobot.forward()\nrobot.left()\nrobot.forward(4)\nrobot.left()\nrobot.forward()\nrobot.right()\nrobot.forward()\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

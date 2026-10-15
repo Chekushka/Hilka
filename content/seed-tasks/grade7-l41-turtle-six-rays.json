@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l41-turtle-six-rays",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Зірочка з шести променів",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй шість променів довжиною 80, що виходять з однієї точки. Після кожного променя повернись у центр і поверни на 60°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Зірочка відрізняється від зразка. Перевір довжину променів і кут 60°."
+    }
+  ],
+  "hints": [
+    "Промінь: 80 уперед і 80 назад — turtle.backward(80).",
+    "Шість променів — цикл for i in range(6)."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    turtle.forward(80)\n    turtle.backward(80)\n    turtle.left(60)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}
