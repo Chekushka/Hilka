@@ -1,0 +1,35 @@
+{
+  "slug": "g7-l42-turtle-stairs-down-loop",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Сходи вниз циклом",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй сходи з чотирьох сходинок, що спускаються праворуч: кожна сходинка — 25 праворуч і 25 униз. Використай цикл. Черепашка на старті дивиться праворуч.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 8,
+      "message": "Сходи мають складатися з восьми відрізків."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Сходи відрізняються від зразка. Сходинки мають іти праворуч і вниз, по 25."
+    }
+  ],
+  "hints": [
+    "Одна сходинка: 25 уперед, поворот праворуч, 25 уперед, поворот ліворуч.",
+    "Повтори сходинку чотири рази циклом for."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    turtle.forward(25)\n    turtle.right(90)\n    turtle.forward(25)\n    turtle.left(90)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

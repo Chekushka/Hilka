@@ -1,0 +1,36 @@
+{
+  "slug": "g7-l40-fix-triangle-angle",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Полагодь трикутник",
+  "payload": {
+    "type": "fix",
+    "surface": "turtle",
+    "prompt": "Ця програма мала намалювати рівносторонній трикутник, але в ній помилка. Знайди її й виправ так, щоб фігура вийшла правильною.",
+    "broken": "import turtle\nfor i in range(3):\n    turtle.forward(100)\n    turtle.right(60)\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 3,
+      "message": "Фігура має складатися з трьох сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Сторони не такі, як на зразку. Перевір кут повороту."
+    }
+  ],
+  "hints": [
+    "Чи замкнулася фігура? Подивись, де зупинилася черепашка.",
+    "Для трикутника черепашка повертає на 360 / 3 градусів."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(3):\n    turtle.forward(100)\n    turtle.right(120)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

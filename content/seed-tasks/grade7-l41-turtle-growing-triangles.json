@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l41-turtle-growing-triangles",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Трикутники, що ростуть",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй чотири рівносторонні трикутники з одного кута: зі сторонами 30, 60, 90 і 120. Кожен наступний — як новий кадр, трохи більший за попередній.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Трикутники відрізняються від зразка. Сторони мають бути 30, 60, 90 і 120."
+    }
+  ],
+  "hints": [
+    "Один трикутник — цикл for i in range(3) з поворотом на 120°.",
+    "Розмір залежить від номера кадру: k * 30."
+  ],
+  "reference": {
+    "code": "import turtle\nfor k in range(1, 5):\n    for i in range(3):\n        turtle.forward(k * 30)\n        turtle.left(120)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,35 @@
+{
+  "slug": "g7-l42-turtle-four-corners",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Чотири квадрати по кутах",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй чотири квадрати зі стороною 40, лівий нижній кут яких у точках (0, 0), (100, 0), (100, 100) і (0, 100). Переходь між ними за допомогою turtle.goto() з піднятим олівцем.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 16,
+      "message": "Має бути чотири квадрати — 16 сторін."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Квадрати не там, де треба. Їхні ліві нижні кути — (0, 0), (100, 0), (100, 100) і (0, 100)."
+    }
+  ],
+  "hints": [
+    "Перед кожним квадратом: penup(), goto(x, y), pendown().",
+    "Квадрат малюй ліворуч-угору: forward і left(90) чотири рази — тоді його лівий нижній кут буде саме в точці goto."
+  ],
+  "reference": {
+    "code": "import turtle\nfor x, y in [(0, 0), (100, 0), (100, 100), (0, 100)]:\n    turtle.penup()\n    turtle.goto(x, y)\n    turtle.pendown()\n    for i in range(4):\n        turtle.forward(40)\n        turtle.left(90)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

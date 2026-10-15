@@ -1,0 +1,31 @@
+{
+  "slug": "g7-l31-predict-weather",
+  "topicSlug": "conditions",
+  "type": "predict",
+  "title": "Яка погода?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "t = 18\nif t >= 25:\n    print(\"спека\")\nelif t >= 15:\n    print(\"тепло\")\nelif t >= 5:\n    print(\"прохолодно\")\nelse:\n    print(\"холодно\")",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "тепло",
+      "normalize": "trim",
+      "message": "18 >= 25 — ні, 18 >= 15 — так. Виконується друга гілка, а решта умов уже не перевіряється."
+    }
+  ],
+  "hints": [
+    "Умови перевіряються згори вниз.",
+    "Щойно одна умова правдива, решта elif і else пропускаються."
+  ],
+  "reference": {
+    "code": "t = 18\nif t >= 25:\n    print(\"спека\")\nelif t >= 15:\n    print(\"тепло\")\nelif t >= 5:\n    print(\"прохолодно\")\nelse:\n    print(\"холодно\")"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

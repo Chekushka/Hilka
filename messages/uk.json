@@ -1088,7 +1088,8 @@
     "sortLabel": "Упорядкувати",
     "sort": {
       "topic": "За темами",
-      "difficulty": "За складністю",
+      "difficulty": "Складність: від легких",
+      "difficulty-desc": "Складність: від складних",
       "title": "За назвою"
     },
     "grades": "{grades} кл.",

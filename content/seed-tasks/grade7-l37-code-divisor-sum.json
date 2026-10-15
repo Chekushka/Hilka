@@ -1,0 +1,57 @@
+{
+  "slug": "g7-l37-code-divisor-sum",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Сума дільників",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле додатне число n і виведи суму всіх його дільників (чисел від 1 до n, на які n ділиться без остачі).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 12",
+      "stdin": ["12"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 28,
+          "tol": 0.01,
+          "message": "Дільники 12: 1, 2, 3, 4, 6, 12 — їхня сума 28."
+        }
+      ]
+    },
+    {
+      "label": "просте",
+      "stdin": ["7"],
+      "checks": [{ "kind": "number_close", "value": 8, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "number_close", "value": 1, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 6",
+      "stdin": ["6"],
+      "checks": [{ "kind": "number_close", "value": 12, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Перебери всі числа d від 1 до n.",
+    "d — дільник, якщо n % d == 0.",
+    "Додавай до суми саме d, а не 1."
+  ],
+  "reference": {
+    "code": "n = int(input())\ntotal = 0\nfor d in range(1, n + 1):\n    if n % d == 0:\n        total += d\nprint(total)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

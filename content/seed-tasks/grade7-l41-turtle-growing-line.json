@@ -1,0 +1,41 @@
+{
+  "slug": "g7-l41-turtle-growing-line",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Лінія, що росте",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Зроби анімацію з 4 кадрів. У кадрі номер i (від 0 до 3) очисти поле (turtle.clear()), постав черепашку в точку (0, 0) і намалюй лінію праворуч довжиною 30 · (i + 1).\nУ Hilka видно останній кадр — лінію довжиною 120 з точки (0, 0).",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 1,
+      "message": "Після останнього кадру на полі має лишитися одна лінія."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [],
+      "message": "Останній кадр не такий, як треба: лінія довжиною 120 з точки (0, 0) праворуч."
+    },
+    {
+      "kind": "uses",
+      "all": ["clear"],
+      "message": "Анімація — це кадри: на початку кожного очищай поле turtle.clear()."
+    }
+  ],
+  "hints": [
+    "Кадр починається з turtle.clear().",
+    "Щоб перейти в (0, 0) без сліду: penup(), goto(0, 0), pendown().",
+    "Довжина лінії в кадрі i — 30 * (i + 1)."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    turtle.clear()\n    turtle.penup()\n    turtle.goto(0, 0)\n    turtle.pendown()\n    turtle.forward(30 * (i + 1))"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

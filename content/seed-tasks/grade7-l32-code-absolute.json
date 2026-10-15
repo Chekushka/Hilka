@@ -1,0 +1,49 @@
+{
+  "slug": "g7-l32-code-absolute",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Число без мінуса",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число. Якщо воно від'ємне, виведи його без мінуса, інакше — саме число. Функцію abs() не використовуй.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "-7",
+      "stdin": ["-7"],
+      "checks": [
+        { "kind": "number_close", "value": 7, "tol": 0.01, "message": "Для -7 має бути 7." }
+      ]
+    },
+    {
+      "label": "12",
+      "stdin": ["12"],
+      "checks": [{ "kind": "number_close", "value": 12, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "нуль",
+      "stdin": ["0"],
+      "checks": [{ "kind": "number_close", "value": 0, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "forbids",
+      "names": ["abs"],
+      "message": "Тут треба обійтися без abs — перевір знак числа через if."
+    }
+  ],
+  "hints": [
+    "Мінус треба прибрати лише тоді, коли число менше за нуль.",
+    "Якщо n від'ємне, то -n — додатне."
+  ],
+  "reference": { "code": "n = int(input())\nif n < 0:\n    n = -n\nprint(n)" },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

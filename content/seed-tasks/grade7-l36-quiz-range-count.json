@@ -1,0 +1,27 @@
+{
+  "slug": "g7-l36-quiz-range-count",
+  "topicSlug": "loops-for",
+  "type": "quiz",
+  "title": "Скільки повторень у range(3, 12)",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Скільки разів виконається тіло цього циклу: for i in range(3, 12): ...?",
+    "options": ["8", "9", "10", "12"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [1],
+      "message": "range(3, 12) дає числа від 3 до 11 — рівно дев'ять значень. Останнє число (12) у діапазон не входить."
+    }
+  ],
+  "hints": [
+    "range(a, b) починає з a і закінчує перед b.",
+    "Кількість чисел у range(a, b) — це b - a."
+  ],
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

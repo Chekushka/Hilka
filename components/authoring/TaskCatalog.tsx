@@ -9,6 +9,7 @@
  */
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { CatalogSortSelect } from '@/components/authoring/CatalogSortSelect';
 import { DifficultyMeter, TaskTagChip, TaskTypeChip } from '@/components/authoring/TaskBadges';
 import { TaskFilterBar } from '@/components/authoring/TaskFilterBar';
 import { t } from '@/lib/i18n';
@@ -26,8 +27,6 @@ export interface CatalogRow extends CatalogTask {
   status: TaskStatus;
   version: number;
 }
-
-const SORTS: readonly CatalogSort[] = ['topic', 'difficulty', 'title'];
 
 function StatusBadge({ status }: { status: TaskStatus }) {
   const draft = status === 'draft';
@@ -68,23 +67,7 @@ export function TaskCatalog({
     <div className="mt-6 flex flex-col gap-4">
       <TaskFilterBar tasks={tasks} filter={filter} onChange={setFilter} shown={visible.length} showStatus />
 
-      <div className="flex items-center justify-end gap-2 text-sm">
-        <label htmlFor="catalogSort" className="text-ink-muted">
-          {t('catalog.sortLabel')}
-        </label>
-        <select
-          id="catalogSort"
-          value={sort}
-          onChange={(event) => setSort(event.target.value as CatalogSort)}
-          className="rounded-lg border border-line bg-surface px-3 py-1.5 text-ink"
-        >
-          {SORTS.map((option) => (
-            <option key={option} value={option}>
-              {t(`catalog.sort.${option}`)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <CatalogSortSelect id="catalogSort" value={sort} onChange={setSort} />
 
       {visible.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line p-6 text-center text-ink-muted">{t('catalog.noMatches')}</p>

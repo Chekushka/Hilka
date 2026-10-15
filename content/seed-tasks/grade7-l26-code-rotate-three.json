@@ -1,0 +1,51 @@
+{
+  "slug": "g7-l26-code-rotate-three",
+  "topicSlug": "variables",
+  "type": "code",
+  "title": "Обмін по колу",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Програма зчитує три числа в змінні a, b і c. Зроби так, щоб значення перейшли по колу: a отримує значення b, b — значення c, а c — колишнє значення a. Виведи a, b і c через пробіл.\nНаприклад, для 1, 2, 3 програма виводить: 2 3 1",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "1, 2, 3",
+      "stdin": ["1", "2", "3"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [2, 3, 1],
+          "tol": 0.01,
+          "message": "Мають бути три числа: нові a, b і c."
+        }
+      ]
+    },
+    {
+      "label": "інші числа",
+      "stdin": ["7", "-4", "0"],
+      "checks": [{ "kind": "numbers_equal", "values": [-4, 0, 7], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "два однакові",
+      "stdin": ["5", "5", "9"],
+      "checks": [{ "kind": "numbers_equal", "values": [5, 9, 5], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Якщо одразу написати a = b, старе значення a зникне.",
+    "Збережи a в допоміжну змінну, наприклад tmp.",
+    "Після a = b і b = c поклади в c значення з tmp."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\ntmp = a\na = b\nb = c\nc = tmp\nprint(a, b, c)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

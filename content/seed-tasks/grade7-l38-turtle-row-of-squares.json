@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l38-turtle-row-of-squares",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Ряд квадратів упритул",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй ряд із 5 квадратів зі стороною 30, що стоять упритул: кожен наступний починається там, де закінчилася нижня сторона попереднього. Використай цикл у циклі.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Ряд не збігається зі зразком. Після кожного квадрата черепашка має перейти на 30 уперед."
+    }
+  ],
+  "hints": [
+    "Один квадрат — внутрішній цикл for i in range(4).",
+    "Після квадрата черепашка в його лівому нижньому куті. Пройди 30 уперед — і ти в куті наступного."
+  ],
+  "reference": {
+    "code": "import turtle\nfor k in range(5):\n    for i in range(4):\n        turtle.forward(30)\n        turtle.left(90)\n    turtle.forward(30)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

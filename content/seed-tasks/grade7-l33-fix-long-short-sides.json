@@ -1,0 +1,36 @@
+{
+  "slug": "g7-l33-fix-long-short-sides",
+  "topicSlug": "turtle-conditions",
+  "type": "fix",
+  "title": "Довгі й короткі сторони",
+  "payload": {
+    "type": "fix",
+    "surface": "turtle",
+    "prompt": "Ця програма мала малювати прямокутник: довгі сторони (120) на парних кроках (0, 2) і короткі (40) на непарних (1, 3). Зараз усе навпаки. Знайди помилку в умові й виправ її.",
+    "broken": "import turtle\nfor i in range(4):\n    if i % 2 == 1:\n        turtle.forward(120)\n    else:\n        turtle.forward(40)\n    turtle.right(90)\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 4,
+      "message": "Фігура має складатися з чотирьох сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Довжини сторін не такі, як на зразку. Перевір, для яких i умова в if істинна."
+    }
+  ],
+  "hints": [
+    "Парне число ділиться на 2 без остачі.",
+    "Для парних i остача i % 2 дорівнює 0, а не 1."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(4):\n    if i % 2 == 0:\n        turtle.forward(120)\n    else:\n        turtle.forward(40)\n    turtle.right(90)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

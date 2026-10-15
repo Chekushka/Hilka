@@ -1,0 +1,28 @@
+{
+  "slug": "g7-l31-fill-warm",
+  "topicSlug": "conditions",
+  "type": "fill",
+  "title": "Знак порівняння: температура",
+  "payload": {
+    "type": "fill",
+    "prompt": "У змінній t — температура. Заповни пропуск знаком порівняння, щоб програма вивела «Тепло», коли температура вища за 20.",
+    "template": "t = 25\nif t {{1}} 20:\n    print(\"Тепло\")\nelse:\n    print(\"Прохолодно\")\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Тепло",
+      "trim": true,
+      "message": "Для температури 25 програма має сказати «Тепло». Який знак означає «більше»?"
+    }
+  ],
+  "hints": ["Порівнюємо t і 20: чи t більше за 20?", "Знак «більше» — це >."],
+  "reference": {
+    "code": "t = 25\nif t > 20:\n    print(\"Тепло\")\nelse:\n    print(\"Прохолодно\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

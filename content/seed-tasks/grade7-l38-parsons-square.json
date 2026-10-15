@@ -1,0 +1,35 @@
+{
+  "slug": "g7-l38-parsons-square",
+  "topicSlug": "turtle-loops",
+  "type": "parsons",
+  "title": "Квадрат (склади програму)",
+  "payload": {
+    "type": "parsons",
+    "prompt": "Розстав рядки так, щоб програма намалювала квадрат.",
+    "lines": [
+      { "text": "import turtle", "indent": 0 },
+      { "text": "for i in range(4):", "indent": 0 },
+      { "text": "turtle.forward(80)", "indent": 1 },
+      { "text": "turtle.left(90)", "indent": 1 }
+    ],
+    "distractors": ["turtle.left(120)"],
+    "indentMode": "given"
+  },
+  "checks": [
+    {
+      "kind": "order_equals",
+      "lines": [0, 1, 2, 3],
+      "message": "Порядок рядків ще не той. Подумай, що має виконатись раніше."
+    }
+  ],
+  "hints": [
+    "Спочатку підключаємо модуль, потім починається цикл.",
+    "Усередині циклу — крок уперед і поворот, у такому порядку.",
+    "Квадрат повертає на 90°, а не на 120°."
+  ],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

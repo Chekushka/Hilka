@@ -1,0 +1,37 @@
+{
+  "slug": "g7-l29-turtle-rhombus",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Ромб",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй ромб зі стороною 80 і гострим кутом 60°. Черепашка повертає по черзі на 60° і на 120° — в один бік.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 4,
+      "message": "Ромб має складатися з чотирьох сторін і бути замкненим."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Ромб відрізняється від зразка. Перевір сторону 80 і повороти на 60° та 120°."
+    }
+  ],
+  "hints": [
+    "У ромба чотири однакові сторони.",
+    "Після першої сторони поверни на 60°, після другої — на 120°, і так ще раз.",
+    "Повертай увесь час в один бік, наприклад ліворуч."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(2):\n    turtle.forward(80)\n    turtle.left(60)\n    turtle.forward(80)\n    turtle.left(120)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,45 @@
+{
+  "slug": "g7-l35-code-step-two-down",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Відлік через одне",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n. Виведи n, n − 2, n − 4 і так далі, поки числа додатні, — кожне в новому рядку. Використай цикл while.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "з 9",
+      "stdin": ["9"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [9, 7, 5, 3, 1],
+          "tol": 0.01,
+          "message": "Для 9 мають бути числа 9, 7, 5, 3 і 1."
+        }
+      ]
+    },
+    {
+      "label": "з 10",
+      "stdin": ["10"],
+      "checks": [{ "kind": "numbers_equal", "values": [10, 8, 6, 4, 2], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "з 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "numbers_equal", "values": [1], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [{ "kind": "uses", "all": ["while"], "message": "Використай цикл while." }],
+  "hints": ["Умова циклу — число ще додатне: n > 0.", "У тілі циклу виведи n і зменш його на 2."],
+  "reference": { "code": "n = int(input())\nwhile n > 0:\n    print(n)\n    n = n - 2" },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

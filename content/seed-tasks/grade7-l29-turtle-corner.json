@@ -1,0 +1,26 @@
+{
+  "slug": "g7-l29-turtle-corner",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Куточок",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй куточок: лінію довжиною 80, потім поверни ліворуч на 90° і намалюй ще одну лінію довжиною 80.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Куточок відрізняється від зразка. Дві лінії по 80 і поворот ліворуч між ними."
+    }
+  ],
+  "hints": ["Крок уперед: turtle.forward(80).", "Поворот ліворуч: turtle.left(90)."],
+  "reference": { "code": "import turtle\nturtle.forward(80)\nturtle.left(90)\nturtle.forward(80)" },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

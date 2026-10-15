@@ -1,0 +1,57 @@
+{
+  "slug": "g7-l36-code-odd-product",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Добуток непарних чисел",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n і виведи добуток усіх непарних чисел від 1 до n включно: 1 · 3 · 5 · …\nНаприклад, для 7: 1 · 3 · 5 · 7 = 105.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 7",
+      "stdin": ["7"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 105,
+          "tol": 0.01,
+          "message": "Для 7: 1 · 3 · 5 · 7 = 105."
+        }
+      ]
+    },
+    {
+      "label": "n = 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "number_close", "value": 1, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 10",
+      "stdin": ["10"],
+      "checks": [{ "kind": "number_close", "value": 945, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 2",
+      "stdin": ["2"],
+      "checks": [{ "kind": "number_close", "value": 1, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Для добутку почни з 1, а не з 0.",
+    "Непарні числа від 1 дає range(1, n + 1, 2).",
+    "На кожному кроці множ result на i."
+  ],
+  "reference": {
+    "code": "n = int(input())\nresult = 1\nfor i in range(1, n + 1, 2):\n    result *= i\nprint(result)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

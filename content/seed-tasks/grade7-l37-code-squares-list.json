@@ -1,0 +1,39 @@
+{
+  "slug": "g7-l37-code-squares-list",
+  "topicSlug": "loops-for",
+  "type": "code",
+  "title": "Квадрати від 1 до n",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n і виведи квадрати чисел від 1 до n — кожен у новому рядку.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 5",
+      "stdin": ["5"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [1, 4, 9, 16, 25],
+          "tol": 0.01,
+          "message": "Для n = 5 мають бути 1, 4, 9, 16 і 25."
+        }
+      ]
+    },
+    {
+      "label": "n = 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "numbers_equal", "values": [1], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": ["range(1, n + 1) дає числа від 1 до n включно.", "Квадрат числа i — це i * i."],
+  "reference": { "code": "n = int(input())\nfor i in range(1, n + 1):\n    print(i * i)" },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

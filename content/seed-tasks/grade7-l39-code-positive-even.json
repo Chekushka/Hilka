@@ -1,0 +1,53 @@
+{
+  "slug": "g7-l39-code-positive-even",
+  "topicSlug": "conditions-nested",
+  "type": "code",
+  "title": "Додатне: парне чи непарне",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ціле число. Якщо воно додатне, виведи «додатне парне» або «додатне непарне». Якщо число не додатне (нуль чи від'ємне) — виведи «не додатне».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "8",
+      "stdin": ["8"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "додатне парне",
+          "normalize": "loose",
+          "message": "8 додатне і парне — має бути «додатне парне»."
+        }
+      ]
+    },
+    {
+      "label": "7",
+      "stdin": ["7"],
+      "checks": [{ "kind": "last_line_equals", "value": "додатне непарне", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "нуль",
+      "stdin": ["0"],
+      "checks": [{ "kind": "last_line_equals", "value": "не додатне", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "від'ємне парне",
+      "stdin": ["-4"],
+      "checks": [{ "kind": "last_line_equals", "value": "не додатне", "normalize": "loose" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": ["Зовнішня умова — чи число додатне.", "Усередині неї друга умова — чи число парне."],
+  "reference": {
+    "code": "n = int(input())\nif n > 0:\n    if n % 2 == 0:\n        print(\"додатне парне\")\n    else:\n        print(\"додатне непарне\")\nelse:\n    print(\"не додатне\")"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

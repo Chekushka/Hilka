@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l39-fill-positive-even",
+  "topicSlug": "conditions-nested",
+  "type": "fill",
+  "title": "Заповни умову в умові",
+  "payload": {
+    "type": "fill",
+    "prompt": "Заповни пропуск так, щоб для n = 8 програма вивела «додатне парне».",
+    "template": "n = 8\nif n > 0:\n    if n % 2 {{1}} 0:\n        print(\"додатне парне\")\n    else:\n        print(\"додатне непарне\")\nelse:\n    print(\"не додатне\")\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "додатне парне",
+      "trim": true,
+      "message": "Для 8 програма має вивести «додатне парне». Чому дорівнює остача 8 % 2?"
+    }
+  ],
+  "hints": [
+    "Парне число ділиться на 2 без остачі.",
+    "Порівняння «дорівнює» пишеться двома знаками."
+  ],
+  "reference": {
+    "code": "n = 8\nif n > 0:\n    if n % 2 == 0:\n        print(\"додатне парне\")\n    else:\n        print(\"додатне непарне\")\nelse:\n    print(\"не додатне\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

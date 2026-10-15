@@ -5,7 +5,7 @@ import { TaskCatalog } from '@/components/authoring/TaskCatalog';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listTasksForAuthoring } from '@/lib/db/task-authoring';
 import { t } from '@/lib/i18n';
-import { filterFromParams, type CatalogSort } from '@/lib/task/catalog-filter';
+import { filterFromParams, sortFromParam } from '@/lib/task/catalog-filter';
 
 /**
  * Every task, draft and published (docs/TASKS.md, "Task authoring UI") —
@@ -14,8 +14,6 @@ import { filterFromParams, type CatalogSort } from '@/lib/task/catalog-filter';
  * The filter comes from the URL, so a link opens the same list.
  */
 export const dynamic = 'force-dynamic';
-
-const SORTS: readonly CatalogSort[] = ['topic', 'difficulty', 'title'];
 
 export default async function TasksPage({
   searchParams
@@ -29,7 +27,7 @@ export default async function TasksPage({
 
   const [tasks, params] = await Promise.all([listTasksForAuthoring(), searchParams]);
   const sortParam = Array.isArray(params.sort) ? params.sort[0] : params.sort;
-  const sort = SORTS.find((option) => option === sortParam) ?? 'topic';
+  const sort = sortFromParam(sortParam);
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">

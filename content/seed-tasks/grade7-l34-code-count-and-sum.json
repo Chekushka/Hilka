@@ -1,0 +1,51 @@
+{
+  "slug": "g7-l34-code-count-and-sum",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Скільки чисел і яка сума",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Зчитуй цілі числа одне за одним, поки не введуть 0. Потім виведи, скільки чисел було введено (без нуля), і їхню суму — два числа через пробіл.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "4, 6, 0",
+      "stdin": ["4", "6", "0"],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [2, 10],
+          "tol": 0.01,
+          "message": "Для 4, 6, 0 введено два числа, їхня сума 10."
+        }
+      ]
+    },
+    {
+      "label": "з від'ємним",
+      "stdin": ["5", "-3", "8", "1", "0"],
+      "checks": [{ "kind": "numbers_equal", "values": [4, 11], "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "одразу нуль",
+      "stdin": ["0"],
+      "checks": [{ "kind": "numbers_equal", "values": [0, 0], "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Тобі знадобляться дві змінні: лічильник і сума, обидві спочатку 0.",
+    "Прочитай перше число до циклу, а наступне — в кінці тіла циклу.",
+    "Умова циклу: n != 0."
+  ],
+  "reference": {
+    "code": "count = 0\ntotal = 0\nn = int(input())\nwhile n != 0:\n    count += 1\n    total += n\n    n = int(input())\nprint(count, total)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

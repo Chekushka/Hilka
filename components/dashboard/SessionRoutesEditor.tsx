@@ -11,11 +11,19 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { RoutesPanel, type RouteTarget } from '@/components/authoring/RoutesPanel';
+import { CatalogSortSelect } from '@/components/authoring/CatalogSortSelect';
 import { DifficultyMeter, TaskTagChip, TaskTypeChip } from '@/components/authoring/TaskBadges';
 import { TaskFilterBar } from '@/components/authoring/TaskFilterBar';
 import { TaskPreviewLink } from '@/components/authoring/TaskPreviewLink';
 import { t } from '@/lib/i18n';
-import { EMPTY_FILTER, filterCatalog, type CatalogFilter, type CatalogTask } from '@/lib/task/catalog-filter';
+import {
+  EMPTY_FILTER,
+  filterCatalog,
+  sortCatalog,
+  type CatalogFilter,
+  type CatalogSort,
+  type CatalogTask
+} from '@/lib/task/catalog-filter';
 import type { RouteKey, StudentRoutes } from '@/lib/session/routes';
 
 interface SessionRoutesEditorProps {
@@ -47,6 +55,7 @@ export function SessionRoutesEditor({
   const [studentRoutes, setStudentRoutes] = useState(savedRoutes);
   const [target, setTarget] = useState<RouteTarget>('main');
   const [filter, setFilter] = useState<CatalogFilter>(EMPTY_FILTER);
+  const [sort, setSort] = useState<CatalogSort>('topic');
   const [save, setSave] = useState<SaveState>('idle');
   // A save (or the page's own refresh) brings new saved routes: start from them, as the server cleaned them.
   const savedKey = JSON.stringify([savedTaskIds, Object.entries(savedRoutes).sort()]);
@@ -60,7 +69,7 @@ export function SessionRoutesEditor({
   const dirty =
     JSON.stringify(routeTaskIds) !== JSON.stringify(savedTaskIds) || !sameRoutes(studentRoutes, savedRoutes);
   const candidates = tasks.filter((task) => !mainTaskIds.includes(task.id));
-  const bank = filterCatalog(candidates, filter);
+  const bank = sortCatalog(filterCatalog(candidates, filter), sort);
 
   function edited<T>(setter: (value: T) => void) {
     return (value: T) => {
@@ -138,6 +147,7 @@ export function SessionRoutesEditor({
                 grade: 'routeGradeFilter'
               }}
             />
+            <CatalogSortSelect id="routeTaskSort" value={sort} onChange={setSort} />
             <ul className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto">
               {bank.map((task) => (
                 <li key={task.id}>

@@ -1,0 +1,41 @@
+{
+  "slug": "g7-l38-turtle-octagon-loop",
+  "topicSlug": "turtle-loops",
+  "type": "code",
+  "title": "Восьмикутник циклом",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй правильний восьмикутник зі стороною 40, використавши цикл for.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 8,
+      "message": "Має вийти замкнена фігура з восьми сторін."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Восьмикутник відрізняється від зразка. Перевір довжину сторони і кут повороту."
+    },
+    {
+      "kind": "uses",
+      "all": ["for"],
+      "message": "Використай цикл for, щоб не писати одне й те саме вісім разів."
+    }
+  ],
+  "hints": [
+    "У восьмикутника вісім однакових сторін.",
+    "Кут повороту — 360 поділити на кількість сторін."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(8):\n    turtle.forward(40)\n    turtle.left(45)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

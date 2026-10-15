@@ -1,0 +1,35 @@
+{
+  "slug": "g7-l42-turtle-small-squares-row",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Ряд маленьких квадратів",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй ряд із 6 квадратів зі стороною 20 з проміжками 10 між ними. Між квадратами черепашка не має залишати сліду. Використай цикл.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 24,
+      "message": "Має бути шість квадратів — 24 сторони."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate"],
+      "message": "Ряд не збігається зі зразком. Перевір розмір квадратів і проміжок 10."
+    }
+  ],
+  "hints": [
+    "Один квадрат — внутрішній цикл for i in range(4).",
+    "До наступного квадрата 20 + 10 = 30 з піднятим олівцем."
+  ],
+  "reference": {
+    "code": "import turtle\nfor k in range(6):\n    for i in range(4):\n        turtle.forward(20)\n        turtle.left(90)\n    turtle.penup()\n    turtle.forward(30)\n    turtle.pendown()"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

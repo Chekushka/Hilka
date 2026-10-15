@@ -1,0 +1,43 @@
+{
+  "slug": "g7-l40-fix-perimeter",
+  "topicSlug": "debugging",
+  "type": "fix",
+  "title": "Неправильний периметр",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала виводити периметр прямокутника, але для сторін 3 і 5 виводить 11 замість 16. Знайди логічну помилку.",
+    "broken": "a = float(input())\nb = float(input())\nprint(2 * a + b)\n"
+  },
+  "cases": [
+    {
+      "label": "3 і 5",
+      "stdin": ["3", "5"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 16,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Периметр прямокутника 3 на 5 — це 16. Спершу треба додати сторони, а потім помножити на 2."
+        }
+      ]
+    },
+    {
+      "label": "10 і 4",
+      "stdin": ["10", "4"],
+      "checks": [{ "kind": "number_close", "value": 28, "tol": 0.01, "which": "last" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Периметр — це дві довжини і дві ширини.",
+    "Множення виконується раніше за додавання. Дужки змінюють порядок."
+  ],
+  "reference": { "code": "a = float(input())\nb = float(input())\nprint(2 * (a + b))\n" },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

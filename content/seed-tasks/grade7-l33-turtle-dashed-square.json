@@ -1,0 +1,36 @@
+{
+  "slug": "g7-l33-turtle-dashed-square",
+  "topicSlug": "turtle-conditions",
+  "type": "code",
+  "title": "Квадрат пунктиром",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй квадрат зі стороною 100 пунктиром. Кожна сторона складається з 5 частин по 20: на парних частинах (0, 2, 4) олівець опущений, на непарних — піднятий. Після кожної сторони повертай ліворуч на 90°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 12,
+      "message": "На кожній стороні три рисочки — разом дванадцять."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Пунктир не такий, як на зразку: рисочки і проміжки по 20, на кожній стороні три рисочки."
+    }
+  ],
+  "hints": [
+    "Одна сторона — цикл for i in range(5) з умовою, як у пунктирній лінії.",
+    "Чотири сторони — ще один цикл навколо: for side in range(4).",
+    "Поворот робиться після кожної сторони, тобто після внутрішнього циклу."
+  ],
+  "reference": {
+    "code": "import turtle\nfor side in range(4):\n    for i in range(5):\n        if i % 2 == 0:\n            turtle.pendown()\n        else:\n            turtle.penup()\n        turtle.forward(20)\n    turtle.left(90)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

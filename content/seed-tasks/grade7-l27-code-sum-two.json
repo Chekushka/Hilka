@@ -1,0 +1,40 @@
+{
+  "slug": "g7-l27-code-sum-two",
+  "topicSlug": "arithmetic",
+  "type": "code",
+  "title": "Сума двох чисел",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай два цілих числа і виведи їхню суму.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "звичайний випадок",
+      "stdin": ["4", "9"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 13,
+          "tol": 0.01,
+          "message": "Для 4 і 9 сума — 13. Чи перетворив ти введене на числа через int()?"
+        }
+      ]
+    },
+    {
+      "label": "з від'ємним числом",
+      "stdin": ["-5", "3"],
+      "checks": [{ "kind": "number_close", "value": -2, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": ["input() дає текст, тому число треба перетворити: int(input()).", "Суму рахує знак +."],
+  "reference": { "code": "a = int(input())\nb = int(input())\nprint(a + b)" },
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

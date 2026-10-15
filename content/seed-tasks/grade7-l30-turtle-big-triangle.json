@@ -1,0 +1,36 @@
+{
+  "slug": "g7-l30-turtle-big-triangle",
+  "topicSlug": "turtle-basics",
+  "type": "code",
+  "title": "Великий трикутник",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй рівносторонній трикутник зі стороною 140.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 3,
+      "message": "Трикутник має складатися з трьох сторін і бути замкненим."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Сторони чи кути не такі, як на зразку. Кут повороту для рівностороннього трикутника — 120°."
+    }
+  ],
+  "hints": [
+    "У рівностороннього трикутника всі сторони й кути однакові.",
+    "Черепашка повертає на 120°: 360 поділити на 3."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(3):\n    turtle.forward(140)\n    turtle.left(120)"
+  },
+  "difficulty": 2,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

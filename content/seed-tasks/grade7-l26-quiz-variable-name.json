@@ -1,0 +1,25 @@
+{
+  "slug": "g7-l26-quiz-variable-name",
+  "topicSlug": "variables",
+  "type": "quiz",
+  "title": "Ім'я для змінної",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яке з цих імен змінної правильне в Python?",
+    "options": ["my age", "my-age", "my_age", "2age"],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [2],
+      "message": "Ім'я змінної не може містити пробіл чи дефіс і не може починатися з цифри. Слова з'єднують підкресленням: my_age."
+    }
+  ],
+  "hints": ["Пробіл розриває ім'я на два слова.", "Дефіс Python читає як мінус."],
+  "difficulty": 1,
+  "gradeTags": [7],
+  "tags": ["easy-start"],
+  "version": 1,
+  "status": "published"
+}

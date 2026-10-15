@@ -1,0 +1,75 @@
+{
+  "slug": "g7-l39-code-museum",
+  "topicSlug": "conditions-nested",
+  "type": "code",
+  "title": "Квиток до музею",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай вік відвідувача і день тижня числом від 1 (понеділок) до 7 (неділя).\nУ понеділок музей зачинено — тоді виведи «зачинено». Інакше діти до 6 років проходять безкоштовно, з 6 до 17 років квиток коштує 40, з 18 — 80. У неділю платний квиток дешевший на 20.\nВиведи ціну квитка.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "5 років, середа",
+      "stdin": ["5", "3"],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "0",
+          "normalize": "loose",
+          "message": "Дитині 5 років квиток безкоштовний — має бути 0."
+        }
+      ]
+    },
+    {
+      "label": "12 років, вівторок",
+      "stdin": ["12", "2"],
+      "checks": [{ "kind": "last_line_equals", "value": "40", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "30 років, неділя",
+      "stdin": ["30", "7"],
+      "checks": [{ "kind": "last_line_equals", "value": "60", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "16 років, неділя",
+      "stdin": ["16", "7"],
+      "checks": [{ "kind": "last_line_equals", "value": "20", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "понеділок",
+      "stdin": ["40", "1"],
+      "checks": [{ "kind": "last_line_equals", "value": "зачинено", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "4 роки, неділя",
+      "stdin": ["4", "7"],
+      "checks": [{ "kind": "last_line_equals", "value": "0", "normalize": "loose" }],
+      "hidden": true
+    },
+    {
+      "label": "рівно 18, п'ятниця",
+      "stdin": ["18", "5"],
+      "checks": [{ "kind": "last_line_equals", "value": "80", "normalize": "loose" }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу перевір понеділок — тоді ціна взагалі не потрібна.",
+    "Ціну за віком вибери вкладеними умовами.",
+    "Знижка в неділю — лише для платного квитка."
+  ],
+  "reference": {
+    "code": "age = int(input())\nday = int(input())\nif day == 1:\n    print(\"зачинено\")\nelse:\n    if age < 6:\n        price = 0\n    else:\n        if age < 18:\n            price = 40\n        else:\n            price = 80\n        if day == 7:\n            price = price - 20\n    print(price)"
+  },
+  "difficulty": 4,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

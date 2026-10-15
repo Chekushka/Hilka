@@ -1,0 +1,36 @@
+{
+  "slug": "g7-l38-fill-hexagon",
+  "topicSlug": "turtle-loops",
+  "type": "fill",
+  "title": "Заповни пропуски: шестикутник",
+  "payload": {
+    "type": "fill",
+    "prompt": "Заповни пропуски так, щоб програма намалювала правильний шестикутник зі стороною 50.",
+    "template": "import turtle\nfor i in range({{1}}):\n    turtle.forward({{2}})\n    turtle.left({{3}})\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "closed": true,
+      "segmentCount": 6,
+      "message": "Фігура має складатися з шести сторін і бути замкненою."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Сторони не такі, як на зразку. Перевір кут повороту."
+    }
+  ],
+  "hints": [
+    "Скільки разів повторюється крок «крок уперед і поворот» для шестикутника?",
+    "Довжина сторони дана в умові — 50.",
+    "Сума всіх поворотів завжди дорівнює 360°: 360 поділи на кількість сторін."
+  ],
+  "reference": {
+    "code": "import turtle\nfor i in range(6):\n    turtle.forward(50)\n    turtle.left(60)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,62 @@
+{
+  "slug": "g7-l32-code-max-of-three",
+  "topicSlug": "conditions",
+  "type": "code",
+  "title": "Найбільше з трьох",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай три цілих числа і виведи найбільше з них. Функцію max() не використовуй — розв'яжи через if.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3, 9, 2",
+      "stdin": ["3", "9", "2"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9,
+          "tol": 0.01,
+          "message": "З чисел 3, 9 і 2 найбільше — 9."
+        }
+      ]
+    },
+    {
+      "label": "два однакові",
+      "stdin": ["5", "5", "1"],
+      "checks": [{ "kind": "number_close", "value": 5, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "від'ємні",
+      "stdin": ["-1", "-7", "-3"],
+      "checks": [{ "kind": "number_close", "value": -1, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "найбільше останнє",
+      "stdin": ["4", "6", "8"],
+      "checks": [{ "kind": "number_close", "value": 8, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "forbids",
+      "names": ["max"],
+      "message": "Тут треба обійтися без max — ні як функції, ні як імені змінної. Порівняй числа через if."
+    }
+  ],
+  "hints": [
+    "Припусти, що найбільше — перше число, і збережи його у змінну.",
+    "Порівняй з ним друге число, потім третє. Якщо знайшлося більше — запам'ятай його."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nc = int(input())\nbiggest = a\nif b > biggest:\n    biggest = b\nif c > biggest:\n    biggest = c\nprint(biggest)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

@@ -34,12 +34,13 @@ import { t } from '@/lib/i18n';
 import { addLessonToSelection, findNonGradedTasks } from '@/lib/lessons/graded-warnings';
 import { unsequencedFileTasks } from '@/lib/task/prerequisite';
 import { GradeBandNote } from '@/components/authoring/GradeBandNote';
+import { CatalogSortSelect } from '@/components/authoring/CatalogSortSelect';
 import { DifficultyMeter, TaskTagChip, TaskTypeChip } from '@/components/authoring/TaskBadges';
 import { sessionAllowsHighBand } from '@/lib/grading/grade';
 import { TaskFilterBar } from '@/components/authoring/TaskFilterBar';
 import { TaskPreviewLink } from '@/components/authoring/TaskPreviewLink';
 import { RoutesPanel, type RouteTarget } from '@/components/authoring/RoutesPanel';
-import { EMPTY_FILTER, filterCatalog, type CatalogFilter } from '@/lib/task/catalog-filter';
+import { EMPTY_FILTER, filterCatalog, sortCatalog, type CatalogFilter, type CatalogSort } from '@/lib/task/catalog-filter';
 import { ROUTE_KEYS, type RouteKey, type StudentRoutes } from '@/lib/session/routes';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { SessionMode } from '@/lib/session/types';
@@ -154,7 +155,8 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   const [created, setCreated] = useState<CreatedSession[] | null>(null);
   const [lessonToAdd, setLessonToAdd] = useState('');
 
-  const visibleTasks = filterCatalog(tasks, filter);
+  const [sort, setSort] = useState<CatalogSort>('topic');
+  const visibleTasks = sortCatalog(filterCatalog(tasks, filter), sort);
   const klass = classes.find((option) => option.id === classId);
   const multiClass = extraClassIds.length > 0;
 
@@ -598,11 +600,12 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
           shown={visibleTasks.length}
           ids={{ search: 'taskSearch', topic: 'topicFilter', grade: 'gradeFilter' }}
         />
+        <CatalogSortSelect id="taskSort" value={sort} onChange={setSort} />
 
         {visibleTasks.length === 0 ? (
           <p className="text-sm text-ink-muted">{t('sessionBuilder.noMatchingTasks')}</p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2" data-testid="task-bank">
             {visibleTasks.map((task) => {
               const place = placeOf(task.id);
               const checked = place === target;

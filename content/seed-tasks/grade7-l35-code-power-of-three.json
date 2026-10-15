@@ -1,0 +1,53 @@
+{
+  "slug": "g7-l35-code-power-of-three",
+  "topicSlug": "loops-while",
+  "type": "code",
+  "title": "Найменший степінь трійки",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай число n. Знайди найменший степінь трійки (1, 3, 9, 27, …), який більший або дорівнює n, і виведи його.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 10",
+      "stdin": ["10"],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 27,
+          "tol": 0.01,
+          "message": "Для 10 найменший підхожий степінь трійки — 27."
+        }
+      ]
+    },
+    {
+      "label": "n є степенем трійки",
+      "stdin": ["9"],
+      "checks": [{ "kind": "number_close", "value": 9, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 1",
+      "stdin": ["1"],
+      "checks": [{ "kind": "number_close", "value": 1, "tol": 0.01 }],
+      "hidden": true
+    },
+    {
+      "label": "n = 82",
+      "stdin": ["82"],
+      "checks": [{ "kind": "number_close", "value": 243, "tol": 0.01 }],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": ["Почни з result = 1.", "Поки result менший за n, множ його на 3."],
+  "reference": {
+    "code": "n = int(input())\nresult = 1\nwhile result < n:\n    result *= 3\nprint(result)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}

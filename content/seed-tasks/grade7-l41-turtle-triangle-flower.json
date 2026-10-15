@@ -1,0 +1,30 @@
+{
+  "slug": "g7-l41-turtle-triangle-flower",
+  "topicSlug": "turtle-animation",
+  "type": "code",
+  "title": "Квітка з трикутників",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй 6 рівносторонніх трикутників зі стороною 60 з однієї точки. Після кожного трикутника повертай черепашку на 60°.",
+    "starter": "import turtle\n\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": ["translate", "rotate"],
+      "message": "Квітка відрізняється від зразка. Перевір розмір трикутників і поворот на 60° між ними."
+    }
+  ],
+  "hints": [
+    "Один трикутник — внутрішній цикл for i in range(3).",
+    "Після трикутника черепашка знову в центрі: поверни на 60° і малюй наступний."
+  ],
+  "reference": {
+    "code": "import turtle\nfor k in range(6):\n    for i in range(3):\n        turtle.forward(60)\n        turtle.left(120)\n    turtle.left(60)"
+  },
+  "difficulty": 3,
+  "gradeTags": [7],
+  "version": 1,
+  "status": "published"
+}
