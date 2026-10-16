@@ -60,6 +60,8 @@ interface WorkspaceFrameProps {
   /** Already empty when a graded session turns hints off. */
   hints: string[];
   onRevealHint: () => void;
+  /** Always-open reference under the hint, e.g. the grid robot's commands. Unlike a hint it is never counted or turned off. */
+  reference?: ReactNode;
   /** SuccessPanel once a Check passed: opens at the top of the task panel, above the statement. */
   success?: ReactNode;
   /** The result dock (WorkspaceDock). */
@@ -94,7 +96,16 @@ function Theory({ children }: { children: ReactNode }) {
   );
 }
 
-export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, dock, children }: WorkspaceFrameProps) {
+export function WorkspaceFrame({
+  task,
+  chrome,
+  hints,
+  onRevealHint,
+  reference,
+  success,
+  dock,
+  children
+}: WorkspaceFrameProps) {
   const retype = task.tags?.includes('retype');
   return (
     <div className="flex flex-col lg:h-[calc(100dvh-3.5rem)] lg:min-h-[26rem] lg:flex-row">
@@ -139,6 +150,7 @@ export function WorkspaceFrame({ task, chrome, hints, onRevealHint, success, doc
               <Hints hints={hints} onReveal={onRevealHint} />
             </div>
           )}
+          {reference && <div className="mx-4">{reference}</div>}
           {chrome?.theory && <Theory>{chrome.theory}</Theory>}
         </div>
       </aside>
