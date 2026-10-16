@@ -24,6 +24,8 @@ test('the robot bumps into a rock, then a path around it passes', async ({ page 
   const field = page.getByRole('img', { name: /Поле 8×8/ });
   await expect(field).toBeVisible();
   await expect(field).toHaveAccessibleName(/стовпці 1, рядку 6, дивиться праворуч/);
+  await expect(page.getByText('Команди робота')).toBeVisible();
+  await expect(page.getByText('robot.forward(n)')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Здати' })).toBeEnabled({ timeout: 30_000 });
 
   await typeIntoEditor(page, 0, 'import robot\nrobot.forward(4)');

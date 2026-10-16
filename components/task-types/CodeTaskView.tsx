@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
-import { GridRunNote } from '@/components/canvas/GridView';
+import { GridCommands, GridRunNote } from '@/components/canvas/GridView';
 import { CodePane, CodeVisual } from '@/components/task/CodePane';
 import { FileDelivery } from '@/components/task/FileDelivery';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
@@ -87,6 +87,7 @@ export function CodeTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
       chrome={chrome}
       hints={hintsEnabled ? task.hints : []}
       onRevealHint={() => (hintsUsedRef.current += 1)}
+      reference={world && <GridCommands />}
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock

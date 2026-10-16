@@ -9,7 +9,7 @@
  * assembly — the run, the checker, the result panel — is identical to them.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GridRunNote } from '@/components/canvas/GridView';
+import { GridCommands, GridRunNote } from '@/components/canvas/GridView';
 import { CodePane, CodeVisual } from '@/components/task/CodePane';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
@@ -84,6 +84,7 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
       chrome={chrome}
       hints={hintsEnabled ? task.hints : []}
       onRevealHint={() => (hintsUsedRef.current += 1)}
+      reference={world && <GridCommands />}
       success={report?.passed ? <SuccessPanel next={next} /> : undefined}
       dock={
         <WorkspaceDock

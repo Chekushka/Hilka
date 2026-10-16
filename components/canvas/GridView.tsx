@@ -237,6 +237,55 @@ export function GridPlayback({ world, run }: { world: GridWorld; run: GridRun | 
   );
 }
 
+/** Code, not prose: the same on every grid task, so it lives here rather than in uk.json. */
+const MOVE_COMMANDS = [
+  { code: 'robot.forward(n)', label: 'grid.commandForward' },
+  { code: 'robot.left()', label: 'grid.commandLeft' },
+  { code: 'robot.right()', label: 'grid.commandRight' }
+] as const;
+const SENSE_COMMANDS = [
+  { code: 'robot.at_goal()', label: 'grid.commandAtGoal' },
+  { code: 'robot.can_move()', label: 'grid.commandCanMove' }
+] as const;
+
+function CommandList({ commands }: { commands: ReadonlyArray<{ code: string; label: string }> }) {
+  return (
+    <ul className="flex flex-col gap-1">
+      {commands.map(({ code, label }) => (
+        <li key={code} className="flex flex-wrap items-baseline gap-x-2">
+          <code className="font-mono text-ink">{code}</code>
+          <span>{t(label)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * The robot's commands, in the task panel of every grid task (the frame's
+ * `reference` slot — beside the field there is no room at 1366×768). Not a
+ * hint: hints are counted and switched off in a graded session, and nobody
+ * should lose a point for not remembering what `robot.left()` is called.
+ */
+export function GridCommands() {
+  return (
+    <section
+      aria-labelledby="grid-commands-title"
+      className="flex flex-col gap-2 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-muted"
+    >
+      <h2 id="grid-commands-title" className="font-medium text-ink">
+        {t('grid.commandsTitle')}
+      </h2>
+      <p>
+        {t('grid.commandsImport')} <code className="font-mono text-ink">import robot</code>
+      </p>
+      <CommandList commands={MOVE_COMMANDS} />
+      <p className="font-medium text-ink">{t('grid.commandsSense')}</p>
+      <CommandList commands={SENSE_COMMANDS} />
+    </section>
+  );
+}
+
 /**
  * The run said in words, in the result dock: where the robot ended, or where
  * it bumped. The picture shows it; this is for the student who reads rather
