@@ -121,7 +121,10 @@ test('the bank sorts by difficulty either way and by title', async ({ page }) =>
   expect(titles).toEqual([...titles].sort(new Intl.Collator('uk').compare));
 });
 
-test('one session for several classes: each class gets its own code and only its own roster', async ({ page }) => {
+test('one session for several classes: each class gets its own code, its own roster and the same route tasks', async ({
+  page,
+  browser
+}) => {
   await loginAsTeacher(page);
   // A second class of the demo teacher's, made through the UI.
   const otherClass = `Паралельний клас ${Date.now()}`;
@@ -136,14 +139,25 @@ test('one session for several classes: each class gets its own code and only its
   await page.locator('#class').selectOption({ label: 'Демонстраційний клас' });
   await expect(page.getByTestId('routes-panel')).toBeVisible();
   await page.getByRole('group', { name: 'Також для класів' }).getByLabel(otherClass).check();
-  // Routes name one roster's students, so they step aside.
   await expect(page.getByTestId('multi-class-note')).toContainText('Класів: 2');
-  await expect(page.getByTestId('routes-panel')).toHaveCount(0);
+  // Route tasks stay; the students on them are one roster's, so they are picked per class afterwards.
+  const routes = page.getByTestId('routes-panel');
+  await routes.locator('summary').click();
+  await expect(routes.getByTestId('routes-students-later')).toBeVisible();
+  await expect(routes.getByRole('button', { name: 'Олена' })).toHaveCount(0);
 
   await page.getByLabel('Пошук').fill('квадрат');
   await page.getByRole('listitem').filter({ has: page.getByText('Квадрат', { exact: true }) }).getByRole('checkbox').check();
+  await page.getByRole('group', { name: 'Додаю до:' }).getByRole('button', { name: 'Глибше' }).click();
+  await page.getByLabel('Пошук').fill('ряд трикутників');
+  await page
+    .getByRole('listitem')
+    .filter({ has: page.getByText('Виклик: ряд трикутників', { exact: true }) })
+    .getByRole('checkbox')
+    .check();
   await page.getByRole('button', { name: 'Створити заняття' }).click();
   await expect(page.getByText('Заняття створено. У кожного класу свій код:')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('created-routes-hint')).toContainText('Завдання маршрутів однакові для всіх класів');
 
   const rows = page.getByTestId('created-sessions').getByRole('listitem');
   await expect(rows).toHaveCount(2);
@@ -154,16 +168,44 @@ test('one session for several classes: each class gets its own code and only its
   expect(demoCode).toMatch(/^[A-Z2-9]{6}$/);
   expect(otherCode).toMatch(/^[A-Z2-9]{6}$/);
   expect(otherCode).not.toBe(demoCode);
+  const otherRoutesHref = await rows
+    .filter({ hasText: otherClass })
+    .getByRole('link', { name: 'Маршрути учнів' })
+    .getAttribute('href');
+  expect(otherRoutesHref).toMatch(/^\/dashboard\/sessions\/[0-9a-f-]+\?routes=1#routes$/);
 
-  await page.goto(`/s/${otherCode.toLowerCase()}`);
-  await expect(page.getByRole('button', { name: 'Остап' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Олена' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Остап' }).click();
-  await expect(page.getByRole('button', { name: 'Квадрат', exact: true })).toBeVisible();
+  // Students in their own browser; the teacher stays logged in on this one.
+  const student = await browser.newPage();
+  await student.goto(`/s/${otherCode.toLowerCase()}`);
+  await expect(student.getByRole('button', { name: 'Остап' })).toBeVisible();
+  await expect(student.getByRole('button', { name: 'Олена' })).toHaveCount(0);
+  await student.getByRole('button', { name: 'Остап' }).click();
+  await expect(student.getByRole('button', { name: 'Квадрат', exact: true })).toBeVisible();
 
-  await page.goto(`/s/${demoCode.toLowerCase()}`);
-  await expect(page.getByRole('button', { name: 'Олена' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Остап' })).toHaveCount(0);
+  await student.goto(`/s/${demoCode.toLowerCase()}`);
+  await expect(student.getByRole('button', { name: 'Олена' })).toBeVisible();
+  await expect(student.getByRole('button', { name: 'Остап' })).toHaveCount(0);
+  // Nobody is on a route yet.
+  await student.getByRole('button', { name: 'Олена' }).click();
+  await expect(student.getByRole('heading', { name: 'Завдання заняття' })).toBeVisible();
+  await expect(student.getByTestId('route-tasks')).toHaveCount(0);
+  await student.close();
+
+  // The teacher puts Остап on the route from their class's page, opened by the created screen's link.
+  // Resolved against the teacher's page: the login lands on the host its cookie belongs to.
+  await page.goto(new URL(otherRoutesHref!, page.url()).toString());
+  const editor = page.getByTestId('routes-editor');
+  const extension = editor.getByTestId('route-extension');
+  await expect(extension.getByText('Виклик: ряд трикутників')).toBeVisible();
+  await extension.getByRole('button', { name: 'Остап' }).click();
+  await editor.getByRole('button', { name: 'Зберегти маршрути' }).click();
+  await expect(editor.getByText('Маршрути збережено.')).toBeVisible();
+
+  const ostap = await browser.newPage();
+  await ostap.goto(`/s/${otherCode.toLowerCase()}`);
+  await ostap.getByRole('button', { name: 'Остап' }).click();
+  await expect(ostap.getByTestId('route-tasks').getByRole('button', { name: 'Виклик: ряд трикутників' })).toBeVisible();
+  await ostap.close();
 });
 
 test('graded and homework sessions explain the grade, and warn when 10–12 is out of reach', async ({ page }) => {

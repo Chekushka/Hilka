@@ -5,7 +5,7 @@
  * lib/db/tasks.ts.
  */
 import { randomInt } from 'node:crypto';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { SESSION_CODE_ALPHABET, SESSION_CODE_LENGTH } from '@/lib/session/code';
 import type { StudentRoutes } from '@/lib/session/routes';
 import type { SessionKind, SessionMode } from '@/lib/session/types';
@@ -120,6 +120,27 @@ export async function listClassesForBuilder(teacherId: string): Promise<BuilderC
       lastRoutes: Object.fromEntries(Object.entries(last).filter(([id]) => onRoster.has(id)))
     };
   });
+}
+
+/**
+ * The routes of a class's latest session that had any, other than `exceptSessionId`,
+ * for "as last time" on a session's own page; students no longer on the roster are left out.
+ */
+export async function lastRoutesForClass(
+  classId: string,
+  exceptSessionId: string,
+  roster: { id: string }[]
+): Promise<StudentRoutes> {
+  const [row] = await getDb()
+    .select({ studentRoutes: sessions.studentRoutes })
+    .from(sessions)
+    .where(
+      and(eq(sessions.classId, classId), ne(sessions.id, exceptSessionId), sql`${sessions.studentRoutes} <> '{}'::jsonb`)
+    )
+    .orderBy(desc(sessions.createdAt))
+    .limit(1);
+  const onRoster = new Set(roster.map((student) => student.id));
+  return Object.fromEntries(Object.entries(row?.studentRoutes ?? {}).filter(([id]) => onRoster.has(id)));
 }
 
 /** Narrows a teacher-submitted task id list down to ones that are actually published, in the order given. */

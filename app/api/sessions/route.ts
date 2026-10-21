@@ -6,7 +6,8 @@
  *
  * Several classes at once make one session per class, all or none: the same
  * tasks and settings, each class with its own code, roster and results.
- * Routes name students of one roster, so they are kept only for a single class.
+ * Route tasks go to every class; the students on routes are kept only for a
+ * single class, since they name one roster's students.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
@@ -109,15 +110,12 @@ export async function POST(request: Request) {
     : [];
 
   // A task sits in one place in a session: a route never repeats a main or improvement task, nor the other route's.
-  // Routes name students of one roster: with several classes there are none.
+  // Route tasks go to every class alike; the students on them belong to one roster, so with several
+  // classes nobody is on a route yet — the teacher picks them on each session's page afterwards.
   const taken = new Set([...taskIds, ...improvementTaskIds]);
-  const supportTaskIds = single
-    ? (await filterToPublishedTaskIds(body.supportTaskIds ?? [])).filter((id) => !taken.has(id))
-    : [];
+  const supportTaskIds = (await filterToPublishedTaskIds(body.supportTaskIds ?? [])).filter((id) => !taken.has(id));
   supportTaskIds.forEach((id) => taken.add(id));
-  const extensionTaskIds = single
-    ? (await filterToPublishedTaskIds(body.extensionTaskIds ?? [])).filter((id) => !taken.has(id))
-    : [];
+  const extensionTaskIds = (await filterToPublishedTaskIds(body.extensionTaskIds ?? [])).filter((id) => !taken.has(id));
   const studentRoutes = single
     ? cleanStudentRoutes(body.studentRoutes, new Set(single.students.map((student) => student.id)), {
         support: supportTaskIds,

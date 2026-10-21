@@ -9,6 +9,10 @@
  * names ("step by step", "deeper") say how the tasks go, and students never see either name
  * — the room shows one neutral heading for both. The choice lasts this session
  * only; "as last time" copies the class's last routes, as a fresh choice.
+ *
+ * For several classes at once there is no one roster to pick from
+ * (`studentsLater`): the route tasks go to every class, and the students are
+ * picked on each class's session page afterwards.
  */
 import { useState } from 'react';
 import { t } from '@/lib/i18n';
@@ -35,6 +39,10 @@ interface RoutesPanelProps {
   onStudentRoutes: (next: StudentRoutes) => void;
   target: RouteTarget;
   onTarget: (target: RouteTarget) => void;
+  /** Several classes: tasks only, students picked per class after creation. */
+  studentsLater?: boolean;
+  /** Open from the start, e.g. when a link led here to set routes. */
+  defaultOpen?: boolean;
 }
 
 export function RoutesPanel({
@@ -47,14 +55,17 @@ export function RoutesPanel({
   studentRoutes,
   onStudentRoutes,
   target,
-  onTarget
+  onTarget,
+  studentsLater = false,
+  defaultOpen = false
 }: RoutesPanelProps) {
   const counts = routeCounts(studentRoutes);
   const used = counts.support + counts.extension + routeTaskIds.support.length + routeTaskIds.extension.length > 0;
-  const [open, setOpen] = useState(used || target !== 'main');
+  const [open, setOpen] = useState(defaultOpen || used || target !== 'main');
   const titles = new Map(tasks.map((task) => [task.id, task.title]));
   const onRoster = students.filter((student) => lastRoutes[student.id]);
   const lastDiffers =
+    !studentsLater &&
     onRoster.length > 0 && JSON.stringify(Object.entries(lastRoutes).sort()) !== JSON.stringify(Object.entries(studentRoutes).sort());
 
   function toggleStudent(studentId: string, route: RouteKey) {
@@ -87,6 +98,11 @@ export function RoutesPanel({
       </summary>
       <div className="flex flex-col gap-4 border-t border-line px-3 py-3">
         <p className="text-xs leading-relaxed text-ink-muted">{t('routes.intro')}</p>
+        {studentsLater && (
+          <p className="rounded-lg bg-shell p-2 text-xs leading-relaxed text-ink" data-testid="routes-students-later">
+            {t('routes.studentsLater')}
+          </p>
+        )}
         {lastDiffers && (
           <button
             type="button"
@@ -147,39 +163,41 @@ export function RoutesPanel({
                 </button>
               </div>
 
-              <fieldset>
-                <legend className="mb-1 text-xs font-medium text-ink-muted">
-                  {t('routes.studentsLabel', { n: onRoute.length })}
-                </legend>
-                {students.length === 0 ? (
-                  <p className="text-xs text-ink-muted">{t('routes.noStudents')}</p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {students.map((student) => {
-                      const on = studentRoutes[student.id] === route;
-                      const elsewhere = !on && studentRoutes[student.id] !== undefined;
-                      return (
-                        <button
-                          key={student.id}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => toggleStudent(student.id, route)}
-                          title={elsewhere ? t('routes.movesHere') : undefined}
-                          className={`rounded-full border px-2.5 py-1 text-xs ${
-                            on
-                              ? 'border-accent bg-accent text-surface'
-                              : elsewhere
-                                ? 'border-dashed border-line text-ink-muted'
-                                : 'border-line text-ink hover:border-accent'
-                          }`}
-                        >
-                          {student.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </fieldset>
+              {!studentsLater && (
+                <fieldset>
+                  <legend className="mb-1 text-xs font-medium text-ink-muted">
+                    {t('routes.studentsLabel', { n: onRoute.length })}
+                  </legend>
+                  {students.length === 0 ? (
+                    <p className="text-xs text-ink-muted">{t('routes.noStudents')}</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {students.map((student) => {
+                        const on = studentRoutes[student.id] === route;
+                        const elsewhere = !on && studentRoutes[student.id] !== undefined;
+                        return (
+                          <button
+                            key={student.id}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={() => toggleStudent(student.id, route)}
+                            title={elsewhere ? t('routes.movesHere') : undefined}
+                            className={`rounded-full border px-2.5 py-1 text-xs ${
+                              on
+                                ? 'border-accent bg-accent text-surface'
+                                : elsewhere
+                                  ? 'border-dashed border-line text-ink-muted'
+                                  : 'border-line text-ink hover:border-accent'
+                            }`}
+                          >
+                            {student.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </fieldset>
+              )}
 
               {onRoute.length > 0 && routeTasks.length === 0 && (
                 <p role="status" className="rounded-lg border border-attention p-2 text-xs text-ink">

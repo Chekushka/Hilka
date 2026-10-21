@@ -6,7 +6,7 @@ import { DeleteSessionButton } from '@/components/dashboard/DeleteSessionButton'
 import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
 import { SessionRoutesEditor } from '@/components/dashboard/SessionRoutesEditor';
-import { listPublishedTasksForPicker } from '@/lib/db/session-authoring';
+import { lastRoutesForClass, listPublishedTasksForPicker } from '@/lib/db/session-authoring';
 import { ROUTE_KEYS, routeOf, type RouteKey } from '@/lib/session/routes';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
@@ -141,13 +141,21 @@ async function loadClassView(session: TeacherSessionDetail) {
  * colour alone (docs/design-brief-python-platform.md). Each name opens the
  * student card.
  */
-export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SessionDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  /** `routes=1`: opened to set routes (the builder's link after creating for several classes). */
+  searchParams: Promise<{ routes?: string }>;
+}) {
   const teacher = await getCurrentTeacher();
   if (!teacher) {
     redirect('/login');
   }
 
   const { id } = await params;
+  const { routes: routesRequested } = await searchParams;
   // Scoped to this teacher's own classes — another teacher's session id 404s
   // exactly like one that does not exist.
   const session = await getSessionForTeacher(id, teacher.id);
@@ -181,7 +189,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
   const taskIndex = new Map(session.tasks.map((task, index) => [task.id, index]));
   // Routes can change while the session is open; a class check has none.
   const routesEditable = session.open && !check;
-  const routeBank = routesEditable ? await listPublishedTasksForPicker() : [];
+  const [routeBank, lastRoutes] = routesEditable
+    ? await Promise.all([listPublishedTasksForPicker(), lastRoutesForClass(session.classId, session.id, session.roster)])
+    : [[], {}];
   // Routes (lib/session/routes.ts): who got which extra tasks, and how many of them they solved.
   const routeOfStudent = (studentId: string) => routeOf(session.routes.studentRoutes, studentId);
   const routePassed = (studentId: string, route: RouteKey) => {
@@ -440,6 +450,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             extension: session.routes.extension.map((task) => task.id)
           }}
           studentRoutes={session.routes.studentRoutes}
+          lastRoutes={lastRoutes}
+          defaultOpen={routesRequested === '1'}
         />
       )}
 
