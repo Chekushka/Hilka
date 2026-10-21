@@ -23,8 +23,9 @@
  * task — offered only to students who lost points.
  *
  * The same session can go to several classes at once (the "also for classes" boxes):
- * one session per class, each with its own code, roster and results. Routes
- * name students of one roster, so they exist only when one class is chosen.
+ * one session per class, each with its own code, roster and results. Route
+ * tasks go to every class alike; the students on them belong to one roster, so
+ * with several classes they are picked on each class's session page afterwards.
  */
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
@@ -163,12 +164,8 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   function toggleExtraClass(id: string) {
     const adding = !extraClassIds.includes(id);
     setExtraClassIds((previous) => (adding ? [...previous, id] : previous.filter((existing) => existing !== id)));
-    if (adding) {
-      // Routes name one roster's students; with a second class they would mean nothing.
-      setRouteTaskIds(NO_ROUTE_TASKS);
-      setStudentRoutes({});
-      setTarget('main');
-    }
+    // The students on a route belong to one roster; with a second class they would mean nothing. The tasks stay.
+    if (adding) setStudentRoutes({});
   }
 
   /** Where a task sits in this session: the main list, a route, or nowhere. */
@@ -267,8 +264,8 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
         shuffle,
         poolSize: poolSize && Number(poolSize) < main.length ? Number(poolSize) : null,
         dueAt: due ? due.toISOString() : null,
-        supportTaskIds: multiClass ? [] : routeTaskIds.support,
-        extensionTaskIds: multiClass ? [] : routeTaskIds.extension,
+        supportTaskIds: routeTaskIds.support,
+        extensionTaskIds: routeTaskIds.extension,
         studentRoutes: multiClass ? {} : studentRoutes
       })
     });
@@ -303,10 +300,18 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
               <a href={`/dashboard/sessions/${session.id}`} className="text-sm text-accent">
                 {t('sessionBuilder.viewSession')}
               </a>
+              <a href={`/dashboard/sessions/${session.id}?routes=1#routes`} className="text-sm text-accent">
+                {t('sessionBuilder.setRoutes')}
+              </a>
             </li>
           ))}
         </ul>
         <p className="mt-4 text-sm text-ink-muted">{t('sessionBuilder.createdManyHint')}</p>
+        <p className="mt-2 text-sm text-ink-muted" data-testid="created-routes-hint">
+          {routeTaskIds.support.length + routeTaskIds.extension.length > 0
+            ? t('sessionBuilder.createdManyRoutesHint')
+            : t('sessionBuilder.createdManyNoRoutesHint')}
+        </p>
       </div>
     );
   }
@@ -571,7 +576,7 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-ink">{t('sessionBuilder.filtersTitle')}</h2>
           <div
-            className={`flex flex-wrap items-center gap-1.5 ${multiClass ? 'hidden' : ''}`}
+            className="flex flex-wrap items-center gap-1.5"
             role="group"
             aria-label={t('routes.targetLabel')}
           >
@@ -733,9 +738,9 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
           </p>
         )}
 
-        {multiClass && <p className="text-xs leading-relaxed text-ink-muted">{t('routes.multiClassNote')}</p>}
-        {klass && !multiClass && (
+        {klass && (
           <RoutesPanel
+            studentsLater={multiClass}
             students={klass.students}
             lastRoutes={klass.lastRoutes}
             tasks={tasks}

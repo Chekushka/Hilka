@@ -7,6 +7,10 @@
  * builder's, with a task bank of its own that opens while a route is being
  * filled. Saving replaces the session's routes; the server cleans them the
  * same way as at creation (`PATCH /api/dashboard/sessions/[id]`).
+ *
+ * It is also where students go on a route when one session went to several
+ * classes: the builder gives every class the route tasks, and each class's
+ * page picks its own students (`#routes`, opened by `?routes=1`).
  */
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -35,6 +39,10 @@ interface SessionRoutesEditorProps {
   mainTaskIds: string[];
   routeTaskIds: Record<RouteKey, string[]>;
   studentRoutes: StudentRoutes;
+  /** The class's latest other routed session's routes, for "as last time". */
+  lastRoutes: StudentRoutes;
+  /** Open the routes at once — the page was opened to set them. */
+  defaultOpen: boolean;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -48,7 +56,9 @@ export function SessionRoutesEditor({
   tasks,
   mainTaskIds,
   routeTaskIds: savedTaskIds,
-  studentRoutes: savedRoutes
+  studentRoutes: savedRoutes,
+  lastRoutes,
+  defaultOpen
 }: SessionRoutesEditorProps) {
   const router = useRouter();
   const [routeTaskIds, setRouteTaskIds] = useState(savedTaskIds);
@@ -111,14 +121,15 @@ export function SessionRoutesEditor({
   }
 
   return (
-    <section className="mt-6 rounded-xl border border-line bg-surface p-5" data-testid="routes-editor">
+    <section id="routes" className="mt-6 scroll-mt-4 rounded-xl border border-line bg-surface p-5" data-testid="routes-editor">
       <h2 className="text-lg font-semibold text-ink">{t('dashboard.routesEditTitle')}</h2>
       <p className="mt-1 text-sm text-ink-muted">{t('dashboard.routesEditNote')}</p>
 
       <div className="mt-3 grid items-start gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <RoutesPanel
           students={students}
-          lastRoutes={{}}
+          lastRoutes={lastRoutes}
+          defaultOpen={defaultOpen}
           tasks={tasks}
           mainTaskIds={mainTaskIds}
           routeTaskIds={routeTaskIds}

@@ -674,6 +674,10 @@ not a label on the student:
   (`suggestRouteTasks`). Routes can also change on an open session's page, since a teacher
   often sees only in class who needs one; the server cleans them the same way. The class table marks each routed student with the route and how many of
   its tasks they solved; the student card lists them.
+- **Several classes at once** share the route tasks, not the students: a route's tasks are about
+  the lesson, so every class's session gets them; who is on a route names one roster, so with
+  several classes nobody is yet, and the teacher picks students on each class's session page
+  (the created screen links there).
 
 ## Homework
 
