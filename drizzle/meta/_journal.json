@@ -85,6 +85,13 @@
       "when": 1791219841403,
       "tag": "0011_add_task_tags_and_routes",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793784348565,
+      "tag": "0012_add_task_revision",
+      "breakpoints": true
     }
   ]
 }

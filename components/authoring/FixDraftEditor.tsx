@@ -8,6 +8,7 @@
  * check, and `broken` must fail at least one (TASK_SCHEMA.md, "Reference
  * solutions" — a broken program that already passes is a bug in the task).
  */
+import { useRevisionPublished } from './TaskRevision';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { GridView } from '@/components/canvas/GridView';
@@ -48,6 +49,8 @@ export interface DraftFixTask {
 
 interface FixDraftEditorProps {
   task: DraftFixTask;
+  /** The live reference solution, when editing a published task's revision; a draft starts without one. */
+  initialReferenceCode?: string;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -60,7 +63,8 @@ type PublishState =
   | { kind: 'broken_passes' }
   | { kind: 'error'; message: string };
 
-export function FixDraftEditor({ task }: FixDraftEditorProps) {
+export function FixDraftEditor({ task, initialReferenceCode }: FixDraftEditorProps) {
+  const onPublished = useRevisionPublished();
   const [title, setTitle] = useState(task.title);
   const [surface, setSurface] = useState<Surface>(task.payload.surface);
   const [grid, setGrid] = useState<GridWorld>(task.payload.grid ?? DEFAULT_GRID_WORLD);
@@ -76,7 +80,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [referenceCode, setReferenceCode] = useState('');
+  const [referenceCode, setReferenceCode] = useState(initialReferenceCode ?? '');
   const [running, setRunning] = useState(false);
   // One run per case (docs/TASK_SCHEMA.md, "Run cases"); a task with no
   // cases is a single-element array with no stdin, so `run` (case 0) and the
@@ -241,6 +245,7 @@ export function FixDraftEditor({ task }: FixDraftEditorProps) {
     const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
+      onPublished();
       return;
     }
     if (body.error === 'reference_run_failed') {

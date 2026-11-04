@@ -129,7 +129,10 @@ async function main() {
       gradeTags: task.gradeTags,
       tags: normalizeTags(task.tags),
       version: task.version,
-      status: task.status
+      status: task.status,
+      // The imported content replaces the live version, so a revision opened
+      // on the old one would publish over it (lib/task/revision.ts).
+      revision: null
     };
     await db
       .insert(tasks)

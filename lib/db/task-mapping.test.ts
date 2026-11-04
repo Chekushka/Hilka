@@ -27,6 +27,7 @@ function row(overrides: Partial<TaskRow> = {}): TaskRow {
     gradeTags: [7],
     tags: ['retype', 'unknown'] as TaskRow['tags'],
     version: 3,
+    revision: null,
     status: 'published',
     ...overrides
   };

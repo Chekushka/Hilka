@@ -43,6 +43,11 @@
  * as `code`'s starter vs reference) must pass every check. Nothing about
  * `fill` needs special-casing here at all.
  *
+ * A published task's open revision (lib/task/revision.ts) goes through this
+ * same gate, judged on the revision's fields rather than the live ones, and
+ * is committed by `publishRevision` instead of `publishTask` — a new version
+ * of a task is held to exactly what its first version was.
+ *
  * `cases` (`code`/`fix` only) — when the task has any, `body.run` is still
  * required (it seeds `reference.artifacts`, same as always — the first
  * case's run), but `body.caseRuns` must also be posted: one run per case, in
@@ -65,11 +70,12 @@ import {
   type Check,
   type RunOutcome
 } from '@/lib/checker';
-import { getTaskForAuthoring, publishTask } from '@/lib/db/task-authoring';
+import { getTaskForAuthoring, publishRevision, publishTask } from '@/lib/db/task-authoring';
+import { authoringModeOf, editableContent } from '@/lib/task/revision';
 import { parsonsCanonicalSubmission } from '@/lib/task/parsons';
 import { validatePredictChoiceChecks } from '@/lib/task/predict';
 import { validateQuizChecks } from '@/lib/task/quiz';
-import type { RunCase } from '@/lib/task/types';
+import type { Reference, RunCase } from '@/lib/task/types';
 
 interface PublishBody {
   referenceCode: string;
@@ -139,12 +145,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!task) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
-  if (task.status !== 'draft') {
+  // What is judged: a draft's own fields, or a published task's open revision.
+  const content = editableContent(task);
+  if (!content) {
     return NextResponse.json({ error: 'not_a_draft' }, { status: 409 });
   }
+  const revision = authoringModeOf(task) === 'revision' ? content : null;
+  const subject = {
+    type: task.type,
+    payload: content.payload,
+    checks: content.checks,
+    cases: content.cases
+  };
+  const commit = (reference: Reference | null) =>
+    revision ? publishRevision(id, revision, reference) : publishTask(id, reference);
 
-  if (task.type === 'parsons' && task.payload?.type === 'parsons') {
-    const outcome = evaluateChecks(task.checks, { submission: parsonsCanonicalSubmission(task.payload) });
+  if (subject.type === 'parsons' && subject.payload?.type === 'parsons') {
+    const outcome = evaluateChecks(subject.checks, { submission: parsonsCanonicalSubmission(subject.payload) });
     if (!outcome.passed) {
       return NextResponse.json(
         {
@@ -154,36 +171,36 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         { status: 422 }
       );
     }
-    const updated = await publishTask(id, null);
+    const updated = await commit(null);
     if (!updated) {
       return NextResponse.json({ error: 'publish_race' }, { status: 409 });
     }
     return NextResponse.json(updated);
   }
 
-  if (task.type === 'quiz' && task.payload?.type === 'quiz') {
-    const errors = validateQuizChecks(task.payload, task.checks);
+  if (subject.type === 'quiz' && subject.payload?.type === 'quiz') {
+    const errors = validateQuizChecks(subject.payload, subject.checks);
     if (errors.length > 0) {
       return NextResponse.json({ error: 'reference_fails_checks', failures: errors }, { status: 422 });
     }
-    const updated = await publishTask(id, null);
+    const updated = await commit(null);
     if (!updated) {
       return NextResponse.json({ error: 'publish_race' }, { status: 409 });
     }
     return NextResponse.json(updated);
   }
 
-  if (task.type === 'fix' && task.payload?.type === 'fix') {
+  if (subject.type === 'fix' && subject.payload?.type === 'fix') {
     const body: unknown = await request.json().catch(() => null);
     if (!isValidFixBody(body)) {
       return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
     }
 
-    if (task.cases && task.cases.length > 0) {
-      if (!body.caseRuns || body.caseRuns.length !== task.cases.length) {
+    if (subject.cases && subject.cases.length > 0) {
+      if (!body.caseRuns || body.caseRuns.length !== subject.cases.length) {
         return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
       }
-      const outcome = validateCases(body.referenceCode, task.checks, task.cases, body.caseRuns);
+      const outcome = validateCases(body.referenceCode, subject.checks, subject.cases, body.caseRuns);
       if (!outcome.ok) {
         return NextResponse.json(
           outcome.kind === 'reference_run_failed'
@@ -193,7 +210,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         );
       }
     } else {
-      const outcome = evaluateAgainstOwnRun(body.referenceCode, task.checks, body.run);
+      const outcome = evaluateAgainstOwnRun(body.referenceCode, subject.checks, body.run);
       if (!outcome.ranCleanly) {
         return NextResponse.json({ error: 'reference_run_failed', detail: body.run.error }, { status: 422 });
       }
@@ -205,7 +222,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // The broken-code proof is unaffected by cases — it always runs once,
     // with no stdin, against the task-level checks only, exactly like
     // lib/checker/reference-check.ts's checkTaskReference does.
-    const brokenOutcome = evaluateRun({ code: task.payload.broken }, task.checks, body.brokenRun, {
+    const brokenOutcome = evaluateRun({ code: subject.payload.broken }, subject.checks, body.brokenRun, {
       stdout: body.run.stdout,
       drawing: body.run.drawing
     });
@@ -213,7 +230,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'broken_passes_checks' }, { status: 422 });
     }
 
-    const updated = await publishTask(id, {
+    const updated = await commit({
       code: body.referenceCode,
       computedAt: new Date().toISOString(),
       artifacts: { stdout: body.run.stdout, drawing: body.run.drawing }
@@ -229,8 +246,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  if (task.type === 'predict' && task.payload?.type === 'predict' && task.payload.answerMode === 'choice') {
-    const structuralErrors = validatePredictChoiceChecks(task.payload, task.checks);
+  if (subject.type === 'predict' && subject.payload?.type === 'predict' && subject.payload.answerMode === 'choice') {
+    const structuralErrors = validatePredictChoiceChecks(subject.payload, subject.checks);
     if (structuralErrors.length > 0) {
       return NextResponse.json({ error: 'reference_fails_checks', failures: structuralErrors }, { status: 422 });
     }
@@ -238,11 +255,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   // Only `code` ever has cases here — `predict`'s payload.code and `fill`'s
   // template have no stdin story of their own.
-  if (task.type === 'code' && task.cases && task.cases.length > 0) {
-    if (!body.caseRuns || body.caseRuns.length !== task.cases.length) {
+  if (subject.type === 'code' && subject.cases && subject.cases.length > 0) {
+    if (!body.caseRuns || body.caseRuns.length !== subject.cases.length) {
       return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
     }
-    const outcome = validateCases(body.referenceCode, task.checks, task.cases, body.caseRuns);
+    const outcome = validateCases(body.referenceCode, subject.checks, subject.cases, body.caseRuns);
     if (!outcome.ok) {
       return NextResponse.json(
         outcome.kind === 'reference_run_failed'
@@ -253,11 +270,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
   } else {
     const outcome =
-      task.type === 'predict' && task.payload?.type === 'predict'
-        ? task.payload.answerMode === 'choice'
-          ? evaluatePredictionChoiceAgainstOwnRun(task.payload.options ?? [], task.checks, body.run)
-          : evaluatePredictionAgainstOwnRun(body.run.stdout, task.checks, body.run)
-        : evaluateAgainstOwnRun(body.referenceCode, task.checks, body.run);
+      subject.type === 'predict' && subject.payload?.type === 'predict'
+        ? subject.payload.answerMode === 'choice'
+          ? evaluatePredictionChoiceAgainstOwnRun(subject.payload.options ?? [], subject.checks, body.run)
+          : evaluatePredictionAgainstOwnRun(body.run.stdout, subject.checks, body.run)
+        : evaluateAgainstOwnRun(body.referenceCode, subject.checks, body.run);
     if (!outcome.ranCleanly) {
       return NextResponse.json({ error: 'reference_run_failed', detail: body.run.error }, { status: 422 });
     }
@@ -266,7 +283,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
   }
 
-  const updated = await publishTask(id, {
+  const updated = await commit({
     code: body.referenceCode,
     computedAt: new Date().toISOString(),
     artifacts: { stdout: body.run.stdout, drawing: body.run.drawing }

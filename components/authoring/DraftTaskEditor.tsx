@@ -11,6 +11,7 @@
  * resulting run to POST /api/tasks/[id]/publish, which re-evaluates it
  * against the checks it just saved before writing anything.
  */
+import { useRevisionPublished } from './TaskRevision';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { GridView } from '@/components/canvas/GridView';
@@ -51,6 +52,8 @@ export interface DraftTask {
 
 interface DraftTaskEditorProps {
   task: DraftTask;
+  /** The live reference solution, when editing a published task's revision; a draft starts without one. */
+  initialReferenceCode?: string;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -62,7 +65,8 @@ type PublishState =
   | { kind: 'checks_failed'; failures: string[] }
   | { kind: 'error'; message: string };
 
-export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
+export function DraftTaskEditor({ task, initialReferenceCode }: DraftTaskEditorProps) {
+  const onPublished = useRevisionPublished();
   const [title, setTitle] = useState(task.title);
   const [surface, setSurface] = useState<Surface>(task.payload.surface);
   // A world with parameter placeholders is hand-authored JSON with no editor
@@ -83,7 +87,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [referenceCode, setReferenceCode] = useState(task.payload.starter);
+  const [referenceCode, setReferenceCode] = useState(initialReferenceCode ?? task.payload.starter);
   const [running, setRunning] = useState(false);
   // One run per case (docs/TASK_SCHEMA.md, "Run cases"); a task with no
   // cases is a single-element array with no stdin, so `run` (case 0) and the
@@ -236,6 +240,7 @@ export function DraftTaskEditor({ task }: DraftTaskEditorProps) {
     const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
+      onPublished();
       return;
     }
     if (body.error === 'reference_run_failed') {

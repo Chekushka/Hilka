@@ -6,6 +6,7 @@
  * (lib/task/parsons.ts) — so there is no reference solution to write or run
  * first; Publish alone posts the saved fields straight to the checker.
  */
+import { useRevisionPublished } from './TaskRevision';
 import { useState, type FormEvent } from 'react';
 import { t } from '@/lib/i18n';
 import type { Check } from '@/lib/checker';
@@ -37,6 +38,7 @@ type PublishState =
   | { kind: 'error'; message: string };
 
 export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
+  const onPublished = useRevisionPublished();
   const [title, setTitle] = useState(task.title);
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [linesText, setLinesText] = useState(formatParsonsLines(task.payload.lines));
@@ -109,6 +111,7 @@ export function ParsonsDraftEditor({ task }: ParsonsDraftEditorProps) {
     const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
+      onPublished();
       return;
     }
     if (body.error === 'reference_fails_checks') {

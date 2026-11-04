@@ -3,21 +3,21 @@
  * from lib/db/tasks.ts, which is the student-facing read side (published
  * rows only). A teacher route handler is the only caller (CLAUDE.md rule 4).
  *
- * A task can be freely edited while `status = 'draft'`. Publishing is a
- * one-way move per version: it requires `status = 'draft'` going in, so a
- * published task is not editable here — re-drafting a published task is
- * separate, unbuilt work (docs/TASKS.md, "Draft / publish + version bump").
+ * A task can be freely edited while `status = 'draft'`. A published task is
+ * never edited in place: a revision is opened (`tasks.revision`), edited and
+ * published through the same gate, and only then copied into the live
+ * columns (lib/task/revision.ts). Students read the live columns alone, so
+ * an open revision is as invisible to them as a draft.
  *
  * `version` starts at 0 — a fresh draft has never been published — and
  * `publishTask` increments it, so a task's first publish lands on version 1,
  * matching content/seed-tasks/ (imported already published, at version 1
- * with no draft history). A later re-draft-and-republish, once that flow
- * exists, would land on 2.
+ * with no draft history). Each published revision adds one more.
  */
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import type { Check } from '@/lib/checker';
 import { normalizeTags, type TaskTag } from '@/lib/task/tags';
-import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
+import type { Reference, RunCase, TaskPayload, TaskRevision, TaskStatus, TaskType } from '@/lib/task/types';
 import { getDb } from './client';
 import { tasks, topics } from './schema';
 import type { TaskRow } from './task-mapping';
@@ -87,6 +87,8 @@ export interface TaskListRow {
   difficulty: number;
   gradeTags: number[];
   tags: TaskTag[];
+  /** A published task with a revision open (lib/task/revision.ts) — unpublished changes waiting. */
+  hasRevision: boolean;
 }
 
 /** Every task, draft and published, for the authoring list — never filtered by status like the student-facing queries. */
@@ -103,7 +105,8 @@ export async function listTasksForAuthoring(): Promise<TaskListRow[]> {
       type: tasks.type,
       difficulty: tasks.difficulty,
       gradeTags: tasks.gradeTags,
-      tags: tasks.tags
+      tags: tasks.tags,
+      hasRevision: sql<boolean>`${tasks.revision} is not null`
     })
     .from(tasks)
     .innerJoin(topics, eq(tasks.topicId, topics.id))
@@ -138,6 +141,81 @@ export async function publishTask(id: string, reference: Reference | null): Prom
     .update(tasks)
     .set({ reference, status: 'published', version: sql`${tasks.version} + 1` })
     .where(and(eq(tasks.id, id), eq(tasks.status, 'draft')))
+    .returning();
+  return row ?? null;
+}
+
+/**
+ * Opens a revision of a published task, starting from `revision` (the live
+ * fields, lib/task/revision.ts's `revisionFromRow`). `null` when the task is
+ * not published or already has one open — the caller re-reads and reports.
+ */
+export async function startRevision(id: string, revision: TaskRevision): Promise<TaskRow | null> {
+  const [row] = await getDb()
+    .update(tasks)
+    .set({ revision })
+    .where(and(eq(tasks.id, id), eq(tasks.status, 'published'), isNull(tasks.revision)))
+    .returning();
+  return row ?? null;
+}
+
+/**
+ * Replaces an open revision with `next`, only if it still equals `expected`
+ * (what the caller read and patched) — a save never lands on a revision that
+ * changed, was published or was discarded in between. `null` when it did.
+ */
+export async function updateRevision(
+  id: string,
+  expected: TaskRevision,
+  next: TaskRevision
+): Promise<TaskRow | null> {
+  const [row] = await getDb()
+    .update(tasks)
+    .set({ revision: next })
+    .where(and(eq(tasks.id, id), eq(tasks.status, 'published'), eq(tasks.revision, expected)))
+    .returning();
+  return row ?? null;
+}
+
+/** Drops an open revision; the live version is untouched. `false` when there was none. */
+export async function discardRevision(id: string): Promise<boolean> {
+  const rows = await getDb()
+    .update(tasks)
+    .set({ revision: null })
+    .where(and(eq(tasks.id, id), eq(tasks.status, 'published'), isNotNull(tasks.revision)))
+    .returning({ id: tasks.id });
+  return rows.length > 0;
+}
+
+/**
+ * Makes a revision the live version: its fields replace the columns, the
+ * reference is the one the gate just accepted, the version goes up by one
+ * and the revision closes. Like `publishTask`, the decision is the route
+ * handler's; the write is guarded on the revision being exactly the one that
+ * was judged, so a save racing the publish is reported (`null`), never
+ * published unchecked.
+ */
+export async function publishRevision(
+  id: string,
+  revision: TaskRevision,
+  reference: Reference | null
+): Promise<TaskRow | null> {
+  const [row] = await getDb()
+    .update(tasks)
+    .set({
+      title: revision.title,
+      payload: revision.payload,
+      type: revision.payload.type,
+      checks: revision.checks,
+      cases: revision.cases && revision.cases.length > 0 ? revision.cases : null,
+      hints: revision.hints,
+      difficulty: revision.difficulty,
+      gradeTags: revision.gradeTags,
+      reference,
+      revision: null,
+      version: sql`${tasks.version} + 1`
+    })
+    .where(and(eq(tasks.id, id), eq(tasks.status, 'published'), eq(tasks.revision, revision)))
     .returning();
   return row ?? null;
 }

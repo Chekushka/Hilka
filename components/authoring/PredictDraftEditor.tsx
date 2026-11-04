@@ -7,6 +7,7 @@
  * fixed program print" (lib/task/types.ts). Save and Run/Publish therefore
  * share one code field instead of DraftTaskEditor's two.
  */
+import { useRevisionPublished } from './TaskRevision';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { humanize, humanizeTimeout } from '@/lib/errors';
@@ -41,6 +42,7 @@ type PublishState =
   | { kind: 'error'; message: string };
 
 export function PredictDraftEditor({ task }: PredictDraftEditorProps) {
+  const onPublished = useRevisionPublished();
   const [title, setTitle] = useState(task.title);
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [code, setCode] = useState(task.payload.code);
@@ -145,6 +147,7 @@ export function PredictDraftEditor({ task }: PredictDraftEditorProps) {
     const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
+      onPublished();
       return;
     }
     if (body.error === 'reference_run_failed') {

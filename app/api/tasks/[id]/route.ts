@@ -1,12 +1,13 @@
 /**
- * Draft task read/edit. A task is only editable here while it is still a
- * draft (docs/TASKS.md, "Draft / publish + version bump") — re-drafting a
- * published task is separate, unbuilt work.
+ * Task read/edit. A draft is edited in place; a published task only through
+ * its open revision (`POST /api/tasks/[id]/revision` opens one), which
+ * students never see until it is published (lib/task/revision.ts).
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { validateTaskChecks, type Check } from '@/lib/checker';
-import { getTaskForAuthoring, updateDraftTask } from '@/lib/db/task-authoring';
+import { getTaskForAuthoring, updateDraftTask, updateRevision } from '@/lib/db/task-authoring';
+import { applyRevisionPatch, authoringModeOf } from '@/lib/task/revision';
 import type { RunCase, TaskPayload } from '@/lib/task/types';
 import { isTaskPayload } from '@/lib/task/payload-guards';
 
@@ -80,18 +81,33 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!existing) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
-  if (existing.status !== 'draft') {
+  const mode = authoringModeOf(existing);
+  if (mode !== 'draft' && mode !== 'revision') {
     return NextResponse.json({ error: 'not_editable' }, { status: 409 });
   }
+  const currentCases = mode === 'revision' ? existing.revision?.cases : existing.cases;
 
   if (body.checks) {
     const errors = validateTaskChecks(
-      { checks: body.checks, cases: body.cases ?? existing.cases ?? undefined, type: body.payload?.type ?? existing.type },
+      { checks: body.checks, cases: body.cases ?? currentCases ?? undefined, type: body.payload?.type ?? existing.type },
       { requireReference: false }
     );
     if (errors.length > 0) {
       return NextResponse.json({ error: 'invalid_checks', details: errors }, { status: 400 });
     }
+  }
+
+  if (mode === 'revision' && existing.revision) {
+    const patched = applyRevisionPatch(existing.type, existing.revision, body);
+    if (!patched.ok) {
+      return NextResponse.json({ error: patched.error }, { status: 400 });
+    }
+    const updated = await updateRevision(id, existing.revision, patched.revision);
+    if (!updated) {
+      // Published, discarded or saved elsewhere between the read and the write.
+      return NextResponse.json({ error: 'revision_changed' }, { status: 409 });
+    }
+    return NextResponse.json(updated);
   }
 
   const updated = await updateDraftTask(id, {
