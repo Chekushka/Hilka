@@ -47,7 +47,7 @@ test('a lesson shows the explanation, then core tasks, then additional tasks', a
 
   await expect(page.getByRole('heading', { name: 'Лінійний алгоритм', level: 1 })).toBeVisible();
   // The explanation's code example is static text, not an editor.
-  await expect(page.locator('pre').first()).toContainText('area = length * width');
+  await expect(page.getByTestId('theory-notes')).toContainText('area = length * width');
   await expect(page.locator('.cm-content')).toHaveCount(0);
 
   const headings = await page.getByRole('heading', { level: 2 }).allTextContents();

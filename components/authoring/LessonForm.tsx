@@ -57,10 +57,9 @@ type SaveState =
   | { kind: 'error'; errors: string[] };
 
 /** What the three insert buttons put at the cursor: the syntax, shown by example (lib/lessons/markdown.ts). */
-const snippet = (kind: 'card' | 'guess' | 'remember') =>
-  kind === 'card'
-    ? '\n\n---\n\n'
-    : `\n\n${t(kind === 'guess' ? 'lessonForm.snippetGuess' : 'lessonForm.snippetRemember')}\n`;
+const SNIPPET_KEY = { guess: 'lessonForm.snippetGuess', notes: 'lessonForm.snippetNotes', remember: 'lessonForm.snippetRemember' } as const;
+const snippet = (kind: 'card' | keyof typeof SNIPPET_KEY) =>
+  kind === 'card' ? '\n\n---\n\n' : `\n\n${t(SNIPPET_KEY[kind])}\n`;
 
 /** Runs every answerable guess's code once, headless, with no input — what a student's screen never does. */
 async function runGuesses(runner: PythonRunner, markdown: string): Promise<GuessRun[]> {
@@ -294,6 +293,9 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
           </button>
           <button type="button" onClick={() => insert(snippet('guess'))} className={insertClass}>
             {t('lessonForm.insertGuess')}
+          </button>
+          <button type="button" onClick={() => insert(snippet('notes'))} className={insertClass}>
+            {t('lessonForm.insertNotes')}
           </button>
           <button type="button" onClick={() => insert(snippet('remember'))} className={insertClass}>
             {t('lessonForm.insertRemember')}

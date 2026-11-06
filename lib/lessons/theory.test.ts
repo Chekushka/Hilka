@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { parseGuess } from './markdown';
+import { parseInline } from './markdown';
 import {
+  cardKind,
   checkGuessRuns,
   guessShapeProblems,
   hasGuessCards,
   optionOrder,
   parseGuessRuns,
   rememberLines,
+  splitTerm,
   theoryCards,
   theoryGuesses
 } from './theory';
@@ -137,5 +140,32 @@ describe('content/lessons', () => {
           )
       );
     expect(problems).toEqual([]);
+  });
+});
+
+describe('cardKind', () => {
+  it('names a card by its most important block', () => {
+    const [idea, guess, rule] = theoryCards(`Текст\n\n---\n\n${GUESS}\n\n\`\`\`remember\nПравило\n\`\`\`\n\n---\n\n\`\`\`remember\nПравило\n\`\`\``);
+    expect([cardKind(idea), cardKind(guess), cardKind(rule)]).toEqual(['idea', 'guess', 'remember']);
+  });
+});
+
+describe('splitTerm', () => {
+  it('splits "`code` — meaning" at the em dash', () => {
+    expect(splitTerm(parseInline('`//` — ділення націло'))).toEqual({
+      term: [{ kind: 'code', text: '//' }],
+      meaning: [{ kind: 'text', text: 'ділення націло' }]
+    });
+    expect(splitTerm(parseInline('`right(кут)` і `left(кут)` — поворот у градусах'))?.term).toEqual([
+      { kind: 'code', text: 'right(кут)' },
+      { kind: 'text', text: ' і ' },
+      { kind: 'code', text: 'left(кут)' }
+    ]);
+  });
+
+  it('leaves alone a line with no code before the dash, a long term, or no dash', () => {
+    expect(splitTerm(parseInline('Синтаксичні — Python не розуміє запис'))).toBeNull();
+    expect(splitTerm(parseInline('`a` і ще дуже довгий опис перед тире, який не є терміном — так'))).toBeNull();
+    expect(splitTerm(parseInline('`print()` виводить текст'))).toBeNull();
   });
 });

@@ -20,7 +20,7 @@ test('a lesson task says where it sits and keeps the lesson theory one click awa
   // Opened, it holds the lesson's «Запам'ятай» rules, not the whole explanation (lib/lessons/theory.ts).
   await theory.click();
   await expect(theory).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByTestId('remember-note')).toContainText('той самий поворот');
+  await expect(page.getByTestId('remember-note')).toContainText('те саме, що right(90)');
   await expect(page.getByText('Основні команди:')).toHaveCount(0);
 });
 

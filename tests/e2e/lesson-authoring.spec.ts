@@ -49,7 +49,7 @@ test('a teacher creates, previews, edits and deletes a lesson, and students see 
   await page.getByRole('button', { name: 'Показати, як побачить учень' }).click();
   const preview = page.getByRole('region', { name: 'Перегляд пояснення' });
   await expect(preview.getByRole('heading', { name: 'Повторюємо' })).toBeVisible();
-  await expect(preview.locator('pre')).toHaveText('print("Привіт")');
+  await expect(preview.getByTestId('theory-code')).toContainText('print("Привіт")');
 
   // No core task yet: the server refuses, and says why.
   await addTask(page, 'Додаткові завдання', 'Навіщо потрібна функція print');

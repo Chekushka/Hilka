@@ -126,3 +126,35 @@ export function optionOrder(guess: Guess): number[] {
   const shift = n === 0 ? 0 : hash % n;
   return guess.options.map((_, i) => (i + shift) % n);
 }
+
+export type CardKind = 'idea' | 'guess' | 'remember';
+
+/** What a card is for, shown as its coloured band: a question beats a rule, a rule beats plain explanation. */
+export function cardKind(card: readonly Block[]): CardKind {
+  if (card.some((block) => block.kind === 'guess' && isAnswerable(block.guess))) return 'guess';
+  if (card.some((block) => block.kind === 'remember')) return 'remember';
+  return 'idea';
+}
+
+const TERM_DASH = /\s+—\s+/;
+const MAX_TERM_LENGTH = 40;
+
+/**
+ * A line written "`code` — meaning" (an em dash between spaces): the term and
+ * what it means. A list of these is drawn as term tiles, and a «Запам'ятай»
+ * rule of this shape becomes a tile the student flips to test themselves.
+ * Null for anything else — it stays an ordinary line.
+ */
+export function splitTerm(line: readonly Inline[]): { term: Inline[]; meaning: Inline[] } | null {
+  const at = line.findIndex((node) => node.kind === 'text' && TERM_DASH.test(node.text));
+  if (at < 0) return null;
+  const node = line[at] as Extract<Inline, { kind: 'text' }>;
+  const dash = TERM_DASH.exec(node.text)!;
+  const before = node.text.slice(0, dash.index);
+  const after = node.text.slice(dash.index + dash[0].length);
+  const term: Inline[] = [...line.slice(0, at), ...(before ? [{ kind: 'text' as const, text: before }] : [])];
+  const meaning: Inline[] = [...(after ? [{ kind: 'text' as const, text: after }] : []), ...line.slice(at + 1)];
+  if (!term.some((part) => part.kind === 'code') || meaning.length === 0) return null;
+  const termLength = term.reduce((sum, part) => sum + (part.kind === 'text' || part.kind === 'code' ? part.text.length : 0), 0);
+  return termLength <= MAX_TERM_LENGTH ? { term, meaning } : null;
+}
