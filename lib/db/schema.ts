@@ -38,7 +38,7 @@ import type { StudentRoutes } from '@/lib/session/routes';
 import type { SessionKind } from '@/lib/session/types';
 import type { ParamSpec } from '@/lib/seed';
 import type { TaskTag } from '@/lib/task/tags';
-import type { Reference, RunCase, TaskPayload, TaskStatus, TaskType } from '@/lib/task/types';
+import type { Reference, RunCase, TaskPayload, TaskRevision, TaskStatus, TaskType } from '@/lib/task/types';
 
 export const topics = pgTable('topics', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -79,6 +79,11 @@ export const tasks = pgTable(
     // Bumped on publish, never on save: that is what makes it safe to edit a
     // task while a class is working on it.
     version: integer('version').notNull().default(1),
+    // A published task's pending next version (lib/task/types.ts's
+    // TaskRevision): edited and gated like a draft, invisible to students,
+    // copied into the columns above on publish. Null when none is open, and
+    // always null on a draft, which is edited in place.
+    revision: jsonb('revision').$type<TaskRevision>(),
     status: text('status').$type<TaskStatus>().notNull().default('draft')
   },
   (table) => [index('tasks_topic_idx').on(table.topicId, table.difficulty)]

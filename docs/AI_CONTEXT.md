@@ -138,7 +138,9 @@ tasks
   tags text[],            -- 'retype' | 'easy-start' | 'challenge' (lib/task/tags.ts); metadata,
                           --   editable on a published task without a version bump
   version int,            -- bumped on publish, not on save
-  status text             -- 'draft' | 'published' | 'archived'
+  status text,            -- 'draft' | 'published' | 'archived'
+  revision jsonb          -- TaskRevision | null: a published task's pending next version
+                          --   (lib/task/revision.ts); never read by student-facing queries
 
 teachers
   id, email, role ('teacher' | 'admin'), status ('pending' | 'active' | 'disabled'), created_at
@@ -211,7 +213,10 @@ Non-obvious invariants:
   with it, and a homework's class checks with theirs (`deleteSession`, `deleteClass`).
 - `sessions.code` is unique only among currently open sessions. Codes are recycled.
 - `tasks.version` is bumped on publish. Draft edits are invisible to students — this is what
-  makes it safe to edit a task while a class is working.
+  makes it safe to edit a task while a class is working. A published task is never edited in
+  place: edits go to `tasks.revision`, which passes the same publish gate before its fields
+  replace the live columns as the next version. Its `type` never changes, because earlier
+  attempts' answers are read by type.
 - `reference.artifacts` is derived, never hand-written. It is recomputed on publish.
 - `tasks.slug` exists because task content lives in git as JSON and is imported
   (`npm run db:seed`). A re-import into a fresh database must update the same rows rather than

@@ -106,7 +106,10 @@ The other direction — edits made in the authoring UI back into git — is
 content changed, never deletes one (it lists what `content/` has that the
 export lacks), and keeps only a reference's `code`. Run it, review `git diff`,
 commit — and do this **before** the next `db:seed`, which would otherwise
-overwrite the UI edits with the older files.
+overwrite the UI edits with the older files. A published task edited in the UI
+comes back with its new `version`. A revision still open in the UI (changes to
+a published task not yet published) is not in the export, and `db:seed` closes
+it: publish or discard those first.
 
 The workflows call these scripts, which `package.json` already defines:
 `typecheck`, `lint`, `test`, `test:browser`, `db:generate`, `db:migrate`,

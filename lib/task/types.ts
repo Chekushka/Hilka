@@ -154,6 +154,24 @@ export interface Reference {
   artifacts?: ReferenceArtifacts;
 }
 
+/**
+ * The pending next version of a published task (`tasks.revision`): every
+ * field the authoring editors change, kept apart from the live columns so
+ * students go on seeing the published version until the revision passes the
+ * publish gate (docs/AI_CONTEXT.md, "Database Schema"). `type` never changes
+ * in a revision — attempts and their answers are read by it.
+ */
+export interface TaskRevision {
+  title: string;
+  payload: TaskPayload;
+  checks: Check[];
+  /** `null`: a single implicit no-stdin case, as in `tasks.cases`. */
+  cases: RunCase[] | null;
+  hints: string[];
+  difficulty: number;
+  gradeTags: number[];
+}
+
 export interface CodeTask {
   /** Database identity. */
   id: string;

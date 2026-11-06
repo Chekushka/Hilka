@@ -7,6 +7,7 @@
  * Publish alone posts the saved fields straight to lib/task/quiz.ts's
  * consistency check.
  */
+import { useRevisionPublished } from './TaskRevision';
 import { useState, type FormEvent } from 'react';
 import { t } from '@/lib/i18n';
 import type { Check } from '@/lib/checker';
@@ -37,6 +38,7 @@ type PublishState =
   | { kind: 'error'; message: string };
 
 export function QuizDraftEditor({ task }: QuizDraftEditorProps) {
+  const onPublished = useRevisionPublished();
   const [title, setTitle] = useState(task.title);
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [optionsText, setOptionsText] = useState(task.payload.options.join('\n'));
@@ -102,6 +104,7 @@ export function QuizDraftEditor({ task }: QuizDraftEditorProps) {
     const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
+      onPublished();
       return;
     }
     if (body.error === 'reference_fails_checks') {

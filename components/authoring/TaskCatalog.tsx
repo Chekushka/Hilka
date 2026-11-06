@@ -26,6 +26,8 @@ import type { TaskStatus } from '@/lib/task/types';
 export interface CatalogRow extends CatalogTask {
   status: TaskStatus;
   version: number;
+  /** Unpublished changes to a published task (lib/task/revision.ts). */
+  hasRevision?: boolean;
 }
 
 function StatusBadge({ status }: { status: TaskStatus }) {
@@ -85,6 +87,7 @@ export function TaskCatalog({
                     {task.topicTitle}
                     {task.gradeTags.length > 0 && ` · ${t('catalog.grades', { grades: task.gradeTags.join(', ') })}`}
                     {task.status === 'published' && ` · ${t('catalog.version', { version: task.version })}`}
+                    {task.hasRevision && ` · ${t('authoring.revisionOpen')}`}
                   </span>
                 </span>
                 <span className="flex flex-wrap items-center gap-2">

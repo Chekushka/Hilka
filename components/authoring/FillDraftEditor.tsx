@@ -8,6 +8,7 @@
  * Publish otherwise works exactly like `code`'s: one clean run of a
  * separately written reference must pass every check.
  */
+import { useRevisionPublished } from './TaskRevision';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { GridView } from '@/components/canvas/GridView';
@@ -38,6 +39,8 @@ export interface DraftFillTask {
 
 interface FillDraftEditorProps {
   task: DraftFillTask;
+  /** The live reference solution, when editing a published task's revision; a draft starts without one. */
+  initialReferenceCode?: string;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
@@ -49,7 +52,8 @@ type PublishState =
   | { kind: 'checks_failed'; failures: string[] }
   | { kind: 'error'; message: string };
 
-export function FillDraftEditor({ task }: FillDraftEditorProps) {
+export function FillDraftEditor({ task, initialReferenceCode }: FillDraftEditorProps) {
+  const onPublished = useRevisionPublished();
   const [title, setTitle] = useState(task.title);
   const [prompt, setPrompt] = useState(task.payload.prompt);
   const [template, setTemplate] = useState(task.payload.template);
@@ -63,7 +67,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [referenceCode, setReferenceCode] = useState('');
+  const [referenceCode, setReferenceCode] = useState(initialReferenceCode ?? '');
   const [running, setRunning] = useState(false);
   const [run, setRun] = useState<RunResult | null>(null);
   const [publishState, setPublishState] = useState<PublishState>({ kind: 'idle' });
@@ -147,6 +151,7 @@ export function FillDraftEditor({ task }: FillDraftEditorProps) {
     const body: { error?: string; failures?: string[]; version?: number } = await response.json().catch(() => ({}));
     if (response.ok) {
       setPublishState({ kind: 'success', version: body.version ?? 1 });
+      onPublished();
       return;
     }
     if (body.error === 'reference_run_failed') {
