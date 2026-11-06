@@ -129,3 +129,66 @@ test('the lesson form warns about a file task placed before its in-browser prere
   await expect(core.first()).toContainText('Візитівка програми');
   await expect(warning).toHaveCount(0);
 });
+
+test('a «Як думаєш?» card is saved only once its marked answer is what its code really prints', async ({ page }) => {
+  await loginAsTeacher(page);
+  await page.getByRole('link', { name: 'Уроки' }).click();
+  await page.getByRole('link', { name: 'Новий урок' }).click();
+  await expect(page.getByRole('heading', { name: 'Новий урок' })).toBeVisible();
+
+  await page.getByLabel('Назва', { exact: true }).fill('Картки');
+  await page.getByLabel('Ідентифікатор (slug)').fill(`e2e-cards-${Date.now()}`);
+  await addTask(page, 'Основні завдання', 'Навіщо потрібна функція print');
+
+  // The insert button writes the syntax by example: x = 3, print(x * 2), 6 marked.
+  const explanation = page.getByLabel('Пояснення (Markdown)');
+  await explanation.fill('Вступ');
+  await page.getByRole('button', { name: '+ Як думаєш?' }).click();
+  await expect(explanation).toHaveValue(/Вступ\n\n```guess\nx = 3\nprint\(x \* 2\)\n--\n32\n-- \*\n6/);
+
+  // A shape problem is named as it is typed, before anything runs.
+  await explanation.fill('```guess\nprint(2 + 3)\n--\n23\n--\n5\n```');
+  await expect(page.getByTestId('guess-problems')).toContainText('познач правильний варіант');
+
+  // A wrong mark: the code is run, and the form says what it really prints.
+  await explanation.fill('Вступ\n\n---\n\n```guess\nprint(2 + 3)\n-- *\n23\n--\n5\n```');
+  await page.getByRole('button', { name: 'Створити урок' }).click();
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('Насправді він виводить: 5', { timeout: 30_000 });
+
+  // The preview is the student's deck.
+  await page.getByRole('button', { name: 'Показати, як побачить учень' }).click();
+  const preview = page.getByRole('region', { name: 'Перегляд пояснення' });
+  await expect(preview.getByTestId('theory-position')).toHaveText('Картка 1 з 2');
+
+  // Marked right, it saves.
+  await explanation.fill('Вступ\n\n---\n\n```guess\nprint(2 + 3)\n--\n23\n-- *\n5\n```');
+  await page.getByRole('button', { name: 'Створити урок' }).click();
+  await expect(page.getByRole('heading', { name: 'Урок «Картки»' })).toBeVisible({ timeout: 30_000 });
+
+  // A save that skips the browser's run is refused by the server too (CLAUDE.md rule 5).
+  // From inside the page, so the request carries the teacher's cookie for this origin.
+  const refused = await page.evaluate(async () => {
+    const response = await fetch('/api/lessons', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: `e2e-cards-norun-${Date.now()}`,
+        grade: 7,
+        order: 900,
+        kind: 'practice',
+        title: 'Без запуску',
+        curriculumRef: null,
+        explanationMd: '```guess\nprint(2 + 3)\n--\n23\n-- *\n5\n```',
+        coreTaskIds: [],
+        additionalTaskIds: []
+      })
+    });
+    return { status: response.status, body: (await response.json()) as { errors?: string[] } };
+  });
+  expect(refused.status).toBe(400);
+  expect(refused.body.errors).toContain('guessNotRun');
+
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Видалити урок' }).click();
+  await expect(page.getByRole('heading', { name: 'Уроки', level: 1 })).toBeVisible();
+});

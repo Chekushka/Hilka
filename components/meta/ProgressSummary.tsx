@@ -16,22 +16,25 @@ import Link from 'next/link';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { Plant } from '@/components/meta/Plant';
 import { plantSpecies, plantStage } from '@/lib/meta/garden';
-import { totalXp, type PracticeTaskMeta } from '@/lib/meta/progress';
+import { practiceXp, type PracticeTaskMeta } from '@/lib/meta/progress';
 import { topicMap, type MapLesson } from '@/lib/meta/topic-map';
 import { t } from '@/lib/i18n';
 
 export function ProgressSummary({
   lessons,
   tasks,
+  theoryLessons,
   grade
 }: {
   lessons: MapLesson[];
   tasks: PracticeTaskMeta[];
+  /** Lessons whose finished theory earns XP (lib/meta/progress.ts's XpSources). */
+  theoryLessons: readonly string[];
   grade: number;
 }) {
   const [progress] = useLocalProgress();
   const completed = new Set(progress.completedTaskSlugs);
-  const xp = totalXp(tasks, completed);
+  const xp = practiceXp({ tasks, theoryLessons }, progress);
   const topics = topicMap(lessons, tasks, completed, grade);
   if (topics.length === 0) return null;
 

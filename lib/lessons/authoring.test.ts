@@ -32,6 +32,16 @@ const context: LessonDraftContext = {
 };
 
 describe('validateLessonDraft', () => {
+  it('holds every «Як думаєш?» card to a run of its own code', () => {
+    const explanationMd = '```guess\nprint(2 + 3)\n--\n23\n-- *\n5\n```';
+    const ran = (stdout: string, failed = false) => ({ ...context, guessRuns: [{ code: 'print(2 + 3)', stdout, failed }] });
+    expect(validateLessonDraft(draft({ explanationMd }), ran('5\n'))).toEqual([]);
+    expect(validateLessonDraft(draft({ explanationMd }), context)).toEqual(['guessNotRun']);
+    expect(validateLessonDraft(draft({ explanationMd }), ran('23\n'))).toEqual(['guessAnswerWrong']);
+    expect(validateLessonDraft(draft({ explanationMd }), ran('', true))).toEqual(['guessRunFailed']);
+    expect(validateLessonDraft(draft({ explanationMd: '```guess\nprint(1)\n--\n1\n```' }), context)).toEqual(['guessMalformed']);
+  });
+
   it('accepts a complete lesson', () => {
     expect(validateLessonDraft(draft(), context)).toEqual([]);
   });
@@ -89,6 +99,11 @@ describe('isLessonDraftShaped', () => {
 });
 
 describe('normalizeLessonDraft', () => {
+  it('keeps only the lesson\'s own fields — the request also carries the guess runs', () => {
+    const body = { ...draft(), guessRuns: [{ code: 'print(1)', stdout: '1', failed: false }] };
+    expect(Object.keys(normalizeLessonDraft(body)).sort()).toEqual(Object.keys(draft()).sort());
+  });
+
   it('trims and stores an empty curriculum reference as null', () => {
     expect(normalizeLessonDraft(draft({ slug: ' g8-1 ', title: ' Списки ', curriculumRef: '  ' }))).toMatchObject({
       slug: 'g8-1',

@@ -1,6 +1,6 @@
 import { PracticeNav } from '@/components/lesson/PracticeNav';
 import { CharacterEditor } from '@/components/meta/CharacterEditor';
-import { listLessonGrades, listPracticeTaskMeta } from '@/lib/db/lessons';
+import { listLessonGrades, listPracticeTaskMeta, listTheoryLessonSlugs } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
 
 /**
@@ -18,12 +18,13 @@ export default async function CharacterPage({ searchParams }: { searchParams: Pr
   const requested = Number(gradeParam);
   const grade = grades.includes(requested) ? requested : grades[0];
   const practiceTasks = await listPracticeTaskMeta();
+  const theoryLessons = await listTheoryLessonSlugs();
 
   return (
     <main className="mx-auto w-full max-w-5xl p-6">
       <h1 className="text-2xl font-semibold text-ink">{t('character.title')}</h1>
       <PracticeNav view="character" grade={grade} grades={grades} />
-      <CharacterEditor tasks={practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty }))} />
+      <CharacterEditor xp={{ tasks: practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty })), theoryLessons }} />
     </main>
   );
 }

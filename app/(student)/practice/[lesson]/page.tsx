@@ -1,16 +1,17 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Explanation } from '@/components/lesson/Explanation';
 import { LessonStart } from '@/components/lesson/LessonStart';
 import { LessonTaskList } from '@/components/lesson/LessonTaskList';
-import { getLesson, listLessonOutline } from '@/lib/db/lessons';
+import { TheoryDeck } from '@/components/lesson/TheoryDeck';
+import { getLesson, listLessonOutline, listPracticeTaskMeta, listTheoryLessonSlugs } from '@/lib/db/lessons';
 import { lessonNeighbours } from '@/lib/lessons/view';
 import { t } from '@/lib/i18n';
 
 /**
  * One lesson: where it sits among the grade's lessons and the way into its
- * tasks first, then the explanation, core tasks, additional ones, and the
- * neighbouring lessons at the end.
+ * tasks first, then the theory as cards (TheoryDeck) — whose last card leads
+ * into the tasks again — core tasks, additional ones, and the neighbouring
+ * lessons at the end.
  */
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
   }
   const neighbours = lessonNeighbours(await listLessonOutline(lesson.grade), lesson.slug);
   const steps = lesson.steps.map((step) => ({ slug: step.slug, href: `/practice/${lesson.slug}/${step.slug}` }));
+  const [practiceTasks, theoryLessons] = await Promise.all([listPracticeTaskMeta(), listTheoryLessonSlugs()]);
 
   return (
     <main className="mx-auto w-full max-w-2xl p-6">
@@ -42,7 +44,12 @@ export default async function LessonPage({ params }: { params: Promise<{ lesson:
       </div>
 
       <section className="mt-6">
-        <Explanation markdown={lesson.explanationMd} />
+        <TheoryDeck
+          markdown={lesson.explanationMd}
+          lessonSlug={lesson.slug}
+          xp={{ tasks: practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty })), theoryLessons }}
+          finish={<LessonStart steps={steps} />}
+        />
       </section>
 
       <section className="mt-8">

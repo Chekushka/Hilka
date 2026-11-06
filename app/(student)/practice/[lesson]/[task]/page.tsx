@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
-import { Explanation } from '@/components/lesson/Explanation';
+import { TheoryReminder } from '@/components/lesson/Explanation';
 import { PracticeTaskNav } from '@/components/lesson/PracticeTaskNav';
 import { PracticePageClient } from '@/components/practice/PracticePageClient';
-import { getLesson, getPublishedTaskInLesson, listLessonOutline, listPracticeTaskMeta } from '@/lib/db/lessons';
+import { getLesson, getPublishedTaskInLesson, listLessonOutline, listPracticeTaskMeta, listTheoryLessonSlugs } from '@/lib/db/lessons';
 import { plantSpecies } from '@/lib/meta/garden';
 import { t } from '@/lib/i18n';
 import type { Task } from '@/lib/task/types';
@@ -41,6 +41,7 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
   );
   // The garden plant this task grows: its topic's practice tasks in this lesson's grade.
   const practiceTasks = await listPracticeTaskMeta();
+  const theoryLessons = await listTheoryLessonSlugs();
   const topicSlug = practiceTasks.find((meta) => meta.slug === task.slug)?.topicSlug;
   const topicTasks = practiceTasks.filter((meta) => meta.topicSlug === topicSlug && meta.grades.includes(lesson.grade));
   const topic = topicSlug
@@ -64,7 +65,7 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
       key={task.slug}
       task={task}
       topic={topic}
-      xpTasks={practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty }))}
+      xp={{ tasks: practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty })), theoryLessons }}
       prerequisite={
         prerequisite
           ? { slug: prerequisite.slug, title: prerequisite.title, href: `/practice/${lesson.slug}/${prerequisite.slug}` }
@@ -113,7 +114,7 @@ export default async function LessonTaskPage({ params }: { params: Promise<{ les
         />
       }
       // The lesson's own explanation, one click away without leaving the task.
-      theory={lesson.explanationMd.trim() ? <Explanation markdown={lesson.explanationMd} /> : undefined}
+      theory={lesson.explanationMd.trim() ? <TheoryReminder markdown={lesson.explanationMd} /> : undefined}
     />
   );
 }

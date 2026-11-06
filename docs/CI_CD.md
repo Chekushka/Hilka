@@ -306,7 +306,9 @@ press, not something a merge does behind your back.
 
 `reference-check.yml` is active: `content/seed-tasks/` holds one published
 task and `verify:references` exists. It runs nightly and on any change to
-`lib/runner/`, `lib/checker/`, or `content/seed-tasks/`.
+`lib/runner/`, `lib/checker/`, `content/seed-tasks/`, `lib/lessons/` or
+`content/lessons/` — the last two because every «Як думаєш?» card in a lesson's
+theory is run too (`tests/references/lessons.spec.ts`).
 
 Add to `scripts/guardrails.sh` as the schema grows; it already rejects
 `stdout_equals` on any seed task that has `cases` (TASK_SCHEMA.md).
