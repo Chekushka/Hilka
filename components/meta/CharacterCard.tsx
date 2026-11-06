@@ -11,13 +11,13 @@ import { Character } from '@/components/meta/Character';
 import { LevelBar } from '@/components/meta/LevelBar';
 import { levelRankLabel, nextUnlockLabel } from '@/components/meta/character-text';
 import { levelForXp, resolveLook } from '@/lib/meta/character';
-import { totalXp, type XpTask } from '@/lib/meta/progress';
+import { practiceXp, type XpSources } from '@/lib/meta/progress';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { t } from '@/lib/i18n';
 
-export function CharacterCard({ tasks }: { tasks: readonly XpTask[] }) {
+export function CharacterCard({ xp: sources }: { xp: XpSources }) {
   const [progress] = useLocalProgress();
-  const xp = totalXp(tasks, new Set(progress.completedTaskSlugs));
+  const xp = practiceXp(sources, progress);
   const level = levelForXp(xp);
   const next = nextUnlockLabel(level);
 

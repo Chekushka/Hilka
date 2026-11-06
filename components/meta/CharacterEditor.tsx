@@ -21,7 +21,7 @@ import {
   type CharacterItem,
   type CharacterLook
 } from '@/lib/meta/character';
-import { totalXp, type XpTask } from '@/lib/meta/progress';
+import { practiceXp, type XpSources } from '@/lib/meta/progress';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { setLook } from '@/lib/practice/progress';
 import { t } from '@/lib/i18n';
@@ -86,9 +86,9 @@ function ItemOption({
   );
 }
 
-export function CharacterEditor({ tasks }: { tasks: readonly XpTask[] }) {
+export function CharacterEditor({ xp: sources }: { xp: XpSources }) {
   const [progress, setProgress] = useLocalProgress();
-  const xp = totalXp(tasks, new Set(progress.completedTaskSlugs));
+  const xp = practiceXp(sources, progress);
   const level = levelForXp(xp);
   const look = resolveLook(progress.look, level);
   const next = nextUnlockLabel(level);

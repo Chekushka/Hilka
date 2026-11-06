@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { hasCompletedTask, isValidPracticeProgress, markTaskCompleted, mergeProgress } from './progress';
+import {
+  EMPTY_PROGRESS,
+  hasCompletedTask,
+  hasCompletedTheory,
+  isValidPracticeProgress,
+  markTaskCompleted,
+  markTheoryCompleted,
+  mergeProgress
+} from './progress';
 
 describe('markTaskCompleted', () => {
   it('adds a new slug', () => {
@@ -85,5 +93,25 @@ describe('isValidPracticeProgress', () => {
 
   it('rejects an empty-string slug', () => {
     expect(isValidPracticeProgress({ completedTaskSlugs: [''] })).toBe(false);
+  });
+});
+
+describe('theory progress', () => {
+  it('marks a lesson once, and merges both sides as a union', () => {
+    const once = markTheoryCompleted(EMPTY_PROGRESS, 'g7-26-variables');
+    expect(markTheoryCompleted(once, 'g7-26-variables')).toBe(once);
+    expect(hasCompletedTheory(once, 'g7-26-variables')).toBe(true);
+    expect(hasCompletedTheory(EMPTY_PROGRESS, 'g7-26-variables')).toBe(false);
+    const other = markTheoryCompleted(EMPTY_PROGRESS, 'g7-27-arithmetic');
+    expect(mergeProgress(once, other).completedTheorySlugs).toEqual(['g7-26-variables', 'g7-27-arithmetic']);
+    // Progress from before theory cards keeps its old shape.
+    expect(mergeProgress(EMPTY_PROGRESS, EMPTY_PROGRESS)).toEqual({ completedTaskSlugs: [] });
+  });
+
+  it('validates the theory list like the task list, and accepts progress without it', () => {
+    expect(isValidPracticeProgress({ completedTaskSlugs: [], completedTheorySlugs: ['g7-25-intro'] })).toBe(true);
+    expect(isValidPracticeProgress({ completedTaskSlugs: [], completedTheorySlugs: 'g7-25-intro' })).toBe(false);
+    expect(isValidPracticeProgress({ completedTaskSlugs: [], completedTheorySlugs: [''] })).toBe(false);
+    expect(isValidPracticeProgress({ completedTaskSlugs: [], completedTheorySlugs: Array(301).fill('a') })).toBe(false);
   });
 });

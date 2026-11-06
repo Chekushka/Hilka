@@ -101,6 +101,14 @@ largest, most contrasting controls on the screen, told apart by colour, icon
 and place. The output must always be on screen at 1366×768 with the
 browser's own bars, not below the fold.
 
+**And the theory** (project owner, after the first card version): the lesson
+theory is a deck of cards, and it is allowed more colour than the rest — each
+card's band says what it is (an idea, a question, a rule to keep) in its own
+fill and icon, code is coloured, key words carry a honey highlighter stroke,
+and there is always something to tap: a guess, a note on a code line, a rule
+to flip. Still no decoration for its own sake: every colour there names a kind
+of thing, and every movement is one-shot.
+
 ## Hard constraints
 
 - Design canvas **1366×768**. School monitors, often washed out, often viewed at

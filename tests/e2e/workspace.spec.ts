@@ -15,11 +15,13 @@ test('a lesson task says where it sits and keeps the lesson theory one click awa
   // Collapsed by default: the statement is what the student reads first.
   const theory = page.getByRole('button', { name: /Як це працює/ });
   await expect(theory).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByText('Основні команди:')).toHaveCount(0);
+  await expect(page.getByTestId('remember-note')).toHaveCount(0);
 
+  // Opened, it holds the lesson's «Запам'ятай» rules, not the whole explanation (lib/lessons/theory.ts).
   await theory.click();
   await expect(theory).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByText('Основні команди:')).toBeVisible();
+  await expect(page.getByTestId('remember-note')).toContainText('те саме, що right(90)');
+  await expect(page.getByText('Основні команди:')).toHaveCount(0);
 });
 
 test('a predict answer is checked with Enter', async ({ page }) => {

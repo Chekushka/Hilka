@@ -62,7 +62,8 @@ export function SchoolComputerBar() {
 
   if (!school) return null;
 
-  const hasProgress = progress.completedTaskSlugs.length > 0 || progress.look !== undefined;
+  const hasProgress =
+    progress.completedTaskSlugs.length > 0 || (progress.completedTheorySlugs?.length ?? 0) > 0 || progress.look !== undefined;
   const shownCode = code ? formatProgressCode(code) : null;
 
   function finish() {

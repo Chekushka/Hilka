@@ -5,6 +5,7 @@
  */
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { lessonSteps, resolveLessonTasks, type LessonOutlineItem, type LessonTaskStep, type LessonTaskSummary } from '@/lib/lessons/view';
+import { hasGuessCards } from '@/lib/lessons/theory';
 import type { LessonKind } from '@/lib/lessons/types';
 import type { PracticeTaskMeta } from '@/lib/meta/progress';
 import { isFileDelivery } from '@/lib/task/prerequisite';
@@ -147,6 +148,16 @@ export async function listLessonsForPicker(): Promise<LessonPickerOption[]> {
     })
     .from(lessons)
     .orderBy(asc(lessons.grade), asc(lessons.order));
+}
+
+/**
+ * Lessons whose theory earns XP once finished: those that ask at least one
+ * «Як думаєш?» question (lib/lessons/theory.ts). Read from the explanation
+ * itself, so a lesson that stops asking simply stops counting.
+ */
+export async function listTheoryLessonSlugs(): Promise<string[]> {
+  const rows = await getDb().select({ slug: lessons.slug, explanationMd: lessons.explanationMd }).from(lessons);
+  return rows.filter((row) => hasGuessCards(row.explanationMd)).map((row) => row.slug);
 }
 
 /**

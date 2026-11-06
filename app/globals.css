@@ -39,6 +39,12 @@
   --char-night: #4a5675;
   --char-shade: rgb(38 44 39 / 0.16);
   --char-glint: #ffffff;
+  /* Code colours in the lesson theory (lib/lessons/highlight.ts) — on --code-bg, every one at least 4.5:1. */
+  --syn-keyword: #6b3a8c;
+  --syn-string: #85540c;
+  --syn-number: #2a6299;
+  --syn-comment: #5f6a61;
+  --syn-call: #2c5b53;
 
   /* Spacing: 4 px base */
   --space-1: 0.25rem;
@@ -113,6 +119,11 @@
     --char-night: #6f7fa8;
     --char-shade: rgb(0 0 0 / 0.25);
     --char-glint: #ffffff;
+    --syn-keyword: #c9a8ee;
+    --syn-string: #e9c27a;
+    --syn-number: #8fc1ee;
+    --syn-comment: #929e94;
+    --syn-call: #86c6b9;
 
     --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
 
@@ -147,6 +158,11 @@
   --char-night: #6f7fa8;
   --char-shade: rgb(0 0 0 / 0.25);
   --char-glint: #ffffff;
+  --syn-keyword: #c9a8ee;
+  --syn-string: #e9c27a;
+  --syn-number: #8fc1ee;
+  --syn-comment: #929e94;
+  --syn-call: #86c6b9;
 
   --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.25);
 
@@ -180,6 +196,11 @@
   --color-char-night: var(--char-night);
   --color-char-shade: var(--char-shade);
   --color-char-glint: var(--char-glint);
+  --color-syn-keyword: var(--syn-keyword);
+  --color-syn-string: var(--syn-string);
+  --color-syn-number: var(--syn-number);
+  --color-syn-comment: var(--syn-comment);
+  --color-syn-call: var(--syn-call);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -238,6 +259,29 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .success-open,
   .success-badge {
+    animation: none;
+  }
+}
+
+/*
+ * The lesson theory (components/lesson/): a guess's real output appears one
+ * line after another, as if the program were printing it, and a flipped term
+ * tile turns once. One-shot, transform and opacity only.
+ */
+@keyframes line-in {
+  from { opacity: 0; transform: translateX(-0.5rem); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes tile-flip {
+  from { opacity: 0.2; transform: rotateX(70deg); }
+  to { opacity: 1; transform: none; }
+}
+.line-in { animation: line-in 260ms ease-out both; }
+.tile-flip { animation: tile-flip 260ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .line-in,
+  .tile-flip {
     animation: none;
   }
 }
