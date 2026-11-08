@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { createLesson, listExistingLessons, listTaskIds } from '@/lib/db/lesson-authoring';
 import { isUniqueViolation } from '@/lib/db/task-authoring';
+import { parseGuessRuns } from '@/lib/lessons/theory';
 import { isLessonDraftShaped, normalizeLessonDraft, validateLessonDraft } from '@/lib/lessons/authoring';
 
 export async function POST(request: Request) {
@@ -21,7 +22,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
   const draft = normalizeLessonDraft(body);
-  const errors = validateLessonDraft(draft, { lessons: await listExistingLessons(), knownTaskIds: await listTaskIds() });
+  const errors = validateLessonDraft(draft, {
+    lessons: await listExistingLessons(),
+    knownTaskIds: await listTaskIds(),
+    // Run in the teacher's browser (LessonForm), as a task's reference is before publishing.
+    guessRuns: parseGuessRuns((body as { guessRuns?: unknown }).guessRuns)
+  });
   if (errors.length > 0) {
     return NextResponse.json({ error: 'invalid_lesson', errors }, { status: 400 });
   }

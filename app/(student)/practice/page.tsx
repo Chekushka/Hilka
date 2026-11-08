@@ -2,7 +2,7 @@ import { LessonList } from '@/components/lesson/LessonList';
 import { PracticeNav } from '@/components/lesson/PracticeNav';
 import { CharacterCard } from '@/components/meta/CharacterCard';
 import { ProgressSummary } from '@/components/meta/ProgressSummary';
-import { listLessonGrades, listLessons, listPracticeTaskMeta } from '@/lib/db/lessons';
+import { listLessonGrades, listLessons, listPracticeTaskMeta, listTheoryLessonSlugs } from '@/lib/db/lessons';
 import { t } from '@/lib/i18n';
 
 /**
@@ -21,6 +21,7 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
   const lessons = grade === undefined ? [] : await listLessons(grade);
   // Every grade's tasks, not just this one's: XP is the student's whole total.
   const practiceTasks = grade === undefined ? [] : await listPracticeTaskMeta();
+  const theoryLessons = grade === undefined ? [] : await listTheoryLessonSlugs();
 
   return (
     <main className="mx-auto w-full max-w-5xl p-6">
@@ -31,10 +32,11 @@ export default async function PracticePage({ searchParams }: { searchParams: Pro
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         {grade !== undefined && (
           <aside className="flex flex-col gap-4 lg:order-2">
-            <CharacterCard tasks={practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty }))} />
+            <CharacterCard xp={{ tasks: practiceTasks.map(({ slug, difficulty }) => ({ slug, difficulty })), theoryLessons }} />
             <ProgressSummary
               lessons={lessons.map((lesson) => ({ slug: lesson.slug, taskSlugs: lesson.taskSlugs }))}
               tasks={practiceTasks}
+              theoryLessons={theoryLessons}
               grade={grade}
             />
           </aside>

@@ -11,6 +11,9 @@
  * stops counting instead of leaving phantom XP behind.
  */
 
+import { THEORY_XP } from '@/lib/lessons/theory';
+import type { PracticeProgress } from '@/lib/practice/progress';
+
 export type Difficulty = 1 | 2 | 3 | 4 | 5;
 
 /** Harder tasks are worth more, but an easy win still counts — the first reward must come quickly. */
@@ -52,6 +55,27 @@ export function totalXp(tasks: readonly XpTask[], completed: ReadonlySet<string>
     xp += taskXp(task.difficulty);
   }
   return xp;
+}
+
+/**
+ * Everything XP can be earned from, as the server hands it to the client:
+ * practice tasks by difficulty, and the lessons whose theory asks a
+ * «Як думаєш?» question (lib/lessons/theory.ts's hasGuessCards).
+ */
+export interface XpSources {
+  tasks: readonly XpTask[];
+  theoryLessons: readonly string[];
+}
+
+/**
+ * The student's XP: tasks by difficulty, plus THEORY_XP for each lesson whose
+ * theory they finished. A finished lesson that no longer asks anything — or
+ * no longer exists — stops counting, as a removed task does.
+ */
+export function practiceXp(sources: XpSources, progress: Pick<PracticeProgress, 'completedTaskSlugs' | 'completedTheorySlugs'>): number {
+  const done = new Set(progress.completedTheorySlugs ?? []);
+  const theory = new Set(sources.theoryLessons.filter((slug) => done.has(slug))).size;
+  return totalXp(sources.tasks, new Set(progress.completedTaskSlugs)) + theory * THEORY_XP;
 }
 
 /** A grade's topics in curriculum order, each with how many of its practice tasks are done. */

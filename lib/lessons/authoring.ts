@@ -10,6 +10,7 @@
  * student-facing reader skips anything unpublished, so a lesson can be
  * prepared before its tasks are finished.
  */
+import { checkGuessRuns, guessShapeProblems, type GuessRun, type GuessRunProblem } from './theory';
 import { LESSON_KINDS, type LessonKind } from './types';
 
 export interface LessonDraft {
@@ -34,7 +35,14 @@ export type LessonDraftError =
   | 'title'
   | 'noCoreTask'
   | 'unknownTask'
-  | 'duplicateTask';
+  | 'duplicateTask'
+  // «Як думаєш?» cards (lib/lessons/theory.ts): a block of the wrong shape,
+  // and a marked answer not proven by a run of the code (CLAUDE.md rule 5).
+  | 'guessMalformed'
+  | 'guessNotRun'
+  | 'guessRunFailed'
+  | 'guessAnswerWrong'
+  | 'guessAmbiguous';
 
 /** Lowercase latin, digits, dashes — the content key a git export and a re-seed key on. */
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -53,7 +61,16 @@ export interface LessonDraftContext {
   knownTaskIds: ReadonlySet<string>;
   /** Set when editing: that lesson does not collide with itself. */
   editingId?: string;
+  /** What running each «Як думаєш?» card's code printed, in the teacher's browser before the save. */
+  guessRuns?: readonly GuessRun[];
 }
+
+const GUESS_RUN_ERROR: Record<GuessRunProblem, LessonDraftError> = {
+  notRun: 'guessNotRun',
+  runFailed: 'guessRunFailed',
+  answerWrong: 'guessAnswerWrong',
+  ambiguous: 'guessAmbiguous'
+};
 
 export function validateLessonDraft(draft: LessonDraft, context: LessonDraftContext): LessonDraftError[] {
   const errors: LessonDraftError[] = [];
@@ -77,6 +94,12 @@ export function validateLessonDraft(draft: LessonDraft, context: LessonDraftCont
   if (all.some((id) => !context.knownTaskIds.has(id))) errors.push('unknownTask');
   if (new Set(all).size !== all.length) errors.push('duplicateTask');
 
+  if (guessShapeProblems(draft.explanationMd).length > 0) errors.push('guessMalformed');
+  for (const report of checkGuessRuns(draft.explanationMd, context.guessRuns ?? [])) {
+    const error = GUESS_RUN_ERROR[report.problem];
+    if (!errors.includes(error)) errors.push(error);
+  }
+
   return errors;
 }
 
@@ -98,14 +121,23 @@ export function isLessonDraftShaped(value: unknown): value is LessonDraft {
   );
 }
 
-/** Trims what a teacher typed; an empty curriculum reference is stored as null, like the seed does. */
+/**
+ * Trims what a teacher typed; an empty curriculum reference is stored as null,
+ * like the seed does. Only the lesson's own fields come out — the request
+ * also carries the guess runs, and this is what goes to the database as is.
+ */
 export function normalizeLessonDraft(draft: LessonDraft): LessonDraft {
   const curriculumRef = draft.curriculumRef?.trim() ?? '';
   return {
-    ...draft,
     slug: draft.slug.trim(),
+    grade: draft.grade,
+    order: draft.order,
+    kind: draft.kind,
     title: draft.title.trim(),
-    curriculumRef: curriculumRef === '' ? null : curriculumRef
+    curriculumRef: curriculumRef === '' ? null : curriculumRef,
+    explanationMd: draft.explanationMd,
+    coreTaskIds: draft.coreTaskIds,
+    additionalTaskIds: draft.additionalTaskIds
   };
 }
 

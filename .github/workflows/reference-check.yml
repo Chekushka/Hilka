@@ -1,7 +1,8 @@
 name: reference-check
 
-# Re-runs every published task's reference solution against its own checks.
-# Reads content/seed-tasks/*.json, so it needs no database.
+# Re-runs every published task's reference solution against its own checks,
+# and every «Як думаєш?» card in content/lessons/ against its own code.
+# Reads content/ directly, so it needs no database.
 #
 # This is what turns "a runner upgrade silently broke forty tasks" into a red X
 # on a Tuesday morning instead of a dead lesson in March.
@@ -12,6 +13,8 @@ on:
       - 'lib/runner/**'
       - 'lib/checker/**'
       - 'content/seed-tasks/**'
+      - 'lib/lessons/**'
+      - 'content/lessons/**'
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:

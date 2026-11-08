@@ -573,8 +573,19 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
     };
     const position = visibleTasks.findIndex((task) => task.id === selectedTaskId) + 1;
     const selectedChecksLeft = checksLeftOf(selectedTaskId);
+    // In a graded session a task locks at its first Check, and the way back to
+    // the list is the only thing left to press — so there it is a real button,
+    // large enough that students notice it (project owner, after classroom use).
     const backToList = (
-      <button type="button" onClick={() => openTask(null)} className="text-accent">
+      <button
+        type="button"
+        onClick={() => openTask(null)}
+        className={
+          graded
+            ? 'inline-flex min-h-11 items-center gap-2 rounded-xl border-2 border-accent bg-accent-soft px-5 py-2 text-base font-bold text-accent hover:bg-accent hover:text-surface'
+            : 'text-accent'
+        }
+      >
         ← {t('session.backToList')}
       </button>
     );

@@ -17,7 +17,7 @@ import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorksp
 import { itemsLabel, levelRankLabel } from '@/components/meta/character-text';
 import { itemsUnlockedBetween, levelForXp, resolveLook } from '@/lib/meta/character';
 import { stageGainedByPass, type PlantSpecies, type PlantStage } from '@/lib/meta/garden';
-import { taskXp, totalXp, type XpTask } from '@/lib/meta/progress';
+import { practiceXp, taskXp, type XpSources } from '@/lib/meta/progress';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { hasCompletedTask, markTaskCompleted } from '@/lib/practice/progress';
 import { t } from '@/lib/i18n';
@@ -27,8 +27,8 @@ interface PracticePageClientProps {
   task: Task;
   /** The lesson's next step after a passed Check, or back to the lesson after its last one. */
   next?: NextTaskAction;
-  /** Every practice task's slug and difficulty: the XP total before and after a pass, so the character can level up. */
-  xpTasks: readonly XpTask[];
+  /** What XP is counted from: the total before and after a pass, so the character can level up. */
+  xp: XpSources;
   /** The task's topic in this grade — whose garden plant a first pass may grow. */
   topic?: { title: string; species: PlantSpecies; taskSlugs: string[] };
   /** For a file-delivery task: the in-browser task in this lesson it rests on (lib/task/prerequisite.ts). */
@@ -41,7 +41,7 @@ interface PracticePageClientProps {
 
 const noSubscription = () => () => {};
 
-export function PracticePageClient({ task, next, xpTasks, topic, prerequisite, context, theory }: PracticePageClientProps) {
+export function PracticePageClient({ task, next, xp, topic, prerequisite, context, theory }: PracticePageClientProps) {
   const [progress, setProgress] = useLocalProgress();
   // The server renders with empty progress; waiting for the browser's own
   // keeps the note from flashing at a student who already passed the prerequisite.
@@ -59,13 +59,13 @@ export function PracticePageClient({ task, next, xpTasks, topic, prerequisite, c
       setProgress((previous) => {
         if (!hasCompletedTask(previous, task.slug)) {
           setFirstPass(true);
-          setXpBefore(totalXp(xpTasks, new Set(previous.completedTaskSlugs)));
+          setXpBefore(practiceXp(xp, previous));
           if (topic) setGrewTo(stageGainedByPass(topic.taskSlugs, new Set(previous.completedTaskSlugs), task.slug));
         }
         return markTaskCompleted(previous, task.slug);
       });
     },
-    [setProgress, task.slug, topic, xpTasks]
+    [setProgress, task.slug, topic, xp]
   );
 
   const nextWithReward = useMemo(() => {
@@ -74,7 +74,7 @@ export function PracticePageClient({ task, next, xpTasks, topic, prerequisite, c
       topic && grewTo !== null
         ? { stage: grewTo, species: topic.species, label: t('garden.grew', { topic: topic.title, stage: t(`garden.stage${grewTo}`) }) }
         : undefined;
-    const xpAfter = totalXp(xpTasks, new Set(progress.completedTaskSlugs));
+    const xpAfter = practiceXp(xp, progress);
     const levelBefore = levelForXp(xpBefore ?? xpAfter);
     const levelAfter = levelForXp(xpAfter);
     const unlocked = itemsUnlockedBetween(levelBefore, levelAfter);
@@ -88,7 +88,7 @@ export function PracticePageClient({ task, next, xpTasks, topic, prerequisite, c
           : undefined
     };
     return { ...next, reward: { xp: t('meta.xpEarned', { xp: taskXp(task.difficulty) }), growth, character } };
-  }, [next, firstPass, grewTo, topic, task.difficulty, xpTasks, xpBefore, progress]);
+  }, [next, firstPass, grewTo, topic, task.difficulty, xp, xpBefore, progress]);
 
   return (
     <div>

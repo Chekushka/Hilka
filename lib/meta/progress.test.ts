@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mergeProgress } from '@/lib/practice/progress';
-import { taskXp, topicProgress, totalXp, XP_BY_DIFFICULTY, type PracticeTaskMeta } from './progress';
+import { THEORY_XP } from '@/lib/lessons/theory';
+import { practiceXp, taskXp, topicProgress, totalXp, XP_BY_DIFFICULTY, type PracticeTaskMeta } from './progress';
 
 function task(slug: string, overrides: Partial<PracticeTaskMeta> = {}): PracticeTaskMeta {
   return {
@@ -74,5 +75,15 @@ describe('topicProgress', () => {
     expect(topicProgress([task('a'), task('a')], new Set(['a']), 7)).toEqual([
       { slug: 'loops', title: 'Цикли', order: 2, done: 1, total: 1 }
     ]);
+  });
+});
+
+describe('practiceXp', () => {
+  it('adds THEORY_XP per finished lesson that still asks something, on top of task XP', () => {
+    const sources = { tasks: [task('a', { difficulty: 2 })], theoryLessons: ['lesson-1', 'lesson-2'] };
+    expect(practiceXp(sources, { completedTaskSlugs: ['a'] })).toBe(20);
+    expect(practiceXp(sources, { completedTaskSlugs: ['a'], completedTheorySlugs: ['lesson-1'] })).toBe(20 + THEORY_XP);
+    // A lesson with no guess cards any more, or gone, earns nothing.
+    expect(practiceXp(sources, { completedTaskSlugs: [], completedTheorySlugs: ['lesson-1', 'lesson-9'] })).toBe(THEORY_XP);
   });
 });

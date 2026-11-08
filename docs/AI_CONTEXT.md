@@ -652,6 +652,14 @@ appear in more than one lesson. Content lives in `content/lessons/` and is impor
 tasks. Explanations show static code only — nothing on the explanation screen runs Python.
 `topics.theory_md` is superseded by the lesson explanation and unused by students.
 
+**The explanation is a deck of cards** (project owner, after students skipped the page): `---`
+splits it into cards, and two fenced blocks add the interactive part — a «Як думаєш?» card
+(code and the outputs to choose from; always answered before moving on, never punished) and a
+«Запам'ятай» rule, which is also what the task panel shows. Still nothing runs on the student's
+screen: a guess's answer is the author's mark, proven by running the code in the teacher's
+browser before a save and in `verify:references` for content — rule 5 the way `predict`'s choice
+mode already satisfied it. Finishing a deck earns XP in practice; it is never graded.
+
 ## Routes
 
 Requested by the teacher: a student who is lost in the topic or not engaging needs something to

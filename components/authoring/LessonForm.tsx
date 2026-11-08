@@ -3,17 +3,25 @@
 /**
  * Creates or edits a lesson (docs/TASKS.md, "Teacher-side lesson authoring"):
  * the fields content/lessons/ holds, the Markdown explanation with a preview
- * rendered by the same component students see, and two ordered task lists —
- * core, then additional. Rules are checked server-side by
+ * rendered by the same deck students see (TheoryDeck), and two ordered task
+ * lists — core, then additional. Rules are checked server-side by
  * lib/lessons/authoring.ts; the form only reports what came back.
+ *
+ * Guess cards ("what will it print?") need work here first: before a
+ * save the form runs each card's code in the browser, as a task's reference is
+ * run before publishing, says plainly which card is wrong and what its code
+ * really prints, and sends the runs along for the server to check again
+ * (CLAUDE.md rule 5).
  */
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { RowButton } from '@/components/authoring/ChecksField';
-import { Explanation } from '@/components/lesson/Explanation';
+import { TheoryDeck } from '@/components/lesson/TheoryDeck';
 import type { LessonDraft, LessonDraftError } from '@/lib/lessons/authoring';
+import { checkGuessRuns, guessShapeProblems, isAnswerable, theoryGuesses, type GuessRun } from '@/lib/lessons/theory';
 import type { LessonKind } from '@/lib/lessons/types';
+import { createRunner, type PythonRunner } from '@/lib/runner';
 import { moveItem } from '@/lib/task/check-form';
 import { unsequencedFileTasks } from '@/lib/task/prerequisite';
 import type { TaskType } from '@/lib/task/types';
@@ -41,7 +49,30 @@ interface LessonFormProps {
   tasks: LessonTaskOptionView[];
 }
 
-type SaveState = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; errors: string[] };
+type SaveState =
+  | { kind: 'idle' }
+  | { kind: 'checking' }
+  | { kind: 'saving' }
+  | { kind: 'saved' }
+  | { kind: 'error'; errors: string[] };
+
+/** What the three insert buttons put at the cursor: the syntax, shown by example (lib/lessons/markdown.ts). */
+const SNIPPET_KEY = { guess: 'lessonForm.snippetGuess', notes: 'lessonForm.snippetNotes', remember: 'lessonForm.snippetRemember' } as const;
+const snippet = (kind: 'card' | keyof typeof SNIPPET_KEY) =>
+  kind === 'card' ? '\n\n---\n\n' : `\n\n${t(SNIPPET_KEY[kind])}\n`;
+
+/** Runs every answerable guess's code once, headless, with no input — what a student's screen never does. */
+async function runGuesses(runner: PythonRunner, markdown: string): Promise<GuessRun[]> {
+  const runs: GuessRun[] = [];
+  for (const guess of theoryGuesses(markdown).filter(isAnswerable)) {
+    if (runs.some((run) => run.code === guess.code)) continue;
+    const result = await runner.run(guess.code, { mode: 'headless' });
+    runs.push({ code: guess.code, stdout: result.stdout, failed: Boolean(result.error) || result.timedOut });
+  }
+  return runs;
+}
+
+const insertClass = 'rounded-md border border-line bg-shell px-3 py-1.5 text-sm text-ink hover:border-accent';
 
 const TYPE_LABEL: Record<TaskType, string> = {
   code: 'authoring.taskTypeCode',
@@ -57,6 +88,10 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
   const [draft, setDraft] = useState<LessonDraft>(initial);
   const [preview, setPreview] = useState(false);
   const [state, setState] = useState<SaveState>({ kind: 'idle' });
+  const explanationRef = useRef<HTMLTextAreaElement>(null);
+  const runnerRef = useRef<PythonRunner | null>(null);
+  useEffect(() => () => runnerRef.current?.dispose(), []);
+  const shapeProblems = useMemo(() => guessShapeProblems(draft.explanationMd), [draft.explanationMd]);
   const byId = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
   const chosen = new Set([...draft.coreTaskIds, ...draft.additionalTaskIds]);
   // The sequencing rule for file tasks (lib/task/prerequisite.ts): a warning, never a reason to refuse the save.
@@ -72,6 +107,33 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
     if (state.kind === 'saved') setState({ kind: 'idle' });
   }
 
+  function insert(addition: string) {
+    const area = explanationRef.current;
+    const at = area?.selectionStart ?? draft.explanationMd.length;
+    const text = draft.explanationMd;
+    // At the very top nothing needs blank lines — or a card break — before it.
+    const piece = text.slice(0, at).trim() === '' ? addition.replace(/^\n+(---\n+)?/, '') : addition;
+    set('explanationMd', text.slice(0, at) + piece + text.slice(at));
+    requestAnimationFrame(() => {
+      area?.focus();
+      area?.setSelectionRange(at + piece.length, at + piece.length);
+    });
+  }
+
+  /** Runs the guesses: the runs to send when every marked answer holds, or what to tell the teacher when one does not. */
+  async function checkGuesses(): Promise<{ runs: GuessRun[] } | { errors: string[] }> {
+    if (!theoryGuesses(draft.explanationMd).some(isAnswerable)) return { runs: [] };
+    runnerRef.current ??= createRunner();
+    const runs = await runGuesses(runnerRef.current, draft.explanationMd);
+    const reports = checkGuessRuns(draft.explanationMd, runs);
+    if (reports.length === 0) return { runs };
+    return {
+      errors: reports.map((report) =>
+        t(`lessonForm.guessRun.${report.problem}`, { n: report.guess, actual: report.actual ?? '' })
+      )
+    };
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     // An empty number field is NaN, which JSON turns into null — say which field instead of sending it.
@@ -83,12 +145,29 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
       setState({ kind: 'error', errors: local.map((code) => t(`lessonForm.errors.${code}`)) });
       return;
     }
+    if (shapeProblems.length > 0) {
+      setState({ kind: 'error', errors: [t('lessonForm.errors.guessMalformed')] });
+      return;
+    }
+    setState({ kind: 'checking' });
+    let guessRuns: GuessRun[];
+    try {
+      const checked = await checkGuesses();
+      if ('errors' in checked) {
+        setState({ kind: 'error', errors: checked.errors });
+        return;
+      }
+      guessRuns = checked.runs;
+    } catch {
+      setState({ kind: 'error', errors: [t('lessonForm.guessEngineError')] });
+      return;
+    }
     setState({ kind: 'saving' });
     try {
       const response = await fetch(lessonId ? `/api/lessons/${lessonId}` : '/api/lessons', {
         method: lessonId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(draft)
+        body: JSON.stringify({ ...draft, guessRuns })
       });
       if (response.status === 400) {
         const data: { errors?: LessonDraftError[] } = await response.json();
@@ -208,21 +287,44 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
             {preview ? t('lessonForm.hidePreview') : t('lessonForm.showPreview')}
           </button>
         </div>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t('lessonForm.insertLabel')}>
+          <button type="button" onClick={() => insert(snippet('card'))} className={insertClass}>
+            {t('lessonForm.insertCard')}
+          </button>
+          <button type="button" onClick={() => insert(snippet('guess'))} className={insertClass}>
+            {t('lessonForm.insertGuess')}
+          </button>
+          <button type="button" onClick={() => insert(snippet('notes'))} className={insertClass}>
+            {t('lessonForm.insertNotes')}
+          </button>
+          <button type="button" onClick={() => insert(snippet('remember'))} className={insertClass}>
+            {t('lessonForm.insertRemember')}
+          </button>
+        </div>
         <textarea
+          ref={explanationRef}
           id="lesson-explanation"
-          rows={10}
+          rows={14}
           value={draft.explanationMd}
           onChange={(event) => set('explanationMd', event.target.value)}
           spellCheck={false}
           className="rounded-md border border-line bg-code-bg px-3 py-2 font-mono text-sm text-ink"
         />
         <p className="text-xs text-ink-muted">{t('lessonForm.explanationHint')}</p>
+        <p className="text-xs text-ink-muted">{t('lessonForm.guessHint')}</p>
+        {shapeProblems.length > 0 && (
+          <ul className="flex flex-col gap-1 rounded-md border-l-4 border-attention bg-surface px-3 py-2 text-sm text-ink" data-testid="guess-problems">
+            {shapeProblems.map(({ guess, problem }) => (
+              <li key={`${guess}:${problem}`}>{t(`lessonForm.guessProblem.${problem}`, { n: guess })}</li>
+            ))}
+          </ul>
+        )}
         {preview && (
           <section
             aria-label={t('lessonForm.preview')}
-            className="rounded-md border border-dashed border-line bg-surface px-4 py-3"
+            className="rounded-md border border-dashed border-line bg-shell p-3"
           >
-            <Explanation markdown={draft.explanationMd} />
+            <TheoryDeck markdown={draft.explanationMd} />
           </section>
         )}
       </div>
@@ -277,10 +379,10 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
       <div className="flex flex-wrap items-center gap-4">
         <button
           type="submit"
-          disabled={state.kind === 'saving'}
+          disabled={state.kind === 'saving' || state.kind === 'checking'}
           className="rounded-md bg-accent px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
-          {state.kind === 'saving' ? t('authoring.saving') : lessonId ? t('lessonForm.save') : t('lessonForm.create')}
+          {state.kind === 'checking' ? t('lessonForm.checkingGuesses') : state.kind === 'saving' ? t('authoring.saving') : lessonId ? t('lessonForm.save') : t('lessonForm.create')}
         </button>
         {state.kind === 'saved' && <span className="text-sm text-growth">{t('lessonForm.saved')}</span>}
         {lessonId && (
