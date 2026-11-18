@@ -1,0 +1,35 @@
+{
+  "slug": "g7-quiz-equals-sign",
+  "topicSlug": "conditions",
+  "type": "quiz",
+  "title": "Знак рівності в умові",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Який знак перевіряє в умові if, чи два значення рівні?",
+    "options": [
+      "==",
+      "=",
+      "!=",
+      "=>"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Один знак = кладе значення у змінну, а два == порівнюють. != означає «не дорівнює»."
+    }
+  ],
+  "hints": [
+    "Знак для порівняння довший за знак присвоєння."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

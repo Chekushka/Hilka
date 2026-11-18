@@ -47,6 +47,8 @@ export interface JoinedSession {
   assignment: AssignmentRule;
   /** Homework only, ISO. Late work is still accepted, for less (lib/homework/rules.ts, `lateCredit`). */
   dueAt: string | null;
+  /** The class race is on (lib/game/race.ts): the room shows the leaderboard card. */
+  game: boolean;
 }
 
 /** One of the student's own attempts, as the room reads them back (`GET /api/sessions/[code]/me`). */

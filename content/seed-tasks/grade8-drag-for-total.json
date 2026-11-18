@@ -1,0 +1,38 @@
+{
+  "slug": "g8-drag-for-total",
+  "topicSlug": "loops-for",
+  "type": "fill",
+  "title": "Перетягни: сума в циклі",
+  "payload": {
+    "type": "fill",
+    "prompt": "Склади з карток програму, яка додає числа від 1 до 5 і виводить суму (15).",
+    "template": "total = 0\nfor n in range(1, 6):\n    total {{1}} n\nprint({{2}})\n",
+    "bank": [
+      "+=",
+      "=",
+      "total",
+      "n"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "15",
+      "trim": true,
+      "message": "Має вийти 15. Кожне число треба додати до total, а вивести — сам total."
+    }
+  ],
+  "hints": [
+    "+= додає до того, що вже є у змінній.",
+    "Виводити треба накопичену суму."
+  ],
+  "reference": {
+    "code": "total = 0\nfor n in range(1, 6):\n    total += n\nprint(total)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

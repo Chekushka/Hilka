@@ -1,0 +1,35 @@
+{
+  "slug": "g7-quiz-print-no-quotes",
+  "topicSlug": "intro",
+  "type": "quiz",
+  "title": "Текст без лапок",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Що станеться, якщо написати print(Привіт) — без лапок?",
+    "options": [
+      "Виведеться Привіт",
+      "Python шукатиме змінну з назвою Привіт і скаже про помилку",
+      "Виведеться \"Привіт\" з лапками",
+      "Нічого не станеться"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        1
+      ],
+      "message": "Без лапок Python читає Привіт як назву змінної. Такої змінної немає — буде помилка NameError."
+    }
+  ],
+  "hints": [
+    "Лапки кажуть Python: «це текст, а не назва»."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

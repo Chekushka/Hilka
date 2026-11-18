@@ -38,6 +38,9 @@
  * program that already passes every check is a bug in the task
  * (TASK_SCHEMA.md, "Reference solutions"), so this needs both runs posted.
  *
+ * `fill` with a word bank must also be able to build its reference from the
+ * cards (`fillFromBank`), or nobody could solve it by dragging.
+ *
  * `fill` — falls into the same generic branch as `code`: a separately
  * written reference (unrelated to `payload.template`'s gap structure, same
  * as `code`'s starter vs reference) must pass every check. Nothing about
@@ -72,6 +75,7 @@ import {
 } from '@/lib/checker';
 import { getTaskForAuthoring, publishRevision, publishTask } from '@/lib/db/task-authoring';
 import { authoringModeOf, editableContent } from '@/lib/task/revision';
+import { fillFromBank } from '@/lib/task/fill';
 import { parsonsCanonicalSubmission } from '@/lib/task/parsons';
 import { validatePredictChoiceChecks } from '@/lib/task/predict';
 import { validateQuizChecks } from '@/lib/task/quiz';
@@ -244,6 +248,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const body: unknown = await request.json().catch(() => null);
   if (!isValidBody(body)) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+  }
+
+  // A word bank must be able to build the reference, or the drag task cannot be solved (lib/task/fill.ts).
+  if (
+    subject.type === 'fill' &&
+    subject.payload?.type === 'fill' &&
+    subject.payload.bank &&
+    fillFromBank(subject.payload.template, subject.payload.bank, body.referenceCode) === null
+  ) {
+    return NextResponse.json({ error: 'bank_cannot_build_reference' }, { status: 422 });
   }
 
   if (subject.type === 'predict' && subject.payload?.type === 'predict' && subject.payload.answerMode === 'choice') {

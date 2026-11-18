@@ -27,6 +27,8 @@
  * tasks go to every class alike; the students on them belong to one roster, so
  * with several classes they are picked on each class's session page afterwards.
  */
+import { CopyLink } from '@/components/dashboard/CopyLink';
+import { ShowToClassButton } from '@/components/dashboard/ShowToClassButton';
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { DEFAULT_GRADING } from '@/lib/grading/config';
@@ -148,6 +150,8 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   const [studentRoutes, setStudentRoutes] = useState<StudentRoutes>({});
   const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
   const [hintsEnabled, setHintsEnabled] = useState(true);
+  // The class race (lib/game/race.ts): a lesson only.
+  const [game, setGame] = useState(false);
   const [shuffle, setShuffle] = useState(false);
   // Each student gets this many of the chosen tasks (lib/seed/assignment.ts); empty for all.
   const [poolSize, setPoolSize] = useState('');
@@ -266,7 +270,8 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
         dueAt: due ? due.toISOString() : null,
         supportTaskIds: routeTaskIds.support,
         extensionTaskIds: routeTaskIds.extension,
-        studentRoutes: multiClass ? {} : studentRoutes
+        studentRoutes: multiClass ? {} : studentRoutes,
+        game: !homework && game
       })
     });
 
@@ -319,9 +324,13 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
   if (created) {
     const [session] = created;
     return (
-      <div className="mx-auto mt-10 max-w-md rounded-2xl border border-line bg-surface p-8 text-center">
+      <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-line bg-surface p-8 text-center">
         <p className="text-ink">{t('sessionBuilder.created')}</p>
-        <p className="mt-3 font-mono text-2xl font-semibold tracking-[0.2em] text-ink md:text-5xl">{session.code}</p>
+        <p className="mt-3 font-mono text-2xl font-semibold tracking-[0.2em] text-ink md:text-7xl">{session.code}</p>
+        <div className="mt-4 flex flex-col items-center gap-3">
+          <ShowToClassButton sessionId={session.id} />
+          <CopyLink path={`/s/${session.code}`} />
+        </div>
         {homework && dueAt && (
           <p className="mt-3 text-ink">
             {t('sessionBuilder.createdDue', { date: formatDeadline(new Date(dueAt).toISOString()) })}
@@ -517,6 +526,21 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
           <input type="checkbox" checked={shuffle} onChange={(event) => setShuffle(event.target.checked)} />
           {t('sessionBuilder.shuffleLabel')}
         </label>
+        {!homework && (
+          <label className="flex items-start gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={game}
+              onChange={(event) => setGame(event.target.checked)}
+              className="mt-0.5"
+              data-testid="builder-game"
+            />
+            <span>
+              {t('sessionBuilder.gameLabel')}
+              <span className="block text-xs text-ink-muted">{t('sessionBuilder.gameNote')}</span>
+            </span>
+          </label>
+        )}
         <div className="flex flex-col gap-1.5">
           <label className={labelClass} htmlFor="poolSize">
             {t('sessionBuilder.poolLabel')}

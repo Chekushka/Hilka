@@ -83,7 +83,8 @@ type Payload =
     }
 
   | { type: 'fill';    prompt: string; template: string   // gaps as {{1}}, {{2}}
-      grid?: GridWorld }                               // present = the gaps drive the grid robot
+      grid?: GridWorld                                 // present = the gaps drive the grid robot
+      bank?: string[] }                                // present = drag mode: cards, not typing
 
   | { type: 'code';    prompt: string; starter: string;
       surface: 'console' | 'turtle' | 'grid';
@@ -131,6 +132,19 @@ Notes:
   guarantee text mode gets from `evaluatePredictionAgainstOwnRun`, applied to a chosen option
   instead of a typed string. `components/task-types/PredictTaskView.tsx` renders radio options
   instead of a text input when `answerMode === 'choice'`.
+- `fill.bank` is **drag mode**: the student drags cards onto the gaps (or taps them in) instead
+  of typing. Each card goes into the code at most once; a gap that appears twice in the template
+  takes the same card in both places; cards beyond what the gaps need are distractors. Between
+  one card per gap and `MAX_BANK_CARDS` (12), each a non-empty single line with no spaces at its
+  edges (`lib/task/fill.ts`'s `isFillBankValid`, in the payload guard). Shown in an order
+  shuffled by the task id (`bankDisplayOrder`), the same for everyone. **The reference must be
+  the template filled from the bank** (`fillFromBank`, ignoring trailing spaces): otherwise the
+  task could pass its own publish gate and still be impossible to solve by dragging. The
+  publish route refuses it with `bank_cannot_build_reference`; content is held to it by
+  `lib/task/fill-bank-content.test.ts`. No new check kind: what runs and is checked is the
+  substituted code, exactly as if it had been typed. Choose distractors that *fail* a check
+  (`or` where the expected output is `False`, `"20"` where `60` is expected) — a distractor
+  that happens to pass is a second right answer.
 - **Not built**: `predict.imageOptions`. Its data shape — where the N reference programs
   themselves would be stored on the payload — is not decided yet, so there is nothing to author
   or render for it.

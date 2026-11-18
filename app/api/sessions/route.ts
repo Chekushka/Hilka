@@ -41,6 +41,8 @@ interface CreateSessionBody {
   supportTaskIds?: string[];
   extensionTaskIds?: string[];
   studentRoutes?: Record<string, unknown>;
+  /** The class race (lib/game/race.ts); ignored for homework. */
+  game?: boolean;
 }
 
 const isIdList = (value: unknown) => Array.isArray(value) && value.every((id) => typeof id === 'string');
@@ -69,7 +71,8 @@ function isValidBody(body: unknown): body is CreateSessionBody {
       (Array.isArray(b.improvementTaskIds) && b.improvementTaskIds.every((id) => typeof id === 'string'))) &&
     (b.supportTaskIds === undefined || isIdList(b.supportTaskIds)) &&
     (b.extensionTaskIds === undefined || isIdList(b.extensionTaskIds)) &&
-    (b.studentRoutes === undefined || (typeof b.studentRoutes === 'object' && b.studentRoutes !== null))
+    (b.studentRoutes === undefined || (typeof b.studentRoutes === 'object' && b.studentRoutes !== null)) &&
+    (b.game === undefined || typeof b.game === 'boolean')
   );
 }
 
@@ -136,7 +139,9 @@ export async function POST(request: Request) {
     dueAt: homework && body.dueAt ? new Date(body.dueAt) : null,
     supportTaskIds,
     extensionTaskIds,
-    studentRoutes
+    studentRoutes,
+    // A race is a lesson in class; homework is worked alone over days.
+    game: !homework && body.game === true
   };
   const created = await createSessions(classIds.map((classId) => ({ classId, ...settings })));
   // `id` and `code` are the first class's, as before; `sessions` has every one, in the order asked.

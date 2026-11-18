@@ -1,0 +1,35 @@
+{
+  "slug": "g7-quiz-hexagon-angle",
+  "topicSlug": "turtle-loops",
+  "type": "quiz",
+  "title": "Кут шестикутника",
+  "payload": {
+    "type": "quiz",
+    "prompt": "На скільки градусів треба повертати черепашку після кожної сторони, щоб намалювати правильний шестикутник?",
+    "options": [
+      "60",
+      "90",
+      "120",
+      "360"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "За всю фігуру черепашка повертає на 360°. Сторін шість, тож 360 : 6 = 60."
+    }
+  ],
+  "hints": [
+    "Усі повороти разом дають повне коло — 360°."
+  ],
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

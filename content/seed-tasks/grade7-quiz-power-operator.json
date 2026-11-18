@@ -1,0 +1,35 @@
+{
+  "slug": "g7-quiz-power-operator",
+  "topicSlug": "arithmetic",
+  "type": "quiz",
+  "title": "Степінь",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яким оператором у Python піднести 2 до степеня 3 (отримати 8)?",
+    "options": [
+      "2 ** 3",
+      "2 ^ 3",
+      "2 * 3",
+      "2 // 3"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Степінь у Python — дві зірочки: 2 ** 3 = 8. Знак ^ означає зовсім інше."
+    }
+  ],
+  "hints": [
+    "Це схоже на множення, але зірочок дві."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

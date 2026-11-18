@@ -197,6 +197,9 @@ export const sessions = pgTable(
     shuffle: boolean('shuffle').notNull().default(false),
     // Each student gets this many of `task_ids`, chosen per student (lib/seed/assignment.ts); null for all.
     poolSize: integer('pool_size'),
+    // The class race (lib/game/race.ts): points for solved tasks, a leaderboard on the
+    // projector and in the room. Lessons only; never part of a grade.
+    game: boolean('game').notNull().default(false),
     opensAt: timestamp('opens_at', { withTimezone: true }),
     closesAt: timestamp('closes_at', { withTimezone: true }),
     // Homework only. Work after it is still accepted, for less credit.

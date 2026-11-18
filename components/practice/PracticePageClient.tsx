@@ -19,6 +19,7 @@ import { itemsUnlockedBetween, levelForXp, resolveLook } from '@/lib/meta/charac
 import { stageGainedByPass, type PlantSpecies, type PlantStage } from '@/lib/meta/garden';
 import { practiceXp, taskXp, type XpSources } from '@/lib/meta/progress';
 import { useLocalProgress } from '@/lib/practice/local-progress';
+import { PRACTICE_DRAFT_SCOPE } from '@/lib/task/draft';
 import { hasCompletedTask, markTaskCompleted } from '@/lib/practice/progress';
 import { t } from '@/lib/i18n';
 import type { Task } from '@/lib/task/types';
@@ -95,6 +96,7 @@ export function PracticePageClient({ task, next, xp, topic, prerequisite, contex
       <TaskWorkspace
         task={task}
         onSubmitAttempt={handleOutcome}
+        draftScope={PRACTICE_DRAFT_SCOPE}
         next={nextWithReward}
         chrome={{
           context,

@@ -1,0 +1,35 @@
+{
+  "slug": "g8-quiz-elif-count",
+  "topicSlug": "conditions",
+  "type": "quiz",
+  "title": "Скільки elif",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Скільки гілок elif може бути в одній команді if?",
+    "options": [
+      "Скільки завгодно",
+      "Лише одна",
+      "Не більше двох",
+      "Жодної — elif пишуть без if"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Після if можна написати будь-яку кількість elif і в кінці, якщо треба, одну else."
+    }
+  ],
+  "hints": [
+    "Згадай програму, яка ставить оцінку за балами: там гілок багато."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,35 @@
+{
+  "slug": "g8-quiz-input-type",
+  "topicSlug": "io",
+  "type": "quiz",
+  "title": "Що повертає input()",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Учень увів 15. Що повертає input() у програму?",
+    "options": [
+      "Рядок \"15\" (str)",
+      "Ціле число 15 (int)",
+      "Дробове число 15.0 (float)",
+      "True"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "input() завжди повертає рядок — навіть якщо ввели цифри. Щоб рахувати, його треба перетворити: int(input())."
+    }
+  ],
+  "hints": [
+    "Згадай, навіщо пишуть int(input())."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

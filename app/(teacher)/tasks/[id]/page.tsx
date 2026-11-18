@@ -239,6 +239,11 @@ function PublishedFillView({ task }: { task: TaskRow }) {
         <pre className="mt-1 whitespace-pre-wrap rounded-md border border-line bg-code-bg p-3 font-mono text-sm text-ink">
           {task.payload.template}
         </pre>
+        {task.payload.bank && (
+          <p className="mt-2 text-sm text-ink" data-testid="published-bank">
+            {t('authoring.fillBankPublished', { cards: task.payload.bank.join('  ·  ') })}
+          </p>
+        )}
       </div>
 
       <div>

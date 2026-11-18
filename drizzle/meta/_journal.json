@@ -92,6 +92,13 @@
       "when": 1793784348565,
       "tag": "0012_add_task_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794995735553,
+      "tag": "0013_add_session_game",
+      "breakpoints": true
     }
   ]
 }

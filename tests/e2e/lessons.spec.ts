@@ -112,7 +112,7 @@ test('solving a task marks it done in the lesson and on the lesson list', async 
   // The way into the lesson now continues from the first unsolved task.
   await expect(page.getByTestId('lesson-start')).toHaveText(/Продовжити: завдання 2/);
   await page.getByRole('link', { name: 'Усі уроки' }).click();
-  await expect(page.getByRole('listitem').filter({ hasText: 'Черепашка малює' })).toContainText('1 з 5');
+  await expect(page.getByRole('listitem').filter({ hasText: 'Черепашка малює' })).toContainText('1 з 6');
 });
 
 test('a parameterized task is listed in its lesson but only opens in a session', async ({ page }) => {

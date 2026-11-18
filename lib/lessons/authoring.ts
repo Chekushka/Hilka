@@ -11,6 +11,7 @@
  * prepared before its tasks are finished.
  */
 import { checkGuessRuns, guessShapeProblems, type GuessRun, type GuessRunProblem } from './theory';
+import { checkMemoryRuns, flowShapeProblems, memoryShapeProblems, type MemoryRun, type MemoryRunProblem } from './visuals';
 import { LESSON_KINDS, type LessonKind } from './types';
 
 export interface LessonDraft {
@@ -42,7 +43,14 @@ export type LessonDraftError =
   | 'guessNotRun'
   | 'guessRunFailed'
   | 'guessAnswerWrong'
-  | 'guessAmbiguous';
+  | 'guessAmbiguous'
+  // The theory's pictures (lib/lessons/visuals.ts): a memory or flow block of the
+  // wrong shape, and memory values not proven by a run of the code (rule 5 again).
+  | 'visualMalformed'
+  | 'memoryNotRun'
+  | 'memoryRunFailed'
+  | 'memoryValueWrong'
+  | 'memoryUnlisted';
 
 /** Lowercase latin, digits, dashes — the content key a git export and a re-seed key on. */
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -63,7 +71,16 @@ export interface LessonDraftContext {
   editingId?: string;
   /** What running each «Як думаєш?» card's code printed, in the teacher's browser before the save. */
   guessRuns?: readonly GuessRun[];
+  /** What running each memory block's steps showed, the same way. */
+  memoryRuns?: readonly MemoryRun[];
 }
+
+const MEMORY_RUN_ERROR: Record<MemoryRunProblem, LessonDraftError> = {
+  notRun: 'memoryNotRun',
+  runFailed: 'memoryRunFailed',
+  valueWrong: 'memoryValueWrong',
+  unlisted: 'memoryUnlisted'
+};
 
 const GUESS_RUN_ERROR: Record<GuessRunProblem, LessonDraftError> = {
   notRun: 'guessNotRun',
@@ -97,6 +114,14 @@ export function validateLessonDraft(draft: LessonDraft, context: LessonDraftCont
   if (guessShapeProblems(draft.explanationMd).length > 0) errors.push('guessMalformed');
   for (const report of checkGuessRuns(draft.explanationMd, context.guessRuns ?? [])) {
     const error = GUESS_RUN_ERROR[report.problem];
+    if (!errors.includes(error)) errors.push(error);
+  }
+
+  if (memoryShapeProblems(draft.explanationMd).length > 0 || flowShapeProblems(draft.explanationMd).length > 0) {
+    errors.push('visualMalformed');
+  }
+  for (const report of checkMemoryRuns(draft.explanationMd, context.memoryRuns ?? [])) {
+    const error = MEMORY_RUN_ERROR[report.problem];
     if (!errors.includes(error)) errors.push(error);
   }
 

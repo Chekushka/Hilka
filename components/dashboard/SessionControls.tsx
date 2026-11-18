@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * The teacher's actions on a session: move a homework's deadline, and close
+ * The teacher's actions on a session: move a homework's deadline, switch a
+ * lesson's class race on or off (lib/game/race.ts), and close
  * the session — its code stops working and returns to the pool. Before
  * homework, nothing closed a session at all. Each action re-reads the page.
  */
@@ -17,13 +18,24 @@ function toLocalInput(iso: string): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function SessionControls({ sessionId, dueAt }: { sessionId: string; dueAt: string | null }) {
+export function SessionControls({
+  sessionId,
+  dueAt,
+  game = null
+}: {
+  sessionId: string;
+  dueAt: string | null;
+  /** The class race (lib/game/race.ts): on or off for a lesson; null where there is none. */
+  game?: boolean | null;
+}) {
   const router = useRouter();
   const [due, setDue] = useState(dueAt ? toLocalInput(dueAt) : '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  // Shown switched at once; set back if the server refuses.
+  const [gameOn, setGameOn] = useState(game);
 
-  async function send(body: object) {
+  async function send(body: object): Promise<boolean> {
     setBusy(true);
     setError(false);
     const response = await fetch(`/api/dashboard/sessions/${sessionId}`, {
@@ -34,9 +46,10 @@ export function SessionControls({ sessionId, dueAt }: { sessionId: string; dueAt
     setBusy(false);
     if (!response?.ok) {
       setError(true);
-      return;
+      return false;
     }
     router.refresh();
+    return true;
   }
 
   return (
@@ -66,6 +79,24 @@ export function SessionControls({ sessionId, dueAt }: { sessionId: string; dueAt
             {t('dashboard.dueChangeSave')}
           </button>
         </form>
+      )}
+      {gameOn !== null && (
+        <label className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={gameOn}
+            disabled={busy}
+            onChange={(event) => {
+              const on = event.target.checked;
+              setGameOn(on);
+              void send({ action: 'game', on }).then((ok) => {
+                if (!ok) setGameOn(!on);
+              });
+            }}
+            data-testid="game-toggle"
+          />
+          {t('dashboard.gameToggle')}
+        </label>
       )}
       <button
         type="button"

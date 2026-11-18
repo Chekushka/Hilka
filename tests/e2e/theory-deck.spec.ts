@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
  * «Як думаєш?» card answered before moving on and never held against the
  * student, code notes opened at a tap, «Запам'ятай» rules as tiles to flip,
  * and 10 XP the first time the deck is finished. Uses the seeded «Змінні»
- * lesson: six cards, two guesses.
+ * lesson: seven cards, a memory picture among them, two guesses.
  */
 
 test('the theory deck waits for an answer, takes a wrong one calmly, and earns XP once at the end', async ({ page }) => {
@@ -13,7 +13,7 @@ test('the theory deck waits for an answer, takes a wrong one calmly, and earns X
   const deck = page.getByTestId('theory-deck');
   const position = page.getByTestId('theory-position');
   const next = deck.getByRole('button', { name: 'Далі' });
-  await expect(position).toHaveText('Картка 1 з 6');
+  await expect(position).toHaveText('Картка 1 з 7');
   await expect(deck.getByRole('button', { name: 'Назад' })).toBeHidden();
   await expect(deck.getByTestId('card-band')).toHaveText('Ідея');
 
@@ -26,16 +26,20 @@ test('the theory deck waits for an answer, takes a wrong one calmly, and earns X
   await expect(notes).not.toContainText('у змінну city кладемо текст');
 
   await next.click();
-  await expect(position).toHaveText('Картка 2 з 6');
+  await expect(position).toHaveText('Картка 2 з 7');
   // The arrow keys move too, once the deck has the focus.
   await page.keyboard.press('ArrowRight');
-  await expect(position).toHaveText('Картка 3 з 6');
+  await expect(position).toHaveText('Картка 3 з 7');
+  // The memory picture (lib/lessons/visuals.ts) is an idea card: nothing to answer.
+  await expect(deck.getByTestId('theory-memory')).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(position).toHaveText('Картка 4 з 7');
   // The progress bar leads back to a card already seen, not ahead.
-  await expect(deck.getByRole('button', { name: 'До картки 5' })).toBeDisabled();
+  await expect(deck.getByRole('button', { name: 'До картки 6' })).toBeDisabled();
   await deck.getByRole('button', { name: 'До картки 1' }).click();
-  await expect(position).toHaveText('Картка 1 з 6');
-  await deck.getByRole('button', { name: 'До картки 3' }).click();
-  await expect(position).toHaveText('Картка 3 з 6');
+  await expect(position).toHaveText('Картка 1 з 7');
+  await deck.getByRole('button', { name: 'До картки 4' }).click();
+  await expect(position).toHaveText('Картка 4 з 7');
 
   // A «Як думаєш?» card: no way on until an answer is picked.
   const guess = deck.getByTestId('guess-card');
@@ -44,7 +48,7 @@ test('the theory deck waits for an answer, takes a wrong one calmly, and earns X
   await expect(next).toBeDisabled();
   await expect(deck).toContainText('Обери відповідь');
   await page.keyboard.press('ArrowRight');
-  await expect(position).toHaveText('Картка 3 з 6');
+  await expect(position).toHaveText('Картка 4 з 7');
 
   // A wrong guess shows the real output and why, in the same calm tone.
   await guess.getByRole('button', { name: /^5$/ }).click();
@@ -56,7 +60,7 @@ test('the theory deck waits for an answer, takes a wrong one calmly, and earns X
   await expect(next).toBeEnabled();
   // The way on took the focus from the answered option, so the keys still work.
   await page.keyboard.press('ArrowRight');
-  await expect(position).toHaveText('Картка 4 з 6');
+  await expect(position).toHaveText('Картка 5 з 7');
 
   // Back keeps the answer; forward again.
   await deck.getByRole('button', { name: 'Назад' }).click();
@@ -68,7 +72,7 @@ test('the theory deck waits for an answer, takes a wrong one calmly, and earns X
   await next.click();
 
   // The last card: the rules to keep as tiles to flip, the deck done, 10 XP, and the way into the tasks.
-  await expect(position).toHaveText('Картка 6 з 6');
+  await expect(position).toHaveText('Картка 7 з 7');
   await expect(deck.getByTestId('card-band')).toHaveText("Запам'ятай");
   const tile = deck.getByTestId('flip-tile').first();
   await expect(tile).toContainText('x = 5');
@@ -85,7 +89,7 @@ test('the theory deck waits for an answer, takes a wrong one calmly, and earns X
 
   // A second time through is welcome, but earns nothing new.
   await page.goto('/practice/g7-26-variables');
-  for (let card = 1; card < 6; card++) {
+  for (let card = 1; card < 7; card++) {
     const options = deck.getByTestId('guess-card').getByRole('button');
     if ((await options.count()) > 0) await options.first().click();
     await next.click();

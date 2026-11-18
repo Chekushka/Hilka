@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "game" boolean DEFAULT false NOT NULL;

@@ -1,0 +1,39 @@
+{
+  "slug": "g7-drag-countdown",
+  "topicSlug": "loops-while",
+  "type": "fill",
+  "title": "Перетягни: зворотний відлік",
+  "payload": {
+    "type": "fill",
+    "prompt": "Склади відлік із карток: програма має вивести 3, 2, 1 — кожне з нового рядка — і «Старт!».",
+    "template": "n = 3\nwhile n {{1}} 0:\n    print(n)\n    n = n {{2}} 1\nprint(\"Старт!\")\n",
+    "bank": [
+      ">",
+      "<",
+      "-",
+      "+",
+      "=="
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "3\n2\n1\nСтарт!",
+      "trim": true,
+      "message": "Мають вийти 3, 2, 1 і «Старт!». Цикл повторюється, поки n більше за нуль, і щоразу n меншає."
+    }
+  ],
+  "hints": [
+    "Цикл має працювати, поки n більше за 0.",
+    "Щоб відлік ішов униз, від n щоразу треба відняти 1."
+  ],
+  "reference": {
+    "code": "n = 3\nwhile n > 0:\n    print(n)\n    n = n - 1\nprint(\"Старт!\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

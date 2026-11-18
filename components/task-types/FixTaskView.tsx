@@ -8,7 +8,7 @@
  * (docs/AI_CONTEXT.md, "Every task type implements one shared component
  * interface").
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { GridCommands, GridRunNote } from '@/components/canvas/GridView';
 import { CodePane, CodeVisual } from '@/components/task/CodePane';
@@ -21,6 +21,7 @@ import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
 import { NO_ACTIVITY, recordChange, type EditorActivity } from '@/lib/task/activity';
+import { isString, useDraft, useHydrated } from '@/lib/task/draft';
 import { gridWorldOf } from '@/lib/task/grid';
 import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
@@ -33,12 +34,16 @@ interface FixTaskViewProps {
   hintsEnabled?: boolean;
   next?: NextTaskAction;
   chrome?: WorkspaceChrome;
+  /** lib/task/draft.ts: keeps the unfinished answer while another task is open. */
+  draftScope?: string;
 }
 
-export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: FixTaskViewProps) {
+export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome, draftScope }: FixTaskViewProps) {
   // File delivery: the code arrives by upload, not typing — nothing to run until it does.
   const fileSpec = task.payload.delivery === 'file' ? task.payload.file : undefined;
-  const [code, setCode] = useState(fileSpec ? '' : task.payload.broken);
+  // A file task's code is the uploaded file, never a draft.
+  const [code, setCode] = useDraft(fileSpec ? undefined : draftScope, task, fileSpec ? '' : task.payload.broken, isString);
+  const hydrated = useHydrated();
   const world = gridWorldOf(task);
   const runnable = useMemo(() => ({ ...task, grid: world }), [task, world]);
   const { engine, busy, result, report, target, pendingInput, run, check, submitInput, parse } = useTaskRunner(runnable);
@@ -146,7 +151,8 @@ export function FixTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, 
           // the student sent, so edits go through IDLE and a new upload.
           <CodeEditor
             // CodeMirror owns its document after mount; a new upload remounts it.
-            key={fileSpec ? code : undefined}
+            // A server-rendered task remounts once after hydration, picking up the draft.
+            key={fileSpec ? code : hydrated ? 'client' : 'server'}
             value={code}
             onChange={setCode}
             onActivity={(change) => (activityRef.current = recordChange(activityRef.current, change))}

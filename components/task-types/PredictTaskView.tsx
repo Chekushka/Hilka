@@ -18,7 +18,19 @@ import { CheckAction, DockIdle, WorkspaceDock } from '@/components/task/Workspac
 import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
+import { useDraft } from '@/lib/task/draft';
 import type { AttemptOutcome, PredictTask } from '@/lib/task/types';
+
+interface PredictDraft {
+  text: string;
+  selected: number | null;
+}
+
+const isPredictDraft = (value: unknown): value is PredictDraft =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as PredictDraft).text === 'string' &&
+  ((value as PredictDraft).selected === null || Number.isInteger((value as PredictDraft).selected));
 
 interface PredictTaskViewProps {
   task: PredictTask;
@@ -26,12 +38,16 @@ interface PredictTaskViewProps {
   hintsEnabled?: boolean;
   next?: NextTaskAction;
   chrome?: WorkspaceChrome;
+  /** lib/task/draft.ts: keeps the unfinished answer while another task is open. */
+  draftScope?: string;
 }
 
-export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: PredictTaskViewProps) {
+export function PredictTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome, draftScope }: PredictTaskViewProps) {
   const isChoice = task.payload.answerMode === 'choice';
-  const [text, setText] = useState('');
-  const [selected, setSelected] = useState<number | null>(null);
+  const [answer, setAnswer] = useDraft<PredictDraft>(draftScope, task, { text: '', selected: null }, isPredictDraft);
+  const { text, selected } = answer;
+  const setText = (next: string) => setAnswer((previous) => ({ ...previous, text: next }));
+  const setSelected = (next: number) => setAnswer((previous) => ({ ...previous, selected: next }));
   const [report, setReport] = useState<CheckReport | null>(null);
 
   const hintsUsedRef = useRef(0);

@@ -35,6 +35,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { evaluateChecks, type CheckReport } from '@/lib/checker';
+import { isNumberList, useDraft } from '@/lib/task/draft';
 import { CheckReportPanel } from '@/components/task/CheckReportPanel';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { CheckAction, DockIdle, WorkspaceDock } from '@/components/task/WorkspaceDock';
@@ -50,6 +51,8 @@ interface ParsonsTaskViewProps {
   hintsEnabled?: boolean;
   next?: NextTaskAction;
   chrome?: WorkspaceChrome;
+  /** lib/task/draft.ts: keeps the unfinished answer while another task is open. */
+  draftScope?: string;
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -168,16 +171,36 @@ function AnswerRow({
   );
 }
 
-export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: ParsonsTaskViewProps) {
+const isIndentRecord = (value: unknown): value is Record<number, number> =>
+  typeof value === 'object' &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.values(value).every((indent) => Number.isInteger(indent) && indent >= 0);
+
+export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome, draftScope }: ParsonsTaskViewProps) {
   const isChosen = task.payload.indentMode === 'chosen';
   const pool = useMemo(() => parsonsPool(task.payload), [task.payload]);
   const byIndex = useMemo(() => new Map(pool.map((item) => [item.poolIndex, item])), [pool]);
 
-  const [bank, setBank] = useState<number[]>(() => shuffled(pool.map((item) => item.poolIndex)));
-  const [answer, setAnswer] = useState<number[]>([]);
+  // The bank keeps one shuffle for the visit; what is in the answer is the draft (lib/task/draft.ts).
+  const [bankOrder] = useState<number[]>(() => shuffled(pool.map((item) => item.poolIndex)));
+  const [answer, setAnswer] = useDraft<number[]>(
+    draftScope,
+    task,
+    [],
+    (value): value is number[] =>
+      isNumberList(value) && new Set(value).size === value.length && value.every((index) => byIndex.has(index))
+  );
+  const bank = bankOrder.filter((poolIndex) => !answer.includes(poolIndex));
   // 'chosen' only — every line starts flat; the student sets each one's
   // indent, which is the whole thing being graded. Unset entries read as 0.
-  const [chosenIndents, setChosenIndents] = useState<Record<number, number>>({});
+  const [chosenIndents, setChosenIndents] = useDraft<Record<number, number>>(
+    draftScope,
+    // Kept beside the order, under its own key.
+    { id: `${task.id}:indents`, version: task.version },
+    {},
+    isIndentRecord
+  );
   const [report, setReport] = useState<CheckReport | null>(null);
 
   function indentOf(poolIndex: number): number {
@@ -205,14 +228,12 @@ export function ParsonsTaskView({ task, onSubmitAttempt, hintsEnabled = true, ne
 
   function addToAnswer(poolIndex: number) {
     setReport(null);
-    setBank((previous) => previous.filter((i) => i !== poolIndex));
     setAnswer((previous) => [...previous, poolIndex]);
   }
 
   function removeFromAnswer(poolIndex: number) {
     setReport(null);
     setAnswer((previous) => previous.filter((i) => i !== poolIndex));
-    setBank((previous) => [...previous, poolIndex].sort((a, b) => a - b));
     // Re-adding starts flat again, same as its first placement.
     setChosenIndents((previous) =>
       Object.fromEntries(Object.entries(previous).filter(([key]) => Number(key) !== poolIndex))

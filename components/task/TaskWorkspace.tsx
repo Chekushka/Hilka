@@ -32,10 +32,12 @@ interface TaskWorkspaceProps {
   next?: NextTaskAction;
   /** The page's own additions to the task panel — where the task sits, advice, the lesson's theory. */
   chrome?: WorkspaceChrome;
+  /** Where the student's unfinished answer is kept while they look at another task (lib/task/draft.ts); absent keeps nothing. */
+  draftScope?: string;
 }
 
-export function TaskWorkspace({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: TaskWorkspaceProps) {
-  const shared = { onSubmitAttempt, hintsEnabled, next, chrome };
+export function TaskWorkspace({ task, onSubmitAttempt, hintsEnabled = true, next, chrome, draftScope }: TaskWorkspaceProps) {
+  const shared = { onSubmitAttempt, hintsEnabled, next, chrome, draftScope };
   if (task.type === 'parsons') {
     return <ParsonsTaskView task={task} {...shared} />;
   }

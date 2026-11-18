@@ -7,10 +7,13 @@
  * `code` string and hand it to `useTaskRunner`, the exact hook `code` and
  * `fix` already share via its `RunnableTask` shape, so everything past
  * assembly — the run, the checker, the result panel — is identical to them.
+ *
+ * With a word bank the gaps take dragged cards instead (./FillBank.tsx).
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { GridCommands, GridRunNote } from '@/components/canvas/GridView';
 import { CodePane, CodeVisual } from '@/components/task/CodePane';
+import { BankTemplate, isBankPlacement, placementValues, type BankPlacement } from './FillBank';
 import type { NextTaskAction } from '@/components/task/NextTaskButton';
 import { OutputPanel } from '@/components/task/OutputPanel';
 import { ResultPanel } from '@/components/task/ResultPanel';
@@ -18,7 +21,8 @@ import { RunCheckActions, RunDockIdle, WorkspaceDock } from '@/components/task/W
 import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
-import { parseFillTemplate, substituteFillTemplate } from '@/lib/task/fill';
+import { bankDisplayOrder, parseFillTemplate, substituteFillTemplate } from '@/lib/task/fill';
+import { isStringRecord, useDraft } from '@/lib/task/draft';
 import { gridWorldOf } from '@/lib/task/grid';
 import { showsTurtleCanvas } from '@/lib/task/surface';
 import { useTaskRunner } from '@/lib/task/use-task-runner';
@@ -31,10 +35,24 @@ interface FillTaskViewProps {
   hintsEnabled?: boolean;
   next?: NextTaskAction;
   chrome?: WorkspaceChrome;
+  /** lib/task/draft.ts: keeps the unfinished answer while another task is open. */
+  draftScope?: string;
 }
 
-export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: FillTaskViewProps) {
-  const [values, setValues] = useState<Record<number, string>>({});
+export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome, draftScope }: FillTaskViewProps) {
+  const [typed, setValues] = useDraft<Record<number, string>>(draftScope, task, {}, isStringRecord);
+  // A word bank (lib/task/fill.ts): cards dragged into the gaps instead of typing. Kept as which card is in which gap.
+  const bank = useMemo(
+    () => (task.payload.bank ? bankDisplayOrder(task.payload.bank, task.id) : null),
+    [task.payload.bank, task.id]
+  );
+  const [placement, setPlacement] = useDraft<BankPlacement>(
+    bank ? draftScope : undefined,
+    { id: `${task.id}:bank`, version: task.version },
+    {},
+    isBankPlacement
+  );
+  const values = bank ? placementValues(placement, bank) : typed;
   const world = gridWorldOf(task);
   const runnable = useMemo(() => ({ ...task, grid: world }), [task, world]);
   const { engine, busy, result, report, target, pendingInput, run, check, submitInput } = useTaskRunner(runnable);
@@ -121,26 +139,30 @@ export function FillTaskView({ task, onSubmitAttempt, hintsEnabled = true, next,
           ) : undefined
         }
       >
-        {/* Same size and face as the editor, so a gap reads as part of the program. */}
-        <div className="flex-1 overflow-auto whitespace-pre-wrap px-5 py-4 font-mono text-base leading-[2.1] text-ink">
-          {parts.map((part, index) =>
-            part.kind === 'text' ? (
-              <span key={index}>{part.value}</span>
-            ) : (
-              <input
-                key={index}
-                type="text"
-                value={values[part.index] ?? ''}
-                onChange={(event) => {
-                  setValues((previous) => ({ ...previous, [part.index]: event.target.value }));
-                }}
-                aria-label={t('fill.gapLabel', { n: part.index })}
-                size={Math.max(3, (values[part.index] ?? '').length || 3)}
-                className="mx-0.5 inline-block rounded-md border-[1.5px] border-dashed border-accent bg-accent-soft px-1.5 py-0.5 text-center font-mono text-base text-ink focus:border-solid focus:outline-none"
-              />
-            )
-          )}
-        </div>
+        {bank ? (
+          <BankTemplate parts={parts} bank={bank} placement={placement} onChange={setPlacement} />
+        ) : (
+          // Same size and face as the editor, so a gap reads as part of the program.
+          <div className="flex-1 overflow-auto whitespace-pre-wrap px-5 py-4 font-mono text-base leading-[2.1] text-ink">
+            {parts.map((part, index) =>
+              part.kind === 'text' ? (
+                <span key={index}>{part.value}</span>
+              ) : (
+                <input
+                  key={index}
+                  type="text"
+                  value={values[part.index] ?? ''}
+                  onChange={(event) => {
+                    setValues((previous) => ({ ...previous, [part.index]: event.target.value }));
+                  }}
+                  aria-label={t('fill.gapLabel', { n: part.index })}
+                  size={Math.max(3, (values[part.index] ?? '').length || 3)}
+                  className="mx-0.5 inline-block rounded-md border-[1.5px] border-dashed border-accent bg-accent-soft px-1.5 py-0.5 text-center font-mono text-base text-ink focus:border-solid focus:outline-none"
+                />
+              )
+            )}
+          </div>
+        )}
       </CodePane>
     </WorkspaceFrame>
   );

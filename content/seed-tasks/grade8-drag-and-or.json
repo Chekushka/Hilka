@@ -1,0 +1,37 @@
+{
+  "slug": "g8-drag-and-or",
+  "topicSlug": "booleans",
+  "type": "fill",
+  "title": "Перетягни: між 10 і 20",
+  "payload": {
+    "type": "fill",
+    "prompt": "Змінна inside має бути True лише тоді, коли x більше за 10 і водночас менше за 20. Для x = 25 програма має вивести False.",
+    "template": "x = 25\ninside = x > 10 {{1}} x < 20\nprint(inside)\n",
+    "bank": [
+      "and",
+      "or",
+      "not"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "False",
+      "trim": true,
+      "message": "Для 25 має вийти False: 25 більше за 10, але не менше за 20. Обидві умови мають бути правдиві разом."
+    }
+  ],
+  "hints": [
+    "«і водночас» — це and.",
+    "or дає True, коли правдива хоча б одна умова."
+  ],
+  "reference": {
+    "code": "x = 25\ninside = x > 10 and x < 20\nprint(inside)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

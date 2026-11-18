@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { checkGuessRuns, guessShapeProblems, isAnswerable, theoryGuesses, type GuessRun } from '@/lib/lessons/theory';
+import { checkMemoryRuns, flowShapeProblems, memoryRunRequests, memoryShapeProblems, theoryMemories, type MemoryRun } from '@/lib/lessons/visuals';
 import type { RunResult } from '@/lib/runner';
 
 /**
@@ -43,6 +44,31 @@ for (const file of files) {
       runs.push({ code: guess.code, stdout: result.stdout, failed: Boolean(result.error) || result.timedOut });
     }
     expect(checkGuessRuns(markdown, runs)).toEqual([]);
+  });
+}
+
+for (const file of files) {
+  const markdown = readFileSync(path.join(root, file), 'utf8');
+  const memories = theoryMemories(markdown);
+  if (memories.length === 0 && flowShapeProblems(markdown).length === 0) continue;
+
+  test(`${file}: every memory picture shows what the code really holds`, async ({ page }) => {
+    expect(memoryShapeProblems(markdown)).toEqual([]);
+    expect(flowShapeProblems(markdown)).toEqual([]);
+    const runs: MemoryRun[] = [];
+    for (const request of memories.flatMap(memoryRunRequests)) {
+      const result = (await page.evaluate(
+        ({ code, exprs }) => window.__runner__!.run(code, { mode: 'headless', exprs }),
+        request
+      )) as RunResult;
+      runs.push({
+        code: request.code,
+        exprResults: result.exprResults,
+        names: Object.keys(result.vars),
+        failed: Boolean(result.error) || result.timedOut
+      });
+    }
+    expect(checkMemoryRuns(markdown, runs)).toEqual([]);
   });
 }
 
