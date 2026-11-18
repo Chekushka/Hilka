@@ -1,0 +1,38 @@
+{
+  "slug": "g7-drag-if-else",
+  "topicSlug": "conditions",
+  "type": "fill",
+  "title": "Перетягни: якщо — інакше",
+  "payload": {
+    "type": "fill",
+    "prompt": "Склади розгалуження з карток: якщо температура вища за 20, програма каже «Тепло», інакше — «Прохолодно».",
+    "template": "t = 25\n{{1}} t > 20:\n    print(\"Тепло\")\n{{2}}:\n    print(\"Прохолодно\")\n",
+    "bank": [
+      "if",
+      "else",
+      "elif",
+      "for"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Тепло",
+      "trim": true,
+      "message": "Для 25 градусів програма має сказати «Тепло»."
+    }
+  ],
+  "hints": [
+    "Розгалуження починається словом «якщо».",
+    "Гілка «інакше» не має умови."
+  ],
+  "reference": {
+    "code": "t = 25\nif t > 20:\n    print(\"Тепло\")\nelse:\n    print(\"Прохолодно\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

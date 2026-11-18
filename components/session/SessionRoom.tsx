@@ -36,6 +36,7 @@
  * to the homework's grade.
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { RaceCard } from '@/components/game/RaceCard';
 import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
 import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
@@ -47,6 +48,7 @@ import { findStudent, seedKeyOf } from '@/lib/classes/roster';
 import { assignTasks } from '@/lib/seed';
 import { nextOpenTaskId } from '@/lib/session/next-task';
 import { sessionProgress, type SessionProgress } from '@/lib/session/progress';
+import { sessionDraftScope } from '@/lib/task/draft';
 import { filePrerequisite } from '@/lib/task/prerequisite';
 import type { JoinedSession, JoinedSessionTask, OwnAttempt, OwnSessionState } from '@/lib/session/types';
 import type { Task } from '@/lib/task/types';
@@ -54,6 +56,8 @@ import type { Task } from '@/lib/task/types';
 interface SessionRoomProps {
   code: string;
   session: JoinedSession;
+  /** From a link to one task (`/s/CODE?task=…`): opened once the student's own state is read. */
+  initialTaskId?: string | null;
 }
 
 /** Holds the student's roster id. The key's `name` is historical: it held the name before students had ids. */
@@ -273,7 +277,7 @@ function ResultsSummary({
   );
 }
 
-export function SessionRoom({ code, session }: SessionRoomProps) {
+export function SessionRoom({ code, session, initialTaskId = null }: SessionRoomProps) {
   const storedRef = useStoredStudent(code);
   const [pickedId, setPickedId] = useState<string | null>(null);
   // A stored student no longer on the roster (removed since) goes back to the name screen.
@@ -383,6 +387,18 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
   }, [code, selectedTaskId, studentId]);
 
   const selectedTask = selectedTaskId ? (taskCache[selectedTaskId] ?? null) : null;
+
+  // A link to one task opens it once, as soon as it is known to be this student's —
+  // set while rendering, React's way of acting on what the last render could not know yet.
+  // Not this student's (another's pool, a route they are not on): the list, as from the code.
+  const [linkedTaskId, setLinkedTaskId] = useState(initialTaskId);
+  if (linkedTaskId && own) {
+    setLinkedTaskId(null);
+    if (visibleTasks.some((task) => task.id === linkedTaskId)) {
+      setSelectedTaskId(linkedTaskId);
+      setOpenedAs(taskState(rules, linkedTaskId, own.attempts).status);
+    }
+  }
 
   const pickStudent = useCallback(
     (id: string) => {
@@ -658,6 +674,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
         key={selectedTask.id}
         task={selectedTask}
         hintsEnabled={session.hintsEnabled}
+        draftScope={sessionDraftScope(code, student.id)}
         next={next}
         onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
         chrome={{
@@ -763,6 +780,7 @@ export function SessionRoom({ code, session }: SessionRoomProps) {
       </div>
       {progress.complete && <ResultsSummary progress={progress} homework={homework} graded={graded} />}
       {myTasks.length > 0 && <SessionProgressBar progress={progress} />}
+      {session.game && <RaceCard code={code} studentId={student.id} refreshKey={attempts.length} />}
       {own.routeTasksFirst && routeSection}
       <ul className="space-y-2">{myTasks.map(taskButton)}</ul>
       {improvementVisible && (

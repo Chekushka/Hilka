@@ -1,0 +1,37 @@
+{
+  "slug": "g8-drag-number-or-text",
+  "topicSlug": "types",
+  "type": "fill",
+  "title": "Перетягни: число чи текст",
+  "payload": {
+    "type": "fill",
+    "prompt": "Ціна однієї ручки — 20 гривень, ручок 3. Перетягни у пропуск ціну так, щоб програма вивела 60.",
+    "template": "price = {{1}}\ncount = 3\nprint(price * count)\n",
+    "bank": [
+      "20",
+      "\"20\"",
+      "20.0"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "60",
+      "trim": true,
+      "message": "Має вийти рівно 60. Подивись, що станеться з текстом \"20\" чи дробом 20.0, якщо їх помножити на 3."
+    }
+  ],
+  "hints": [
+    "Текст у лапках при множенні повторюється.",
+    "Дробове число й результат дає дробовий."
+  ],
+  "reference": {
+    "code": "price = 20\ncount = 3\nprint(price * count)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

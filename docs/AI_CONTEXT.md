@@ -107,6 +107,7 @@ lib/
   errors/                Python error → Ukrainian humanized message
   seed/                  deterministic PRNG + task parameterization
   device/                the school-computer mark (school.ts pure, school-client.ts browser)
+  game/                  the class race: points and standings from a session's attempts (race.ts, pure)
   meta/                  XP, levels, topic progress and garden stages, derived from completed tasks;
                          the character's unlocks (character.ts)
   db/                    Drizzle schema, migrations, queries
@@ -163,6 +164,8 @@ sessions
   shuffle bool, pool_size int | null,      -- each student gets pool_size of task_ids
   support_task_ids uuid[], extension_task_ids uuid[],
   student_routes jsonb,                    -- { [roster id]: 'support' | 'extension' } — see "Routes"
+  game bool,                               -- lessons only: the class race (lib/game/race.ts) — points
+                                           --   for solved tasks and a leaderboard; never part of a grade
   opens_at, closes_at, due_at, created_at
 
 progress_codes
@@ -274,7 +277,9 @@ nothing about a student behind; every other browser behaves as before.
 - **What stays, on purpose:** the device mark (`hilka_device`, "Homework") is a random id for the
   PC, not the student, and is what lets a teacher see that two names worked on one machine; the
   theme choice; and the session room's chosen name in `sessionStorage`, which is per tab and per
-  session code.
+  session code — with the unfinished answers typed in that room (`lib/task/draft.ts`), also in
+  `sessionStorage`. Practice drafts follow practice progress: dropped on idle, and «Завершити»
+  takes every draft, a session's included.
 - The progress endpoints' rate limits are a classroom's worth per IP, since a class sits behind
   one school address and every student now saves and restores through them
   (`lib/practice/progress-rate-limiter.ts`).

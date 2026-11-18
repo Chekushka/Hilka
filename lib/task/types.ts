@@ -128,6 +128,12 @@ export interface FillPayload {
   template: string;
   /** Present, the gaps drive the grid robot in this world (docs/TASK_SCHEMA.md, "Grid"). `fill` has no `surface`; the world is the switch. */
   grid?: GridWorld;
+  /**
+   * A word bank: the student drags these cards into the gaps instead of
+   * typing (lib/task/fill.ts). Each card goes in once; extra cards are
+   * distractors. The reference must be the template filled from it.
+   */
+  bank?: string[];
 }
 
 /** Widens to the union in TASK_SCHEMA.md as each task type is built. */

@@ -1,0 +1,36 @@
+{
+  "slug": "g7-quiz-variable-after",
+  "topicSlug": "variables",
+  "type": "quiz",
+  "title": "Що лежить у змінній",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яке значення буде в змінній x після цих трьох рядків?\n\n```\nx = 4\nx = x * 2\nx = x + 1\n```",
+    "options": [
+      "9",
+      "8",
+      "5",
+      "4"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Спочатку x = 4, потім 4 · 2 = 8, потім 8 + 1 = 9."
+    }
+  ],
+  "hints": [
+    "Кожен рядок бере значення, яке x має саме зараз.",
+    "Порахуй по кроках: 4 → ? → ?"
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

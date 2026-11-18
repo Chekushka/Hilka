@@ -1,0 +1,38 @@
+{
+  "slug": "g7-drag-minutes",
+  "topicSlug": "arithmetic",
+  "type": "fill",
+  "title": "Перетягни: години і хвилини",
+  "payload": {
+    "type": "fill",
+    "prompt": "135 хвилин — це скільки годин і хвилин? Перетягни оператори так, щоб програма вивела «2 15».",
+    "template": "minutes = 135\nhours = minutes {{1}} 60\nrest = minutes {{2}} 60\nprint(hours, rest)\n",
+    "bank": [
+      "//",
+      "%",
+      "/",
+      "*"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "2 15",
+      "trim": true,
+      "message": "Має вийти 2 години і 15 хвилин. Один оператор дає цілу частину, другий — остачу."
+    }
+  ],
+  "hints": [
+    "// — ціла частина від ділення.",
+    "% — остача."
+  ],
+  "reference": {
+    "code": "minutes = 135\nhours = minutes // 60\nrest = minutes % 60\nprint(hours, rest)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

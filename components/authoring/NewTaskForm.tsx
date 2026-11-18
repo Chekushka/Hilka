@@ -22,7 +22,7 @@ import {
   validateDeliveryForm,
   type DeliveryFormState
 } from '@/lib/task/delivery-form';
-import { isFillTemplateValid } from '@/lib/task/fill';
+import { MAX_BANK_CARDS, fillTemplateGaps, isFillBankValid, isFillTemplateValid } from '@/lib/task/fill';
 import type { GridWorld } from '@/lib/runner';
 import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
 import type { Surface, TaskType } from '@/lib/task/types';
@@ -31,6 +31,7 @@ import { GridWorldField } from './GridWorldField';
 import { formatParsonsLines, parseParsonsLines } from './parsons-form-utils';
 import { ChecksField } from './ChecksField';
 import { CasesField } from './CasesField';
+import { FillBankFields, parseBankText } from './FillBankFields';
 import { FillGridFields } from './FillGridFields';
 import { FormSection } from './FormSection';
 import { GradeTagsField, HintsField } from './HintsField';
@@ -93,6 +94,9 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
   // fill-only
   const [template, setTemplate] = useState('');
   const [fillOnGrid, setFillOnGrid] = useState(false);
+  const [fillBankOn, setFillBankOn] = useState(false);
+  const [fillBankText, setFillBankText] = useState('');
+  const fillBank = fillBankOn ? parseBankText(fillBankText) : undefined;
 
   // code/fix-only. The file name follows the slug until the teacher edits it.
   const [delivery, setDelivery] = useState<DeliveryFormState>(() => deliveryFormFromPayload({}));
@@ -153,6 +157,10 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
       setError(t('authoring.templateEmpty'));
       return;
     }
+    if (taskType === 'fill' && fillBank && !isFillBankValid(template, fillBank)) {
+      setError(t('authoring.fillBankShape', { gaps: fillTemplateGaps(template).length, max: MAX_BANK_CARDS }));
+      return;
+    }
     const deliveryError = hasDelivery ? validateDeliveryForm(deliveryForm) : null;
     if (deliveryError) {
       setError(
@@ -200,7 +208,13 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
                         broken: brokenCode,
                         ...surfacePayloadFields(surface, grid, deliveryForm)
                       }
-                    : { type: 'fill', prompt, template, ...(fillOnGrid ? { grid } : {}) },
+                    : {
+                        type: 'fill',
+                        prompt,
+                        template,
+                        ...(fillOnGrid ? { grid } : {}),
+                        ...(fillBank ? { bank: fillBank } : {})
+                      },
         checks: parsedChecks.checks,
         ...((taskType === 'code' || taskType === 'fix') && parsedCases.cases.length > 0
           ? { cases: parsedCases.cases }
@@ -522,7 +536,16 @@ export function NewTaskForm({ topics }: NewTaskFormProps) {
         )}
 
         {taskType === 'fill' && (
-          <FillGridFields on={fillOnGrid} onToggle={setFillOnGrid} world={grid} onWorldChange={setGrid} />
+          <>
+            <FillGridFields on={fillOnGrid} onToggle={setFillOnGrid} world={grid} onWorldChange={setGrid} />
+            <FillBankFields
+              on={fillBankOn}
+              onToggle={setFillBankOn}
+              text={fillBankText}
+              onTextChange={setFillBankText}
+              template={template}
+            />
+          </>
         )}
 
         {hasDelivery && surface !== 'grid' && (

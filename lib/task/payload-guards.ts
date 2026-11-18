@@ -5,7 +5,7 @@
  * Trust"), so this only needs to catch a malformed request, not an
  * adversarial one.
  */
-import { isFillTemplateValid } from './fill';
+import { isFillBankValid, isFillTemplateValid } from './fill';
 import { isGridWorldSpec, isValidGridWorld } from './grid';
 import type { CodePayload, FillPayload, FixPayload, ParsonsPayload, PredictPayload, QuizPayload, TaskPayload } from './types';
 
@@ -130,7 +130,8 @@ export function isFillPayload(value: unknown): value is FillPayload {
     // rather than storing a fill task with nothing for the student to fill.
     isFillTemplateValid(p.template) &&
     // No surface on fill: a world, when there is one, is the grid.
-    (p.grid === undefined || isValidGridWorld(p.grid))
+    (p.grid === undefined || isValidGridWorld(p.grid)) &&
+    (p.bank === undefined || isFillBankValid(p.template, p.bank))
   );
 }
 

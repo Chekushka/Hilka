@@ -172,6 +172,8 @@ export interface CreateSessionInput {
   supportTaskIds?: string[];
   extensionTaskIds?: string[];
   studentRoutes?: StudentRoutes;
+  /** The class race (lib/game/race.ts); lessons only. */
+  game?: boolean;
 }
 
 /**
@@ -205,7 +207,8 @@ export async function createSession(
         checksSessionId: input.checksSessionId ?? null,
         supportTaskIds: input.supportTaskIds ?? [],
         extensionTaskIds: input.extensionTaskIds ?? [],
-        studentRoutes: input.studentRoutes ?? {}
+        studentRoutes: input.studentRoutes ?? {},
+        game: input.game ?? false
       })
       .onConflictDoNothing()
       .returning({ id: sessions.id, code: sessions.code });

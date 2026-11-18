@@ -276,12 +276,19 @@ body {
   from { opacity: 0.2; transform: rotateX(70deg); }
   to { opacity: 1; transform: none; }
 }
+@keyframes memory-pop {
+  from { transform: scale(0.92); box-shadow: 0 0 0 6px var(--honey-soft); }
+  to { transform: none; box-shadow: 0 0 0 0 transparent; }
+}
 .line-in { animation: line-in 260ms ease-out both; }
 .tile-flip { animation: tile-flip 260ms ease-out both; }
+/* The theory's memory picture: the box a step just changed, once (components/lesson/TheoryVisuals.tsx). */
+.memory-pop { animation: memory-pop 320ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
   .line-in,
-  .tile-flip {
+  .tile-flip,
+  .memory-pop {
     animation: none;
   }
 }

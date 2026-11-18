@@ -13,6 +13,7 @@ import { CheckAction, DockIdle, WorkspaceDock } from '@/components/task/Workspac
 import { SuccessPanel } from '@/components/task/SuccessPanel';
 import { WorkspaceFrame, type WorkspaceChrome } from '@/components/task/WorkspaceFrame';
 import { t } from '@/lib/i18n';
+import { isNumberList, useDraft } from '@/lib/task/draft';
 import type { AttemptOutcome, QuizTask } from '@/lib/task/types';
 
 interface QuizTaskViewProps {
@@ -21,10 +22,12 @@ interface QuizTaskViewProps {
   hintsEnabled?: boolean;
   next?: NextTaskAction;
   chrome?: WorkspaceChrome;
+  /** lib/task/draft.ts: keeps the unfinished answer while another task is open. */
+  draftScope?: string;
 }
 
-export function QuizTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome }: QuizTaskViewProps) {
-  const [selected, setSelected] = useState<number[]>([]);
+export function QuizTaskView({ task, onSubmitAttempt, hintsEnabled = true, next, chrome, draftScope }: QuizTaskViewProps) {
+  const [selected, setSelected] = useDraft<number[]>(draftScope, task, [], isNumberList);
   const [report, setReport] = useState<CheckReport | null>(null);
 
   const hintsUsedRef = useRef(0);

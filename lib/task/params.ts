@@ -53,7 +53,8 @@ export function resolveTaskParams<T extends Task>(task: T, seed: number): T {
       payload: {
         ...task.payload,
         prompt: substituteParams(task.payload.prompt, values),
-        template: substituteParams(task.payload.template, values)
+        template: substituteParams(task.payload.template, values),
+        ...(task.payload.bank ? { bank: task.payload.bank.map((card) => substituteParams(card, values)) } : {})
       },
       reference,
       params: undefined

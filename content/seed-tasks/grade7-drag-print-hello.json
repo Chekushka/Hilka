@@ -1,0 +1,40 @@
+{
+  "slug": "g7-drag-print-hello",
+  "topicSlug": "intro",
+  "type": "fill",
+  "title": "Перетягни: перша команда",
+  "payload": {
+    "type": "fill",
+    "prompt": "Перетягни у пропуск команду, яка виведе на екран «Привіт, світе!».",
+    "template": "{{1}}(\"Привіт, світе!\")\n",
+    "bank": [
+      "print",
+      "input",
+      "Print",
+      "say"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Привіт, світе!",
+      "trim": true,
+      "message": "Програма має вивести «Привіт, світе!». Яка команда показує текст на екрані?"
+    }
+  ],
+  "hints": [
+    "Команда виведення пишеться маленькими літерами."
+  ],
+  "reference": {
+    "code": "print(\"Привіт, світе!\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

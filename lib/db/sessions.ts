@@ -52,6 +52,8 @@ export interface TeacherSessionDetail {
   assignment: AssignmentRule;
   /** Routes (lib/session/routes.ts): each route's tasks, and who is on which. Never graded. */
   routes: { support: SessionTaskSummary[]; extension: SessionTaskSummary[]; studentRoutes: StudentRoutes };
+  /** The class race is on (lib/game/race.ts). */
+  game: boolean;
 }
 
 /** A class check of a homework, as the homework's page lists it. */
@@ -111,7 +113,8 @@ export async function getSessionForTeacher(
       support: await taskSummaries(db, row.session.supportTaskIds),
       extension: await taskSummaries(db, row.session.extensionTaskIds),
       studentRoutes: row.session.studentRoutes
-    }
+    },
+    game: row.session.game
   };
 }
 
@@ -221,7 +224,8 @@ export async function getOpenSessionByCode(code: string): Promise<JoinedSession 
     hintsEnabled: row.session.hintsEnabled,
     timeLimitS: row.session.timeLimitS,
     assignment: { poolSize: row.session.poolSize, shuffle: row.session.shuffle },
-    dueAt: row.session.dueAt?.toISOString() ?? null
+    dueAt: row.session.dueAt?.toISOString() ?? null,
+    game: row.session.game
   };
 }
 
@@ -323,6 +327,17 @@ export async function closeSession(sessionId: string, teacherId: string): Promis
     .update(sessions)
     .set({ closesAt: new Date() })
     .where(and(eq(sessions.id, id), isNull(sessions.closesAt)));
+  return true;
+}
+
+/** Switches the class race on or off. A lesson only: homework and class checks have none. */
+export async function setSessionGame(sessionId: string, teacherId: string, game: boolean): Promise<boolean> {
+  const id = await ownedSessionId(sessionId, teacherId);
+  if (!id) return false;
+  await getDb()
+    .update(sessions)
+    .set({ game })
+    .where(and(eq(sessions.id, id), eq(sessions.kind, 'lesson')));
   return true;
 }
 

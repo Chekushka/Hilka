@@ -7,6 +7,21 @@ print(2 == 7)   # False: == — два знаки!
 
 ---
 
+Результат порівняння можна покласти у змінну — так само, як число:
+
+```memory
+age = 14
+> age = 14
+teen = age >= 13
+> teen = True
+child = age < 10
+> child = False
+both = teen and child
+> both = False
+```
+
+---
+
 Логічні оператори:
 
 - `and` — правдиві **обидві** частини

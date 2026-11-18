@@ -19,6 +19,7 @@
  */
 import { useCallback, useSyncExternalStore } from 'react';
 import { hasSchoolMark, isIdleExpired } from '@/lib/device/school';
+import { PRACTICE_DRAFT_SCOPE, removeDrafts } from '@/lib/task/draft';
 import { normalizeProgressCode } from './code';
 import { EMPTY_PROGRESS, isValidPracticeProgress, type PracticeProgress } from './progress';
 
@@ -66,6 +67,7 @@ function dropIfIdle(): boolean {
     sessionStorage.removeItem(PROGRESS_STORAGE_KEY);
     sessionStorage.removeItem(CODE_STORAGE_KEY);
     sessionStorage.removeItem(ACTIVE_STORAGE_KEY);
+    removeDrafts(sessionStorage, PRACTICE_DRAFT_SCOPE);
     return true;
   } catch {
     return false;
@@ -248,6 +250,9 @@ export function clearLocalPractice(): void {
     target?.removeItem(PROGRESS_STORAGE_KEY);
     target?.removeItem(CODE_STORAGE_KEY);
     sessionStorage.removeItem(ACTIVE_STORAGE_KEY);
+    // Unfinished answers too, a session's included: the next student starts clean.
+    if (target) removeDrafts(target);
+    removeDrafts(sessionStorage);
   } catch {
     // Nothing stored to remove.
   }
@@ -262,6 +267,8 @@ export function clearAllLocalPractice(): void {
       target().removeItem(PROGRESS_STORAGE_KEY);
       target().removeItem(CODE_STORAGE_KEY);
       target().removeItem(ACTIVE_STORAGE_KEY);
+      // Whatever this browser kept of anyone's unfinished answers goes too, a session's included.
+      removeDrafts(target());
     } catch {
       // Unavailable storage holds nothing.
     }

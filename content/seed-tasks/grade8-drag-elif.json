@@ -1,0 +1,37 @@
+{
+  "slug": "g8-drag-elif",
+  "topicSlug": "conditions",
+  "type": "fill",
+  "title": "Перетягни: три гілки",
+  "payload": {
+    "type": "fill",
+    "prompt": "Склади розгалуження з трьох гілок. Для 12 балів програма має вивести лише «Відмінно».",
+    "template": "score = 12\nif score >= 10:\n    print(\"Відмінно\")\n{{1}} score >= 6:\n    print(\"Добре\")\n{{2}}:\n    print(\"Спробуй ще\")\n",
+    "bank": [
+      "elif",
+      "else",
+      "if"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Відмінно",
+      "trim": true,
+      "message": "Для 12 балів має вивестися тільки «Відмінно». Якщо вивелося ще й «Добре», друга перевірка стала окремим if."
+    }
+  ],
+  "hints": [
+    "Середня гілка має умову і продовжує той самий if.",
+    "Остання гілка — без умови."
+  ],
+  "reference": {
+    "code": "score = 12\nif score >= 10:\n    print(\"Відмінно\")\nelif score >= 6:\n    print(\"Добре\")\nelse:\n    print(\"Спробуй ще\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

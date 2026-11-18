@@ -1,0 +1,35 @@
+{
+  "slug": "g7-quiz-turtle-turn-right",
+  "topicSlug": "turtle-basics",
+  "type": "quiz",
+  "title": "Поворот черепашки",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яка команда повертає черепашку праворуч на 90°?",
+    "options": [
+      "turtle.right(90)",
+      "turtle.forward(90)",
+      "turtle.turn(90)",
+      "turtle.left(90)"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "right — праворуч, left — ліворуч, а forward рухає вперед, а не повертає."
+    }
+  ],
+  "hints": [
+    "Англійською «праворуч» — right."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

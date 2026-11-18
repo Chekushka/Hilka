@@ -6,6 +6,7 @@
  */
 import type { ReactNode } from 'react';
 import { CodeView, FlipTile, NotesCodeView, TermGrid } from '@/components/lesson/TheoryBits';
+import { FlowView, MemoryView } from '@/components/lesson/TheoryVisuals';
 import { parseMarkdown, type Block, type Inline } from '@/lib/lessons/markdown';
 import { rememberLines, splitTerm } from '@/lib/lessons/theory';
 import { t } from '@/lib/i18n';
@@ -91,7 +92,16 @@ export function renderBlock(block: Block, i: number, options: RenderOptions = {}
       );
     }
     case 'code':
-      return block.lang.toLowerCase() === 'notes' ? <NotesCodeView key={i} text={block.text} /> : <CodeBlock key={i} text={block.text} />;
+      switch (block.lang.toLowerCase()) {
+        case 'notes':
+          return <NotesCodeView key={i} text={block.text} />;
+        case 'memory':
+          return <MemoryView key={i} text={block.text} />;
+        case 'flow':
+          return <FlowView key={i} text={block.text} />;
+        default:
+          return <CodeBlock key={i} text={block.text} />;
+      }
   }
 }
 

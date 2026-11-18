@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { AutoRefresh } from '@/components/dashboard/AutoRefresh';
 import { ClassCheckPanel } from '@/components/dashboard/ClassCheckPanel';
+import { CopyLink } from '@/components/dashboard/CopyLink';
+import { ShowToClassButton } from '@/components/dashboard/ShowToClassButton';
 import { DeleteSessionButton } from '@/components/dashboard/DeleteSessionButton';
 import { RecheckPanel } from '@/components/dashboard/RecheckPanel';
 import { SessionControls } from '@/components/dashboard/SessionControls';
@@ -208,7 +210,15 @@ export default async function SessionDetailPage({
 
       <header className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-b border-line pb-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-ink">{t('dashboard.sessionDetailTitle', { code: session.code })}</h1>
+          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xl font-bold text-ink">
+            {t('dashboard.sessionDetailHeading')}
+            <span
+              className="rounded-xl border-2 border-accent bg-code-bg px-4 py-1 font-mono text-5xl tracking-[0.2em] text-ink"
+              data-testid="session-code"
+            >
+              {session.code}
+            </span>
+          </h1>
           <p className="mt-1 text-sm text-ink-muted">
             {t('dashboard.sessionSubtitle', {
               classTitle: session.classTitle,
@@ -226,6 +236,12 @@ export default async function SessionDetailPage({
             {' · '}
             {session.open ? t('dashboard.sessionOpen') : t('dashboard.sessionClosed')}
           </p>
+          {session.open && (
+            <div className="mt-3 flex flex-wrap items-center gap-3" data-testid="session-share">
+              <ShowToClassButton sessionId={session.id} />
+              <CopyLink path={`/s/${session.code}`} />
+            </div>
+          )}
           {check && session.checks && (
             <p className="mt-1 text-sm text-ink" data-testid="check-of">
               {t('dashboard.checkOf', { code: session.checks.code })}{' '}
@@ -258,7 +274,13 @@ export default async function SessionDetailPage({
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
         {session.open && <span className="text-xs text-ink-muted">{t('dashboard.liveUpdating')}</span>}
-        {session.open && <SessionControls sessionId={session.id} dueAt={homework ? session.dueAt : null} />}
+        {session.open && (
+          <SessionControls
+            sessionId={session.id}
+            dueAt={homework ? session.dueAt : null}
+            game={session.kind === 'lesson' ? session.game : null}
+          />
+        )}
         <span className="flex-1" />
         {rows.some((row) => row.sourceHash !== null) && (
           <a href={`/api/dashboard/sessions/${session.id}/files`} className="text-accent">
@@ -498,14 +520,20 @@ export default async function SessionDetailPage({
           <h2 id="session-tasks" className="text-lg font-semibold text-ink">
             {t('dashboard.tasksSummaryTitle')}
           </h2>
+          {session.open && <p className="mt-1 text-sm text-ink-muted">{t('dashboard.taskLinkNote')}</p>}
           <ol className="mt-3 grid gap-2 md:grid-cols-2">
             {session.tasks.map((task, index) => {
               const tally = taskTallies[index];
               return (
                 <li key={task.id} data-task-id={task.id} className="rounded-lg border border-line bg-surface px-4 py-3">
-                  <p className="font-medium text-ink">
-                    {index + 1}. {task.title}
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-medium text-ink">
+                      {index + 1}. {task.title}
+                    </p>
+                    {session.open && (
+                      <CopyLink compact path={`/s/${session.code}?task=${task.id}`} label={task.title} />
+                    )}
+                  </div>
                   <p className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
                     <span className="inline-flex items-center gap-1.5">
                       <CellMark status="passed" attempts={0} size={12} decorative />

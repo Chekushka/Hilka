@@ -22,7 +22,7 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
   plain: ''
 };
 
-function Tokens({ tokens }: { tokens: Token[] }) {
+export function Tokens({ tokens }: { tokens: Token[] }) {
   return (
     <>
       {tokens.map((token, i) =>

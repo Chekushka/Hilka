@@ -1,20 +1,29 @@
 /**
  * A teacher's actions on their own session: close it (its code stops working),
  * move a homework's deadline (docs/HOMEWORK.md, section 1), change its routes
- * after it was created (lib/session/routes.ts), or delete it with everything
+ * after it was created (lib/session/routes.ts), switch the class race on or off
+ * (lib/game/race.ts), or delete it with everything
  * recorded in it. Owner-scoped like every dashboard route — another
  * teacher's session reads as not found.
  */
 import { NextResponse } from 'next/server';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { filterToPublishedTaskIds } from '@/lib/db/session-authoring';
-import { closeSession, deleteSession, getSessionForTeacher, setSessionDueAt, setSessionRoutes } from '@/lib/db/sessions';
+import {
+  closeSession,
+  deleteSession,
+  getSessionForTeacher,
+  setSessionDueAt,
+  setSessionGame,
+  setSessionRoutes
+} from '@/lib/db/sessions';
 import { isUuid } from '@/lib/lessons/authoring';
 import { cleanStudentRoutes } from '@/lib/session/routes';
 
 type Body =
   | { action: 'close' }
   | { action: 'due'; dueAt: string }
+  | { action: 'game'; on: boolean }
   | { action: 'routes'; supportTaskIds: string[]; extensionTaskIds: string[]; studentRoutes: unknown };
 
 const isIdList = (value: unknown): value is string[] =>
@@ -24,6 +33,7 @@ function parse(body: unknown): Body | null {
   if (typeof body !== 'object' || body === null) return null;
   const b = body as Record<string, unknown>;
   if (b.action === 'close') return { action: 'close' };
+  if (b.action === 'game' && typeof b.on === 'boolean') return { action: 'game', on: b.on };
   if (b.action === 'due' && typeof b.dueAt === 'string' && !Number.isNaN(Date.parse(b.dueAt))) {
     return { action: 'due', dueAt: b.dueAt };
   }
@@ -46,7 +56,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ? await closeSession(id, teacher.id)
       : body.action === 'due'
         ? await setSessionDueAt(id, teacher.id, new Date(body.dueAt))
-        : await saveRoutes(id, teacher.id, body);
+        : body.action === 'game'
+          ? await setSessionGame(id, teacher.id, body.on)
+          : await saveRoutes(id, teacher.id, body);
   return done ? NextResponse.json({ ok: true }) : NextResponse.json({ error: 'not_found' }, { status: 404 });
 }
 

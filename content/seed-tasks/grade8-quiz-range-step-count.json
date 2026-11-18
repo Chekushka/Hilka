@@ -1,0 +1,36 @@
+{
+  "slug": "g8-quiz-range-step-count",
+  "topicSlug": "loops-for",
+  "type": "quiz",
+  "title": "Крок у range",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Скільки чисел дасть range(2, 10, 3)?",
+    "options": [
+      "3",
+      "8",
+      "4",
+      "2"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Від 2 з кроком 3: 2, 5, 8. Наступне було б 11, але воно вже за межею 10."
+    }
+  ],
+  "hints": [
+    "Третє число в range — крок.",
+    "Почни з 2 і додавай 3, поки не дійдеш до 10."
+  ],
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

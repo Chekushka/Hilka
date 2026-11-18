@@ -11,14 +11,18 @@ import { getOpenSessionByCode } from '@/lib/db/sessions';
 export const dynamic = 'force-dynamic';
 
 export default async function SessionPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ code: string }>;
+  /** `task`: a task's id — the teacher's link to one task opens it once a name is picked. */
+  searchParams: Promise<{ task?: string }>;
 }) {
   const { code } = await params;
+  const { task } = await searchParams;
   const session = await getOpenSessionByCode(code);
   if (!session) {
     notFound();
   }
-  return <SessionRoom code={code.toUpperCase()} session={session} />;
+  return <SessionRoom code={code.toUpperCase()} session={session} initialTaskId={typeof task === 'string' ? task : null} />;
 }

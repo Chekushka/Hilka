@@ -9,6 +9,7 @@ import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { deleteLesson, listExistingLessons, listTaskIds, updateLesson } from '@/lib/db/lesson-authoring';
 import { isUniqueViolation } from '@/lib/db/task-authoring';
 import { parseGuessRuns } from '@/lib/lessons/theory';
+import { parseMemoryRuns } from '@/lib/lessons/visuals';
 import { isLessonDraftShaped, isUuid, normalizeLessonDraft, validateLessonDraft } from '@/lib/lessons/authoring';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +31,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     lessons: await listExistingLessons(),
     knownTaskIds: await listTaskIds(),
     editingId: id,
-    guessRuns: parseGuessRuns((body as { guessRuns?: unknown }).guessRuns)
+    guessRuns: parseGuessRuns((body as { guessRuns?: unknown }).guessRuns),
+    memoryRuns: parseMemoryRuns((body as { memoryRuns?: unknown }).memoryRuns)
   });
   if (errors.length > 0) {
     return NextResponse.json({ error: 'invalid_lesson', errors }, { status: 400 });

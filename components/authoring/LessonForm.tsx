@@ -20,6 +20,14 @@ import { RowButton } from '@/components/authoring/ChecksField';
 import { TheoryDeck } from '@/components/lesson/TheoryDeck';
 import type { LessonDraft, LessonDraftError } from '@/lib/lessons/authoring';
 import { checkGuessRuns, guessShapeProblems, isAnswerable, theoryGuesses, type GuessRun } from '@/lib/lessons/theory';
+import {
+  checkMemoryRuns,
+  flowShapeProblems,
+  memoryRunRequests,
+  memoryShapeProblems,
+  theoryMemories,
+  type MemoryRun
+} from '@/lib/lessons/visuals';
 import type { LessonKind } from '@/lib/lessons/types';
 import { createRunner, type PythonRunner } from '@/lib/runner';
 import { moveItem } from '@/lib/task/check-form';
@@ -57,7 +65,14 @@ type SaveState =
   | { kind: 'error'; errors: string[] };
 
 /** What the three insert buttons put at the cursor: the syntax, shown by example (lib/lessons/markdown.ts). */
-const SNIPPET_KEY = { guess: 'lessonForm.snippetGuess', notes: 'lessonForm.snippetNotes', remember: 'lessonForm.snippetRemember' } as const;
+const SNIPPET_KEY = {
+  guess: 'lessonForm.snippetGuess',
+  notes: 'lessonForm.snippetNotes',
+  remember: 'lessonForm.snippetRemember',
+  memory: 'lessonForm.snippetMemory',
+  flowIf: 'lessonForm.snippetFlowIf',
+  flowWhile: 'lessonForm.snippetFlowWhile'
+} as const;
 const snippet = (kind: 'card' | keyof typeof SNIPPET_KEY) =>
   kind === 'card' ? '\n\n---\n\n' : `\n\n${t(SNIPPET_KEY[kind])}\n`;
 
@@ -68,6 +83,22 @@ async function runGuesses(runner: PythonRunner, markdown: string): Promise<Guess
     if (runs.some((run) => run.code === guess.code)) continue;
     const result = await runner.run(guess.code, { mode: 'headless' });
     runs.push({ code: guess.code, stdout: result.stdout, failed: Boolean(result.error) || result.timedOut });
+  }
+  return runs;
+}
+
+/** Runs every step of every memory block (lib/lessons/visuals.ts), with the checks of the boxes it should show. */
+async function runMemories(runner: PythonRunner, markdown: string): Promise<MemoryRun[]> {
+  const runs: MemoryRun[] = [];
+  for (const request of theoryMemories(markdown).flatMap(memoryRunRequests)) {
+    if (runs.some((run) => run.code === request.code)) continue;
+    const result = await runner.run(request.code, { mode: 'headless', exprs: request.exprs });
+    runs.push({
+      code: request.code,
+      exprResults: result.exprResults,
+      names: Object.keys(result.vars),
+      failed: Boolean(result.error) || result.timedOut
+    });
   }
   return runs;
 }
@@ -92,6 +123,13 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
   const runnerRef = useRef<PythonRunner | null>(null);
   useEffect(() => () => runnerRef.current?.dispose(), []);
   const shapeProblems = useMemo(() => guessShapeProblems(draft.explanationMd), [draft.explanationMd]);
+  const visualProblems = useMemo(
+    () => [
+      ...memoryShapeProblems(draft.explanationMd).map(({ memory, problem }) => t(`lessonForm.memoryProblem.${problem}`, { n: memory })),
+      ...flowShapeProblems(draft.explanationMd).map(({ flow, problem }) => t(`lessonForm.flowProblem.${problem}`, { n: flow }))
+    ],
+    [draft.explanationMd]
+  );
   const byId = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
   const chosen = new Set([...draft.coreTaskIds, ...draft.additionalTaskIds]);
   // The sequencing rule for file tasks (lib/task/prerequisite.ts): a warning, never a reason to refuse the save.
@@ -121,17 +159,22 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
   }
 
   /** Runs the guesses: the runs to send when every marked answer holds, or what to tell the teacher when one does not. */
-  async function checkGuesses(): Promise<{ runs: GuessRun[] } | { errors: string[] }> {
-    if (!theoryGuesses(draft.explanationMd).some(isAnswerable)) return { runs: [] };
+  async function checkGuesses(): Promise<{ runs: GuessRun[]; memoryRuns: MemoryRun[] } | { errors: string[] }> {
+    const hasGuesses = theoryGuesses(draft.explanationMd).some(isAnswerable);
+    const hasMemories = theoryMemories(draft.explanationMd).length > 0;
+    if (!hasGuesses && !hasMemories) return { runs: [], memoryRuns: [] };
     runnerRef.current ??= createRunner();
-    const runs = await runGuesses(runnerRef.current, draft.explanationMd);
-    const reports = checkGuessRuns(draft.explanationMd, runs);
-    if (reports.length === 0) return { runs };
-    return {
-      errors: reports.map((report) =>
+    const runs = hasGuesses ? await runGuesses(runnerRef.current, draft.explanationMd) : [];
+    const memoryRuns = hasMemories ? await runMemories(runnerRef.current, draft.explanationMd) : [];
+    const errors = [
+      ...checkGuessRuns(draft.explanationMd, runs).map((report) =>
         t(`lessonForm.guessRun.${report.problem}`, { n: report.guess, actual: report.actual ?? '' })
+      ),
+      ...checkMemoryRuns(draft.explanationMd, memoryRuns).map((report) =>
+        t(`lessonForm.memoryRun.${report.problem}`, { n: report.memory, step: report.step, name: report.name ?? '' })
       )
-    };
+    ];
+    return errors.length === 0 ? { runs, memoryRuns } : { errors };
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -149,8 +192,13 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
       setState({ kind: 'error', errors: [t('lessonForm.errors.guessMalformed')] });
       return;
     }
+    if (visualProblems.length > 0) {
+      setState({ kind: 'error', errors: [t('lessonForm.errors.visualMalformed')] });
+      return;
+    }
     setState({ kind: 'checking' });
     let guessRuns: GuessRun[];
+    let memoryRuns: MemoryRun[];
     try {
       const checked = await checkGuesses();
       if ('errors' in checked) {
@@ -158,6 +206,7 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
         return;
       }
       guessRuns = checked.runs;
+      memoryRuns = checked.memoryRuns;
     } catch {
       setState({ kind: 'error', errors: [t('lessonForm.guessEngineError')] });
       return;
@@ -167,7 +216,7 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
       const response = await fetch(lessonId ? `/api/lessons/${lessonId}` : '/api/lessons', {
         method: lessonId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...draft, guessRuns })
+        body: JSON.stringify({ ...draft, guessRuns, memoryRuns })
       });
       if (response.status === 400) {
         const data: { errors?: LessonDraftError[] } = await response.json();
@@ -300,6 +349,15 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
           <button type="button" onClick={() => insert(snippet('remember'))} className={insertClass}>
             {t('lessonForm.insertRemember')}
           </button>
+          <button type="button" onClick={() => insert(snippet('memory'))} className={insertClass}>
+            {t('lessonForm.insertMemory')}
+          </button>
+          <button type="button" onClick={() => insert(snippet('flowIf'))} className={insertClass}>
+            {t('lessonForm.insertFlowIf')}
+          </button>
+          <button type="button" onClick={() => insert(snippet('flowWhile'))} className={insertClass}>
+            {t('lessonForm.insertFlowWhile')}
+          </button>
         </div>
         <textarea
           ref={explanationRef}
@@ -316,6 +374,13 @@ export function LessonForm({ lessonId, initial, tasks }: LessonFormProps) {
           <ul className="flex flex-col gap-1 rounded-md border-l-4 border-attention bg-surface px-3 py-2 text-sm text-ink" data-testid="guess-problems">
             {shapeProblems.map(({ guess, problem }) => (
               <li key={`${guess}:${problem}`}>{t(`lessonForm.guessProblem.${problem}`, { n: guess })}</li>
+            ))}
+          </ul>
+        )}
+        {visualProblems.length > 0 && (
+          <ul className="flex flex-col gap-1 rounded-md border-l-4 border-attention bg-surface px-3 py-2 text-sm text-ink" data-testid="visual-problems">
+            {visualProblems.map((problem) => (
+              <li key={problem}>{problem}</li>
             ))}
           </ul>
         )}

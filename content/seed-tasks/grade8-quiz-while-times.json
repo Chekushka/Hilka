@@ -1,0 +1,35 @@
+{
+  "slug": "g8-quiz-while-times",
+  "topicSlug": "loops-while",
+  "type": "quiz",
+  "title": "Скільки повторень",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Скільки разів виконається тіло циклу?\n\n```\nx = 5\nwhile x > 0:\n    x = x - 2\n```",
+    "options": [
+      "3",
+      "2",
+      "5",
+      "4"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "x буде 5, 3, 1 — усі більші за 0, тож тіло виконається тричі. Після третього разу x = -1, і цикл зупиняється."
+    }
+  ],
+  "hints": [
+    "Випиши значення x перед кожною перевіркою умови."
+  ],
+  "difficulty": 2,
+  "gradeTags": [
+    8
+  ],
+  "version": 1,
+  "status": "published"
+}

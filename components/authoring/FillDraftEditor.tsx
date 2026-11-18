@@ -18,12 +18,13 @@ import { t } from '@/lib/i18n';
 import { createRunner, type GridWorld, type PythonRunner, type RunResult } from '@/lib/runner';
 import { DEFAULT_GRID_WORLD } from '@/lib/task/grid';
 import type { Check } from '@/lib/checker';
-import { isFillTemplateValid } from '@/lib/task/fill';
+import { MAX_BANK_CARDS, fillTemplateGaps, isFillBankValid, isFillTemplateValid } from '@/lib/task/fill';
 import type { FillPayload } from '@/lib/task/types';
 import { ChecksField } from './ChecksField';
 import { GradeTagsField, HintsField } from './HintsField';
 import { checkKindsFor } from '@/lib/task/check-form';
 import { parseChecksJson, parseGradeTags, parseHints } from './task-form-utils';
+import { FillBankFields, parseBankText } from './FillBankFields';
 import { FillGridFields } from './FillGridFields';
 import { FormSection } from './FormSection';
 
@@ -60,6 +61,9 @@ export function FillDraftEditor({ task, initialReferenceCode }: FillDraftEditorP
   const [onGrid, setOnGrid] = useState(task.payload.grid !== undefined);
   const [grid, setGrid] = useState<GridWorld>(task.payload.grid ?? DEFAULT_GRID_WORLD);
   const runGrid = onGrid ? grid : undefined;
+  const [bankOn, setBankOn] = useState(task.payload.bank !== undefined);
+  const [bankText, setBankText] = useState((task.payload.bank ?? []).join('\n'));
+  const bank = bankOn ? parseBankText(bankText) : undefined;
   const [checksText, setChecksText] = useState(JSON.stringify(task.checks, null, 2));
   const [hintsText, setHintsText] = useState(task.hints.join('\n'));
   const [difficulty, setDifficulty] = useState(task.difficulty);
@@ -96,6 +100,11 @@ export function FillDraftEditor({ task, initialReferenceCode }: FillDraftEditorP
       setSaveError(t('authoring.templateEmpty'));
       return { ok: false };
     }
+    if (bank && !isFillBankValid(template, bank)) {
+      setSaveState('error');
+      setSaveError(t('authoring.fillBankShape', { gaps: fillTemplateGaps(template).length, max: MAX_BANK_CARDS }));
+      return { ok: false };
+    }
     setSaveState('saving');
     setSaveError(null);
     const response = await fetch(`/api/tasks/${task.id}`, {
@@ -103,7 +112,7 @@ export function FillDraftEditor({ task, initialReferenceCode }: FillDraftEditorP
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        payload: { type: 'fill', prompt, template, ...(onGrid ? { grid } : {}) },
+        payload: { type: 'fill', prompt, template, ...(onGrid ? { grid } : {}), ...(bank ? { bank } : {}) },
         checks: parsedChecks.checks,
         hints: parseHints(hintsText),
         difficulty,
@@ -158,6 +167,8 @@ export function FillDraftEditor({ task, initialReferenceCode }: FillDraftEditorP
       setPublishState({ kind: 'run_failed' });
     } else if (body.error === 'reference_fails_checks') {
       setPublishState({ kind: 'checks_failed', failures: body.failures ?? [] });
+    } else if (body.error === 'bank_cannot_build_reference') {
+      setPublishState({ kind: 'error', message: t('authoring.fillBankMismatch') });
     } else if (body.error === 'not_a_draft') {
       setPublishState({ kind: 'error', message: t('authoring.alreadyPublished') });
     } else if (body.error === 'publish_race') {
@@ -244,6 +255,14 @@ export function FillDraftEditor({ task, initialReferenceCode }: FillDraftEditorP
             <p className="text-xs text-ink-muted">{t('authoring.templateHint')}</p>
           </div>
           <FillGridFields on={onGrid} onToggle={setOnGrid} world={grid} onWorldChange={setGrid} />
+          <FillBankFields
+            on={bankOn}
+            onToggle={setBankOn}
+            text={bankText}
+            onTextChange={setBankText}
+            template={template}
+            referenceCode={referenceCode}
+          />
         </FormSection>
 
         <FormSection title={t('authoring.sectionChecking')}>

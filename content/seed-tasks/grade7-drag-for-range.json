@@ -1,0 +1,38 @@
+{
+  "slug": "g7-drag-for-range",
+  "topicSlug": "loops-for",
+  "type": "fill",
+  "title": "Перетягни: від 1 до 5",
+  "payload": {
+    "type": "fill",
+    "prompt": "Склади цикл із карток, щоб програма вивела числа від 1 до 5, кожне з нового рядка.",
+    "template": "for i in {{1}}(1, {{2}}):\n    print(i)\n",
+    "bank": [
+      "range",
+      "6",
+      "5",
+      "len"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "1\n2\n3\n4\n5",
+      "trim": true,
+      "message": "Мають вийти числа 1, 2, 3, 4, 5. Пам’ятай: останнє число в range не входить."
+    }
+  ],
+  "hints": [
+    "Числа для циклу дає range.",
+    "Щоб дійти до 5, межа має бути на одне більша."
+  ],
+  "reference": {
+    "code": "for i in range(1, 6):\n    print(i)\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}

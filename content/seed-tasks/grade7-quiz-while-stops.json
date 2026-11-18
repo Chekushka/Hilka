@@ -1,0 +1,35 @@
+{
+  "slug": "g7-quiz-while-stops",
+  "topicSlug": "loops-while",
+  "type": "quiz",
+  "title": "Коли зупиняється while",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Коли цикл while припиняє повторюватися?",
+    "options": [
+      "Коли його умова стає хибною (False)",
+      "Завжди після 10 повторень",
+      "Коли умова стає істинною (True)",
+      "Ніколи — він повторюється вічно"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "while повторює тіло, поки умова істинна. Щойно вона стала хибною — цикл закінчується."
+    }
+  ],
+  "hints": [
+    "while перекладається як «поки»."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    7
+  ],
+  "version": 1,
+  "status": "published"
+}
