@@ -521,6 +521,20 @@ slower and the checker harder to reason about. Prefer a fixed kind.
 guidance, not as a verdict: «Периметр правильний, але фігура не замкнена» beats «Неправильно».
 A check with no `message` falls back to a calm generic line for its kind.
 
+### Criteria
+
+Before a graded task, the student reads what it is judged on (`lib/task/criteria.ts`): one line per
+requirement, generated from `checks` and `cases`, never typed by the author. The rules:
+
+- **Never the answer.** A check holding the expected value (`choice_equals`, `text_equals`,
+  `stdout_equals`, the value of `var_equals`, `number_close`'s number) is described by the kind of
+  requirement only. `uses`/`forbids` names and `var_equals`'s variable name are requirements, so
+  they are shown.
+- **Cases:** the count, the labels of visible cases, and only the count of hidden ones.
+- **Exhaustive.** `describeCheck` switches over every `Check['kind']`, so a new kind does not
+  compile until it says what it asks; its line goes into `messages/uk.json` under
+  `criteria.items` in the same commit.
+
 ## Reference solutions
 
 ```ts

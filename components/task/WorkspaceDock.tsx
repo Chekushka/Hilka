@@ -18,6 +18,7 @@
  * controls on the screen (project owner, after classroom use).
  */
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useGatedCheck } from './CheckGate';
 import { EngineLoading } from './EngineLoading';
 import { NextTaskButton, type NextTaskAction } from './NextTaskButton';
 import { StepBadge } from './StepBadge';
@@ -169,13 +170,14 @@ export function RunCheckActions({
   onRun: () => void;
   onCheck: () => void;
 }) {
+  const check = useGatedCheck(onCheck);
   return (
     <div className="flex items-center gap-2.5">
       <button type="button" onClick={onRun} disabled={disabled} className={passed ? secondary : runClass}>
         {busy ? <Spinner /> : <PlayIcon />}
         {busy ? t('workspace.running') : t('workspace.run')}
       </button>
-      <button type="button" onClick={onCheck} disabled={disabled} className={passed ? secondary : submitClass}>
+      <button type="button" onClick={check} disabled={disabled} className={passed ? secondary : submitClass}>
         <SubmitIcon />
         {busy ? t('workspace.checking') : t('workspace.check')}
       </button>
@@ -194,8 +196,9 @@ export function CheckAction({
   passed?: boolean;
   onCheck: () => void;
 }) {
+  const check = useGatedCheck(onCheck);
   return (
-    <button type="button" onClick={onCheck} disabled={disabled} className={passed ? secondary : submitClass}>
+    <button type="button" onClick={check} disabled={disabled} className={passed ? secondary : submitClass}>
       <SubmitIcon />
       {t('workspace.check')}
     </button>

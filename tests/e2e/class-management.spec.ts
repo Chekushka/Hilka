@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { confirmHandIn } from './hand-in';
 
 /**
  * Class + roster management (docs/TASKS.md, "Class + roster management"): a
@@ -233,6 +234,7 @@ test("a student renamed mid-session keeps their order, their variant and their w
   await student.getByRole('button', { name: new RegExp(`^${QUIZ.replace(/[()]/g, '\\$&')}`) }).click();
   await student.getByLabel(QUIZ_RIGHT, { exact: true }).check();
   await student.getByRole('button', { name: 'Здати' }).click();
+  await confirmHandIn(student);
   await expect(student.getByRole('heading', { name: 'Завдання здано' })).toBeVisible();
 
   // The teacher fixes the name while the session is open.

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { confirmHandIn } from './hand-in';
 
 /**
  * The student's progress in a session (lib/session/progress.ts): Checks left
@@ -48,6 +49,7 @@ async function answer(page: Page, title: string, option: string) {
   await taskRow(page, title).click();
   await page.getByLabel(option, { exact: true }).check();
   await page.getByRole('button', { name: 'Здати' }).click();
+  await confirmHandIn(page);
 }
 
 test('a graded lesson counts Checks down and shows the results at the end', async ({ browser, page }) => {
@@ -101,6 +103,7 @@ test('homework shows fixes left and, once done, how each task was counted', asyn
   await expect(student.getByTestId('workspace-checks-left')).toHaveText('Спроб: 2');
   await student.getByLabel(PRINT_RIGHT, { exact: true }).check();
   await student.getByRole('button', { name: 'Здати' }).click();
+  await confirmHandIn(student);
   await expect(student.getByRole('heading', { name: 'Готово!' })).toBeVisible();
   await student.getByRole('button', { name: /До списку завдань/ }).first().click();
   await expect(student.getByTestId('session-progress')).toContainText("Розв'язано: 1 з 2");

@@ -12,6 +12,7 @@
  * an explanation and a next step, with the student's own line shown inline.
  */
 import { useEffect } from 'react';
+import { useGatedCheck } from './CheckGate';
 import { PassedNote, ResultFrame as Frame } from './ResultFrame';
 import { humanize, humanizeTimeout, setUnmatchedReporter } from '@/lib/errors';
 import { t } from '@/lib/i18n';
@@ -46,6 +47,8 @@ function useUnmatchedErrorReporting() {
 
 export function ResultPanel({ result, report, code, onRetry }: ResultPanelProps) {
   useUnmatchedErrorReporting();
+  // "Try again" hands the task in again, so in a graded session it asks first, like Hand in.
+  const retry = useGatedCheck(onRetry);
 
   if (result.timedOut || result.error) {
     const human = result.timedOut ? humanizeTimeout() : humanize(result.error!, code);
@@ -63,7 +66,7 @@ export function ResultPanel({ result, report, code, onRetry }: ResultPanelProps)
         {human.hint && <p className="mt-2 text-ink-muted">{human.hint}</p>}
         <button
           type="button"
-          onClick={onRetry}
+          onClick={retry}
           className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-surface"
         >
           {t('workspace.tryAgain')}

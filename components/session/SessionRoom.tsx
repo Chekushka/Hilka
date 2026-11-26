@@ -37,10 +37,15 @@
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { RaceCard } from '@/components/game/RaceCard';
+import { GradingRules } from '@/components/session/GradingRules';
+import { CheckGateProvider, ConfirmCheckDialog } from '@/components/task/CheckGate';
 import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
 import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
+import { CriteriaList, TaskCriteria, pointsText } from '@/components/task/TaskCriteria';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { DEFAULT_GRADING } from '@/lib/grading/config';
+import { taskLevel } from '@/lib/grading/explain';
+import { taskPoints } from '@/lib/grading/grade';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
 import { checksLeft, improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
 import { t } from '@/lib/i18n';
@@ -293,6 +298,8 @@ export function SessionRoom({ code, session, initialTaskId = null }: SessionRoom
   const [taskLoadFailed, setTaskLoadFailed] = useState<string | null>(null);
   const fetchedRef = useRef<Set<string>>(new Set());
   const [own, setOwn] = useState<OwnSessionState | null>(null);
+  // The Check waiting on the student's yes in the confirm question (components/task/CheckGate.tsx).
+  const [pendingCheck, setPendingCheck] = useState<(() => void) | null>(null);
   const graded = session.mode === 'graded';
   const homework = session.kind === 'homework';
   const classCheck = session.kind === 'check' && (
@@ -418,6 +425,7 @@ export function SessionRoom({ code, session, initialTaskId = null }: SessionRoom
   );
 
   function openTask(taskId: string | null) {
+    setPendingCheck(null);
     setSelectedTaskId(taskId);
     setOpenedAs(taskId ? stateOf(taskId).status : null);
     window.scrollTo(0, 0);
@@ -652,6 +660,25 @@ export function SessionRoom({ code, session, initialTaskId = null }: SessionRoom
       );
     }
     const routeNotice = isRouteTask && graded && <Notice testId="route-task-notice">{t('session.routeTaskNotice')}</Notice>;
+    // A graded task shows what it is judged on before the student starts (lib/task/criteria.ts).
+    const criteriaPanel = graded && !isRouteTask && <TaskCriteria task={selectedTask} />;
+    // Every Check that still counts is asked about first, in the middle of the screen.
+    const gated = (selectedChecksLeft ?? 0) > 0;
+    const fixCredit = percent(DEFAULT_GRADING.fixCredit);
+    const attemptNote =
+      session.kind === 'check'
+        ? t('confirmCheck.classCheck', { credit: fixCredit })
+        : !homework
+          ? t('confirmCheck.graded')
+          : isImprovement
+            ? t('confirmCheck.improvement')
+            : state.status === 'fixable'
+              ? state.fixesLeft > 1
+                ? t('confirmCheck.homeworkFix', { left: state.fixesLeft - 1, credit: fixCredit })
+                : t('confirmCheck.homeworkLastFix', { credit: fixCredit })
+              : t('confirmCheck.homeworkFirst', { n: DEFAULT_GRADING.maxFixes, credit: fixCredit });
+    // What the task is worth only where its own points count: not in a class check, not for an improvement task.
+    const showWorth = session.kind !== 'check' && !isImprovement;
     const homeworkNotice =
       homework &&
       !isRouteTask &&
@@ -670,48 +697,79 @@ export function SessionRoom({ code, session, initialTaskId = null }: SessionRoom
         </Notice>
       ) : null);
     return (
-      <TaskWorkspace
-        key={selectedTask.id}
-        task={selectedTask}
-        hintsEnabled={session.hintsEnabled}
-        draftScope={sessionDraftScope(code, student.id)}
-        next={next}
-        onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
-        chrome={{
-          context: (
-            <>
-              {backToList}
-              <span className="flex-1" />
-              {position > 0 && (
-                <span className="text-ink-muted">{t('task.position', { n: position, total: visibleTasks.length })}</span>
-              )}
-              {selectedChecksLeft !== null && (
-                <span className="rounded-full bg-shell px-3 py-1 text-ink" data-testid="workspace-checks-left">
-                  {t('session.workspaceChecksLeft', { n: selectedChecksLeft })}
-                </span>
-              )}
-              {timerBadge}
-            </>
-          ),
-          notice: (homeworkNotice || routeNotice || showPrerequisite) && (
-            <>
-              {homeworkNotice && <div className="px-5 pt-4">{homeworkNotice}</div>}
-              {routeNotice && <div className="px-5 pt-4">{routeNotice}</div>}
-              {showPrerequisite && (
-                <PrerequisiteNote
-                  action={{
-                    kind: 'button',
-                    title: prerequisite.title,
-                    onSelect: () => openTask(prerequisite.id)
-                  }}
-                />
-              )}
-            </>
-          )
-        }}
-      />
+      <CheckGateProvider gate={gated ? (proceed) => setPendingCheck(() => proceed) : null}>
+        <TaskWorkspace
+          key={selectedTask.id}
+          task={selectedTask}
+          hintsEnabled={session.hintsEnabled}
+          draftScope={sessionDraftScope(code, student.id)}
+          next={next}
+          onSubmitAttempt={(outcome) => submitAttempt(selectedTask.id, selectedTask.version, outcome)}
+          chrome={{
+            context: (
+              <>
+                {backToList}
+                <span className="flex-1" />
+                {position > 0 && (
+                  <span className="text-ink-muted">{t('task.position', { n: position, total: visibleTasks.length })}</span>
+                )}
+                {selectedChecksLeft !== null && (
+                  <span className="rounded-full bg-shell px-3 py-1 text-ink" data-testid="workspace-checks-left">
+                    {t('session.workspaceChecksLeft', { n: selectedChecksLeft })}
+                  </span>
+                )}
+                {timerBadge}
+              </>
+            ),
+            notice: (criteriaPanel || homeworkNotice || routeNotice || showPrerequisite) && (
+              <>
+                {criteriaPanel && <div className="px-5 pt-4">{criteriaPanel}</div>}
+                {homeworkNotice && <div className="px-5 pt-4">{homeworkNotice}</div>}
+                {routeNotice && <div className="px-5 pt-4">{routeNotice}</div>}
+                {showPrerequisite && (
+                  <PrerequisiteNote
+                    action={{
+                      kind: 'button',
+                      title: prerequisite.title,
+                      onSelect: () => openTask(prerequisite.id)
+                    }}
+                  />
+                )}
+              </>
+            )
+          }}
+        />
+        <ConfirmCheckDialog
+          open={pendingCheck !== null}
+          onCancel={() => setPendingCheck(null)}
+          onConfirm={() => {
+            const proceed = pendingCheck;
+            setPendingCheck(null);
+            proceed?.();
+          }}
+        >
+          <p className="rounded-lg border-l-4 border-attention bg-shell px-4 py-3 font-semibold" data-testid="confirm-check-note">
+            {attemptNote}
+          </p>
+          {homework && lateNow < 1 && <p>{t('confirmCheck.late', { credit: percent(lateNow) })}</p>}
+          {showWorth && (
+            <p>{t('confirmCheck.worth', { points: pointsText(taskPoints(selectedTask.difficulty)) })}</p>
+          )}
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-ink-muted">{t('confirmCheck.criteriaTitle')}</p>
+            <CriteriaList task={selectedTask} />
+          </div>
+        </ConfirmCheckDialog>
+      </CheckGateProvider>
     );
   }
+
+  // What each task is worth, in the list of a graded session — only for the tasks whose own points count.
+  const worthShown = (task: JoinedSessionTask) =>
+    graded &&
+    session.kind !== 'check' &&
+    !rules.routeTaskIds?.includes(task.id) &&
+    !rules.improvementTaskIds.includes(task.id);
 
   // Numbered, with the kind of work under the title and a solved task ticked,
   // so the list is not a column of identical grey rows.
@@ -741,6 +799,15 @@ export function SessionRoom({ code, session, initialTaskId = null }: SessionRoom
             {/* Visual only: the row's name stays the task's title, which is how it is announced and found. */}
             <span aria-hidden="true" className="block text-xs text-ink-muted">
               {t(`task.types.${task.type}`)}
+              {worthShown(task) && (
+                <span data-testid="task-worth">
+                  {' · '}
+                  {t('grading.listWorth', {
+                    level: t(`grading.level.${taskLevel(task.difficulty)}`),
+                    points: pointsText(taskPoints(task.difficulty))
+                  })}
+                </span>
+              )}
             </span>
           </span>
           <StatusMark
@@ -779,6 +846,17 @@ export function SessionRoom({ code, session, initialTaskId = null }: SessionRoom
         {timerBadge}
       </div>
       {progress.complete && <ResultsSummary progress={progress} homework={homework} graded={graded} />}
+      <GradingRules
+        defaultOpen={attempts.length === 0}
+        input={{
+          kind: session.kind,
+          mode: session.mode,
+          hintsEnabled: session.hintsEnabled,
+          timeLimitS: session.timeLimitS,
+          difficulties: [...myTasks, ...(homework ? session.improvementTasks : [])].map((task) => task.difficulty),
+          hasImprovementTasks: session.improvementTasks.length > 0
+        }}
+      />
       {myTasks.length > 0 && <SessionProgressBar progress={progress} />}
       {session.game && <RaceCard code={code} studentId={student.id} refreshKey={attempts.length} />}
       {own.routeTasksFirst && routeSection}
