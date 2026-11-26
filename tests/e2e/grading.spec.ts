@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { confirmHandIn } from './hand-in';
 
 /**
  * Suggested grades in a graded session (docs/AI_CONTEXT.md, "Grading"): a
@@ -48,7 +49,7 @@ test('partial credit in a graded session becomes a suggested grade', async ({ pa
   await typeSolution(page, 'a = int(input())\nb = int(input())\nprint(b)');
   const [attemptResponse] = await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/attempts') && response.request().method() === 'POST'),
-    page.getByRole('button', { name: 'Здати' }).click()
+    page.getByRole('button', { name: 'Здати' }).click().then(() => confirmHandIn(page))
   ]);
   expect(attemptResponse.status()).toBe(201);
   const body = attemptResponse.request().postDataJSON() as { passed: boolean; score: number };

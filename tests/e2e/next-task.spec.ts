@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { confirmHandIn } from './hand-in';
 
 /**
  * Two workspace behaviours: the turtle canvas appears only where a task
@@ -156,6 +157,7 @@ test('in a graded session, the next-task button moves on without reopening a loc
   await waitForEngine(page);
   await typeSolution(page, SQUARE);
   await page.getByRole('button', { name: 'Здати' }).click();
+  await confirmHandIn(page);
 
   // The first Check locks the task; the locked screen carries the way on.
   await expect(page.getByRole('heading', { name: 'Завдання здано' })).toBeVisible({ timeout: 20_000 });
@@ -166,6 +168,7 @@ test('in a graded session, the next-task button moves on without reopening a loc
   await waitForEngine(page);
   await typeSolution(page, 'import turtle\nturtle.forward(100)');
   await page.getByRole('button', { name: 'Здати' }).click();
+  await confirmHandIn(page);
   await expect(page.getByRole('heading', { name: 'Завдання здано' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole('button', { name: NEXT, exact: true })).toHaveCount(0);
 

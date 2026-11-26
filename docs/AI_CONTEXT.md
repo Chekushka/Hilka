@@ -724,8 +724,16 @@ Designed and decided with the project owner in docs/HOMEWORK.md; this is the arc
 
 ## Grading
 
-Decided with the teacher. Hilka **suggests** a grade; the teacher decides, and students never see
-the number in Hilka — they see which tasks they solved.
+Decided with the teacher. Hilka **suggests** a grade; the teacher decides. Students see the
+**rules and the scale before they start** — by the school's rules they must know what they get and
+for what (project owner, 2026-11; this replaced "students never see anything of the grade"). They
+do not see the suggested number itself: their results say which tasks they solved.
+
+- **What students are shown is generated, never written twice.** The rules and the 12-point
+  scale come from `lib/grading/config.ts` through `lib/grading/explain.ts`; each graded task's
+  criteria come from its checks and cases through `lib/task/criteria.ts` and never contain an
+  expected value. Every Check that still counts is confirmed in a modal first
+  (`components/task/CheckGate.tsx`).
 
 - Only **graded sessions** produce a grade, and they should draw only from mandatory lessons
   ("Course Structure"). Practice and additional tasks never lower anyone's grade.

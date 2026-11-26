@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { confirmHandIn } from './hand-in';
 
 /**
  * Homework (docs/HOMEWORK.md): built in the session builder with a deadline
@@ -87,6 +88,7 @@ async function joinAs(browser: Browser, code: string, name: string): Promise<Pag
 async function answer(page: Page, option: string) {
   await page.getByLabel(option, { exact: true }).check();
   await page.getByRole('button', { name: 'Здати' }).click();
+  await confirmHandIn(page);
 }
 
 test('a failed first Check can be fixed twice for 70%, then the improvement task appears and the state survives a reload', async ({
@@ -337,9 +339,10 @@ async function pasteProgram(page: Page, code: string) {
  * waiting for `POST /api/attempts`, so a spec that closes the browser right
  * after could cancel the request — and lose the attempt it then asserts on.
  */
-async function checkAndPass(page: Page) {
+async function checkAndPass(page: Page, { graded = false }: { graded?: boolean } = {}) {
   const recorded = attemptStored(page);
   await page.getByRole('button', { name: 'Здати' }).click();
+  if (graded) await confirmHandIn(page);
   await expect(page.getByRole('heading', { name: 'Готово!' })).toBeVisible({ timeout: 20_000 });
   expect((await recorded).status()).toBe(201);
 }
@@ -368,7 +371,7 @@ test('facts for the teacher: a whole paste, a renamed copy, a construct not taug
   await openSign(olena);
   await pasteProgram(olena, SIGN_SOLUTION);
   const firstCheck = olena.waitForRequest((request) => request.url().endsWith('/api/attempts'));
-  await checkAndPass(olena);
+  await checkAndPass(olena, { graded: true });
   const { sessionId, taskId, taskVersion } = JSON.parse((await firstCheck).postData() ?? '{}');
   await olena.context().close();
 
@@ -376,7 +379,7 @@ test('facts for the teacher: a whole paste, a renamed copy, a construct not taug
   const taras = await joinAs(browser, code, 'Тарас');
   await openSign(taras);
   await typeProgram(taras, SIGN_SOLUTION.replace(/\bn\b/g, 'number'));
-  await checkAndPass(taras);
+  await checkAndPass(taras, { graded: true });
   await taras.context().close();
 
   // Соломія solves it with a function — no lesson so far has shown `def`.
@@ -393,7 +396,7 @@ test('facts for the teacher: a whole paste, a renamed copy, a construct not taug
 print(sign(int(input())))
 `
   );
-  await checkAndPass(solomiia);
+  await checkAndPass(solomiia, { graded: true });
   await solomiia.context().close();
 
   // Ігор never solves it, but posts a "pass" for a program that does not pass — what devtools would do.
