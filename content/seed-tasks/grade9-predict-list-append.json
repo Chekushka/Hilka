@@ -1,0 +1,33 @@
+{
+  "slug": "g9-predict-list-append",
+  "topicSlug": "lists",
+  "type": "predict",
+  "title": "Додали в кінець",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = [3, 5]\na.append(7)\na.append(1)\nprint(len(a), a[-1])",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "4 1",
+      "normalize": "trim",
+      "message": "Після двох append у списку 4 елементи: [3, 5, 7, 1]. a[-1] — останній, тобто 1."
+    }
+  ],
+  "hints": [
+    "append додає один елемент у кінець.",
+    "Індекс -1 — це останній елемент."
+  ],
+  "reference": {
+    "code": "a = [3, 5]\na.append(7)\na.append(1)\nprint(len(a), a[-1])"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

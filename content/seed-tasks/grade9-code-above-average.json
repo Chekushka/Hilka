@@ -1,0 +1,105 @@
+{
+  "slug": "g9-code-above-average",
+  "topicSlug": "lists-iteration",
+  "type": "code",
+  "title": "Більші за середнє",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, а потім n цілих чисел. Виведи, скільки з них більші за середнє арифметичне всіх цих чисел.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "2, 4, 6, 8, 10",
+      "stdin": [
+        "5",
+        "2",
+        "4",
+        "6",
+        "8",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "1, 1, 1, 9",
+      "stdin": [
+        "4",
+        "1",
+        "1",
+        "1",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "усі однакові",
+      "stdin": [
+        "3",
+        "5",
+        "5",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Коли всі числа однакові, жодне не більше за середнє."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "з від'ємними",
+      "stdin": [
+        "4",
+        "-3",
+        "-1",
+        "0",
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Середнє можна порахувати лише після того, як прочитано всі числа, — тому їх треба зберегти в список.",
+    "sum(nums) / n — середнє.",
+    "Другим циклом пройди по списку й порівнюй кожне число із середнім."
+  ],
+  "reference": {
+    "code": "n = int(input())\nnums = []\nfor i in range(n):\n    nums.append(int(input()))\navg = sum(nums) / n\ncount = 0\nfor x in nums:\n    if x > avg:\n        count = count + 1\nprint(count)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,38 @@
+{
+  "slug": "g9-quiz-randint-values",
+  "topicSlug": "random",
+  "type": "quiz",
+  "title": "Що може випасти?",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Які числа може повернути random.randint(1, 6)? Обери всі.",
+    "options": [
+      "1",
+      "6",
+      "0",
+      "7",
+      "3.5"
+    ],
+    "multiple": true
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0,
+        1
+      ],
+      "message": "randint(1, 6) дає ціле число від 1 до 6 — обидва кінці входять. 0, 7 і 3.5 — ні."
+    }
+  ],
+  "hints": [
+    "У randint обидві межі входять.",
+    "randint дає лише цілі числа."
+  ],
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

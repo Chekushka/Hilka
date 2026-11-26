@@ -1,0 +1,86 @@
+{
+  "slug": "g9-parsons-caesar",
+  "topicSlug": "strings-cipher",
+  "type": "parsons",
+  "title": "Шифрувальник (склади код)",
+  "payload": {
+    "type": "parsons",
+    "prompt": "Змінні abc (абетка), text (що шифруємо) і k (зсув) уже є. Склади з рядків частину програми, яка шифрує text зі зсувом k: літери з абетки зсуває, а решту символів залишає як є.",
+    "lines": [
+      {
+        "text": "result = \"\"",
+        "indent": 0
+      },
+      {
+        "text": "for ch in text:",
+        "indent": 0
+      },
+      {
+        "text": "if ch in abc:",
+        "indent": 1
+      },
+      {
+        "text": "i = abc.find(ch)",
+        "indent": 2
+      },
+      {
+        "text": "result = result + abc[(i + k) % len(abc)]",
+        "indent": 2
+      },
+      {
+        "text": "else:",
+        "indent": 1
+      },
+      {
+        "text": "result = result + ch",
+        "indent": 2
+      },
+      {
+        "text": "print(result)",
+        "indent": 0
+      }
+    ],
+    "distractors": [
+      "result = abc[i + k]"
+    ],
+    "indentMode": "chosen"
+  },
+  "checks": [
+    {
+      "kind": "order_equals",
+      "lines": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "checkIndent": true,
+      "indents": [
+        0,
+        0,
+        1,
+        2,
+        2,
+        1,
+        2,
+        0
+      ],
+      "message": "Ще не так. Результат збирай у рядок result, а виводь один раз — після циклу."
+    }
+  ],
+  "hints": [
+    "Спочатку порожній result, потім цикл по літерах.",
+    "Номер літери шукай лише тоді, коли літера є в абетці.",
+    "print — без відступу, після циклу."
+  ],
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

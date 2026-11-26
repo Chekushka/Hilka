@@ -1,0 +1,39 @@
+{
+  "slug": "g9-quiz-list-index",
+  "topicSlug": "lists",
+  "type": "quiz",
+  "title": "Другий елемент",
+  "payload": {
+    "type": "quiz",
+    "prompt": "fruits = [\"яблуко\", \"груша\", \"слива\"]\nЯк отримати «груша»?",
+    "options": [
+      "fruits[1]",
+      "fruits[2]",
+      "fruits(1)",
+      "fruits[\"груша\"]"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Нумерація в списку починається з 0: fruits[0] — яблуко, fruits[1] — груша."
+    }
+  ],
+  "hints": [
+    "Перший елемент має номер 0.",
+    "До елемента звертаються квадратними дужками."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

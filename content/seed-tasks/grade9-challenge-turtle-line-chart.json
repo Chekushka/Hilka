@@ -1,0 +1,43 @@
+{
+  "slug": "g9-challenge-turtle-line-chart",
+  "topicSlug": "project-turtle",
+  "type": "code",
+  "title": "Лінійний графік",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй графік за списком values = [20, 60, 40, 90, 70]: точки мають координати (0, 20), (30, 60), (60, 40), (90, 90), (120, 70) — x зростає на 30, y береться зі списку. Сполучи їх лінією по черзі. До першої точки йди з піднятим пером.",
+    "starter": "import turtle\nvalues = [20, 60, 40, 90, 70]\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 4,
+      "message": "Між п'ятьма точками — чотири відрізки."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Графік не збігається: x — 0, 30, 60, 90, 120, а y — числа зі списку."
+    }
+  ],
+  "hints": [
+    "goto(x, y) веде черепашку просто в точку.",
+    "Номер точки i дає x = i * 30, а y = values[i].",
+    "Першу точку досягни з піднятим пером."
+  ],
+  "reference": {
+    "code": "import turtle\nvalues = [20, 60, 40, 90, 70]\nturtle.penup()\nturtle.goto(0, values[0])\nturtle.pendown()\nfor i in range(1, len(values)):\n    turtle.goto(i * 30, values[i])\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

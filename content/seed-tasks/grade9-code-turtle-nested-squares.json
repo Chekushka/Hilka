@@ -1,0 +1,40 @@
+{
+  "slug": "g9-code-turtle-nested-squares",
+  "topicSlug": "project-turtle",
+  "type": "code",
+  "title": "Квадрати зі спільним центром",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "За списком sizes = [40, 80, 120, 160] намалюй квадрати з такими сторонами, у яких спільний центр. Між квадратами переходь із піднятим пером (penup, goto, pendown).",
+    "starter": "import turtle\nsizes = [40, 80, 120, 160]\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 16,
+      "message": "Має бути чотири квадрати — 16 сторін."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Квадрати мають бути зі сторонами 40, 80, 120, 160 і спільним центром."
+    }
+  ],
+  "hints": [
+    "Центр — точка (0, 0). Лівий нижній кут квадрата зі стороною s — (-s / 2, -s / 2).",
+    "Перед кожним квадратом: penup(), goto(...), pendown().",
+    "Квадрат — 4 рази forward(s) і left(90)."
+  ],
+  "reference": {
+    "code": "import turtle\nsizes = [40, 80, 120, 160]\nfor s in sizes:\n    turtle.penup()\n    turtle.goto(-s / 2, -s / 2)\n    turtle.pendown()\n    for i in range(4):\n        turtle.forward(s)\n        turtle.left(90)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

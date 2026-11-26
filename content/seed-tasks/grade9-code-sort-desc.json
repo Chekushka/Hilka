@@ -1,0 +1,88 @@
+{
+  "slug": "g9-code-sort-desc",
+  "topicSlug": "lists-sort",
+  "type": "code",
+  "title": "Від найбільшої",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, а потім n оцінок (цілі числа). Виведи їх від найбільшої до найменшої, кожну в окремому рядку.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "7, 12, 3, 9",
+      "stdin": [
+        "4",
+        "7",
+        "12",
+        "3",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            12,
+            9,
+            7,
+            3
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "з однаковими",
+      "stdin": [
+        "3",
+        "5",
+        "5",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            5,
+            5,
+            1
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одна оцінка",
+      "stdin": [
+        "1",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            10
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Збери оцінки у список.",
+    "nums.sort(reverse=True) сортує від більшого до меншого."
+  ],
+  "reference": {
+    "code": "n = int(input())\nnums = []\nfor i in range(n):\n    nums.append(int(input()))\nnums.sort(reverse=True)\nfor x in nums:\n    print(x)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

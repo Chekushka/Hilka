@@ -1,0 +1,97 @@
+{
+  "slug": "g9-code-palindrome",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Паліндром",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай слово. Виведи «так», якщо воно однаково читається в обидва боки (великі й малі літери не розрізняй), інакше — «ні».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Анна",
+      "stdin": [
+        "Анна"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose",
+          "message": "«Анна» і «аннА» — те саме слово, якщо не зважати на велику літеру. Спробуй lower()."
+        }
+      ]
+    },
+    {
+      "label": "кіт",
+      "stdin": [
+        "кіт"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ні",
+          "normalize": "loose"
+        }
+      ]
+    },
+    {
+      "label": "ротор",
+      "stdin": [
+        "ротор"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "Пилип",
+      "stdin": [
+        "Пилип"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "так",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "книга",
+      "stdin": [
+        "книга"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ні",
+          "normalize": "loose"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Переверни слово й порівняй з початковим.",
+    "Спершу зроби всі літери малими: word.lower()."
+  ],
+  "reference": {
+    "code": "word = input().lower()\nif word == word[::-1]:\n    print(\"так\")\nelse:\n    print(\"ні\")\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

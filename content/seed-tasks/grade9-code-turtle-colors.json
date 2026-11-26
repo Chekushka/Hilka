@@ -1,0 +1,44 @@
+{
+  "slug": "g9-code-turtle-colors",
+  "topicSlug": "project-turtle",
+  "type": "code",
+  "title": "Кольорові квадрати",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй у ряд чотири квадрати зі стороною 40 і проміжком 10 між ними. Колір кожного бери по черзі зі списку colors = [\"red\", \"green\", \"blue\", \"orange\"].",
+    "starter": "import turtle\ncolors = [\"red\", \"green\", \"blue\", \"orange\"]\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "colors": [
+        "red",
+        "green",
+        "blue",
+        "orange"
+      ],
+      "message": "Мають бути всі чотири кольори зі списку: turtle.color(c) перед кожним квадратом."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Має бути чотири квадрати 40 × 40 у ряд з проміжком 10."
+    }
+  ],
+  "hints": [
+    "Цикл for c in colors, а в ньому turtle.color(c).",
+    "Між квадратами: penup(), forward(50), pendown()."
+  ],
+  "reference": {
+    "code": "import turtle\ncolors = [\"red\", \"green\", \"blue\", \"orange\"]\nfor c in colors:\n    turtle.color(c)\n    for i in range(4):\n        turtle.forward(40)\n        turtle.left(90)\n    turtle.penup()\n    turtle.forward(50)\n    turtle.pendown()\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

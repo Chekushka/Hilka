@@ -1,0 +1,40 @@
+{
+  "slug": "g9-predict-join-upper",
+  "topicSlug": "strings-methods",
+  "type": "predict",
+  "title": "Склеїти і збільшити",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "words = [\"сонце\", \"світить\"]\nprint(\"-\".join(words).upper())",
+    "answerMode": "choice",
+    "options": [
+      "СОНЦЕ-СВІТИТЬ",
+      "сонце-світить",
+      "СОНЦЕ СВІТИТЬ",
+      "Сонце-Світить"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "join склеює слова через «-», а upper робить усі літери великими."
+    }
+  ],
+  "hints": [
+    "Рядок перед .join — те, що ставиться між словами.",
+    "upper — усі літери великі."
+  ],
+  "reference": {
+    "code": "words = [\"сонце\", \"світить\"]\nprint(\"-\".join(words).upper())"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

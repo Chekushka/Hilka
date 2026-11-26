@@ -1,0 +1,87 @@
+{
+  "slug": "g9-code-review-max-count",
+  "topicSlug": "review",
+  "type": "code",
+  "title": "До нуля: скільки і найбільше",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Вводь цілі числа, по одному в рядку, доки не введеш 0 (сам 0 не рахується). Виведи в одному рядку два числа: скільки чисел введено і яке з них найбільше. Перед 0 завжди є хоча б одне число.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "4, 11, -2, 0",
+      "stdin": [
+        "4",
+        "11",
+        "-2",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            3,
+            11
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "усі від'ємні",
+      "stdin": [
+        "-5",
+        "-1",
+        "-9",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            3,
+            -1
+          ],
+          "tol": 0.01,
+          "message": "Усі числа від'ємні — найбільше -1. Чи не починаєш ти найбільше з 0?"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одне число",
+      "stdin": [
+        "7",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            1,
+            7
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Кількість невідома заздалегідь — тут потрібен while.",
+    "Найбільшим спочатку вважай перше введене число, а не 0.",
+    "Виведи обидва числа одним print через кому."
+  ],
+  "reference": {
+    "code": "count = 0\nx = int(input())\nbiggest = x\nwhile x != 0:\n    count = count + 1\n    if x > biggest:\n        biggest = x\n    x = int(input())\nprint(count, biggest)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,74 @@
+{
+  "slug": "g9-challenge-most-common-letter",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Найчастіша літера",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок. Виведи літеру, яка трапляється в ньому найчастіше: великі й малі не розрізняй і виводь малу, пробіли й розділові знаки не рахуй. Якщо таких літер кілька — ту, що трапляється в рядку раніше.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Мама мила раму",
+      "stdin": [
+        "Мама мила раму"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "м",
+          "normalize": "trim",
+          "message": "«м» і «а» трапляються по 4 рази, але «м» стоїть раніше."
+        }
+      ]
+    },
+    {
+      "label": "Ого, ого!",
+      "stdin": [
+        "Ого, ого!"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "о",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "латиниця",
+      "stdin": [
+        "abc cba b"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "b",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "text.count(ch) скаже, скільки разів трапляється літера.",
+    "ch.isalpha() відкине пробіли й розділові знаки.",
+    "Заміняй найкращу, лише коли нова строго частіша."
+  ],
+  "reference": {
+    "code": "text = input().lower()\nbest = \"\"\nbest_count = 0\nfor ch in text:\n    if ch.isalpha():\n        c = text.count(ch)\n        if c > best_count:\n            best = ch\n            best_count = c\nprint(best)\n"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

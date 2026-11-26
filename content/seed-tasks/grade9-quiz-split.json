@@ -1,0 +1,39 @@
+{
+  "slug": "g9-quiz-split",
+  "topicSlug": "strings-methods",
+  "type": "quiz",
+  "title": "Що робить split?",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Що дає вираз \"1 2 3\".split()?",
+    "options": [
+      "[\"1\", \"2\", \"3\"]",
+      "[1, 2, 3]",
+      "\"123\"",
+      "6"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "split ріже рядок за пробілами на список рядків. Числами вони стануть лише після int()."
+    }
+  ],
+  "hints": [
+    "split повертає список.",
+    "Чи перетворює split текст на числа?"
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

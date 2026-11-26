@@ -1,0 +1,38 @@
+{
+  "slug": "g9-quiz-useful-comment",
+  "topicSlug": "testing",
+  "type": "quiz",
+  "title": "Корисний коментар",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Який коментар справді допомагає зрозуміти цей рядок?\n```\nprice = price * 0.8\n```",
+    "options": [
+      "# знижка 20% для учнів",
+      "# множимо price на 0.8",
+      "# рядок коду",
+      "# price"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Що робить код, видно й так. Корисний коментар пояснює навіщо: це знижка 20%."
+    }
+  ],
+  "hints": [
+    "Який коментар каже те, чого не видно з коду?"
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,86 @@
+{
+  "slug": "g9-challenge-average-valid",
+  "topicSlug": "exceptions",
+  "type": "code",
+  "title": "Середнє серед сміття",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, а потім n рядків. Деякі з них — не цілі числа. Виведи середнє арифметичне лише тих, що є цілими числами. Якщо таких немає — виведи «Немає чисел».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "10, abc, 20, x",
+      "stdin": [
+        "4",
+        "10",
+        "abc",
+        "20",
+        "x"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 15,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "жодного числа",
+      "stdin": [
+        "3",
+        "a",
+        "b",
+        "c"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Немає чисел",
+          "normalize": "loose",
+          "message": "Якщо чисел немає, ділити на 0 не можна — виведи «Немає чисел»."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "1, 2, 2",
+      "stdin": [
+        "3",
+        "1",
+        "2",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1.6667,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Рахуй окремо суму й кількість справжніх чисел.",
+    "int(input()) — у try; у except просто пропусти (pass).",
+    "Наприкінці перевір, чи count не 0."
+  ],
+  "reference": {
+    "code": "n = int(input())\ntotal = 0\ncount = 0\nfor i in range(n):\n    try:\n        total = total + int(input())\n        count = count + 1\n    except ValueError:\n        pass\nif count == 0:\n    print(\"Немає чисел\")\nelse:\n    print(total / count)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

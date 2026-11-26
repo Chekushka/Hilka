@@ -1,0 +1,32 @@
+{
+  "slug": "g9-predict-replace",
+  "topicSlug": "strings-methods",
+  "type": "predict",
+  "title": "Заміна літер",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "s = \"мама мила раму\"\nprint(s.replace(\"м\", \"п\"))",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "папа пила рапу",
+      "normalize": "trim",
+      "message": "replace замінює кожну «м» на «п» в усьому рядку."
+    }
+  ],
+  "hints": [
+    "replace замінює всі входження, а не лише перше."
+  ],
+  "reference": {
+    "code": "s = \"мама мила раму\"\nprint(s.replace(\"м\", \"п\"))"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

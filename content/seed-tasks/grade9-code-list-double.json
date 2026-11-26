@@ -1,0 +1,43 @@
+{
+  "slug": "g9-code-list-double",
+  "topicSlug": "lists-iteration",
+  "type": "code",
+  "title": "Удвічі більше",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Дано список nums = [3, 8, 1, 6]. Створи новий список doubled, у якому кожне число вдвічі більше, і виведи його.",
+    "starter": "nums = [3, 8, 1, 6]\n"
+  },
+  "checks": [
+    {
+      "kind": "var_equals",
+      "name": "doubled",
+      "value": [
+        6,
+        16,
+        2,
+        12
+      ],
+      "message": "У списку doubled мають бути числа 6, 16, 2, 12 — саме в такому порядку."
+    },
+    {
+      "kind": "stdout_equals",
+      "value": "[6, 16, 2, 12]",
+      "trim": true
+    }
+  ],
+  "hints": [
+    "Почни з doubled = [].",
+    "Пройди по nums циклом for і додавай x * 2."
+  ],
+  "reference": {
+    "code": "nums = [3, 8, 1, 6]\ndoubled = []\nfor x in nums:\n    doubled.append(x * 2)\nprint(doubled)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

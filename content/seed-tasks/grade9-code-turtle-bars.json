@@ -1,0 +1,39 @@
+{
+  "slug": "g9-code-turtle-bars",
+  "topicSlug": "project-turtle",
+  "type": "code",
+  "title": "Стовпчикова діаграма",
+  "payload": {
+    "type": "code",
+    "surface": "turtle",
+    "prompt": "Намалюй діаграму за списком heights = [40, 80, 60, 100]: кожен стовпчик — прямокутник шириною 20 і висотою зі списку. Стовпчики стоять на одній лінії, ростуть угору, ідуть зліва направо, а між ними проміжок 10.",
+    "starter": "import turtle\nheights = [40, 80, 60, 100]\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_props",
+      "segmentCount": 16,
+      "message": "Має бути чотири прямокутники — 16 сторін. Між стовпчиками переходь із піднятим пером."
+    },
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Стовпчики не такі, як треба: ширина 20, висоти 40, 80, 60, 100, проміжок 10, ростуть угору."
+    }
+  ],
+  "hints": [
+    "Для кожного h намалюй прямокутник 20 × h: два рази forward(20), left(90), forward(h), left(90).",
+    "Щоб перейти до наступного: penup(), forward(30), pendown()."
+  ],
+  "reference": {
+    "code": "import turtle\nheights = [40, 80, 60, 100]\nfor h in heights:\n    for i in range(2):\n        turtle.forward(20)\n        turtle.left(90)\n        turtle.forward(h)\n        turtle.left(90)\n    turtle.penup()\n    turtle.forward(30)\n    turtle.pendown()\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

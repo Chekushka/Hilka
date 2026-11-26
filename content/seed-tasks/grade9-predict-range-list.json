@@ -1,0 +1,33 @@
+{
+  "slug": "g9-predict-range-list",
+  "topicSlug": "lists-generate",
+  "type": "predict",
+  "title": "Список із range",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = list(range(2, 11, 3))\nprint(a)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "[2, 5, 8]",
+      "normalize": "trim",
+      "message": "range(2, 11, 3): починаємо з 2 і щоразу додаємо 3, поки менше 11 — 2, 5, 8."
+    }
+  ],
+  "hints": [
+    "Третє число в range — крок.",
+    "11 не входить, і 11 уже за межею."
+  ],
+  "reference": {
+    "code": "a = list(range(2, 11, 3))\nprint(a)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

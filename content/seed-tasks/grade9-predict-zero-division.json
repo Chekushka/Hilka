@@ -1,0 +1,32 @@
+{
+  "slug": "g9-predict-zero-division",
+  "topicSlug": "exceptions",
+  "type": "predict",
+  "title": "Ділення на нуль",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = 10\nb = 0\ntry:\n    print(a // b)\nexcept ZeroDivisionError:\n    print(\"ділити на 0 не можна\")",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "ділити на 0 не можна",
+      "normalize": "trim",
+      "message": "a // 0 викликає ZeroDivisionError, і програма не падає, а виконує except."
+    }
+  ],
+  "hints": [
+    "Що буде при діленні на 0?"
+  ],
+  "reference": {
+    "code": "a = 10\nb = 0\ntry:\n    print(a // b)\nexcept ZeroDivisionError:\n    print(\"ділити на 0 не можна\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

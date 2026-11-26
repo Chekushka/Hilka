@@ -1,0 +1,39 @@
+{
+  "slug": "g9-quiz-string-index",
+  "topicSlug": "strings",
+  "type": "quiz",
+  "title": "Перша літера",
+  "payload": {
+    "type": "quiz",
+    "prompt": "word = \"Python\"\nЩо дає word[0]?",
+    "options": [
+      "\"P\"",
+      "\"y\"",
+      "\"n\"",
+      "\"Python\""
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Літери рядка нумеруються з 0, як елементи списку: word[0] — «P»."
+    }
+  ],
+  "hints": [
+    "Рядок — це послідовність символів.",
+    "Нумерація з 0."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

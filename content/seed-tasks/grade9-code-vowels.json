@@ -1,0 +1,73 @@
+{
+  "slug": "g9-code-vowels",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Голосні літери",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок. Виведи, скільки в ньому голосних літер (а, е, є, и, і, ї, о, у, ю, я) — і великих, і малих.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Привіт, світе!",
+      "stdin": [
+        "Привіт, світе!"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "велика голосна",
+      "stdin": [
+        "Ялинка"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Велика «Я» — теж голосна. Спробуй lower()."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "без голосних",
+      "stdin": [
+        "ххх"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Запиши всі голосні в один рядок і перевіряй ch in \"аеєиіїоуюя\".",
+    "Великі літери зроби малими через lower()."
+  ],
+  "reference": {
+    "code": "text = input().lower()\ncount = 0\nfor ch in text:\n    if ch in \"аеєиіїоуюя\":\n        count = count + 1\nprint(count)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

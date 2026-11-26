@@ -1,0 +1,80 @@
+{
+  "slug": "g9-parsons-review-level",
+  "topicSlug": "review",
+  "type": "parsons",
+  "title": "Рівень за балом (склади програму)",
+  "payload": {
+    "type": "parsons",
+    "prompt": "Розстав рядки й відступи так, щоб програма за балом виводила: 10 і більше — «високий», від 7 — «достатній», інакше — «інший».",
+    "lines": [
+      {
+        "text": "score = int(input())",
+        "indent": 0
+      },
+      {
+        "text": "if score >= 10:",
+        "indent": 0
+      },
+      {
+        "text": "print(\"високий\")",
+        "indent": 1
+      },
+      {
+        "text": "elif score >= 7:",
+        "indent": 0
+      },
+      {
+        "text": "print(\"достатній\")",
+        "indent": 1
+      },
+      {
+        "text": "else:",
+        "indent": 0
+      },
+      {
+        "text": "print(\"інший\")",
+        "indent": 1
+      }
+    ],
+    "distractors": [
+      "else score < 7:"
+    ],
+    "indentMode": "chosen"
+  },
+  "checks": [
+    {
+      "kind": "order_equals",
+      "lines": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "checkIndent": true,
+      "indents": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "message": "Порядок або відступи ще не ті. Спочатку перевіряй вищий поріг, а під кожною умовою — відступ."
+    }
+  ],
+  "hints": [
+    "Спочатку прочитай бал.",
+    "if, elif, else — без відступу, print під ними — з відступом.",
+    "У else умови не буває."
+  ],
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

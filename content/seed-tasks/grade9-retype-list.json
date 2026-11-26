@@ -1,0 +1,37 @@
+{
+  "slug": "g9-retype-list",
+  "topicSlug": "lists",
+  "type": "code",
+  "title": "Набери код: список кольорів",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\ncolors = [\"червоний\", \"зелений\", \"синій\"]\ncolors.append(\"жовтий\")\nfor c in colors:\n    print(c)\nprint(len(colors))\n```\nПрограма додає колір у список, виводить усі кольори й кількість.",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "червоний\nзелений\nсиній\nжовтий\n4",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": [
+    "Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.",
+    "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab)."
+  ],
+  "reference": {
+    "code": "colors = [\"червоний\", \"зелений\", \"синій\"]\ncolors.append(\"жовтий\")\nfor c in colors:\n    print(c)\nprint(len(colors))\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "retype",
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

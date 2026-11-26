@@ -1,0 +1,60 @@
+{
+  "slug": "g9-challenge-sort-by-length",
+  "topicSlug": "testing",
+  "type": "code",
+  "title": "Слова за довжиною",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок слів. Виведи слова через пробіл, від найкоротшого до найдовшого. Слова однакової довжини залиш у тому порядку, у якому вони були.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "яблуко кіт груша і",
+      "stdin": [
+        "яблуко кіт груша і"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "і кіт груша яблуко",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "однакові довжини",
+      "stdin": [
+        "ab cd e"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "e ab cd",
+          "normalize": "trim",
+          "message": "ab і cd однакові за довжиною — їхній порядок не змінюється."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "sort(key=len) сортує за довжиною.",
+    "Такий sort не переставляє слова однакової довжини.",
+    "Склей слова через \" \".join(words)."
+  ],
+  "reference": {
+    "code": "words = input().split()\nwords.sort(key=len)\nprint(\" \".join(words))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,32 @@
+{
+  "slug": "g9-predict-randint-fixed",
+  "topicSlug": "random",
+  "type": "predict",
+  "title": "Не дуже випадково",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "import random\nx = random.randint(5, 5)\nprint(x * 2)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "10",
+      "normalize": "trim",
+      "message": "Між 5 і 5 є лише одне ціле число — 5. Тому x завжди 5, а x * 2 — 10."
+    }
+  ],
+  "hints": [
+    "Які цілі числа є від 5 до 5?"
+  ],
+  "reference": {
+    "code": "import random\nx = random.randint(5, 5)\nprint(x * 2)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

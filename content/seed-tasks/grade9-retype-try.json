@@ -1,0 +1,60 @@
+{
+  "slug": "g9-retype-try",
+  "topicSlug": "exceptions",
+  "type": "code",
+  "title": "Набери код: try-except",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\ntext = input()\ntry:\n    n = int(text)\n    print(n * 2)\nexcept ValueError:\n    print(\"Потрібне число\")\n```\nПрограма подвоює введене число, а на текст не падає.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "21",
+      "stdin": [
+        "21"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "42",
+          "normalize": "trim",
+          "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+        }
+      ]
+    },
+    {
+      "label": "текст",
+      "stdin": [
+        "двадцять"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Потрібне число",
+          "normalize": "trim",
+          "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+        }
+      ]
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.",
+    "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab)."
+  ],
+  "reference": {
+    "code": "text = input()\ntry:\n    n = int(text)\n    print(n * 2)\nexcept ValueError:\n    print(\"Потрібне число\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "retype",
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

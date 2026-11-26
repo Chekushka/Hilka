@@ -1,0 +1,63 @@
+{
+  "slug": "g9-retype-review",
+  "topicSlug": "review",
+  "type": "code",
+  "title": "Набери код: через 5 років",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\nname = input()\nage = int(input())\nprint(name, \"через 5 років матиме\", age + 5)\n```\nПрограма питає ім'я і вік та каже, скільки років буде через 5 років.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Оля, 14",
+      "stdin": [
+        "Оля",
+        "14"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Оля через 5 років матиме 19",
+          "normalize": "trim",
+          "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+        }
+      ]
+    },
+    {
+      "label": "Тарас, 13",
+      "stdin": [
+        "Тарас",
+        "13"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Тарас через 5 років матиме 18",
+          "normalize": "trim",
+          "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.",
+    "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab)."
+  ],
+  "reference": {
+    "code": "name = input()\nage = int(input())\nprint(name, \"через 5 років матиме\", age + 5)\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "retype",
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

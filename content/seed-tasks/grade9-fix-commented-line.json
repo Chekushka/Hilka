@@ -1,0 +1,59 @@
+{
+  "slug": "g9-fix-commented-line",
+  "topicSlug": "testing",
+  "type": "fix",
+  "title": "Забутий коментар",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала вивести площу прямокутника, але падає з NameError. Схоже, потрібний рядок випадково закоментували. Виправ.",
+    "broken": "a = int(input())\nb = int(input())\n# area = a * b\nprint(\"Площа:\", area)\n"
+  },
+  "cases": [
+    {
+      "label": "3 і 4",
+      "stdin": [
+        "3",
+        "4"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 12,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "5 і 5",
+      "stdin": [
+        "5",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 25,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Де мала з'явитися змінна area?",
+    "Прибери # перед рядком, що рахує площу."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\narea = a * b\nprint(\"Площа:\", area)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

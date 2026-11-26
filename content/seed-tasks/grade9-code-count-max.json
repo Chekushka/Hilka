@@ -1,0 +1,88 @@
+{
+  "slug": "g9-code-count-max",
+  "topicSlug": "testing",
+  "type": "code",
+  "title": "Скільки разів найбільше",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок цілих чисел через пробіл. Виведи, скільки разів у ньому трапляється найбільше число.\nПеревір себе на різних тестах: від'ємні числа, одне число, усі однакові.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3 7 2 7 1",
+      "stdin": [
+        "3 7 2 7 1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "усі від'ємні",
+      "stdin": [
+        "-4 -2 -9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Найбільше тут -2. Чи не починаєш ти найбільше з 0?"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одне число",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "усі однакові",
+      "stdin": [
+        "6 6 6"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Перетвори шматки split() на числа.",
+    "max знайде найбільше, а count — скільки разів воно є."
+  ],
+  "reference": {
+    "code": "nums = []\nfor p in input().split():\n    nums.append(int(p))\nprint(nums.count(max(nums)))\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

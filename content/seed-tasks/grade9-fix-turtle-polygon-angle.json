@@ -1,0 +1,34 @@
+{
+  "slug": "g9-fix-turtle-polygon-angle",
+  "topicSlug": "project-turtle",
+  "type": "fix",
+  "title": "Самі трикутники",
+  "payload": {
+    "type": "fix",
+    "surface": "turtle",
+    "prompt": "Програма мала намалювати трикутник, квадрат і п'ятикутник зі спільної точки, а малює щось не те. Знайди помилку.",
+    "broken": "import turtle\nfor n in [3, 4, 5]:\n    for i in range(n):\n        turtle.forward(70)\n        turtle.left(360 / 3)\n"
+  },
+  "checks": [
+    {
+      "kind": "shape_equals",
+      "normalize": [
+        "translate"
+      ],
+      "message": "Має бути три різні фігури: трикутник, квадрат і п'ятикутник."
+    }
+  ],
+  "hints": [
+    "Який кут повороту в кожної фігури?",
+    "Кут має залежати від n, а не бути сталим."
+  ],
+  "reference": {
+    "code": "import turtle\nfor n in [3, 4, 5]:\n    for i in range(n):\n        turtle.forward(70)\n        turtle.left(360 / n)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

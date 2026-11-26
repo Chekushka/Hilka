@@ -1,0 +1,75 @@
+{
+  "slug": "g9-code-ask-until-valid",
+  "topicSlug": "exceptions",
+  "type": "code",
+  "title": "Доки не введе правильно",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Програма просить ввести ціле число від 1 до 10, доки не отримає правильне. Якщо введено не число — виведи «Це не число», якщо число поза межами — «Від 1 до 10». Коли введено правильне — виведи «Прийнято: N» (N — це число) і зупинись.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "abc, 15, 7",
+      "stdin": [
+        "abc",
+        "15",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Прийнято: 7",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "одразу правильне",
+      "stdin": [
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Прийнято: 3",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "0, десять, 10",
+      "stdin": [
+        "0",
+        "десять",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Прийнято: 10",
+          "normalize": "trim",
+          "message": "І 1, і 10 входять у межі."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Повторюй, доки число не в межах: while not (1 <= n <= 10).",
+    "Читання й int() — у try, у except ValueError — «Це не число».",
+    "Після циклу виведи «Прийнято:» і число."
+  ],
+  "reference": {
+    "code": "n = 0\nwhile not (1 <= n <= 10):\n    try:\n        n = int(input())\n        if not (1 <= n <= 10):\n            print(\"Від 1 до 10\")\n    except ValueError:\n        print(\"Це не число\")\nprint(\"Прийнято:\", n)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

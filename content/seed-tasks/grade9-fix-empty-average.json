@@ -1,0 +1,57 @@
+{
+  "slug": "g9-fix-empty-average",
+  "topicSlug": "testing",
+  "type": "fix",
+  "title": "Тест із порожнім рядком",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма рахує середнє чисел із рядка. Тест із порожнім рядком падає з ZeroDivisionError. Зроби так, щоб для порожнього рядка виводилося «Немає чисел».",
+    "broken": "nums = input().split()\ntotal = 0\nfor x in nums:\n    total = total + int(x)\nprint(total / len(nums))\n"
+  },
+  "cases": [
+    {
+      "label": "2 4 9",
+      "stdin": [
+        "2 4 9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "порожній рядок",
+      "stdin": [
+        ""
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Немає чисел",
+          "normalize": "loose",
+          "message": "Для порожнього рядка ділити на 0 не можна."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Що буде з len(nums) для порожнього рядка?",
+    "Перед діленням перевір, чи є числа."
+  ],
+  "reference": {
+    "code": "nums = input().split()\ntotal = 0\nfor x in nums:\n    total = total + int(x)\nif len(nums) == 0:\n    print(\"Немає чисел\")\nelse:\n    print(total / len(nums))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,58 @@
+{
+  "slug": "g9-code-message-template",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Повідомлення з параметрами",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай ім'я, а потім кількість балів. Виведи рівно таке повідомлення:\n```\nПривіт, Оля! У тебе 50 балів.\n```\n(тут Оля і 50 — введені значення).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Оля, 50",
+      "stdin": [
+        "Оля",
+        "50"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Привіт, Оля! У тебе 50 балів.",
+          "normalize": "trim",
+          "message": "Перевір кому, знак оклику, пробіли й крапку в кінці."
+        }
+      ]
+    },
+    {
+      "label": "Тарас, 7",
+      "stdin": [
+        "Тарас",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Привіт, Тарас! У тебе 7 балів.",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "f-рядок: f\"Привіт, {name}!\" підставляє значення змінної.",
+    "Знак оклику стоїть одразу після імені, без пробілу."
+  ],
+  "reference": {
+    "code": "name = input()\npoints = int(input())\nprint(f\"Привіт, {name}! У тебе {points} балів.\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

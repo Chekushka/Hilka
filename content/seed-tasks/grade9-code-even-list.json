@@ -1,0 +1,81 @@
+{
+  "slug": "g9-code-even-list",
+  "topicSlug": "lists-generate",
+  "type": "code",
+  "title": "Парні до 2n",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n. За допомогою range створи список парних чисел від 2 до 2·n включно і виведи його.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "n = 3",
+      "stdin": [
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2,
+            4,
+            6
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "n = 5",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2,
+            4,
+            6,
+            8,
+            10
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "n = 1",
+      "stdin": [
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            2
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "range(початок, кінець, крок): крок 2.",
+    "Кінець у range не входить — візьми 2 * n + 1."
+  ],
+  "reference": {
+    "code": "n = int(input())\nevens = list(range(2, 2 * n + 1, 2))\nprint(evens)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

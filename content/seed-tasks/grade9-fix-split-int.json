@@ -1,0 +1,58 @@
+{
+  "slug": "g9-fix-split-int",
+  "topicSlug": "strings-methods",
+  "type": "fix",
+  "title": "Склеїло замість додало",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала додати два числа, введені в одному рядку через пробіл, але склеює їх. Виправ.",
+    "broken": "parts = input().split()\nprint(parts[0] + parts[1])\n"
+  },
+  "cases": [
+    {
+      "label": "4 5",
+      "stdin": [
+        "4 5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 9,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для «4 5» має вийти 9."
+        }
+      ]
+    },
+    {
+      "label": "10 -2",
+      "stdin": [
+        "10 -2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 8,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "split дає рядки, а не числа.",
+    "Перетвори кожен шматок через int()."
+  ],
+  "reference": {
+    "code": "parts = input().split()\nprint(int(parts[0]) + int(parts[1]))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

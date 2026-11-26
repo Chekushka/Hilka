@@ -1,0 +1,93 @@
+{
+  "slug": "g9-code-safe-square",
+  "topicSlug": "exceptions",
+  "type": "code",
+  "title": "Квадрат без падінь",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок. Якщо це ціле число — виведи його квадрат. Якщо ні — виведи «Це не число». Скористайся try-except.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "5",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "25",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "слово",
+      "stdin": [
+        "п'ять"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Це не число",
+          "normalize": "loose",
+          "message": "Для тексту програма не має падати — виведи «Це не число»."
+        }
+      ]
+    },
+    {
+      "label": "-3",
+      "stdin": [
+        "-3"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "9",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "дробове",
+      "stdin": [
+        "4.5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Це не число",
+          "normalize": "loose",
+          "message": "int(\"4.5\") — теж ValueError."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "uses",
+      "all": [
+        "try",
+        "except"
+      ],
+      "message": "Тут треба try-except."
+    }
+  ],
+  "hints": [
+    "Перетворення int(text) поклади в try.",
+    "У except ValueError виведи «Це не число»."
+  ],
+  "reference": {
+    "code": "text = input()\ntry:\n    n = int(text)\n    print(n * n)\nexcept ValueError:\n    print(\"Це не число\")\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

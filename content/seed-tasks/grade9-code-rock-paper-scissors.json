@@ -1,0 +1,72 @@
+{
+  "slug": "g9-code-rock-paper-scissors",
+  "topicSlug": "random",
+  "type": "code",
+  "title": "Камінь, ножиці, папір",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Гра «Камінь, ножиці, папір». Прочитай хід гравця («камінь», «ножиці» або «папір») у змінну player. Комп'ютер обирає свій хід випадково — збережи його в змінній computer. Визнач результат для гравця й збережи в змінній result: «перемога», «поразка» або «нічия». Виведи хід комп'ютера і результат.\nКамінь б'є ножиці, ножиці б'ють папір, папір б'є камінь.",
+    "starter": "import random\n"
+  },
+  "cases": [
+    {
+      "label": "гравець: камінь",
+      "stdin": [
+        "камінь"
+      ],
+      "checks": []
+    },
+    {
+      "label": "гравець: ножиці",
+      "stdin": [
+        "ножиці"
+      ],
+      "checks": [],
+      "hidden": true
+    },
+    {
+      "label": "гравець: папір",
+      "stdin": [
+        "папір"
+      ],
+      "checks": [],
+      "hidden": true
+    }
+  ],
+  "checks": [
+    {
+      "kind": "expr",
+      "python": "computer in ['камінь', 'ножиці', 'папір']",
+      "message": "computer має бути одним із трьох ходів."
+    },
+    {
+      "kind": "expr",
+      "python": "result == ('нічия' if player == computer else 'перемога' if (player, computer) in [('камінь', 'ножиці'), ('ножиці', 'папір'), ('папір', 'камінь')] else 'поразка')",
+      "message": "Результат не відповідає ходам: перевір, хто кого б'є, і нічию."
+    },
+    {
+      "kind": "uses",
+      "any": [
+        "choice",
+        "randint",
+        "randrange"
+      ],
+      "message": "Хід комп'ютера має бути випадковим."
+    }
+  ],
+  "hints": [
+    "random.choice([\"камінь\", \"ножиці\", \"папір\"]) — хід комп'ютера.",
+    "Спершу перевір нічию: player == computer.",
+    "Перемога — три пари; усе інше — поразка."
+  ],
+  "reference": {
+    "code": "import random\nplayer = input()\ncomputer = random.choice([\"камінь\", \"ножиці\", \"папір\"])\nif player == computer:\n    result = \"нічия\"\nelif (player == \"камінь\" and computer == \"ножиці\") or (player == \"ножиці\" and computer == \"папір\") or (player == \"папір\" and computer == \"камінь\"):\n    result = \"перемога\"\nelse:\n    result = \"поразка\"\nprint(\"Комп'ютер:\", computer)\nprint(result)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

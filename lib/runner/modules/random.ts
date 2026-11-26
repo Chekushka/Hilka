@@ -1,12 +1,12 @@
 /**
  * random, replaced.
  *
- * Grade 9 writes programs that use random, and a program whose output is
- * genuinely random cannot be checked. In headless mode the runner seeds this
- * deterministically, so the same task and the same student produce the same
- * numbers every time and a teacher's report reproduces exactly what was seen.
- * In interactive mode the seed comes from Math.random and the randomness is
- * real — a dice game that always rolls the same number teaches the wrong thing.
+ * Grade 9 writes programs that use random. Given RunOptions.randomSeed, the
+ * runner seeds this deterministically, so a run can be reproduced exactly.
+ * Without one the seed comes from Math.random and the randomness is real — a
+ * dice game that always rolls the same number teaches the wrong thing. No
+ * check passes a seed today, so random tasks are checked by invariants, never
+ * by output (docs/TASK_SCHEMA.md, "Randomness and determinism").
  *
  * Seeding Skulpt's own random module from outside does not survive between
  * module bodies, which is why this replaces the module rather than calling into

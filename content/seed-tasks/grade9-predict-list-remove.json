@@ -1,0 +1,40 @@
+{
+  "slug": "g9-predict-list-remove",
+  "topicSlug": "lists",
+  "type": "predict",
+  "title": "Прибрали зі списку",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "nums = [4, 8, 15, 16]\nnums.remove(8)\nnums.pop()\nprint(nums)",
+    "answerMode": "choice",
+    "options": [
+      "[4, 15]",
+      "[4, 15, 16]",
+      "[8, 15]",
+      "[4, 16]"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "remove(8) прибирає значення 8, а pop() без числа — останній елемент, 16. Лишається [4, 15]."
+    }
+  ],
+  "hints": [
+    "remove прибирає елемент за значенням.",
+    "pop() без аргументу прибирає останній."
+  ],
+  "reference": {
+    "code": "nums = [4, 8, 15, 16]\nnums.remove(8)\nnums.pop()\nprint(nums)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,50 @@
+{
+  "slug": "g9-code-random-list",
+  "topicSlug": "lists-generate",
+  "type": "code",
+  "title": "Десять випадкових",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Створи список nums із 10 випадкових цілих чисел від 1 до 100 (random.randint). Збережи найбільше з них у змінній biggest, а найменше — у smallest. Виведи список, а потім biggest і smallest.",
+    "starter": "import random\n"
+  },
+  "checks": [
+    {
+      "kind": "expr",
+      "python": "len(nums) == 10",
+      "message": "У списку nums має бути рівно 10 чисел."
+    },
+    {
+      "kind": "expr",
+      "python": "all(isinstance(x, int) and 1 <= x <= 100 for x in nums)",
+      "message": "Кожне число в nums має бути цілим від 1 до 100."
+    },
+    {
+      "kind": "expr",
+      "python": "biggest == max(nums) and smallest == min(nums)",
+      "message": "biggest має бути найбільшим числом зі списку, а smallest — найменшим."
+    },
+    {
+      "kind": "uses",
+      "any": [
+        "randint",
+        "randrange"
+      ],
+      "message": "Числа мають бути випадковими — скористайся random.randint."
+    }
+  ],
+  "hints": [
+    "Цикл for на 10 повторень, у кожному — nums.append(random.randint(1, 100)).",
+    "max(nums) і min(nums) знайдуть найбільше й найменше."
+  ],
+  "reference": {
+    "code": "import random\nnums = []\nfor i in range(10):\n    nums.append(random.randint(1, 100))\nbiggest = max(nums)\nsmallest = min(nums)\nprint(nums)\nprint(biggest, smallest)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

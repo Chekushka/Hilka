@@ -1,0 +1,35 @@
+{
+  "slug": "g9-quiz-which-test-catches",
+  "topicSlug": "testing",
+  "type": "quiz",
+  "title": "Який тест знайде помилку?",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Дитячий квиток — до 12 років включно. Ось програма:\n```\nage = int(input())\nif age < 12:\n    print(\"дитячий\")\nelse:\n    print(\"дорослий\")\n```\nНа якому тесті видно помилку?",
+    "options": [
+      "12",
+      "5",
+      "30",
+      "0"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Для 12 програма каже «дорослий», а має «дитячий». На решті тестів вона відповідає правильно, тож помилки не видно."
+    }
+  ],
+  "hints": [
+    "Підстав кожне число й порівняй з тим, що має бути."
+  ],
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

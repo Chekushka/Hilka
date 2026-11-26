@@ -942,6 +942,15 @@ card instead of scrolling, and the statement's last lines disappeared under the 
 panel's children are `shrink-0` now; anything added to a scrolling flex column with its own
 `overflow` needs the same.
 
+**Checks run `random` with real randomness, whatever the comments say.** The `random` stub
+(`lib/runner/modules/random.ts`) and TASK_SCHEMA.md used to say that headless runs are seeded
+deterministically. The worker does seed from `RunOptions.randomSeed` — but no caller outside
+the `/runner` dev page passes one, so `checkTaskReference` and the student's Check fall back to
+`Math.random()`. The reference and the student draw different numbers, and so do two runs of
+the same reference. A random task checked against an output value passes or fails by luck;
+the grade 9 ones check invariants with `expr` instead, and `npm run verify:references
+--repeat-each` is how to prove one is not luck.
+
 **The room shows a result before the attempt is stored.** `SessionRoom` posts `POST /api/attempts`
 in the background, best-effort, and shows «Готово!» from the browser's own Check. A spec that closes
 a student's browser right after the result can cancel that request on a slow runner, and whatever it

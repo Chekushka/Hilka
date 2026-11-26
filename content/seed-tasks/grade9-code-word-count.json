@@ -1,0 +1,73 @@
+{
+  "slug": "g9-code-word-count",
+  "topicSlug": "strings-methods",
+  "type": "code",
+  "title": "Скільки слів",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай речення. Виведи, скільки в ньому слів (слова розділені пробілами, пробілів може бути кілька).",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Я люблю Python",
+      "stdin": [
+        "Я люблю Python"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "зайві пробіли",
+      "stdin": [
+        "  багато   пробілів тут  "
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last",
+          "message": "split() без аргументів не зважає на зайві пробіли."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одне слово",
+      "stdin": [
+        "Слово"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "split() розріже речення на слова.",
+    "len дасть кількість."
+  ],
+  "reference": {
+    "code": "words = input().split()\nprint(len(words))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

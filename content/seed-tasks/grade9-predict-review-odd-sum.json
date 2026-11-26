@@ -1,0 +1,33 @@
+{
+  "slug": "g9-predict-review-odd-sum",
+  "topicSlug": "review",
+  "type": "predict",
+  "title": "Сума непарних",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "s = 0\nfor i in range(1, 8):\n    if i % 2 == 1:\n        s = s + i\nprint(s)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "16",
+      "normalize": "trim",
+      "message": "range(1, 8) — це 1…7. Непарні серед них: 1, 3, 5, 7. Разом 16."
+    }
+  ],
+  "hints": [
+    "Випиши всі i від 1 до 7.",
+    "i % 2 == 1 правдиве для непарних чисел."
+  ],
+  "reference": {
+    "code": "s = 0\nfor i in range(1, 8):\n    if i % 2 == 1:\n        s = s + i\nprint(s)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

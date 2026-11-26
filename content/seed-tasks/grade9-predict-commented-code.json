@@ -1,0 +1,32 @@
+{
+  "slug": "g9-predict-commented-code",
+  "topicSlug": "testing",
+  "type": "predict",
+  "title": "Закоментований рядок",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "x = 5\n# x = x * 10\nx = x + 1  # додаємо один\nprint(x)",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "6",
+      "normalize": "trim",
+      "message": "Рядок після # не виконується. Множення на 10 не відбулося: 5 + 1 = 6."
+    }
+  ],
+  "hints": [
+    "Python пропускає все, що стоїть після #."
+  ],
+  "reference": {
+    "code": "x = 5\n# x = x * 10\nx = x + 1  # додаємо один\nprint(x)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

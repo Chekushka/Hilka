@@ -1,0 +1,55 @@
+{
+  "slug": "g9-code-acronym",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Абревіатура",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай назву з кількох слів і виведи абревіатуру — перші літери слів, великими. Наприклад, «зовнішнє незалежне оцінювання» → «ЗНО».",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "зовнішнє незалежне оцінювання",
+      "stdin": [
+        "зовнішнє незалежне оцінювання"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ЗНО",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "організація об'єднаних націй",
+      "stdin": [
+        "організація об'єднаних націй"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "ООН",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Розріж назву на слова через split().",
+    "Збери перші літери w[0] і зроби їх великими."
+  ],
+  "reference": {
+    "code": "words = input().split()\nresult = \"\"\nfor w in words:\n    result = result + w[0]\nprint(result.upper())\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

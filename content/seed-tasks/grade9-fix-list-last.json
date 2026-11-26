@@ -1,0 +1,33 @@
+{
+  "slug": "g9-fix-list-last",
+  "topicSlug": "lists",
+  "type": "fix",
+  "title": "Остання оцінка",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала вивести останню оцінку зі списку, але падає з IndexError. Виправ.",
+    "broken": "marks = [10, 7, 12, 9]\nprint(\"Остання оцінка:\", marks[len(marks)])\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "Остання оцінка: 9",
+      "trim": true,
+      "message": "Має вийти «Остання оцінка: 9»."
+    }
+  ],
+  "hints": [
+    "У списку з 4 елементів номери 0, 1, 2, 3. Номера 4 немає.",
+    "Останній елемент — marks[-1] або marks[len(marks) - 1]."
+  ],
+  "reference": {
+    "code": "marks = [10, 7, 12, 9]\nprint(\"Остання оцінка:\", marks[-1])\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

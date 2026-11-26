@@ -1,0 +1,39 @@
+{
+  "slug": "g9-drag-string-slice",
+  "topicSlug": "strings",
+  "type": "fill",
+  "title": "Перетягни: слово в слові",
+  "payload": {
+    "type": "fill",
+    "prompt": "Виріж зі слова «інформатика» слово «форма». Перетягни числа в пропуски.",
+    "template": "word = \"інформатика\"\nprint(word[{{1}}:{{2}}])\n",
+    "bank": [
+      "2",
+      "7",
+      "6",
+      "3",
+      "1"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "форма",
+      "trim": true,
+      "message": "Має вийти «форма». Порахуй номери літер з 0: і — 0, н — 1, ф — 2…"
+    }
+  ],
+  "hints": [
+    "«ф» має номер 2.",
+    "Кінець зрізу не входить: потрібен номер літери після «а»."
+  ],
+  "reference": {
+    "code": "word = \"інформатика\"\nprint(word[2:7])\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

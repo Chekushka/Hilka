@@ -1,0 +1,33 @@
+{
+  "slug": "g9-predict-alphabet",
+  "topicSlug": "strings-cipher",
+  "type": "predict",
+  "title": "Абетка в рядку",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\nprint(len(abc), abc.find(\"в\"), abc.find(\"я\"))",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "33 2 32",
+      "normalize": "trim",
+      "message": "В українській абетці 33 літери. find дає номер з 0: «в» — 2, «я» — останній, 32."
+    }
+  ],
+  "hints": [
+    "find повертає номер літери, рахуючи з 0.",
+    "Остання з 33 літер має номер 32."
+  ],
+  "reference": {
+    "code": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\nprint(len(abc), abc.find(\"в\"), abc.find(\"я\"))"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

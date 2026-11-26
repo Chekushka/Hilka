@@ -1,0 +1,38 @@
+{
+  "slug": "g9-quiz-caesar-idea",
+  "topicSlug": "strings-cipher",
+  "type": "quiz",
+  "title": "Шифр зі зсувом 1",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Шифр Цезаря зі зсувом 1 замінює кожну літеру наступною за абеткою. Як зашифрується слово «дім»?\nАбетка: абвгґдеєжзиіїйклмнопрстуфхцчшщьюя",
+    "options": [
+      "еїн",
+      "ґил",
+      "дім",
+      "ейн"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "д → е, і → ї, м → н. Не пропусти «ї»: в українській абетці вона стоїть одразу після «і»."
+    }
+  ],
+  "hints": [
+    "Знайди кожну літеру в абетці й візьми наступну."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

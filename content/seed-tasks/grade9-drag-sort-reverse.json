@@ -1,0 +1,39 @@
+{
+  "slug": "g9-drag-sort-reverse",
+  "topicSlug": "lists-sort",
+  "type": "fill",
+  "title": "Перетягни: від більшого",
+  "payload": {
+    "type": "fill",
+    "prompt": "Програма має відсортувати бали від більшого до меншого й вивести [12, 7, 3].",
+    "template": "scores = [7, 12, 3]\nscores.{{1}}(reverse={{2}})\nprint(scores)\n",
+    "bank": [
+      "sort",
+      "sorted",
+      "True",
+      "False",
+      "reverse"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "[12, 7, 3]",
+      "trim": true,
+      "message": "Має вийти [12, 7, 3] — від більшого до меншого."
+    }
+  ],
+  "hints": [
+    "Метод списку, що сортує, — sort.",
+    "reverse=True — «у зворотному порядку»."
+  ],
+  "reference": {
+    "code": "scores = [7, 12, 3]\nscores.sort(reverse=True)\nprint(scores)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

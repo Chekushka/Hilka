@@ -110,6 +110,14 @@ the runner — it is the dominant interaction mode for an entire grade.
 | 38 | Оцінювання правильності. Документація. Коментарі | testing, comments |
 | 39–44 | Робота над проєктом, захист, рефлексія | (project lessons) |
 
+The programme numbers two lessons 29. On the platform the cipher lesson is order 30 and the
+text-processing practice order 31; each keeps the programme's number in `curriculumRef` ("9:29",
+"9:30"). The project-setup lessons 31–33 and the project work 39–44 have no platform lessons:
+they are planning and work on a student's own program, which the platform supports at best as
+a reference. Lesson 34's turtle tasks sit in their own topic, `project-turtle`, rather than in
+the grade 7 turtle topics, and lesson 38's tasks on comments sit in `testing`, not in the grade 8
+`comments` topic, so each grade's garden lists its own topics in its own lesson order.
+
 ## Consequences for the platform
 
 These three documents change earlier decisions, three in total.

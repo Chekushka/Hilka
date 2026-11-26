@@ -19,5 +19,18 @@
   { "slug": "project-quadratic", "title": "Проєкт: квадратні рівняння", "order": 18, "gradeTags": [8], "curriculumRef": "8:53-55" },
   { "slug": "project-bmi", "title": "Проєкт: індекс маси тіла", "order": 19, "gradeTags": [8], "curriculumRef": "8:56-57" },
   { "slug": "project-site-cost", "title": "Проєкт: вартість сайту", "order": 20, "gradeTags": [8], "curriculumRef": "8:58-59" },
-  { "slug": "project-pizza", "title": "Проєкт: PyPizza", "order": 21, "gradeTags": [8], "curriculumRef": "8:60-61" }
+  { "slug": "project-pizza", "title": "Проєкт: PyPizza", "order": 21, "gradeTags": [8], "curriculumRef": "8:60-61" },
+  { "slug": "review", "title": "Повторення основ Python", "order": 22, "gradeTags": [9], "curriculumRef": "9:24" },
+  { "slug": "lists", "title": "Списки", "order": 23, "gradeTags": [9], "curriculumRef": "9:25" },
+  { "slug": "lists-iteration", "title": "Перебір списку", "order": 24, "gradeTags": [9], "curriculumRef": "9:25" },
+  { "slug": "lists-search", "title": "Пошук у списку", "order": 25, "gradeTags": [9], "curriculumRef": "9:26" },
+  { "slug": "lists-sort", "title": "Сортування списків", "order": 26, "gradeTags": [9], "curriculumRef": "9:26" },
+  { "slug": "lists-generate", "title": "Генерація списків", "order": 27, "gradeTags": [9], "curriculumRef": "9:27" },
+  { "slug": "strings", "title": "Рядки", "order": 28, "gradeTags": [9], "curriculumRef": "9:28, 9:30" },
+  { "slug": "strings-methods", "title": "Методи рядків", "order": 29, "gradeTags": [9], "curriculumRef": "9:29" },
+  { "slug": "strings-cipher", "title": "Шифр Цезаря", "order": 30, "gradeTags": [9], "curriculumRef": "9:29" },
+  { "slug": "project-turtle", "title": "Проєкт: малюнок у Turtle", "order": 31, "gradeTags": [9], "curriculumRef": "9:34" },
+  { "slug": "random", "title": "Модуль random: ігри", "order": 32, "gradeTags": [9], "curriculumRef": "9:35" },
+  { "slug": "exceptions", "title": "Обробка помилок: try-except", "order": 33, "gradeTags": [9], "curriculumRef": "9:36" },
+  { "slug": "testing", "title": "Тестування і документація", "order": 34, "gradeTags": [9], "curriculumRef": "9:37-38" }
 ]

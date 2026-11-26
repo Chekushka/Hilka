@@ -1,0 +1,60 @@
+{
+  "slug": "g9-fix-review-int",
+  "topicSlug": "review",
+  "type": "fix",
+  "title": "Сума замість склеювання",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала вивести суму двох введених чисел, а виводить їх склеєними: для 5 і 7 — 57. Виправ.",
+    "broken": "a = input()\nb = input()\nprint(a + b)\n"
+  },
+  "cases": [
+    {
+      "label": "5 і 7",
+      "stdin": [
+        "5",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 12,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Для 5 і 7 має вийти 12."
+        }
+      ]
+    },
+    {
+      "label": "10 і -3",
+      "stdin": [
+        "10",
+        "-3"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 7,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "input() завжди повертає текст.",
+    "Перетвори введене на число: int(input())."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\nprint(a + b)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,39 @@
+{
+  "slug": "g9-quiz-turtle-list-loop",
+  "topicSlug": "project-turtle",
+  "type": "quiz",
+  "title": "Що намалює список?",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Що намалює ця програма?\n```\nfor side in [100, 50, 100, 50]:\n    turtle.forward(side)\n    turtle.left(90)\n```",
+    "options": [
+      "прямокутник",
+      "квадрат",
+      "трикутник",
+      "пряму лінію"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "Чотири сторони з поворотом на 90°, по дві однакові: 100 і 50 — це прямокутник."
+    }
+  ],
+  "hints": [
+    "Скільки разів повториться цикл?",
+    "Чи однакові всі сторони?"
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

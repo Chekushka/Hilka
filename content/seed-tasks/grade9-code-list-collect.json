@@ -1,0 +1,93 @@
+{
+  "slug": "g9-code-list-collect",
+  "topicSlug": "lists",
+  "type": "code",
+  "title": "Зібрати список",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, а потім n цілих чисел і збережи їх у список. Виведи список, а в наступному рядку — суму першого й останнього елементів.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "5, 1, 9, 2",
+      "stdin": [
+        "4",
+        "5",
+        "1",
+        "9",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            5,
+            1,
+            9,
+            2,
+            7
+          ],
+          "tol": 0.01
+        }
+      ]
+    },
+    {
+      "label": "одне число",
+      "stdin": [
+        "1",
+        "6"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            6,
+            12
+          ],
+          "tol": 0.01,
+          "message": "Коли число одне, воно і перше, і останнє: 6 + 6 = 12."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "-4, 0, 10",
+      "stdin": [
+        "3",
+        "-4",
+        "0",
+        "10"
+      ],
+      "checks": [
+        {
+          "kind": "numbers_equal",
+          "values": [
+            -4,
+            0,
+            10,
+            6
+          ],
+          "tol": 0.01
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Почни з порожнього списку: nums = [].",
+    "У циклі додавай кожне прочитане число: nums.append(...).",
+    "Перший — nums[0], останній — nums[-1]."
+  ],
+  "reference": {
+    "code": "n = int(input())\nnums = []\nfor i in range(n):\n    nums.append(int(input()))\nprint(nums)\nprint(nums[0] + nums[-1])\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

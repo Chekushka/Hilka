@@ -1,0 +1,37 @@
+{
+  "slug": "g9-quiz-in-list",
+  "topicSlug": "lists-search",
+  "type": "quiz",
+  "title": "Що правда про список?",
+  "payload": {
+    "type": "quiz",
+    "prompt": "nums = [2, 7, 9]\nЯкі вирази дорівнюють True? Обери всі.",
+    "options": [
+      "7 in nums",
+      "nums[0] == 2",
+      "5 in nums",
+      "max(nums) == 7"
+    ],
+    "multiple": true
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0,
+        1
+      ],
+      "message": "7 є у списку, а перший елемент — 2. Числа 5 у списку немає, а найбільше — 9."
+    }
+  ],
+  "hints": [
+    "in перевіряє, чи є значення у списку.",
+    "max дає найбільше значення."
+  ],
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,49 @@
+{
+  "slug": "g9-challenge-dice-duel",
+  "topicSlug": "random",
+  "type": "code",
+  "title": "Дуель на кубиках",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Двоє гравців кидають по два кубики. Збережи суму очок першого в first, другого — в second, а в winner — «перший», «другий» або «нічия». Виведи обидві суми й переможця.",
+    "starter": "import random\n"
+  },
+  "checks": [
+    {
+      "kind": "expr",
+      "python": "2 <= first <= 12 and 2 <= second <= 12",
+      "message": "Сума двох кубиків — від 2 до 12."
+    },
+    {
+      "kind": "expr",
+      "python": "winner == ('перший' if first > second else 'другий' if second > first else 'нічия')",
+      "message": "winner не відповідає сумам: більша сума перемагає, однакові — нічия."
+    },
+    {
+      "kind": "uses",
+      "any": [
+        "randint",
+        "randrange",
+        "choice"
+      ],
+      "message": "Кидки мають бути випадковими."
+    }
+  ],
+  "hints": [
+    "Кидок одного кубика — random.randint(1, 6). Для суми двох — додай два кидки.",
+    "Порівняй суми через if / elif / else."
+  ],
+  "reference": {
+    "code": "import random\nfirst = random.randint(1, 6) + random.randint(1, 6)\nsecond = random.randint(1, 6) + random.randint(1, 6)\nif first > second:\n    winner = \"перший\"\nelif second > first:\n    winner = \"другий\"\nelse:\n    winner = \"нічия\"\nprint(first, second)\nprint(winner)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

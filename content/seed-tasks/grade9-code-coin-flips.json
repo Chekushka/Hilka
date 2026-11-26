@@ -1,0 +1,51 @@
+{
+  "slug": "g9-code-coin-flips",
+  "topicSlug": "random",
+  "type": "code",
+  "title": "Орел чи решка",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Підкинь монетку 20 разів: створи список flips із 20 випадкових значень «орел» або «решка» (random.choice). Порахуй, скільки разів випав «орел», збережи це в змінній heads і виведи.",
+    "starter": "import random\n"
+  },
+  "checks": [
+    {
+      "kind": "expr",
+      "python": "len(flips) == 20",
+      "message": "У списку flips має бути 20 підкидань."
+    },
+    {
+      "kind": "expr",
+      "python": "all(f == 'орел' or f == 'решка' for f in flips)",
+      "message": "У flips мають бути лише слова «орел» і «решка»."
+    },
+    {
+      "kind": "expr",
+      "python": "heads == flips.count('орел')",
+      "message": "heads має дорівнювати кількості «орел» у списку flips."
+    },
+    {
+      "kind": "uses",
+      "any": [
+        "choice",
+        "randint",
+        "randrange"
+      ],
+      "message": "Підкидання мають бути випадковими."
+    }
+  ],
+  "hints": [
+    "random.choice([\"орел\", \"решка\"]) — одне підкидання.",
+    "flips.count(\"орел\") порахує орлів."
+  ],
+  "reference": {
+    "code": "import random\nflips = []\nfor i in range(20):\n    flips.append(random.choice([\"орел\", \"решка\"]))\nheads = flips.count(\"орел\")\nprint(heads)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

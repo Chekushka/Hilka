@@ -1,0 +1,39 @@
+{
+  "slug": "g9-fix-random-import",
+  "topicSlug": "random",
+  "type": "fix",
+  "title": "Кубик не кидається",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала кинути кубик, але падає з NameError. Виправ.",
+    "broken": "roll = random.randint(1, 6)\nprint(\"Випало:\", roll)\n"
+  },
+  "checks": [
+    {
+      "kind": "expr",
+      "python": "1 <= roll <= 6",
+      "message": "У roll має бути число від 1 до 6."
+    },
+    {
+      "kind": "uses",
+      "any": [
+        "randint"
+      ],
+      "message": "Кидай кубик через random.randint(1, 6)."
+    }
+  ],
+  "hints": [
+    "Модуль random треба підключити.",
+    "Перший рядок: import random."
+  ],
+  "reference": {
+    "code": "import random\nroll = random.randint(1, 6)\nprint(\"Випало:\", roll)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

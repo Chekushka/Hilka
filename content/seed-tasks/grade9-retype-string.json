@@ -1,0 +1,37 @@
+{
+  "slug": "g9-retype-string",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Набери код: літери слова",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її.\n```\nword = \"Україна\"\nprint(word[0])\nprint(word[-1])\nprint(len(word))\nprint(word.upper())\n```\nПрограма виводить першу й останню літеру, довжину слова і слово великими літерами.",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "У\nа\n7\nУКРАЇНА",
+      "trim": true,
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": [
+    "Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.",
+    "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab)."
+  ],
+  "reference": {
+    "code": "word = \"Україна\"\nprint(word[0])\nprint(word[-1])\nprint(len(word))\nprint(word.upper())\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "retype",
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

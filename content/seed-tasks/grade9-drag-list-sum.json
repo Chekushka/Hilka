@@ -1,0 +1,39 @@
+{
+  "slug": "g9-drag-list-sum",
+  "topicSlug": "lists-iteration",
+  "type": "fill",
+  "title": "Перетягни: сума покупок",
+  "payload": {
+    "type": "fill",
+    "prompt": "Програма має вивести загальну вартість покупок — 50. Перетягни картки в пропуски.",
+    "template": "prices = [12, 30, 8]\ntotal = 0\nfor p in {{1}}:\n    total = total {{2}} p\nprint(total)\n",
+    "bank": [
+      "prices",
+      "+",
+      "-",
+      "*",
+      "len(prices)"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "50",
+      "trim": true,
+      "message": "Має вийти 50 = 12 + 30 + 8. Цикл іде по самому списку, а кожну ціну додаємо до total."
+    }
+  ],
+  "hints": [
+    "for p in список — p по черзі стає кожним елементом.",
+    "Суму накопичують додаванням."
+  ],
+  "reference": {
+    "code": "prices = [12, 30, 8]\ntotal = 0\nfor p in prices:\n    total = total + p\nprint(total)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

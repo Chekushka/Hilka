@@ -635,12 +635,15 @@ only ever be assigned to a session, never opened there.
 
 ## Randomness and determinism
 
-Grade 9 uses the `random` module. In `headless` mode the runner seeds it deterministically from
-`randomSeed`, so a program using `random` still has a reproducible expected output. In
-`interactive` mode randomness is real.
+Grade 9 uses the `random` module. The runner seeds it from `RunOptions.randomSeed` when one is
+given, so a run can be reproduced; without one the seed is random. **No check passes a seed**:
+the student's run and the reference's run each get their own random numbers, so their outputs
+differ and `matches_reference` cannot check a random program (see AI_CONTEXT.md, Gotchas).
 
-A task whose answer genuinely depends on randomness should be checked with `shape_props`,
-`uses`, or a range check — not with an exact expected value.
+A task whose answer genuinely depends on randomness is therefore checked by what must hold for
+*any* numbers: `expr` on variables the prompt names (`len(rolls) == 30`,
+`heads == flips.count('орел')`, a winner consistent with the two scores), `uses`, or
+`shape_props` — never by an exact expected value. The grade 9 random tasks are all built so.
 
 ## Worked examples
 

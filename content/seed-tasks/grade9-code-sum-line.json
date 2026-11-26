@@ -1,0 +1,87 @@
+{
+  "slug": "g9-code-sum-line",
+  "topicSlug": "strings-methods",
+  "type": "code",
+  "title": "Сума в рядку",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай один рядок із цілими числами через пробіл. Виведи їхню суму.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3 8 1",
+      "stdin": [
+        "3 8 1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 12,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "з від'ємним",
+      "stdin": [
+        "-5 10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одне число",
+      "stdin": [
+        "42"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 42,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "десять чисел",
+      "stdin": [
+        "1 2 3 4 5 6 7 8 9 10"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 55,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "input().split() дає список рядків.",
+    "Кожен шматок перетвори на число int(...) і додай."
+  ],
+  "reference": {
+    "code": "parts = input().split()\ntotal = 0\nfor p in parts:\n    total = total + int(p)\nprint(total)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

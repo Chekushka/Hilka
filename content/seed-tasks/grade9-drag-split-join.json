@@ -1,0 +1,39 @@
+{
+  "slug": "g9-drag-split-join",
+  "topicSlug": "strings-methods",
+  "type": "fill",
+  "title": "Перетягни: дата з крапками",
+  "payload": {
+    "type": "fill",
+    "prompt": "Програма має перетворити дату «2025-11-26» на «2025.11.26».",
+    "template": "date = \"2025-11-26\"\nparts = date.{{1}}(\"-\")\nprint({{2}}.join(parts))\n",
+    "bank": [
+      "split",
+      "join",
+      "\".\"",
+      "\"-\"",
+      "replace"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "2025.11.26",
+      "trim": true,
+      "message": "Має вийти 2025.11.26: спочатку розріж за «-», потім склей через «.»."
+    }
+  ],
+  "hints": [
+    "Розрізає рядок split, склеює join.",
+    "Перед .join стоїть те, що ставиться між частинами."
+  ],
+  "reference": {
+    "code": "date = \"2025-11-26\"\nparts = date.split(\"-\")\nprint(\".\".join(parts))\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

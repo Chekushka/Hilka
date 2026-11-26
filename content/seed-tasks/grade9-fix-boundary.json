@@ -1,0 +1,70 @@
+{
+  "slug": "g9-fix-boundary",
+  "topicSlug": "testing",
+  "type": "fix",
+  "title": "Помилка на межі",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Дитячий квиток — до 12 років включно, а програма для 12 років каже «дорослий». Виправ.",
+    "broken": "age = int(input())\nif age < 12:\n    print(\"дитячий\")\nelse:\n    print(\"дорослий\")\n"
+  },
+  "cases": [
+    {
+      "label": "5 років",
+      "stdin": [
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "дитячий",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "12 років — межа",
+      "stdin": [
+        "12"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "дитячий",
+          "normalize": "trim",
+          "message": "12 років — ще дитячий квиток."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "13 років",
+      "stdin": [
+        "13"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "дорослий",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "«Включно» означає, що 12 теж підходить.",
+    "< — строго менше, <= — менше або дорівнює."
+  ],
+  "reference": {
+    "code": "age = int(input())\nif age <= 12:\n    print(\"дитячий\")\nelse:\n    print(\"дорослий\")\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "g9-predict-string-slice",
+  "topicSlug": "strings",
+  "type": "predict",
+  "title": "Зріз рядка",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "s = \"програма\"\nprint(s[0:3], s[-1], len(s))",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "про а 8",
+      "normalize": "trim",
+      "message": "s[0:3] — символи з номерами 0, 1, 2: «про». s[-1] — остання літера «а». У слові 8 літер."
+    }
+  ],
+  "hints": [
+    "Кінець зрізу не входить.",
+    "s[-1] — остання літера."
+  ],
+  "reference": {
+    "code": "s = \"програма\"\nprint(s[0:3], s[-1], len(s))"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

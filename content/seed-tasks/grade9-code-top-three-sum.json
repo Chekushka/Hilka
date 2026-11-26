@@ -1,0 +1,104 @@
+{
+  "slug": "g9-code-top-three-sum",
+  "topicSlug": "lists-sort",
+  "type": "code",
+  "title": "Три найбільші",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n (не менше 3), а потім n цілих чисел. Виведи суму трьох найбільших.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "4, 10, 1, 8, 6",
+      "stdin": [
+        "5",
+        "4",
+        "10",
+        "1",
+        "8",
+        "6"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 24,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "усі від'ємні",
+      "stdin": [
+        "4",
+        "-1",
+        "-5",
+        "-2",
+        "-9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -8,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Три найбільші тут -1, -2 і -5."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "однакові",
+      "stdin": [
+        "4",
+        "7",
+        "7",
+        "7",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 21,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "рівно три",
+      "stdin": [
+        "3",
+        "1",
+        "2",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 6,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Відсортуй список від більшого до меншого.",
+    "Тоді три найбільші — це перші три елементи."
+  ],
+  "reference": {
+    "code": "n = int(input())\nnums = []\nfor i in range(n):\n    nums.append(int(input()))\nnums.sort(reverse=True)\nprint(nums[0] + nums[1] + nums[2])\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

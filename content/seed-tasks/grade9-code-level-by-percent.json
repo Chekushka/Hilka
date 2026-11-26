@@ -1,0 +1,154 @@
+{
+  "slug": "g9-code-level-by-percent",
+  "topicSlug": "testing",
+  "type": "code",
+  "title": "Рівень за відсотком",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай відсоток виконання тесту (ціле число). Виведи рівень: 0–39 — «початковий», 40–69 — «середній», 70–89 — «достатній», 90–100 — «високий». Якщо число менше 0 або більше 100 — «помилка».\nЦю програму перевіряють на всіх межах — продумай їх сам.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "75%",
+      "stdin": [
+        "75"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "достатній",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "0%",
+      "stdin": [
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "початковий",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "39%",
+      "stdin": [
+        "39"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "початковий",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "40%",
+      "stdin": [
+        "40"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "середній",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "89%",
+      "stdin": [
+        "89"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "достатній",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "90%",
+      "stdin": [
+        "90"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "високий",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "100%",
+      "stdin": [
+        "100"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "високий",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "101%",
+      "stdin": [
+        "101"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "помилка",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "-1%",
+      "stdin": [
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "помилка",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу відсій неможливі значення: p < 0 or p > 100.",
+    "Далі перевіряй пороги від найвищого: 90, 70, 40.",
+    "Перевір себе на 39, 40, 89, 90, 100 і 101."
+  ],
+  "reference": {
+    "code": "p = int(input())\nif p < 0 or p > 100:\n    print(\"помилка\")\nelif p >= 90:\n    print(\"високий\")\nelif p >= 70:\n    print(\"достатній\")\nelif p >= 40:\n    print(\"середній\")\nelse:\n    print(\"початковий\")\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

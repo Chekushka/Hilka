@@ -1,0 +1,33 @@
+{
+  "slug": "g9-fix-sort-none",
+  "topicSlug": "lists-sort",
+  "type": "fix",
+  "title": "Де подівся список?",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала вивести відсортований список [1, 3, 7], а виводить None. Виправ.",
+    "broken": "nums = [7, 1, 3]\nnums = nums.sort()\nprint(nums)\n"
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "[1, 3, 7]",
+      "trim": true,
+      "message": "Має вийти [1, 3, 7]."
+    }
+  ],
+  "hints": [
+    "sort() змінює сам список і нічого не повертає (тобто повертає None).",
+    "Не записуй результат sort() назад у nums."
+  ],
+  "reference": {
+    "code": "nums = [7, 1, 3]\nnums.sort()\nprint(nums)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

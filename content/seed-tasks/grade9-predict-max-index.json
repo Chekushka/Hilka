@@ -1,0 +1,33 @@
+{
+  "slug": "g9-predict-max-index",
+  "topicSlug": "lists-search",
+  "type": "predict",
+  "title": "Де найбільше?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "t = [3, 9, 4, 9]\nprint(max(t), t.index(9), t.count(9))",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "9 1 2",
+      "normalize": "trim",
+      "message": "Найбільше — 9. index дає номер першої дев'ятки — 1 (рахуємо з 0). count рахує, скільки їх, — 2."
+    }
+  ],
+  "hints": [
+    "index шукає перше входження.",
+    "Нумерація з 0."
+  ],
+  "reference": {
+    "code": "t = [3, 9, 4, 9]\nprint(max(t), t.index(9), t.count(9))"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

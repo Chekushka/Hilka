@@ -1,0 +1,33 @@
+{
+  "slug": "g9-predict-comprehension",
+  "topicSlug": "lists-generate",
+  "type": "predict",
+  "title": "Список в один рядок",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "print([x * 2 for x in range(4)])",
+    "answerMode": "text"
+  },
+  "checks": [
+    {
+      "kind": "text_equals",
+      "value": "[0, 2, 4, 6]",
+      "normalize": "trim",
+      "message": "x пробігає 0, 1, 2, 3, і кожне подвоюється: [0, 2, 4, 6]."
+    }
+  ],
+  "hints": [
+    "range(4) — це 0, 1, 2, 3.",
+    "Перед for записано, що покласти в список для кожного x."
+  ],
+  "reference": {
+    "code": "print([x * 2 for x in range(4)])"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

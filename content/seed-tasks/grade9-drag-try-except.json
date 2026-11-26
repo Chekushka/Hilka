@@ -1,0 +1,39 @@
+{
+  "slug": "g9-drag-try-except",
+  "topicSlug": "exceptions",
+  "type": "fill",
+  "title": "Перетягни: спроба",
+  "payload": {
+    "type": "fill",
+    "prompt": "Програма пробує перетворити «12a» на число й не падає. Має вивести «помилка введення».",
+    "template": "text = \"12a\"\n{{1}}:\n    n = int(text)\n    print(n)\n{{2}} ValueError:\n    print(\"помилка введення\")\n",
+    "bank": [
+      "try",
+      "except",
+      "if",
+      "else",
+      "while"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "помилка введення",
+      "trim": true,
+      "message": "Має вийти «помилка введення»: спроба — try, перехоплення — except."
+    }
+  ],
+  "hints": [
+    "Блок, у якому може статися помилка, починається з try.",
+    "Помилку ловить except."
+  ],
+  "reference": {
+    "code": "text = \"12a\"\ntry:\n    n = int(text)\n    print(n)\nexcept ValueError:\n    print(\"помилка введення\")\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

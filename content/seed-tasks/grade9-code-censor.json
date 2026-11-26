@@ -1,0 +1,57 @@
+{
+  "slug": "g9-code-censor",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Цензор",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай речення, а потім слово, яке треба приховати. Виведи речення, у якому кожне входження цього слова замінене зірочками — стільки зірочок, скільки літер у слові.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "каву",
+      "stdin": [
+        "я люблю каву і ще раз каву",
+        "каву"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "я люблю **** і ще раз ****",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "слова немає",
+      "stdin": [
+        "тут нічого",
+        "кава"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "тут нічого",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "replace замінює всі входження.",
+    "\"*\" * 4 — це «****»."
+  ],
+  "reference": {
+    "code": "text = input()\nword = input()\nprint(text.replace(word, \"*\" * len(word)))\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

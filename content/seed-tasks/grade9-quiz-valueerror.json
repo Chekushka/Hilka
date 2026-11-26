@@ -1,0 +1,38 @@
+{
+  "slug": "g9-quiz-valueerror",
+  "topicSlug": "exceptions",
+  "type": "quiz",
+  "title": "Яка помилка?",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Яка помилка виникне, якщо виконати int(\"abc\")?",
+    "options": [
+      "ValueError",
+      "ZeroDivisionError",
+      "SyntaxError",
+      "IndexError"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "«abc» не можна перетворити на число — це ValueError, помилка значення."
+    }
+  ],
+  "hints": [
+    "Сам запис правильний, проблема в значенні."
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

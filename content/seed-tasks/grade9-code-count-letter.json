@@ -1,0 +1,75 @@
+{
+  "slug": "g9-code-count-letter",
+  "topicSlug": "strings",
+  "type": "code",
+  "title": "Скільки разів літера",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай слово, а потім одну літеру. Виведи, скільки разів ця літера трапляється в слові.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "мама, м",
+      "stdin": [
+        "мама",
+        "м"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "перепелиця, е",
+      "stdin": [
+        "перепелиця",
+        "е"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "немає літери",
+      "stdin": [
+        "кіт",
+        "а"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Пройди по слову циклом for ch in word.",
+    "Або скористайся word.count(letter)."
+  ],
+  "reference": {
+    "code": "word = input()\nletter = input()\ncount = 0\nfor ch in word:\n    if ch == letter:\n        count = count + 1\nprint(count)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

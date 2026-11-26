@@ -1,0 +1,73 @@
+{
+  "slug": "g9-challenge-longest-word",
+  "topicSlug": "strings-methods",
+  "type": "code",
+  "title": "Найдовше слово",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай речення. Виведи найдовше слово. Якщо таких кілька — те, що трапляється першим.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Я вивчаю мову Python",
+      "stdin": [
+        "Я вивчаю мову Python"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "вивчаю",
+          "normalize": "trim",
+          "message": "«вивчаю» і «Python» однакові за довжиною — виводь перше."
+        }
+      ]
+    },
+    {
+      "label": "кіт пес",
+      "stdin": [
+        "кіт пес"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "кіт",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "програмування це цікаво",
+      "stdin": [
+        "програмування це цікаво"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "програмування",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Найдовшим спочатку вважай перше слово.",
+    "Заміняй, лише коли нове слово строго довше (>), — тоді перше з однакових залишиться."
+  ],
+  "reference": {
+    "code": "words = input().split()\nlongest = words[0]\nfor w in words:\n    if len(w) > len(longest):\n        longest = w\nprint(longest)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

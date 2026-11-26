@@ -1,0 +1,40 @@
+{
+  "slug": "g9-predict-sort-sorted",
+  "topicSlug": "lists-sort",
+  "type": "predict",
+  "title": "sorted чи reverse?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "a = [5, 2, 8]\nb = sorted(a)\na.reverse()\nprint(a, b)",
+    "answerMode": "choice",
+    "options": [
+      "[8, 2, 5] [2, 5, 8]",
+      "[8, 5, 2] [2, 5, 8]",
+      "[2, 5, 8] [2, 5, 8]",
+      "[5, 2, 8] [2, 5, 8]"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "sorted(a) робить новий впорядкований список і не чіпає a. reverse() лише перевертає a: [5, 2, 8] → [8, 2, 5]."
+    }
+  ],
+  "hints": [
+    "sorted не змінює початковий список.",
+    "reverse не сортує, а лише перевертає."
+  ],
+  "reference": {
+    "code": "a = [5, 2, 8]\nb = sorted(a)\na.reverse()\nprint(a, b)"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

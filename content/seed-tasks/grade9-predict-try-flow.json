@@ -1,0 +1,40 @@
+{
+  "slug": "g9-predict-try-flow",
+  "topicSlug": "exceptions",
+  "type": "predict",
+  "title": "Куди піде програма?",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "try:\n    x = int(\"7a\")\n    print(\"число\")\nexcept ValueError:\n    print(\"не число\")\nprint(\"кінець\")",
+    "answerMode": "choice",
+    "options": [
+      "не число\nкінець",
+      "число\nкінець",
+      "не число",
+      "число\nне число\nкінець"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "int(\"7a\") дає ValueError, тож print(\"число\") не виконується — одразу переходимо в except. А «кінець» — уже після try, він виконується завжди."
+    }
+  ],
+  "hints": [
+    "Після помилки решта рядків у try пропускається.",
+    "Рядок після всього блоку виконується в будь-якому разі."
+  ],
+  "reference": {
+    "code": "try:\n    x = int(\"7a\")\n    print(\"число\")\nexcept ValueError:\n    print(\"не число\")\nprint(\"кінець\")"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

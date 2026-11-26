@@ -1,0 +1,54 @@
+{
+  "slug": "g9-challenge-dice-counts",
+  "topicSlug": "random",
+  "type": "code",
+  "title": "Статистика кубика",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Кинь кубик 30 разів: створи список rolls із 30 випадкових чисел від 1 до 6. Потім створи список counts із шести чисел: counts[0] — скільки випало одиниць, counts[1] — двійок, …, counts[5] — шісток. Виведи counts.",
+    "starter": "import random\n"
+  },
+  "checks": [
+    {
+      "kind": "expr",
+      "python": "len(rolls) == 30 and all(1 <= r <= 6 for r in rolls)",
+      "message": "У rolls має бути 30 чисел від 1 до 6."
+    },
+    {
+      "kind": "expr",
+      "python": "len(counts) == 6",
+      "message": "У counts має бути рівно шість чисел — по одному на кожну грань."
+    },
+    {
+      "kind": "expr",
+      "python": "all(counts[i] == rolls.count(i + 1) for i in range(6))",
+      "message": "counts не збігається з rolls: counts[0] — скільки одиниць, counts[5] — скільки шісток."
+    },
+    {
+      "kind": "uses",
+      "any": [
+        "randint",
+        "randrange",
+        "choice"
+      ],
+      "message": "Кидки мають бути випадковими."
+    }
+  ],
+  "hints": [
+    "rolls.count(1) рахує, скільки разів випала одиниця.",
+    "Пройди циклом по гранях від 1 до 6 і додавай rolls.count(грань) до counts."
+  ],
+  "reference": {
+    "code": "import random\nrolls = []\nfor i in range(30):\n    rolls.append(random.randint(1, 6))\ncounts = []\nfor face in range(1, 7):\n    counts.append(rolls.count(face))\nprint(counts)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

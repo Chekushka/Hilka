@@ -1,0 +1,58 @@
+{
+  "slug": "g9-fix-caesar-wrap",
+  "topicSlug": "strings-cipher",
+  "type": "fix",
+  "title": "Падає на «я»",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма шифрує слово, але на літерах із кінця абетки («ю», «я») падає з IndexError. Виправ, щоб після «я» знову йшла «а».",
+    "broken": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\ntext = input()\nk = int(input())\nresult = \"\"\nfor ch in text:\n    i = abc.find(ch)\n    result = result + abc[i + k]\nprint(result)\n"
+  },
+  "cases": [
+    {
+      "label": "кіт, зсув 1",
+      "stdin": [
+        "кіт",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "лїу",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "юля, зсув 2",
+      "stdin": [
+        "юля",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "анб",
+          "normalize": "trim",
+          "message": "ю → а, л → н, я → б: після «я» рахуй з початку абетки."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "i + k може бути більше за 32 — такої літери немає.",
+    "Остача від ділення на len(abc) повертає на початок."
+  ],
+  "reference": {
+    "code": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\ntext = input()\nk = int(input())\nresult = \"\"\nfor ch in text:\n    i = abc.find(ch)\n    result = result + abc[(i + k) % len(abc)]\nprint(result)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

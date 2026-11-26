@@ -1,0 +1,40 @@
+{
+  "slug": "g9-predict-shift-wrap",
+  "topicSlug": "strings-cipher",
+  "type": "predict",
+  "title": "Після «я»",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\ni = abc.find(\"ю\")\nprint(abc[(i + 3) % len(abc)])",
+    "answerMode": "choice",
+    "options": [
+      "б",
+      "в",
+      "а",
+      "IndexError"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "«ю» має номер 31. 31 + 3 = 34, а 34 % 33 = 1 — це «б». Остача від ділення повертає нас на початок абетки."
+    }
+  ],
+  "hints": [
+    "Знайди номер «ю».",
+    "% len(abc) не дає вийти за кінець абетки."
+  ],
+  "reference": {
+    "code": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\ni = abc.find(\"ю\")\nprint(abc[(i + 3) % len(abc)])"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

@@ -1,0 +1,58 @@
+{
+  "slug": "g9-fix-wrong-except",
+  "topicSlug": "exceptions",
+  "type": "fix",
+  "title": "Не та помилка",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала ділити числа й не падати при діленні на нуль, але все одно падає. Виправ.",
+    "broken": "a = int(input())\nb = int(input())\ntry:\n    print(a // b)\nexcept ValueError:\n    print(\"На нуль ділити не можна\")\n"
+  },
+  "cases": [
+    {
+      "label": "7 і 2",
+      "stdin": [
+        "7",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "3",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "5 і 0",
+      "stdin": [
+        "5",
+        "0"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "На нуль ділити не можна",
+          "normalize": "trim",
+          "message": "При діленні на 0 програма має вивести повідомлення, а не падати."
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Яка помилка буває при діленні на нуль?",
+    "except ловить лише ту помилку, яку в ньому названо."
+  ],
+  "reference": {
+    "code": "a = int(input())\nb = int(input())\ntry:\n    print(a // b)\nexcept ZeroDivisionError:\n    print(\"На нуль ділити не можна\")\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

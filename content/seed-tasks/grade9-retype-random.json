@@ -1,0 +1,41 @@
+{
+  "slug": "g9-retype-random",
+  "topicSlug": "random",
+  "type": "code",
+  "title": "Набери код: кубик",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Набери цю програму сам, рядок за рядком, і запусти її кілька разів.\n```\nimport random\ndice = random.randint(1, 6)\nprint(\"Випало\", dice)\nif dice == 6:\n    print(\"Ура, шістка!\")\n```\nЩоразу випадає інше число — саме так працює random.",
+    "starter": ""
+  },
+  "checks": [
+    {
+      "kind": "expr",
+      "python": "1 <= dice <= 6",
+      "message": "У dice має бути число від 1 до 6 — перевір random.randint(1, 6)."
+    },
+    {
+      "kind": "stdout_contains",
+      "value": "Випало",
+      "message": "Вивід не такий, як мав би бути. Порівняй свою програму зі зразком символ за символом."
+    }
+  ],
+  "hints": [
+    "Перевір кожен символ: лапки, дужки, двокрапки й коми мають бути такі самі, як у зразку.",
+    "Відступ у рядку під двокрапкою — чотири пробіли (або клавіша Tab)."
+  ],
+  "reference": {
+    "code": "import random\ndice = random.randint(1, 6)\nprint(\"Випало\", dice)\nif dice == 6:\n    print(\"Ура, шістка!\")\n"
+  },
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "retype",
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

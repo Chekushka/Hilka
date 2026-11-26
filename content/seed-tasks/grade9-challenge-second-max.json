@@ -1,0 +1,107 @@
+{
+  "slug": "g9-challenge-second-max",
+  "topicSlug": "lists-search",
+  "type": "code",
+  "title": "Друге за величиною",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, а потім n цілих чисел. Виведи друге за величиною різне число: якщо найбільше трапляється кілька разів, воно рахується один раз. Різних чисел завжди хоча б два.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "5, 9, 9, 2",
+      "stdin": [
+        "4",
+        "5",
+        "9",
+        "9",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 5,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Дев'ятка повторюється, але рахується один раз — друге за величиною тут 5."
+        }
+      ]
+    },
+    {
+      "label": "1…5",
+      "stdin": [
+        "5",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "від'ємні з повтором",
+      "stdin": [
+        "4",
+        "-3",
+        "-3",
+        "-7",
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": -3,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "8, 8, 3",
+      "stdin": [
+        "3",
+        "8",
+        "8",
+        "3"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 3,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спершу прибери повтори: збери новий список, додаючи число, лише якщо його там ще немає.",
+    "Відсортуй список без повторів — друге з кінця і є відповіддю."
+  ],
+  "reference": {
+    "code": "n = int(input())\nnums = []\nfor i in range(n):\n    nums.append(int(input()))\nunique = []\nfor x in nums:\n    if x not in unique:\n        unique.append(x)\nunique.sort()\nprint(unique[-2])\n"
+  },
+  "difficulty": 5,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "challenge"
+  ],
+  "version": 1,
+  "status": "published"
+}

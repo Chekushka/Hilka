@@ -1,0 +1,56 @@
+{
+  "slug": "g9-fix-string-capital",
+  "topicSlug": "strings",
+  "type": "fix",
+  "title": "Велика перша літера",
+  "payload": {
+    "type": "fix",
+    "surface": "console",
+    "prompt": "Програма мала зробити першу літеру введеного слова великою, але падає з помилкою TypeError. Рядок не можна змінити на місці — збудуй новий.",
+    "broken": "word = input()\nword[0] = word[0].upper()\nprint(word)\n"
+  },
+  "cases": [
+    {
+      "label": "київ",
+      "stdin": [
+        "київ"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Київ",
+          "normalize": "trim",
+          "message": "Має вийти «Київ»."
+        }
+      ]
+    },
+    {
+      "label": "оля",
+      "stdin": [
+        "оля"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Оля",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "word[0] = ... не можна: рядок не змінюється.",
+    "Склей новий рядок: велика перша літера + решта word[1:]."
+  ],
+  "reference": {
+    "code": "word = input()\nword = word[0].upper() + word[1:]\nprint(word)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

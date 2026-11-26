@@ -1,0 +1,40 @@
+{
+  "slug": "g9-predict-string-loop",
+  "topicSlug": "strings",
+  "type": "predict",
+  "title": "Цикл по літерах",
+  "payload": {
+    "type": "predict",
+    "prompt": "Прочитай програму. Що вона виведе, якщо її запустити?",
+    "code": "for ch in \"кіт\":\n    print(ch * 2)",
+    "answerMode": "choice",
+    "options": [
+      "кк\nіі\nтт",
+      "кіткіт",
+      "кк іі тт",
+      "к\nі\nт"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "for проходить по літерах по одній, і кожну виводить двічі в окремому рядку."
+    }
+  ],
+  "hints": [
+    "ch по черзі — «к», «і», «т».",
+    "Кожен print — новий рядок."
+  ],
+  "reference": {
+    "code": "for ch in \"кіт\":\n    print(ch * 2)"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

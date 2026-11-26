@@ -1,0 +1,38 @@
+{
+  "slug": "g9-drag-random-choice",
+  "topicSlug": "random",
+  "type": "fill",
+  "title": "Перетягни: випадковий колір",
+  "payload": {
+    "type": "fill",
+    "prompt": "Програма вибирає випадковий колір зі списку й перевіряє, що він справді звідти. Має вивести True.",
+    "template": "import random\ncolors = [\"червоний\", \"зелений\", \"синій\"]\nc = random.{{1}}(colors)\nprint(c in colors)\n",
+    "bank": [
+      "choice",
+      "randint",
+      "shuffle",
+      "random"
+    ]
+  },
+  "checks": [
+    {
+      "kind": "stdout_equals",
+      "value": "True",
+      "trim": true,
+      "message": "Має вийти True: потрібна функція, яка бере один випадковий елемент зі списку."
+    }
+  ],
+  "hints": [
+    "randint працює з числами, а не зі списком.",
+    "shuffle перемішує список і нічого не повертає."
+  ],
+  "reference": {
+    "code": "import random\ncolors = [\"червоний\", \"зелений\", \"синій\"]\nc = random.choice(colors)\nprint(c in colors)\n"
+  },
+  "difficulty": 2,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

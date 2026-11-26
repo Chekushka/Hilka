@@ -1,0 +1,70 @@
+{
+  "slug": "g9-code-initials",
+  "topicSlug": "strings-methods",
+  "type": "code",
+  "title": "Прізвище та ініціали",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок «Прізвище Ім'я По батькові», наприклад «Шевченко Тарас Григорович». Виведи прізвище й ініціали: «Шевченко Т. Г.»",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "Шевченко Тарас Григорович",
+      "stdin": [
+        "Шевченко Тарас Григорович"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Шевченко Т. Г.",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "Коваленко Олена Іванівна",
+      "stdin": [
+        "Коваленко Олена Іванівна"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Коваленко О. І.",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "зайві пробіли",
+      "stdin": [
+        "  Франко   Іван Якович "
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "Франко І. Я.",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "split() дасть список із трьох слів.",
+    "parts[1][0] — перша літера імені.",
+    "Між прізвищем і ініціалами — пробіл, після кожної літери — крапка."
+  ],
+  "reference": {
+    "code": "parts = input().split()\nprint(parts[0], parts[1][0] + \".\", parts[2][0] + \".\")\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

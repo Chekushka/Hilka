@@ -1,0 +1,81 @@
+{
+  "slug": "g9-code-review-even-count",
+  "topicSlug": "review",
+  "type": "code",
+  "title": "Скільки парних",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, а потім n цілих чисел, кожне в окремому рядку. Виведи, скільки серед них парних.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "3, 8, 10, 7",
+      "stdin": [
+        "4",
+        "3",
+        "8",
+        "10",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ]
+    },
+    {
+      "label": "з нулем і від'ємним",
+      "stdin": [
+        "3",
+        "-2",
+        "0",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last",
+          "message": "І -2, і 0 — парні числа."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "одне непарне",
+      "stdin": [
+        "1",
+        "9"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Лічильник count = 0 створи до циклу.",
+    "Число парне, коли x % 2 == 0."
+  ],
+  "reference": {
+    "code": "n = int(input())\ncount = 0\nfor i in range(n):\n    x = int(input())\n    if x % 2 == 0:\n        count = count + 1\nprint(count)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

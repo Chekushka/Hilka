@@ -1,0 +1,107 @@
+{
+  "slug": "g9-code-find-position",
+  "topicSlug": "lists-search",
+  "type": "code",
+  "title": "Під яким номером?",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай n, потім n цілих чисел, а потім ще одне число — те, яке шукаємо. Виведи номер (рахуючи з 1), під яким воно трапляється вперше. Якщо його в списку немає — виведи 0.",
+    "starter": ""
+  },
+  "cases": [
+    {
+      "label": "шукаємо 7 у 4, 7, 1, 7, 3",
+      "stdin": [
+        "5",
+        "4",
+        "7",
+        "1",
+        "7",
+        "3",
+        "7"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 2,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Перша сімка стоїть другою."
+        }
+      ]
+    },
+    {
+      "label": "числа немає",
+      "stdin": [
+        "3",
+        "2",
+        "4",
+        "6",
+        "5"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 0,
+          "tol": 0.01,
+          "which": "last",
+          "message": "Якщо числа немає, треба вивести 0, а не падати з помилкою."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "останнє",
+      "stdin": [
+        "4",
+        "9",
+        "8",
+        "7",
+        "6",
+        "6"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 4,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "усі однакові",
+      "stdin": [
+        "2",
+        "1",
+        "1",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "number_close",
+          "value": 1,
+          "tol": 0.01,
+          "which": "last"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Спочатку перевір: target in nums.",
+    "nums.index(target) рахує з 0 — додай 1."
+  ],
+  "reference": {
+    "code": "n = int(input())\nnums = []\nfor i in range(n):\n    nums.append(int(input()))\ntarget = int(input())\nif target in nums:\n    print(nums.index(target) + 1)\nelse:\n    print(0)\n"
+  },
+  "difficulty": 3,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}

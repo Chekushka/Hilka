@@ -1,0 +1,38 @@
+{
+  "slug": "g9-quiz-branch-tests",
+  "topicSlug": "testing",
+  "type": "quiz",
+  "title": "Тести на всі гілки",
+  "payload": {
+    "type": "quiz",
+    "prompt": "Програма виводить «додатне», «від'ємне» або «нуль». Який набір тестів перевіряє всі три гілки?",
+    "options": [
+      "5, -5, 0",
+      "1, 2, 3",
+      "-1, -2, -3",
+      "0, 0, 0"
+    ],
+    "multiple": false
+  },
+  "checks": [
+    {
+      "kind": "choice_equals",
+      "indices": [
+        0
+      ],
+      "message": "На кожну гілку потрібен хоча б один тест: додатне, від'ємне й нуль."
+    }
+  ],
+  "hints": [
+    "Скільки гілок у програмі?"
+  ],
+  "difficulty": 1,
+  "gradeTags": [
+    9
+  ],
+  "tags": [
+    "easy-start"
+  ],
+  "version": 1,
+  "status": "published"
+}

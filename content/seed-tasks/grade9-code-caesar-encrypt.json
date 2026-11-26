@@ -1,0 +1,89 @@
+{
+  "slug": "g9-code-caesar-encrypt",
+  "topicSlug": "strings-cipher",
+  "type": "code",
+  "title": "Шифр Цезаря",
+  "payload": {
+    "type": "code",
+    "surface": "console",
+    "prompt": "Прочитай рядок (малими українськими літерами), а потім зсув k. Зашифруй рядок шифром Цезаря: кожну літеру заміни тією, що стоїть на k позицій далі в абетці (після «я» знову йде «а»). Пробіли й розділові знаки залиш як є. Абетку вже записано в abc.",
+    "starter": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\n"
+  },
+  "cases": [
+    {
+      "label": "кіт, зсув 1",
+      "stdin": [
+        "кіт",
+        "1"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "лїу",
+          "normalize": "trim"
+        }
+      ]
+    },
+    {
+      "label": "з пробілами і через «я»",
+      "stdin": [
+        "я і ти",
+        "2"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "б й фї",
+          "normalize": "trim",
+          "message": "Після «я» знову йде «а», а пробіли не змінюються."
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "зсув 33 — коло",
+      "stdin": [
+        "привіт!",
+        "33"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "привіт!",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "label": "зсув назад",
+      "stdin": [
+        "бал",
+        "-1"
+      ],
+      "checks": [
+        {
+          "kind": "last_line_equals",
+          "value": "аяк",
+          "normalize": "trim"
+        }
+      ],
+      "hidden": true
+    }
+  ],
+  "checks": [],
+  "hints": [
+    "Пройди по кожному символу text.",
+    "Якщо символ є в abc — знайди його номер, додай k і візьми % len(abc).",
+    "Інакше додай символ без змін."
+  ],
+  "reference": {
+    "code": "abc = \"абвгґдеєжзиіїйклмнопрстуфхцчшщьюя\"\ntext = input()\nk = int(input())\nresult = \"\"\nfor ch in text:\n    if ch in abc:\n        i = abc.find(ch)\n        result = result + abc[(i + k) % len(abc)]\n    else:\n        result = result + ch\nprint(result)\n"
+  },
+  "difficulty": 4,
+  "gradeTags": [
+    9
+  ],
+  "version": 1,
+  "status": "published"
+}
