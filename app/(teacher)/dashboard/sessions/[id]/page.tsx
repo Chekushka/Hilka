@@ -13,6 +13,7 @@ import { ROUTE_KEYS, routeOf, type RouteKey } from '@/lib/session/routes';
 import { CellMark, STATE_TEXT_CLASS, StateMark, agoText, stateLabel } from '@/components/dashboard/StateMark';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listAttemptsForSession } from '@/lib/db/attempts';
+import { listLessonsWithTasks } from '@/lib/db/lessons';
 import { loadHomeworkFacts } from '@/lib/db/homework-facts';
 import {
   getSessionForTeacher,
@@ -41,6 +42,9 @@ import type { HomeworkGrade } from '@/lib/homework/grade';
 import { isHomeworkGrade, suggestSessionGrades } from '@/lib/homework/session-grades';
 import { t } from '@/lib/i18n';
 import { assignedTo } from '@/lib/session/assigned';
+
+/** More lessons than this behind one session is a review of many topics, not a new one: no theory buttons then. */
+const MAX_THEORY_LINKS = 3;
 
 export const dynamic = 'force-dynamic';
 
@@ -189,6 +193,8 @@ export default async function SessionDetailPage({
       )
     : null;
   const taskIndex = new Map(session.tasks.map((task, index) => [task.id, index]));
+  // The theory behind the session's tasks, for the projector before the class starts (components/lesson/PresentDeck.tsx).
+  const theoryLessons = check ? [] : await listLessonsWithTasks(session.tasks.map((task) => task.id));
   // Routes can change while the session is open; a class check has none.
   const routesEditable = session.open && !check;
   const [routeBank, lastRoutes] = routesEditable
@@ -238,8 +244,22 @@ export default async function SessionDetailPage({
           </p>
           {session.open && (
             <div className="mt-3 flex flex-wrap items-center gap-3" data-testid="session-share">
-              <ShowToClassButton sessionId={session.id} />
+              <ShowToClassButton href={`/show/${session.id}`} />
               <CopyLink path={`/s/${session.code}`} />
+            </div>
+          )}
+          {theoryLessons.length > 0 && theoryLessons.length <= MAX_THEORY_LINKS && (
+            <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="session-theory">
+              <span className="text-sm text-ink-muted">{t('present.sessionTheory')}</span>
+              {theoryLessons.map((lesson) => (
+                <ShowToClassButton
+                  key={lesson.slug}
+                  href={`/present/${lesson.slug}`}
+                  label={lesson.title}
+                  quiet
+                  testId="show-theory"
+                />
+              ))}
             </div>
           )}
           {check && session.checks && (

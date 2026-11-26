@@ -328,7 +328,7 @@ export function SessionBuilderForm({ classes, initialClassId, tasks, lessons }: 
         <p className="text-ink">{t('sessionBuilder.created')}</p>
         <p className="mt-3 font-mono text-2xl font-semibold tracking-[0.2em] text-ink md:text-7xl">{session.code}</p>
         <div className="mt-4 flex flex-col items-center gap-3">
-          <ShowToClassButton sessionId={session.id} />
+          <ShowToClassButton href={`/show/${session.id}`} />
           <CopyLink path={`/s/${session.code}`} />
         </div>
         {homework && dueAt && (

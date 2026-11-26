@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ImportExportControls } from '@/components/authoring/ImportExportControls';
+import { ShowToClassButton } from '@/components/dashboard/ShowToClassButton';
 import { getCurrentTeacher } from '@/lib/auth/current-teacher';
 import { listLessonsForAuthoring } from '@/lib/db/lesson-authoring';
 import { t } from '@/lib/i18n';
@@ -45,6 +46,9 @@ export default async function LessonsPage() {
                 <th className="pb-2 font-medium">{t('lessonForm.title')}</th>
                 <th className="pb-2 font-medium">{t('lessonForm.kind')}</th>
                 <th className="pb-2 font-medium">{t('lessonForm.columnTasks')}</th>
+                <th className="pb-2 font-medium">
+                  <span className="sr-only">{t('present.columnTheory')}</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -63,6 +67,9 @@ export default async function LessonsPage() {
                     </td>
                     <td className="py-2 text-ink-muted">
                       {t('lessonForm.taskCounts', { core: lesson.coreCount, additional: lesson.additionalCount })}
+                    </td>
+                    <td className="py-1.5 text-right">
+                      <ShowToClassButton href={`/present/${lesson.slug}`} label={t('present.showTheory')} quiet testId="show-theory" />
                     </td>
                   </tr>
                 ))}
