@@ -17,12 +17,13 @@
  * An explanation with no `---` and no guess is shown as it always was.
  */
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
-import { CodeBlock, Explanation, renderBlock, renderInline } from '@/components/lesson/Explanation';
+import { CardBand } from '@/components/lesson/CardBand';
+import { Explanation, renderBlock } from '@/components/lesson/Explanation';
+import { GuessView } from '@/components/lesson/GuessView';
 import { itemsLabel } from '@/components/meta/character-text';
 import { itemsUnlockedBetween, levelForXp } from '@/lib/meta/character';
 import { practiceXp, type XpSources } from '@/lib/meta/progress';
-import type { Guess } from '@/lib/lessons/markdown';
-import { cardKind, isAnswerable, optionOrder, theoryCards, THEORY_XP, type CardKind } from '@/lib/lessons/theory';
+import { cardKind, isAnswerable, theoryCards, THEORY_XP } from '@/lib/lessons/theory';
 import { useLocalProgress } from '@/lib/practice/local-progress';
 import { hasCompletedTheory, markTheoryCompleted } from '@/lib/practice/progress';
 import { t } from '@/lib/i18n';
@@ -256,153 +257,5 @@ export function TheoryDeck({ markdown, lessonSlug, xp, finish }: TheoryDeckProps
         </div>
       )}
     </section>
-  );
-}
-
-const BAND: Record<CardKind, { className: string; label: string; icon: ReactNode }> = {
-  idea: { className: 'bg-accent-soft text-accent', label: 'theory.kindIdea', icon: <BulbIcon /> },
-  guess: { className: 'bg-accent text-surface', label: 'theory.guessLabel', icon: <QuestionIcon /> },
-  remember: { className: 'bg-honey text-on-bright', label: 'theory.remember', icon: <StarIcon /> }
-};
-
-/** What the card is, in its own colour and icon — never the colour alone. */
-function CardBand({ kind }: { kind: CardKind }) {
-  const band = BAND[kind];
-  return (
-    <p className={`mt-3 flex items-center gap-2.5 px-5 py-2.5 text-base font-bold ${band.className}`} data-testid="card-band">
-      {band.icon}
-      {t(band.label)}
-    </p>
-  );
-}
-
-function BulbIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 flex-none">
-      <path d="M10 2.5a5.5 5.5 0 0 0-3.2 10c.5.4.7.9.7 1.5v.5h5v-.5c0-.6.2-1.1.7-1.5A5.5 5.5 0 0 0 10 2.5z" fill="currentColor" />
-      <path d="M7.5 16.5h5M8.5 18.5h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function QuestionIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 flex-none">
-      <circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M7.6 7.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.4v.7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="10" cy="14.6" r="1.1" fill="currentColor" />
-    </svg>
-  );
-}
-
-function StarIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 flex-none">
-      <path d="M10 1.8l2.5 5.2 5.7.8-4.1 4 1 5.6L10 14.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="currentColor" />
-    </svg>
-  );
-}
-
-/**
- * A guess card: the code, the outputs to choose from as lettered tiles, then
- * what it really prints — line by line, as if the program were running — and
- * why. One answer, never a retry and never a red mark: the point is to have
- * guessed before seeing it.
- */
-function GuessView({ guess, chosen, onChoose }: { guess: Guess; chosen: number | null; onChoose: (option: number) => void }) {
-  if (!isAnswerable(guess)) return <CodeBlock text={guess.code} />;
-  const answered = chosen !== null;
-  const right = chosen === guess.answer;
-  const letters = t('theory.optionLetters').split('');
-
-  return (
-    <div className="flex flex-col gap-4" data-testid="guess-card">
-      <CodeBlock text={guess.code} />
-      <p className="text-xl font-bold">{t('theory.guessQuestion')}</p>
-      <div role="group" aria-label={t('theory.guessQuestion')} className="grid gap-2.5 sm:grid-cols-2">
-        {optionOrder(guess).map((option, position) => {
-          const isAnswer = option === guess.answer;
-          const isChosen = option === chosen;
-          const tone = !answered
-            ? 'border-line bg-surface hover:-translate-y-0.5 hover:border-accent'
-            : isAnswer
-              ? 'border-growth bg-surface'
-              : isChosen
-                ? 'border-dashed border-ink-muted bg-shell'
-                : 'border-line bg-shell opacity-50';
-          const badge = !answered
-            ? 'bg-accent-soft text-accent'
-            : isAnswer
-              ? 'success-badge bg-growth text-on-bright'
-              : 'bg-shell text-ink-muted';
-          return (
-            <button
-              key={option}
-              type="button"
-              disabled={answered}
-              aria-pressed={isChosen}
-              onClick={() => onChoose(option)}
-              className={`flex items-start gap-3 rounded-xl border-2 px-3 py-3 text-left transition-transform ${tone}`}
-            >
-              <span
-                aria-hidden="true"
-                className={`flex h-8 w-8 flex-none items-center justify-center rounded-full text-base font-bold ${badge}`}
-              >
-                {answered && isAnswer ? '✓' : letters[position] ?? position + 1}
-              </span>
-              <span className="flex min-w-0 flex-col gap-1">
-                <span className="whitespace-pre-wrap font-mono text-lg leading-snug text-ink">{guess.options[option]}</span>
-                {answered && isAnswer && <span className="sr-only">{t('theory.correctOption')}</span>}
-                {answered && isChosen && !isAnswer && (
-                  <span className="text-sm font-semibold text-ink-muted">{t('theory.yourOption')}</span>
-                )}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <div aria-live="polite">
-        {answered && (
-          <div className="flex flex-col gap-3" data-testid="guess-feedback">
-            <p className={`flex items-center gap-2 text-xl font-bold ${right ? 'text-growth' : 'text-ink'}`}>
-              {right && (
-                <span aria-hidden="true" className="success-badge flex h-8 w-8 items-center justify-center rounded-full bg-growth text-on-bright">
-                  ✓
-                </span>
-              )}
-              {right ? t('theory.guessRight') : t('theory.guessWrong')}
-            </p>
-            <OutputReveal text={guess.options[guess.answer]} />
-            {guess.why && (
-              <p className="flex gap-3 rounded-xl border-l-4 border-accent bg-accent-soft px-4 py-3 text-lg leading-snug">
-                <span aria-hidden="true" className="mt-0.5 text-accent">
-                  <BulbIcon />
-                </span>
-                <span>{renderInline(guess.why)}</span>
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** The real output, one line after another, in the same console face as the workspace's output. */
-function OutputReveal({ text }: { text: string }) {
-  return (
-    <div className="overflow-hidden rounded-xl border-2 border-growth bg-code-bg" data-testid="guess-output">
-      <p className="flex items-center gap-2 border-b border-line px-4 py-1.5 text-sm font-bold text-growth">
-        <span aria-hidden="true">▶</span>
-        {t('theory.outputTitle')}
-      </p>
-      <pre className="px-4 py-2.5 font-mono text-lg leading-7 text-ink">
-        {text.split('\n').map((line, i) => (
-          <span key={i} className="line-in block whitespace-pre" style={{ animationDelay: `${i * 220}ms` }}>
-            {line === '' ? ' ' : line}
-          </span>
-        ))}
-      </pre>
-    </div>
   );
 }

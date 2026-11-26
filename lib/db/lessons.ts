@@ -3,7 +3,7 @@
  * published tasks inside a lesson — a lesson that references a draft simply
  * shows one task fewer until it is published.
  */
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, arrayOverlaps, asc, eq, inArray, or } from 'drizzle-orm';
 import { lessonSteps, resolveLessonTasks, type LessonOutlineItem, type LessonTaskStep, type LessonTaskSummary } from '@/lib/lessons/view';
 import { hasGuessCards } from '@/lib/lessons/theory';
 import type { LessonKind } from '@/lib/lessons/types';
@@ -111,6 +111,30 @@ export async function getLesson(slug: string): Promise<LessonDetail | null> {
     additional,
     steps: lessonSteps(core, additional)
   };
+}
+
+/** What the projector shows of a lesson (app/(projector)/present/): its title and theory, nothing about tasks. */
+export async function getLessonTheory(slug: string): Promise<{ slug: string; title: string; explanationMd: string } | null> {
+  const [row] = await getDb()
+    .select({ slug: lessons.slug, title: lessons.title, explanationMd: lessons.explanationMd })
+    .from(lessons)
+    .where(eq(lessons.slug, slug))
+    .limit(1);
+  return row ?? null;
+}
+
+/**
+ * The lessons any of these tasks belong to, in curriculum order — on a
+ * session's page, the theory the teacher may want to show before the class
+ * starts on its tasks.
+ */
+export async function listLessonsWithTasks(taskIds: string[]): Promise<{ slug: string; title: string }[]> {
+  if (taskIds.length === 0) return [];
+  return getDb()
+    .select({ slug: lessons.slug, title: lessons.title })
+    .from(lessons)
+    .where(or(arrayOverlaps(lessons.coreTaskIds, taskIds), arrayOverlaps(lessons.additionalTaskIds, taskIds)))
+    .orderBy(asc(lessons.grade), asc(lessons.order));
 }
 
 /** A published task by slug — the practice route checks it belongs to the lesson via `LessonDetail.steps`. */
