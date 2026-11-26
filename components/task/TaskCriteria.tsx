@@ -5,7 +5,7 @@
  * statement and again in the question before handing it in. Generated from the
  * task's checks, so it is there for every task and says exactly what is checked.
  */
-import { taskLevel, pointsMessageKey } from '@/lib/grading/explain';
+import { taskLevel, pointsMessageKey, type TaskLevel } from '@/lib/grading/explain';
 import { taskPoints } from '@/lib/grading/grade';
 import { t } from '@/lib/i18n';
 import { taskCriteria } from '@/lib/task/criteria';
@@ -15,12 +15,24 @@ export function pointsText(points: number): string {
   return t(pointsMessageKey(points), { n: points });
 }
 
-/** "This is a medium task — 2 points." */
-export function taskWorthText(difficulty: number): string {
-  return t('criteria.worth', {
-    level: t(`grading.level.${taskLevel(difficulty)}`),
-    points: pointsText(taskPoints(difficulty))
-  });
+/** One colour per level, the same in the rules, the task list and above the statement. */
+const LEVEL_TONE: Record<TaskLevel, string> = {
+  easy: 'border-accent/40 bg-accent-soft text-accent',
+  medium: 'border-growth/60 bg-growth/15 text-ink',
+  hard: 'border-honey bg-honey-soft text-honey-ink'
+};
+
+/** The level and its points ("hard · 3 points") as a small coloured mark. */
+export function LevelChip({ difficulty, className = '' }: { difficulty: number; className?: string }) {
+  const level = taskLevel(difficulty);
+  return (
+    <span
+      data-testid="level-chip"
+      className={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-bold ${LEVEL_TONE[level]} ${className}`}
+    >
+      {t('grading.levelChip', { level: t(`grading.level.${level}`), points: pointsText(taskPoints(difficulty)) })}
+    </span>
+  );
 }
 
 /** The criteria as a list, for the panel below and for the confirm question. */
@@ -53,7 +65,9 @@ export function TaskCriteria({ task }: { task: Task }) {
         {t('criteria.title')}
       </summary>
       <div className="mt-2 space-y-2">
-        <p className="text-sm font-semibold text-ink">{taskWorthText(task.difficulty)}</p>
+        <p>
+          <LevelChip difficulty={task.difficulty} className="text-sm" />
+        </p>
         <CriteriaList task={task} />
       </div>
     </details>

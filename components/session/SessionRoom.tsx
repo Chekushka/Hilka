@@ -41,10 +41,9 @@ import { GradingRules } from '@/components/session/GradingRules';
 import { CheckGateProvider, ConfirmCheckDialog } from '@/components/task/CheckGate';
 import { NextTaskButton, type NextTaskAction } from '@/components/task/NextTaskButton';
 import { PrerequisiteNote } from '@/components/task/PrerequisiteNote';
-import { CriteriaList, TaskCriteria, pointsText } from '@/components/task/TaskCriteria';
+import { CriteriaList, LevelChip, TaskCriteria, pointsText } from '@/components/task/TaskCriteria';
 import { TaskWorkspace, type AttemptOutcome } from '@/components/task/TaskWorkspace';
 import { DEFAULT_GRADING } from '@/lib/grading/config';
-import { taskLevel } from '@/lib/grading/explain';
 import { taskPoints } from '@/lib/grading/grade';
 import { deadlineDistance, formatDeadline } from '@/lib/homework/deadline';
 import { checksLeft, improvementOpen, lateCredit, taskState, type SessionRules, type TaskState } from '@/lib/homework/rules';
@@ -799,16 +798,12 @@ export function SessionRoom({ code, session, initialTaskId = null }: SessionRoom
             {/* Visual only: the row's name stays the task's title, which is how it is announced and found. */}
             <span aria-hidden="true" className="block text-xs text-ink-muted">
               {t(`task.types.${task.type}`)}
-              {worthShown(task) && (
-                <span data-testid="task-worth">
-                  {' · '}
-                  {t('grading.listWorth', {
-                    level: t(`grading.level.${taskLevel(task.difficulty)}`),
-                    points: pointsText(taskPoints(task.difficulty))
-                  })}
-                </span>
-              )}
             </span>
+            {worthShown(task) && (
+              <span aria-hidden="true" data-testid="task-worth" className="mt-1 block">
+                <LevelChip difficulty={task.difficulty} />
+              </span>
+            )}
           </span>
           <StatusMark
             state={state}

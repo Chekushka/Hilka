@@ -55,20 +55,20 @@ test('a graded lesson shows its rules, scale and criteria, and asks before every
   const rules = student.getByTestId('grading-rules');
   await expect(rules).toHaveAttribute('open', '');
   await expect(rules).toContainText('Як оцінюється це заняття');
-  await expect(rules).toContainText('зараховується перша спроба');
-  await expect(rules).toContainText('легке — 1 бал, середнє — 2 бали, складне — 3 бали');
+  await expect(rules.getByTestId('rule-firstCheckOnly')).toContainText('Одна спроба на завдання');
+  await expect(rules.getByTestId('rule-points').getByTestId('level-chip')).toHaveText(['легке · 1 бал', 'середнє · 2 бали', 'складне · 3 бали']);
   // No hard task here: the session says the top it can reach.
-  await expect(rules).toContainText('найвища можлива оцінка — 9');
+  await expect(rules.getByTestId('rule-highBandUnavailable')).toContainText('Найвища оцінка тут — 9');
   const scale = student.getByTestId('grading-scale');
   await expect(scale).toContainText('Високий');
   await expect(scale.getByRole('term').last()).toHaveText('Оцінка 12');
   await expect(scale.getByRole('definition').last()).toHaveText('91,7–100%');
-  await expect(taskRow(student, QUIZ).getByTestId('task-worth')).toHaveText(' · легке, 1 бал');
+  await expect(student.getByTestId('task-worth').first()).toHaveText('легке · 1 бал');
 
   // The task's own criteria: cases by label, the hidden one only counted.
   await taskRow(student, COUNTDOWN).click();
   const criteria = student.getByTestId('task-criteria');
-  await expect(criteria).toContainText('Це легке завдання — 1 бал.');
+  await expect(criteria.getByTestId('level-chip')).toHaveText('легке · 1 бал');
   await expect(criteria).toContainText('Приклади: з 5.');
   await expect(criteria).toContainText('Прихованих прикладів: 1.');
   await expect(criteria).not.toContainText('з 1');
@@ -118,7 +118,7 @@ test('a practice session explains no grade and hands in without asking', async (
   await student.getByRole('button', { name: 'Тарас', exact: true }).click();
   await expect(student.getByRole('heading', { name: 'Завдання заняття' })).toBeVisible();
   await expect(student.getByTestId('grading-rules')).toHaveCount(0);
-  await expect(taskRow(student, QUIZ).getByTestId('task-worth')).toHaveCount(0);
+  await expect(student.getByTestId('task-worth')).toHaveCount(0);
 
   await taskRow(student, QUIZ).click();
   await expect(student.getByTestId('task-criteria')).toHaveCount(0);

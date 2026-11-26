@@ -73,10 +73,12 @@ describe('sessionRules', () => {
   it('has a message for every rule, with every placeholder filled', () => {
     const rules = sessionRules({ ...lesson, kind: 'homework', hasImprovementTasks: true, timeLimitS: 600 });
     const all = [...rules, ...sessionRules({ ...lesson, difficulties: [1] })];
-    const messages = (uk as unknown as { grading: { rules: Record<string, string> } }).grading.rules;
+    const messages = (uk as unknown as { grading: { rules: Record<string, Record<string, string>> } }).grading.rules;
     for (const rule of all) {
-      expect(messages[rule.key], rule.key).toBeTypeOf('string');
-      expect(t(`grading.rules.${rule.key}`, rule.values), rule.key).not.toMatch(/\{\w+\}/);
+      for (const part of ['badge', 'title', 'body']) {
+        expect(messages[rule.key]?.[part], `${rule.key}.${part}`).toBeTypeOf('string');
+        expect(t(`grading.rules.${rule.key}.${part}`, rule.values), `${rule.key}.${part}`).not.toMatch(/\{\w+\}/);
+      }
     }
   });
 });
